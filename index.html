@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Suryanarayan Renjith</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <div class="profile">
+        <div class="profile-pic-container">
+          <img src="assets/profile-pic.jpg" alt="Profile Picture" class="profile-pic">
+        </div>
+        <div class="profile-info">
+          <h2>Suryanarayan Renjith</h2>
+          <p>Student at Reva University | Web & Game Developer | C# App Developer | IoT/Embedded C Developer | Exploring Cybersecurity | Aspiring Linux Enthusiast & Advocate | Virtualization Professional | Rising Luminary</p>
+        </div>
+      </div>
+    <h1>Welcome to My <span class="typewriter">Profile</span></h1>
+    <p class="introduction">Hi, I'm Suryanarayan Renjith, a student at Reva University passionate about technology and development. Here you can find links to my projects and social media profiles.</p>
+    <h3>Explore My Links:</h3>
+    <div id="links-container" class="links-container"></div>
+  </div>
+  <script>
+const profileTextElement = document.querySelector(".typewriter");
+
+function typeBackAndForth() {
+    const profileText = "Profile";
+    const randomLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    const delay = 200;
+    const backDelay = 150;
+    const randomChance = 0.2; 
+
+    let index = 0;
+    let direction = 1;
+
+    function typeCharacter() {
+        if (index === profileText.length) {
+            direction = -1;
+        } else if (index === 0 && direction === -1) {
+            direction = 1;
+        }
+
+        if (direction === 1) {
+            profileTextElement.textContent = profileText.substring(0, index + 1);
+        } else {
+            profileTextElement.textContent = profileText.substring(0, index);
+        }
+
+        index += direction;
+
+        setTimeout(typeCharacter, delay);
+    }
+
+    function addRandomLetter() {
+        if (Math.random() < randomChance) {
+            const randomLetter = randomLetters[Math.floor(Math.random() * randomLetters.length)];
+            profileTextElement.textContent += randomLetter;
+        }
+
+        setTimeout(removeRandomLetter, delay);
+    }
+
+    function removeRandomLetter() {
+        const text = profileTextElement.textContent;
+        if (text.length > profileText.length) {
+            profileTextElement.textContent = text.substring(0, text.length - 1);
+        }
+
+        setTimeout(addRandomLetter, backDelay);
+    }
+
+    typeCharacter();
+    setTimeout(addRandomLetter, delay * profileText.length);
+}
+
+typeBackAndForth();
+  </script>
+
+  <footer class="footer">
+    <p>© 2024 Suryanarayan Renjith</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
