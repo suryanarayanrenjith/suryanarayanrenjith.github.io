@@ -7,6 +7,45 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <div class="javascript-disabled" id="javascript-disabled-message">
+    JavaScript is disabled in your browser. Please enable JavaScript to view this website links.
+</div>
+<style>
+  .javascript-disabled {
+    display: none;
+        background-color: black;
+        color: white;
+        padding: 10px;
+        border-bottom-left-radius: 20px;
+        border-bottom-right-radius: 20px;
+        text-align: center;
+        word-wrap: break-word;
+        font-size: 18px;
+  }
+
+  @media only screen and (max-width: 600px) {
+        .javascript-disabled {
+            font-size: 14px;
+            padding: 8px;
+        }
+    }
+
+    @media only screen and (min-width: 601px) and (max-width: 1024px) {
+        .javascript-disabled {
+            font-size: 16px;
+        }
+    }
+</style>
+<noscript>
+  <style>
+      .javascript-disabled {
+          display: block !important;
+      }
+  </style>
+<script>
+  document.getElementById('javascript-disabled-message').style.display = 'none';
+</script>
+</noscript>
   <div class="container">
     <div class="profile">
         <div class="profile-pic-container">
