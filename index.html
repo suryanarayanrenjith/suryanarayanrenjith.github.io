@@ -60,8 +60,23 @@
   <div class="container">
     <div class="profile">
         <div class="profile-pic-container">
-          <img src="assets/profile-pic.jpg" alt="Profile Picture" class="profile-pic">
+          <img src="assets/profile-pic.jpg" alt="Profile Picture" class="profile-pic" id="profile-pic">
         </div>
+        <script>
+          let clickCount = 0;
+        
+          function imageClickHandler() {
+            clickCount++;
+            if (clickCount === 5) {
+
+              window.location.href = "/Matrix";
+            }
+          }
+        
+          const profilePic = document.getElementById("profile-pic");
+        
+          profilePic.addEventListener("click", imageClickHandler);
+        </script>
         <div class="profile-info">
           <h2>Suryanarayan Renjith</h2>
           <p>Student at Reva University | Web & Game Developer | C# App Developer | IoT/Embedded C Developer | Exploring Cybersecurity | Aspiring Linux Enthusiast & Advocate | Virtualization Professional | Rising Luminary</p>
