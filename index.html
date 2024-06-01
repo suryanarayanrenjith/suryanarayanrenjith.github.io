@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Suryanarayan Renjith</title>
+  <meta name="copyright" content="">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
@@ -11,6 +12,10 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <script>
+    const currentYear = new Date().getFullYear();
+    document.querySelector('meta[name="copyright"]').setAttribute('content', `Copyright © ${currentYear} Suryanarayan Renjith`);
+  </script>
   <div class="javascript-disabled" id="javascript-disabled-message">
     JavaScript is disabled in your browser. Please enable JavaScript to view this website links.
 </div>
