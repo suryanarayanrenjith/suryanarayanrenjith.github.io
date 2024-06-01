@@ -67,16 +67,36 @@
         <div class="profile-pic-container">
           <img src="assets/profile-pic.jpg" alt="Profile Picture" class="profile-pic" id="profile-pic">
         </div>
-        <script>
+                <script>
           let clickCount = 0;
         
           function imageClickHandler() {
             clickCount++;
             if (clickCount === 5) {
-
-              window.location.href = "/Matrix";
-
-              clickCount = 0;
+              const popup = document.createElement('div');
+              popup.innerText = 'Secret link unlocked';
+              popup.style.position = 'fixed';
+              popup.style.top = '8px';
+              popup.style.left = '50%';
+              popup.style.transform = 'translateX(-50%)';
+              popup.style.backgroundColor = '#000';
+              popup.style.color = '#fff';
+              popup.style.padding = '10px';
+              popup.style.borderRadius = '5px';
+              popup.style.opacity = '0';
+              popup.style.transition = 'opacity 0.5s';
+              popup.style.maxWidth = '90%';
+              popup.style.textAlign = 'center';
+              document.body.appendChild(popup);
+        
+              popup.offsetHeight;
+        
+              popup.style.opacity = '1';
+        
+              setTimeout(function() {
+                clickCount = 0;
+                window.location.href = "/Matrix";
+              }, 1000);
             }
           }
         
@@ -84,6 +104,16 @@
         
           profilePic.addEventListener("click", imageClickHandler);
         </script>
+        
+        <style>
+          @media screen and (max-width: 768px) {
+            .custom-pointer {
+              top: 30%;
+              left: 50%;
+              transform: translate(-50%, -50%);
+            }
+          }
+        </style>
         <div class="profile-info">
           <h2>Suryanarayan Renjith</h2>
           <p>Student at Reva University | Web & Game Developer | C# App Developer | IoT/Embedded C Developer | Exploring Cybersecurity | Aspiring Linux Enthusiast & Advocate | Virtualization Professional | Rising Luminary</p>
