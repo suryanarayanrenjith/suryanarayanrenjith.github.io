@@ -53,19 +53,27 @@ spaceattackLinkAnchor.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width
 spaceattackLinkItem.appendChild(spaceattackLinkAnchor);
 linksContainer.appendChild(spaceattackLinkItem);
 
-  
-  links.forEach(link => {
-    const linkItem = document.createElement("div");
-    linkItem.classList.add("link-item");
-    
-    const linkAnchor = document.createElement("a");
-    linkAnchor.textContent = link.name;
-    linkAnchor.href = link.url;
-    
-    linkItem.appendChild(linkAnchor);
-    linksContainer.appendChild(linkItem);
-  });
+function isBotOrCurl(userAgentString) {
+      return /curl|bot|spider|crawler|wget|Mediapartners-Google/i.test(userAgentString);
+    }
 
-  linksContainer.appendChild(iconContainer);
-  
-  
+
+    if (!isBotOrCurl(navigator.userAgent)) {
+        links.forEach(link => {
+            const linkItem = document.createElement("div");
+            linkItem.classList.add("link-item");
+            
+            const linkAnchor = document.createElement("a");
+            linkAnchor.textContent = link.name;
+            linkAnchor.href = link.url;
+            
+            linkItem.appendChild(linkAnchor);
+            linksContainer.appendChild(linkItem);
+        });
+        
+        linksContainer.appendChild(iconContainer);
+    }
+    else
+    {
+        linksContainer.style.display = "none";
+    }
