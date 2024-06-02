@@ -12,6 +12,36 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const body = document.querySelector('body');
+    let initialMouseY = 0;
+    let lastMouseY = 0;
+
+    function isMobile() {
+      return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
+
+    if (!isMobile()) {
+      body.addEventListener('mousemove', function(event) {
+        const mouseY = event.clientY;
+        if (initialMouseY === 0) {
+          initialMouseY = mouseY;
+        }
+        const rangeY = window.innerHeight / 2;
+        const offsetY = (mouseY - initialMouseY) / rangeY * 20;
+        const clampedOffsetY = Math.min(Math.max(offsetY, -10), 10);
+        body.style.backgroundPosition = `50% calc(50% + ${clampedOffsetY}px)`;
+        lastMouseY = clampedOffsetY;
+      });
+
+      body.addEventListener('mouseleave', function() {
+        body.style.backgroundPosition = `50% calc(50% + ${lastMouseY}px)`;
+        initialMouseY = 0;
+      });
+    }
+  });
+</script>
   <script>
     const currentYear = new Date().getFullYear();
     document.querySelector('meta[name="copyright"]').setAttribute('content', `Copyright © ${currentYear} Suryanarayan Renjith`);
