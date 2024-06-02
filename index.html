@@ -227,6 +227,18 @@ function typeBackAndForth() {
 typeBackAndForth();
   </script>
 
+  <script>
+    function BotOrCurl(userAgentString) {
+      return /curl|bot|spider|crawler|wget|Mediapartners-Google/i.test(userAgentString);
+    }
+
+
+    if (BotOrCurl(navigator.userAgent)) {
+      const linksHeading = document.getElementById("links");
+      linksHeading.style.display = "none";
+    }
+  </script>
+  
   <script src="script.js"></script>
 </body>
 </html>
