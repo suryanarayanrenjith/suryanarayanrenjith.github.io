@@ -151,7 +151,45 @@
       </div>
     <h1>Welcome to My <span class="typewriter">Profile</span></h1>
     <p class="introduction">Hi, I'm Suryanarayan Renjith, a student at Reva University passionate about technology and development. Here you can find links to my games and social media profiles.</p>
-    <h3 id="links">Explore My Links:</h3>
+    <h3 id="links" class="link">Explore My Links:</h3>
+    <script>
+const profileText = document.querySelector('.link');
+let originalText = profileText.textContent;
+
+profileText.addEventListener('mouseenter', startAnimation);
+profileText.addEventListener('mouseleave', stopAnimation);
+
+let animationInterval;
+
+function startAnimation() {
+  clearInterval(animationInterval);
+  animationInterval = setInterval(scrollText, 100);
+}
+
+function stopAnimation() {
+  clearInterval(animationInterval);
+  profileText.textContent = originalText;
+}
+
+function scrollText() {
+  let currentText = profileText.textContent;
+  
+  if (currentText.endsWith(':')) {
+    currentText = currentText.slice(0, -1);
+  }
+  
+  const randomIndex = Math.floor(Math.random() * currentText.length);
+  
+  let randomChar = currentText.charAt(randomIndex);
+  
+  while (randomChar === currentText.charAt(randomIndex)) {
+    randomChar = String.fromCharCode(33 + Math.floor(Math.random() * 93));
+  }
+  
+  const newText = currentText.slice(0, randomIndex) + randomChar + currentText.slice(randomIndex + 1);
+  profileText.textContent = newText;
+}
+    </script>
     <div id="links-container" class="links-container"></div>
   </div>
     <script>
