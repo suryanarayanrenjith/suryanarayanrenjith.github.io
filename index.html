@@ -227,18 +227,31 @@ function typeBackAndForth() {
 typeBackAndForth();
   </script>
 
-  <script>
-    function BotOrCurl(userAgentString) {
-      return /curl|bot|spider|crawler|wget|Mediapartners-Google/i.test(userAgentString);
-    }
+<script>
+  function BotDetected() {
+    return localStorage.getItem("isBot") === "true";
+}
+
+function BotOrCurl(userAgentString) {
+    return /curl|bot|spider|crawler|wget|Mediapartners-Google/i.test(userAgentString);
+  }
 
 
-    if (BotOrCurl(navigator.userAgent)) {
-      const linksHeading = document.getElementById("links");
-      const pfp = document.getElementById("profile-pic");
-      linksHeading.style.display = "none";
-      pfp.style.display = "none";
-    }
+  if (BotOrCurl(navigator.userAgent)) {
+    const linksHeading = document.getElementById("links");
+    const pfp = document.getElementById("profile-pic");
+    linksHeading.style.display = "none";
+    pfp.style.display = "none";
+    console.log("Bot Detected!");
+  }
+
+if (BotDetected()) {
+  const linksHead = document.getElementById("links");
+  const pfpic = document.getElementById("profile-pic");
+  linksHead.style.display = "none"; 
+  pfpic.style.display = "none";
+  console.log("User Banned!");
+}
   </script>
   
   <script src="script.js"></script>
