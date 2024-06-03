@@ -54,10 +54,18 @@ spaceattackLinkItem.appendChild(spaceattackLinkAnchor);
 linksContainer.appendChild(spaceattackLinkItem);
 
 function isBotOrCurl(userAgentString) {
-      return /curl|bot|spider|crawler|wget|Mediapartners-Google/i.test(userAgentString);
-    }
+    return /curl|bot|spider|crawler|wget|Mediapartners-Google/i.test(userAgentString);
+}
 
+function setBotFlag() {
+    localStorage.setItem("isBot", "true");
+}
 
+function isBotDetected() {
+    return localStorage.getItem("isBot") === "true";
+}
+
+function initializeLinks() {
     if (!isBotOrCurl(navigator.userAgent)) {
         links.forEach(link => {
             const linkItem = document.createElement("div");
@@ -72,8 +80,16 @@ function isBotOrCurl(userAgentString) {
         });
         
         linksContainer.appendChild(iconContainer);
-    }
-    else
-    {
+    } else {
+        setBotFlag();
         linksContainer.style.display = "none";
     }
+}
+
+window.onload = function() {
+    if (isBotDetected()) {
+        linksContainer.style.display = "none";
+    } else {
+        initializeLinks();
+    }
+};
