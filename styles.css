@@ -5,7 +5,7 @@ body {
     background-image: url('assets/background.jpg');
     filter: drop-shadow(1px);
     background-size: cover;
-    overflow: hidden;
+    overflow-x: hidden;
     color: #fff;
     transition: background-position 0.5s ease;
   } 
