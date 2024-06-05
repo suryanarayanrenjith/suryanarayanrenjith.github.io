@@ -196,22 +196,6 @@ function scrollText() {
     </script>
     <div id="links-container" class="links-container"></div>
   </div>
-    <script>
-    function isMobileDevice() {
-        return (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
-    }
-
-    function adjustOverflow() {
-        var body = document.body;
-        if (isMobileDevice()) {
-            body.style.overflow = 'scroll';
-        } else {
-            body.style.overflow = 'hidden';
-        }
-    }
-
-    window.onload = window.onresize = adjustOverflow;
-</script>
   
   <script>
 const profileTextElement = document.querySelector(".typewriter");
