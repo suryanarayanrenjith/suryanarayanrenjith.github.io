@@ -13,6 +13,10 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+<video autoplay muted loop id="video-background">
+<source src="assets/Animate.mp4" type="video/mp4">
+Your browser does not support video.
+</video>  
 <div id="preloader">
     <div class="dot"></div>
     <div class="dot"></div>
@@ -47,6 +51,19 @@
       });
     }
   });
+
+  document.addEventListener("DOMContentLoaded", function() {
+  const videoBackground = document.querySelector('#video-background');
+  const body = document.querySelector('body');
+
+  function startAnimation() {
+    body.style.backgroundImage = 'none';
+    videoBackground.style.display = 'block';
+    videoBackground.play();
+  }
+
+  body.addEventListener('dblclick', startAnimation);
+});
 </script>
   <script>
     const currentYear = new Date().getFullYear();
