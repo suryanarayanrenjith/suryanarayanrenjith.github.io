@@ -116,8 +116,8 @@ margin-bottom: 20px;
 </style>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-var pathName = window.location.pathname.substring(1);
-var itemElement = document.querySelector('.branding');
-itemElement.textContent = pathName ? pathName : 'Home';
-        });    
+var pageTitle = document.title;
+var brandingElement = document.querySelector('.item');
+itemElement.textContent = pageTitle;
+        });
 </script>
