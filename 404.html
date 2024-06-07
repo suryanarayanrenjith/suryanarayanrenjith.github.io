@@ -1,6 +1,6 @@
 <div id="main">
     <div class="fof">
-    <p class="branding">Suryanarayan Renjith</p>
+    <p class="item"></p>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="200" height="200">
     <circle cx="256" cy="256" r="150" fill="#FFD700"/>
     <circle cx="200" cy="200" r="20" fill="#FFD700"/>
@@ -35,7 +35,7 @@ html {
   scrollbar-width: none;
 }
 
-.branding {
+.item {
 font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 font-size: 24px;
 margin-bottom: 20px;
@@ -114,3 +114,10 @@ margin-bottom: 20px;
             }
         }
 </style>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+var pathName = window.location.pathname.substring(1);
+var itemElement = document.querySelector('.branding');
+itemElement.textContent = pathName ? pathName : 'Home';
+        });    
+</script>
