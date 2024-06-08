@@ -4,6 +4,37 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Suryanarayan Renjith</title>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+    const fullText = "Suryanarayan Renjith";
+    const fixedChar = "S";
+    const dynamicText = fullText.slice(1);
+    let index = 0;
+    let isDeleting = false;
+
+    function type() {
+        const speed = 300;
+
+        if (isDeleting) {
+            document.title = fixedChar + dynamicText.substring(0, index - 1);
+            index--;
+            if (index === 0) {
+                isDeleting = false;
+            }
+        } else {
+            document.title = fixedChar + dynamicText.substring(0, index + 1);
+            index++;
+            if (index === dynamicText.length) {
+                isDeleting = true;
+            }
+        }
+
+        setTimeout(type, speed);
+    }
+
+    type();
+});
+  </script>
   <meta name="copyright" content="">
   <script>window.addEventListener('load', function () {var preloader = document.getElementById('preloader');preloader.style.display = 'none';});</script>
   <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png">
@@ -65,6 +96,28 @@ Your browser does not support video.
   body.addEventListener('dblclick', startAnimation);
 });
 </script>
+  <script>
+  document.addEventListener('mousemove', function (e) {
+  var trail = document.createElement('div');
+  trail.className = 'mouse-trail';
+  trail.style.left = e.pageX + 'px';
+  trail.style.top = e.pageY + 'px';
+  document.body.appendChild(trail);
+  setTimeout(function () {
+    trail.remove();
+  }, 1000);
+});
+
+window.onload = function() {
+  var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  if (isMobile) {
+    var mouseTrail = document.querySelector('.mouse-trail');
+    if (mouseTrail) {
+      mouseTrail.classList.add('no-animation');
+    }
+  }
+};
+  </script>
   <script>
     const currentYear = new Date().getFullYear();
     document.querySelector('meta[name="copyright"]').setAttribute('content', `Copyright © ${currentYear} Suryanarayan Renjith`);
