@@ -83,18 +83,22 @@ Your browser does not support video.
     }
   });
 
-  document.addEventListener("DOMContentLoaded", function() {
-  const videoBackground = document.querySelector('#video-background');
-  const body = document.querySelector('body');
+      document.addEventListener("DOMContentLoaded", function() {
+      const videoBackground = document.querySelector('#video-background');
+      const body = document.querySelector('body');
+      const profilePic = document.querySelector('#profile-pic');
 
-  function startAnimation() {
-    body.style.backgroundImage = 'none';
-    videoBackground.style.display = 'block';
-    videoBackground.play();
-  }
+      function startAnimation(event) {
+        if (event.target === profilePic) {
+          return;
+        }
+        body.style.backgroundImage = 'none';
+        videoBackground.style.display = 'block';
+        videoBackground.play();
+      }
 
-  body.addEventListener('dblclick', startAnimation);
-});
+      body.addEventListener('dblclick', startAnimation);
+    });
 </script>
   <script>
   document.addEventListener('mousemove', function (e) {
