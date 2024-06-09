@@ -22,16 +22,18 @@
 
         #game {
             position: relative;
-            width: 800px;
-            height: 600px;
+            width: 90vw;
+            max-width: 800px;
+            height: 80vh;
+            max-height: 600px;
             border: 2px solid white;
             overflow: hidden;
-            padding-top: 40px; /* Add space above canvas */
+            padding-top: 40px; 
         }
 
         #canvas {
             width: 100%;
-            height: calc(100% - 40px); /* Adjusted height to accommodate score counter */
+            height: calc(100% - 40px);
         }
 
         #game-over {
@@ -53,16 +55,16 @@
 
         #score-counter {
             position: absolute;
-            top: 20px; /* Adjusted top position */
-            left: 20px; /* Adjusted left position */
-            font-size: 24px;
+            top: 20px;
+            left: 20px;
+            font-size: 4vw;
         }
 
         #high-score-counter {
             position: absolute;
-            top: 20px; /* Adjusted top position */
-            right: 20px; /* Adjusted right position */
-            font-size: 24px;
+            top: 20px;
+            right: 20px;
+            font-size: 4vw;
         }
 
         #tap-to-start {
@@ -70,13 +72,13 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 24px;
+            font-size: 4vw;
             cursor: pointer;
-            z-index: 1; /* Ensure it's above the canvas */
+            z-index: 1;
         }
 
         #game-over-text {
-            margin-bottom: 20px; /* Add space below the text */
+            margin-bottom: 20px;
         }
     </style>
     <div id="game">
@@ -93,7 +95,7 @@
         let canvas = document.getElementById('canvas');
         let ctx = canvas.getContext('2d');
         canvas.width = 800;
-        canvas.height = 560; /* Adjusted height to accommodate score counter */
+        canvas.height = 560;
 
         let gameWidth = canvas.width;
         let gameHeight = canvas.height;
@@ -112,10 +114,10 @@
         let tapToStart = document.getElementById('tap-to-start');
 
         function generateAsteroid() {
-            let asteroidSize = Math.random() * 50 + 20; // Random size between 20 and 70
+            let asteroidSize = Math.random() * 50 + 20;
             let asteroidX = 0;
             let asteroidY = Math.random() * (gameHeight - asteroidSize);
-            let rotationSpeed = Math.random() * 0.2 - 0.1; // Random rotation speed between -0.1 and 0.1
+            let rotationSpeed = Math.random() * 0.2 - 0.1;
             asteroid = {
                 size: asteroidSize,
                 x: asteroidX,
@@ -210,7 +212,7 @@
 
         canvas.addEventListener('click', function(event) {
             if (!gameInterval) {
-                tapToStart.style.display = 'none'; // Hide "Tap to Start" text
+                tapToStart.style.display = 'none';
                 resetGame();
             } else {
                 let rect = canvas.getBoundingClientRect();
