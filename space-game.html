@@ -221,7 +221,11 @@
         }
         accelerateAsteroid();
     }
-
+        
+        function accelerateAsteroid() {
+        speed += acceleration;
+        }
+        
         canvas.addEventListener('click', function(event) {
             if (!gameInterval) {
                 tapToStart.style.display = 'none';
