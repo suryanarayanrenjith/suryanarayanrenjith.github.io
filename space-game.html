@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Game</title>
+</head>
+<body>
+    <style>
+body, html {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: black;
+    color: white;
+    font-family: Arial, sans-serif;
+}
+
+#game {
+    position: relative;
+    width: 800px;
+    height: 600px;
+    border: 2px solid white;
+    overflow: hidden;
+}
+
+#canvas {
+    width: 100%;
+    height: 100%;
+}
+
+#game-over {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    font-size: 2em;
+}
+
+#restart {
+    margin-top: 20px;
+    padding: 10px 20px;
+    font-size: 1em;
+    border-radius: 10px;
+    cursor: pointer;
+}
+    </style>
+    <div id="game">
+        <canvas id="canvas"></canvas>
+    </div>
+    <div id="game-over" style="display: none;">
+        Game Over!
+        <br>
+        <span id="score">Score: 0</span>
+        <br>
+        <span id="high-score">High Score: 0</span>
+        <br>
+        <button id="restart">Restart</button>
+    </div>
+    <script>
+     let canvas = document.getElementById('canvas');
+let ctx = canvas.getContext('2d');
+canvas.width = 800;
+canvas.height = 600;
+
+let gameWidth = canvas.width;
+let gameHeight = canvas.height;
+let asteroidSize = 50;
+let speed = 5;
+let asteroidX = 0;
+let asteroidY = Math.random() * (gameHeight - asteroidSize);
+let score = 0;
+let highScore = 0;
+let gameOverText = document.getElementById('game-over');
+let scoreText = document.getElementById('score');
+let highScoreText = document.getElementById('high-score');
+let restartButton = document.getElementById('restart');
+let gameInterval;
+
+function drawAsteroid(x, y) {
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + 20, y + 10);
+    ctx.lineTo(x + 30, y + 30);
+    ctx.lineTo(x + 10, y + 50);
+    ctx.lineTo(x - 20, y + 30);
+    ctx.lineTo(x - 10, y + 10);
+    ctx.closePath();
+    ctx.fillStyle = 'gray';
+    ctx.fill();
+    ctx.strokeStyle = 'white';
+    ctx.stroke();
+}
+
+function drawBackground() {
+    let stars = 100;
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, gameWidth, gameHeight);
+
+    for (let i = 0; i < stars; i++) {
+        let x = Math.random() * gameWidth;
+        let y = Math.random() * gameHeight;
+        let radius = Math.random() * 1.5;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fillStyle = 'white';
+        ctx.fill();
+    }
+}
+
+function clearCanvas() {
+    ctx.clearRect(0, 0, gameWidth, gameHeight);
+}
+
+function moveAsteroid() {
+    if (asteroidX > gameWidth) {
+        gameOver();
+    } else {
+        asteroidX += speed;
+        clearCanvas();
+        drawBackground();
+        drawAsteroid(asteroidX, asteroidY);
+    }
+}
+
+function gameOver() {
+    clearInterval(gameInterval);
+    if (score > highScore) {
+        highScore = score;
+        highScoreText.innerText = 'High Score: ' + highScore;
+    }
+    gameOverText.style.display = 'block';
+    scoreText.innerText = 'Score: ' + score;
+}
+
+function resetGame() {
+    asteroidX = 0;
+    asteroidY = Math.random() * (gameHeight - asteroidSize);
+    score = 0;
+    speed = 5;
+    gameOverText.style.display = 'none';
+    gameInterval = setInterval(updateGame, 100);
+}
+
+function updateGame() {
+    moveAsteroid();
+    score++;
+    if (score % 100 === 0) {
+        speed += 1;
+    }
+}
+
+canvas.addEventListener('click', function(event) {
+    let rect = canvas.getBoundingClientRect();
+    let mouseX = event.clientX - rect.left;
+    let mouseY = event.clientY - rect.top;
+
+    if (mouseX >= asteroidX && mouseX <= asteroidX + asteroidSize && mouseY >= asteroidY && mouseY <= asteroidY + asteroidSize) {
+        asteroidX = 0;
+        asteroidY = Math.random() * (gameHeight - asteroidSize);
+    }
+});
+
+restartButton.addEventListener('click', resetGame);
+
+function startGame() {
+    clearCanvas();
+    drawBackground();
+    asteroidX = 0;
+    asteroidY = Math.random() * (gameHeight - asteroidSize);
+    score = 0;
+    speed = 5;
+    gameOverText.style.display = 'none';
+    gameInterval = setInterval(updateGame, 100);
+}
+
+startGame();
+
+   
+</script>
+</body>
+</html>
