@@ -188,6 +188,11 @@ body {
     flex-direction: column;
     gap: 10px;
   }
+
+  .link-text {
+    color: #000;
+    font-size: 1.2em;
+  }
   
   .link-item {
     position: relative;
@@ -197,6 +202,7 @@ body {
     transition: transform 0.7s ease;
     font-weight: bold;
     overflow: hidden;
+    text-decoration: none !important;
   }
   
   .link-item::after {
