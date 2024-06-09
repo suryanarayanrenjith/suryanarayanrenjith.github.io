@@ -185,18 +185,19 @@
             }
         }
 
-        let storedHighScore = localStorage.getItem('highScore');
-        if (storedHighScore !== null) {
-            highScore = parseInt(storedHighScore);
-        }
+    let storedHighScore = localStorage.getItem('highScore');
+    if (storedHighScore !== null) {
+        highScore = parseInt(storedHighScore);
+        highScoreText.innerText = highScore;
+    }
 
-        function gameOver() {
+    function gameOver() {
         clearInterval(gameInterval);
-            if (score > highScore) {
-                highScore = score;
-                highScoreText.innerText = highScore;
-                localStorage.setItem('highScore', highScore);
-                }
+        if (score > highScore) {
+            highScore = score;
+            highScoreText.innerText = highScore;
+            localStorage.setItem('highScore', highScore);
+        }
         gameOverText.style.display = 'block';
         restartButton.style.display = 'block';
         gameOverButtonText.innerText = 'Game Over!';
