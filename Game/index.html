@@ -185,26 +185,32 @@
             }
         }
 
+        let storedHighScore = localStorage.getItem('highScore');
+        if (storedHighScore !== null) {
+            highScore = parseInt(storedHighScore);
+        }
+
         function gameOver() {
-            clearInterval(gameInterval);
+        clearInterval(gameInterval);
             if (score > highScore) {
                 highScore = score;
                 highScoreText.innerText = highScore;
-            }
-            gameOverText.style.display = 'block';
-            restartButton.style.display = 'block';
-            gameOverButtonText.innerText = 'Game Over!';
-        }
+                localStorage.setItem('highScore', highScore);
+                }
+        gameOverText.style.display = 'block';
+        restartButton.style.display = 'block';
+        gameOverButtonText.innerText = 'Game Over!';
+    }
 
-        function resetGame() {
-            generateAsteroid();
-            score = 0;
-            speed = 5;
-            gameOverText.style.display = 'none';
-            restartButton.style.display = 'none';
-            gameOverButtonText.innerText = '';
-            gameInterval = setInterval(updateGame, 100);
-        }
+    function resetGame() {
+        generateAsteroid();
+        score = 0;
+        speed = 5;
+        gameOverText.style.display = 'none';
+        restartButton.style.display = 'none';
+        gameOverButtonText.innerText = '';
+        gameInterval = setInterval(updateGame, 100);
+    }
 
         let acceleration = 0.05;
 
