@@ -128,21 +128,30 @@
         }
 
         function drawAsteroid() {
-            ctx.save();
-            ctx.translate(asteroid.x + asteroid.size / 2, asteroid.y + asteroid.size / 2);
-            ctx.rotate(asteroid.rotation);
-            ctx.beginPath();
-            ctx.moveTo(-asteroid.size / 2, -asteroid.size / 2);
-            ctx.lineTo(asteroid.size / 2, -asteroid.size / 4);
-            ctx.lineTo(asteroid.size / 4, asteroid.size / 2);
-            ctx.lineTo(-asteroid.size / 4, asteroid.size / 2);
-            ctx.closePath();
-            ctx.fillStyle = 'gray';
-            ctx.fill();
-            ctx.strokeStyle = 'white';
-            ctx.stroke();
-            ctx.restore();
+        ctx.save();
+        ctx.translate(asteroid.x + asteroid.size / 2, asteroid.y + asteroid.size / 2);
+        ctx.rotate(asteroid.rotation);
+        ctx.beginPath();
+
+        let numPoints = Math.floor(Math.random() * 6) + 5;
+        let radius = asteroid.size / 2;
+        for (let i = 0; i < numPoints; i++) {
+        let angle = (i / numPoints) * Math.PI * 2;
+        let x = Math.cos(angle) * radius * (Math.random() * 0.5 + 0.5);
+        let y = Math.sin(angle) * radius * (Math.random() * 0.5 + 0.5);
+        if (i === 0) {
+            ctx.moveTo(x, y);
+            } else {
+            ctx.lineTo(x, y);
+            }
         }
+        ctx.closePath();
+        ctx.fillStyle = 'gray';
+        ctx.fill();
+        ctx.strokeStyle = 'white';
+        ctx.stroke();
+        ctx.restore();
+    }
 
         function drawBackground() {
             let stars = 100;
@@ -197,18 +206,21 @@
             gameInterval = setInterval(updateGame, 100);
         }
 
+        let acceleration = 0.05;
+
         function updateGame() {
-            moveAsteroid();
-            score++;
-            liveScore.innerText = score;
-            if (score > highScore) {
-                highScore = score;
-                liveHighScore.innerText = highScore;
-            }
-            if (score % 100 === 0) {
-                speed += 1;
-            }
+        moveAsteroid();
+        score++;
+        liveScore.innerText = score;
+        if (score > highScore) {
+            highScore = score;
+            liveHighScore.innerText = highScore;
         }
+        if (score % 100 === 0) {
+            speed += 1;
+        }
+        accelerateAsteroid();
+    }
 
         canvas.addEventListener('click', function(event) {
             if (!gameInterval) {
