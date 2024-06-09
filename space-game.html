@@ -26,11 +26,12 @@
             height: 600px;
             border: 2px solid white;
             overflow: hidden;
+            padding-top: 40px; /* Add space above canvas */
         }
 
         #canvas {
             width: 100%;
-            height: 100%;
+            height: calc(100% - 40px); /* Adjusted height to accommodate score counter */
         }
 
         #game-over {
@@ -52,58 +53,93 @@
 
         #score-counter {
             position: absolute;
-            top: 10px;
-            left: 10px;
+            top: 20px; /* Adjusted top position */
+            left: 20px; /* Adjusted left position */
             font-size: 24px;
+        }
+
+        #high-score-counter {
+            position: absolute;
+            top: 20px; /* Adjusted top position */
+            right: 20px; /* Adjusted right position */
+            font-size: 24px;
+        }
+
+        #tap-to-start {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 1; /* Ensure it's above the canvas */
+        }
+
+        #game-over-text {
+            margin-bottom: 20px; /* Add space below the text */
         }
     </style>
     <div id="game">
         <canvas id="canvas"></canvas>
         <div id="score-counter">Score: <span id="live-score">0</span></div>
+        <div id="high-score-counter">High Score: <span id="live-high-score">0</span></div>
+        <div id="tap-to-start">Tap to Start</div>
     </div>
     <div id="game-over" style="display: none;">
-        Game Over!
-        <br>
-        <span id="score">Score: 0</span>
-        <br>
-        <span id="high-score">High Score: 0</span>
-        <br>
+        <div id="game-over-text">Game Over!</div>
         <button id="restart">Restart</button>
     </div>
     <script>
         let canvas = document.getElementById('canvas');
         let ctx = canvas.getContext('2d');
         canvas.width = 800;
-        canvas.height = 600;
+        canvas.height = 560; /* Adjusted height to accommodate score counter */
 
         let gameWidth = canvas.width;
         let gameHeight = canvas.height;
-        let asteroidSize = 50;
         let speed = 5;
-        let asteroidX = 0;
-        let asteroidY = Math.random() * (gameHeight - asteroidSize);
         let score = 0;
         let highScore = 0;
         let gameOverText = document.getElementById('game-over');
+        let gameOverButtonText = document.getElementById('game-over-text');
         let scoreText = document.getElementById('score');
         let highScoreText = document.getElementById('high-score');
         let restartButton = document.getElementById('restart');
         let gameInterval;
         let liveScore = document.getElementById('live-score');
+        let liveHighScore = document.getElementById('live-high-score');
+        let asteroid;
+        let tapToStart = document.getElementById('tap-to-start');
 
-        function drawAsteroid(x, y) {
+        function generateAsteroid() {
+            let asteroidSize = Math.random() * 50 + 20; // Random size between 20 and 70
+            let asteroidX = 0;
+            let asteroidY = Math.random() * (gameHeight - asteroidSize);
+            let rotationSpeed = Math.random() * 0.2 - 0.1; // Random rotation speed between -0.1 and 0.1
+            asteroid = {
+                size: asteroidSize,
+                x: asteroidX,
+                y: asteroidY,
+                rotation: 0,
+                rotationSpeed: rotationSpeed
+            };
+        }
+
+        function drawAsteroid() {
+            ctx.save();
+            ctx.translate(asteroid.x + asteroid.size / 2, asteroid.y + asteroid.size / 2);
+            ctx.rotate(asteroid.rotation);
             ctx.beginPath();
-            ctx.moveTo(x, y);
-            ctx.lineTo(x + 20, y + 10);
-            ctx.lineTo(x + 30, y + 30);
-            ctx.lineTo(x + 10, y + 50);
-            ctx.lineTo(x - 20, y + 30);
-            ctx.lineTo(x - 10, y + 10);
+            ctx.moveTo(-asteroid.size / 2, -asteroid.size / 2);
+            ctx.lineTo(asteroid.size / 2, -asteroid.size / 4);
+            ctx.lineTo(asteroid.size / 4, asteroid.size / 2);
+            ctx.lineTo(-asteroid.size / 4, asteroid.size / 2);
             ctx.closePath();
             ctx.fillStyle = 'gray';
             ctx.fill();
             ctx.strokeStyle = 'white';
             ctx.stroke();
+            ctx.restore();
         }
 
         function drawBackground() {
@@ -127,13 +163,14 @@
         }
 
         function moveAsteroid() {
-            if (asteroidX > gameWidth) {
+            if (asteroid.x > gameWidth) {
                 gameOver();
             } else {
-                asteroidX += speed;
+                asteroid.x += speed;
+                asteroid.rotation += asteroid.rotationSpeed;
                 clearCanvas();
                 drawBackground();
-                drawAsteroid(asteroidX, asteroidY);
+                drawAsteroid();
             }
         }
 
@@ -141,18 +178,20 @@
             clearInterval(gameInterval);
             if (score > highScore) {
                 highScore = score;
-                highScoreText.innerText = 'High Score: ' + highScore;
+                highScoreText.innerText = highScore;
             }
             gameOverText.style.display = 'block';
-            scoreText.innerText = 'Score: ' + score;
+            restartButton.style.display = 'block';
+            gameOverButtonText.innerText = 'Game Over!';
         }
 
         function resetGame() {
-            asteroidX = 0;
-            asteroidY = Math.random() * (gameHeight - asteroidSize);
+            generateAsteroid();
             score = 0;
             speed = 5;
             gameOverText.style.display = 'none';
+            restartButton.style.display = 'none';
+            gameOverButtonText.innerText = '';
             gameInterval = setInterval(updateGame, 100);
         }
 
@@ -160,19 +199,27 @@
             moveAsteroid();
             score++;
             liveScore.innerText = score;
+            if (score > highScore) {
+                highScore = score;
+                liveHighScore.innerText = highScore;
+            }
             if (score % 100 === 0) {
                 speed += 1;
             }
         }
 
         canvas.addEventListener('click', function(event) {
-            let rect = canvas.getBoundingClientRect();
-            let mouseX = event.clientX - rect.left;
-            let mouseY = event.clientY - rect.top;
+            if (!gameInterval) {
+                tapToStart.style.display = 'none'; // Hide "Tap to Start" text
+                resetGame();
+            } else {
+                let rect = canvas.getBoundingClientRect();
+                let mouseX = event.clientX - rect.left;
+                let mouseY = event.clientY - rect.top;
 
-            if (mouseX >= asteroidX && mouseX <= asteroidX + asteroidSize && mouseY >= asteroidY && mouseY <= asteroidY + asteroidSize) {
-                asteroidX = 0;
-                asteroidY = Math.random() * (gameHeight - asteroidSize);
+                if (mouseX >= asteroid.x && mouseX <= asteroid.x + asteroid.size && mouseY >= asteroid.y && mouseY <= asteroid.y + asteroid.size) {
+                    generateAsteroid();
+                }
             }
         });
 
@@ -181,13 +228,13 @@
         function startGame() {
             clearCanvas();
             drawBackground();
-            asteroidX = 0;
-            asteroidY = Math.random() * (gameHeight - asteroidSize);
+            generateAsteroid();
             score = 0;
             speed = 5;
             liveScore.innerText = score;
+            liveHighScore.innerText = highScore;
             gameOverText.style.display = 'none';
-            gameInterval = setInterval(updateGame, 100);
+            restartButton.style.display = 'none';
         }
 
         startGame();
