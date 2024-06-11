@@ -223,14 +223,14 @@ body {
     top: 0;
     left: 50%;
     transform: translateX(-50%) scaleX(0);
-    transform-origin: left;
+    transform-origin: left center;
   }
   
   .link-item::after {
     top: 0;
     right: 50%;
     transform: translateX(50%) scaleX(0);
-    transform-origin: right;
+    transform-origin: right center;
   }
   
   .link-item:hover::before {
