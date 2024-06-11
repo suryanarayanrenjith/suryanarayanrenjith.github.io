@@ -297,7 +297,47 @@ updateOnlineStatus();
         </div>
       </div>
     <h1>Welcome to My <span class="typewriter">Profile</span></h1>
-    <p class="introduction">Hi, I'm Suryanarayan Renjith, a student at Reva University passionate about technology and development. Here you can find links to my games and social media profiles.</p>
+    <p class="introduction"></p>
+    <script>
+      function typeWriter(element, text, i) {
+        if (i < text.length) {
+          element.textContent += text.charAt(i);
+          i++;
+          setTimeout(function() {
+            typeWriter(element, text, i);
+          }, 80);
+        }
+      }
+      
+      var mainIntros = [
+        "Hi, I'm Suryanarayan Renjith, a student at Reva University passionate about technology and development.",
+        "Hello there! I'm Suryanarayan Renjith, currently studying at Reva University with a keen interest in technology and development.",
+        "Greetings! I'm Suryanarayan Renjith, a tech enthusiast and student at Reva University.",
+        "Hey, it's Suryanarayan Renjith here, a student at Reva University deeply interested in technology and its applications.",
+      ];
+    
+      var additionalTexts = [
+        "Here you can find links to my games and social media profiles.",
+        "Feel free to check out my games and follow me on social media!",
+        "Check out my social media for more information about my projects and interests.",
+        "Connect with me on social media to stay updated on my latest activities and projects.",
+      ];
+    
+      function getRandomIntroduction() {
+        var mainIntro = mainIntros[Math.floor(Math.random() * mainIntros.length)];
+        var additionalText = additionalTexts[Math.floor(Math.random() * additionalTexts.length)];
+        return mainIntro + " " + additionalText;
+      }
+    
+      document.addEventListener("DOMContentLoaded", function() {
+        var elements = document.querySelectorAll(".introduction");
+        elements.forEach(function(element) {
+          var text = getRandomIntroduction();
+          element.textContent = '';
+          typeWriter(element, text, 0);
+        });
+      });
+    </script>
     <h3 id="links" class="link">Explore My Links:</h3>
     <script>
 const profileText = document.querySelector('.link');
