@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
 	const animationText = [
 		"Connecting to server...",
-		"Username: admin",
+		"Username: surya",
 		"Password: ********",
 		"Accessing mainframe...",
 		"Loading files...",
