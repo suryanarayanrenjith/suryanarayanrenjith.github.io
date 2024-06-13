@@ -78,43 +78,56 @@ document.addEventListener('DOMContentLoaded', () => {
 	function startMatrix() {
 		const canvas = document.getElementById('matrix');
 		const ctx = canvas.getContext('2d');
-
+		const tiltIntensity = 0.02;
+	
 		canvas.width = window.innerWidth;
 		canvas.height = window.innerHeight;
-
+	
 		const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-		const fontSize = 16;
-		const columns = canvas.width / fontSize;
-		const drops = Array(Math.floor(columns)).fill(1);
-
+		const fontSize = 18;
+		const columns = Math.ceil(canvas.width / fontSize);
+		const drops = [];
+	
+		for (let i = 0; i < columns; i++) {
+			drops[i] = {
+				x: i * fontSize,
+				y: -Math.random() * canvas.height,
+				speed: Math.random() * 4 + 4
+			};
+		}
+	
 		function draw() {
 			ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
 			ctx.fillRect(0, 0, canvas.width, canvas.height);
-			ctx.fillStyle = '#0F0';
-			ctx.font = `${fontSize}px arial`;
-			
-			for (let i = 0; i < drops.length; i++) {
+			ctx.fillStyle = '#00FF00';
+	
+			drops.forEach(drop => {
 				const text = letters.charAt(Math.floor(Math.random() * letters.length));
-				const x = i * fontSize;
-				const y = drops[i] * fontSize;
-
-				const gradient = ctx.createLinearGradient(x, y - fontSize, x, y);
-				gradient.addColorStop(0, 'rgba(0, 255, 0, 1)');
-				gradient.addColorStop(1, 'rgba(0, 255, 0, 0)');
-				ctx.fillStyle = gradient;
-
-				ctx.fillText(text, x, y);
-
-				if (y > canvas.height && Math.random() > 0.975) {
-					drops[i] = 0;
+				ctx.save();
+				ctx.translate(drop.x, drop.y);
+				ctx.rotate(drop.angle);
+				ctx.fillText(text, 0, 0);
+				ctx.restore();
+	
+				drop.y += drop.speed;
+	
+				if (drop.y > canvas.height) {
+					drop.y = -fontSize;
 				}
-
-				drops[i]++;
-			}
+			});
 		}
-
+	
+		function tiltCursor(event) {
+			const tiltAmount = (event.clientX - canvas.width / 2) * tiltIntensity;
+	
+			drops.forEach(drop => {
+				drop.angle = tiltAmount;
+			});
+		}
+	
+		canvas.addEventListener('mousemove', tiltCursor);
+	
 		setInterval(draw, 33);
 	}
-
 	typeAnimation();
-});
+});	
