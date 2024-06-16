@@ -1,29 +1,25 @@
 document.addEventListener('DOMContentLoaded', (event) => {
-const Homevisit = 'visitTimestamp';
-const currentTime = new Date().getTime();
-const twentyFourHours = 24 * 60 * 60 * 1000;
+    const Homepagevisit = 'visitTimestamp';
+    const currentTime = new Date().getTime();
+    const twentyFourHours = 24 * 60 * 60 * 1000;
 
-const storedTime = localStorage.getItem(Homevisit);
+    const storedTime = localStorage.getItem(Homepagevisit);
 
-if (storedTime) {
-const storedTimestamp = parseInt(storedTime, 10);
+    if (storedTime) {
 
-if (currentTime - storedTimestamp < twentyFourHours) {
+        const storedTimestamp = parseInt(storedTime, 10);
 
-window.location.href = '/Links';
+        if (currentTime - storedTimestamp < twentyFourHours) {
+            window.location.href = '/Links';
+        } else {
+            localStorage.removeItem(Homepagevisit);
+        }
+    }
 
-} else {
-
-localStorage.removeItem(Homevisit);
-
-}
-
-} else {
-
-localStorage.setItem(Homevisit, currentTime);
-
-}
-
+    const button = document.querySelector('.center-button');
+    button.addEventListener('click', () => {
+        localStorage.setItem(Homepagevisit, currentTime);
+    });
 });
 
 document.addEventListener("DOMContentLoaded", () => {
