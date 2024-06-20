@@ -21,29 +21,31 @@
     </div>
     
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            var popup = document.getElementById('music-popup');
-            popup.style.display = 'flex';
+    document.addEventListener('DOMContentLoaded', function() {
+    var popup = document.getElementById('music-popup');
+    popup.style.display = 'flex';
 
-            var audio = new Audio('/assets/bg_music.mp3');
+    var audio = new Audio('/assets/bg_music.mp3');
+    audio.loop = true;
 
-            function playMusic() {
-                audio.play().then(() => {
-                    popup.style.display = 'none';
-                }).catch((error) => {
-                    console.error('Playback issue:', error);
-                    alert('Playback issue: Autoplay is not supported on this browser.');
-                });
-            }
-
-            document.getElementById('enable-music').addEventListener('click', function() {
-                playMusic();
-            });
-
-            document.getElementById('disable-music').addEventListener('click', function() {
-                popup.style.display = 'none';
-            });
+    function playMusic() {
+        audio.play().then(() => {
+            popup.style.display = 'none';
+        }).catch((error) => {
+            console.error('Playback issue:', error);
+            alert('Playback issue: Autoplay is not supported on this browser.');
         });
+    }
+
+    document.getElementById('enable-music').addEventListener('click', function() {
+        playMusic();
+    });
+
+    document.getElementById('disable-music').addEventListener('click', function() {
+        audio.pause();
+        popup.style.display = 'none';
+    });
+});
     </script>
     
     <div id="preloader">
