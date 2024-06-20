@@ -11,8 +11,7 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <audio id="background-music" src="/assets/bg_music.mp3" loop></audio>
-
+    
     <div id="music-popup">
         <div id="popup-content">
             <p>Would you like to enable music on this website?</p>
@@ -24,17 +23,21 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             var popup = document.getElementById('music-popup');
-            popup.style.display = 'block';
+            popup.style.display = 'flex';
 
-            document.getElementById('enable-music').addEventListener('click', function() {
-                var audio = document.getElementById('background-music');
+            var audio = new Audio('/assets/bg_music.mp3');
+
+            function playMusic() {
                 audio.play().then(() => {
                     popup.style.display = 'none';
                 }).catch((error) => {
-                    alert('Autoplay was prevented. Your browser does not support autoplay.');
-                    popup.style.display = 'none';
-                    console.error('Autoplay prevented:', error);
+                    console.error('Playback issue:', error);
+                    alert('Playback issue: Please click the play button to start the music.');
                 });
+            }
+
+            document.getElementById('enable-music').addEventListener('click', function() {
+                playMusic();
             });
 
             document.getElementById('disable-music').addEventListener('click', function() {
