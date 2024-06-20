@@ -11,6 +11,37 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <audio id="background-music" src="Music.mp3" loop></audio>
+
+    <div id="music-popup">
+        <div id="popup-content">
+            <p>Would you like to enable music on this website?</p>
+            <button id="enable-music">Yes</button>
+            <button id="disable-music">No</button>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var popup = document.getElementById('music-popup');
+            popup.style.display = 'block';
+
+            document.getElementById('enable-music').addEventListener('click', function() {
+                var audio = document.getElementById('background-music');
+                audio.play().then(() => {
+                    popup.style.display = 'none';
+                }).catch((error) => {
+                    alert('Autoplay was prevented. Please click the play button to start the music.');
+                    console.error('Autoplay prevented:', error);
+                });
+            });
+
+            document.getElementById('disable-music').addEventListener('click', function() {
+                popup.style.display = 'none';
+            });
+        });
+    </script>
+    
     <div id="preloader">
         <div id="preloader-inner"></div>
     </div>
