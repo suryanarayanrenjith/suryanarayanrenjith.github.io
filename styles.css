@@ -161,7 +161,7 @@ footer {
 @media (max-width: 768px) {
     #popup-content {
         width: 80%;
-        margin: 40% auto;
+        margin: auto;
     }
     #popup-content button {
         width: 100%;
