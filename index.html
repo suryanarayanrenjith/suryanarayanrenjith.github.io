@@ -31,7 +31,8 @@
                 audio.play().then(() => {
                     popup.style.display = 'none';
                 }).catch((error) => {
-                    alert('Autoplay was prevented. Please click the play button to start the music.');
+                    alert('Autoplay was prevented. Your browser does not support autoplay.');
+                    popup.style.display = 'none';
                     console.error('Autoplay prevented:', error);
                 });
             });
