@@ -111,3 +111,61 @@ footer {
     height: 100%;
     z-index: 0;
 }
+
+#music-popup {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    text-align: center;
+    color: white;
+    font-size: 18px;
+    font-family: 'Arial', sans-serif;
+}
+
+#popup-content {
+    display: inline-block;
+    margin: 20% auto;
+    padding: 20px;
+    background-color: black;
+    border-radius: 20px;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+#popup-content p {
+    margin: 0 0 10px;
+    word-wrap: break-word;
+}
+
+#popup-content button {
+    padding: 10px 20px;
+    margin: 10px;
+    background-color: white;
+    color: black;
+    border: none;
+    border-radius: 10px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: 'Arial', sans-serif;
+}
+
+#popup-content button:hover {
+    background-color: grey;
+}
+
+@media (max-width: 768px) {
+    #popup-content {
+        width: 80%;
+        margin: 40% auto;
+    }
+    #popup-content button {
+        width: 100%;
+        margin: 10px 0;
+        padding: 15px 0;
+    }
+}
