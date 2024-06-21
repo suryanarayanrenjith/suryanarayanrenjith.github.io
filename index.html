@@ -11,6 +11,84 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
+    <header>
+        <nav class="menu-bar">
+            <ul>
+                <li><a href="#" data-section="home">Home</a></li>
+                <li><a href="#" data-section="about">About</a></li>
+                <li><a href="#" data-section="projects">Projects</a></li>
+                <li><a href="#" data-section="resume">Resume</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <script>
+
+        function showContent(section) {
+            const content = document.getElementById('content');
+        
+            content.style.opacity = '0';
+            content.style.transform = 'translateX(-100%)';
+        
+            setTimeout(() => {
+                let html = '';
+        
+                switch (section) {
+                    case 'home':
+                        html = `
+                            <h1 class="animated-text">Fusing Imagination with Innovation</h1>
+                            <p class="tagline">Explore Boundless Creativity</p>
+                            <button class="center-button"><a href="/Links" style="text-decoration:none; color:black;">Discover Now</a></button>
+                        `;
+                        break;
+                        case 'about':
+                        html = `
+                            <div class="about-content">
+                            <img src="/assets/profile-pic.jpg" alt="Logo" class="logo" style="width: 80px; height: 80px; border-radius: 50%;">
+                            <h1 class="animated-text">About Me</h1>
+                            <p class="tagline">My name is Suryanarayan Renjith.</p>
+                            <p>I am committed to harnessing the transformative power of technology to craft solutions inspire a profound and lasting impact.</p>
+                            <p>Feel free to explore and connect!</p>
+                        </div>
+                        `;
+                        break;
+                    case 'projects':
+                        html = `
+                            <h1 class="animated-text">Projects</h1>
+                            <p class="tagline">Explore some of the exciting projects I have worked on.</p>
+                            <p>Under Construction.</p>
+                        `;
+                        break;
+                    case 'resume':
+                        html = `
+                            <h1 class="animated-text">Resume</h1>
+                            <p class="tagline">View my professional resume to learn about my skills and experience.</p>
+                            <p>Under Construction.</p>
+                        `;
+                        break;
+                    default:
+                        return;
+                }
+        
+                content.innerHTML = html;
+        
+                content.style.opacity = '1';
+                content.style.transform = 'translateX(0)';
+            }, 300);
+        
+            animationPaused = true;
+        }
+        
+        document.querySelectorAll('.menu-bar a').forEach(link => {
+            link.addEventListener('click', (event) => {
+                event.preventDefault();
+                const section = event.target.getAttribute('data-section');
+                showContent(section);
+            });
+        });
+        
+        </script>
     
     <div id="music-popup">
         <div id="popup-content">
@@ -55,7 +133,7 @@
     <div class="container" id="content">
         <h1 class="animated-text">Fusing Imagination with Innovation</h1>
         <p class="tagline">Explore Boundless Creativity</p>
-        <button class="center-button">Discover Now</button>
+        <button id="home-button" class="center-button"><a href="/Links" style="text-decoration:none; color:black;">Discover Now</a></button>
     </div>
     <footer>
         <p id="footer-text"></p>
