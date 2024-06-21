@@ -1,27 +1,3 @@
-document.addEventListener('DOMContentLoaded', (event) => {
-    const Homepagevisit = 'visitTimestamp';
-    const currentTime = new Date().getTime();
-    const twentyFourHours = 24 * 60 * 60 * 1000;
-
-    const storedTime = localStorage.getItem(Homepagevisit);
-
-    if (storedTime) {
-
-        const storedTimestamp = parseInt(storedTime, 10);
-
-        if (currentTime - storedTimestamp < twentyFourHours) {
-            window.location.href = '/Links';
-        } else {
-            localStorage.removeItem(Homepagevisit);
-        }
-    }
-
-    const button = document.querySelector('.center-button');
-    button.addEventListener('click', () => {
-        localStorage.setItem(Homepagevisit, currentTime);
-    });
-});
-
 document.addEventListener("DOMContentLoaded", () => {
     const text = document.querySelector('.animated-text');
     text.classList.add('animate');
