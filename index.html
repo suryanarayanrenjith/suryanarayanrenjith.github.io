@@ -23,6 +23,41 @@
         </nav>
     </header>
 
+    <noscript>
+        <div class="offline-message" style="display: block;">
+            Please enable JavaScript to use this website.
+        </div>
+    </noscript>
+
+    <style>
+    .offline-message {
+            display: none;
+            position: fixed;
+            top: 20%;
+            left: 0;
+            width: 100%;
+            background-color: black;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 18px;
+            z-index: 1000;
+        }
+
+        @media only screen and (max-width: 600px) {
+            .offline-message {
+                font-size: 14px;
+                padding: 10px;
+            }
+        }
+
+        @media only screen and (min-width: 601px) and (max-width: 1024px) {
+            .offline-message {
+                font-size: 16px;
+            }
+        }
+</style>
+
     <script>
 
         function showContent(section) {
@@ -45,7 +80,7 @@
                     case 'about':
                         html = `
                         <div class="about-content">
-                        <img src="/assets/profile-pic.jpg" alt="Profile Picture" class="logo" style="width: 80px; height: 80px; border-radius: 50%;">
+                        <img src="/assets/profile-pic.jpg" alt="Profile Picture" class="logo" style="width: 90px; height: 90px; border-radius: 50%;">
                         <h1 class="animated-text">About Me</h1>
                         <p class="tagline">My name is Suryanarayan Renjith.</p>
                         <p>I had a deep passion for computers since my childhood and over the years, I have channeled this passion into creating numerous innovative projects.</p>
