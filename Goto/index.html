@@ -3,27 +3,47 @@
 <head>
     <title>Redirecting...</title>
     <script>
-        window.onload = function() {
-            var path = window.location.pathname;
-            var queryParams = new URLSearchParams(window.location.search);
-            var id = queryParams.get('id');
-            
-            var expectedPath = '/Goto/';
-            
-            var redirections = {
-		'mail': 'mailto:suryanarayanrenjith@gmail.com',
-                'github': 'https://github.com/suryanarayanrenjith',
-                'twitter': 'https://x.com/_suryanarayanr',
-		'linkedin': 'https://www.linkedin.com/in/suryanarayan-renjith',
-		'space-attack': 'https://space-attack.itch.io'
+	function isBotOrCurl(userAgentString) {
+    	return /curl|bot|spider|crawler|wget|Mediapartners-Google/i.test(userAgentString);
+	}
+
+	function setBotFlag() {
+    	localStorage.setItem("isBot", "true");
+	}
+
+	function isBotDetected() {
+    	return localStorage.getItem("isBot") === "true";
+	}
+
+	window.onload = function() {
+    	if (isBotDetected() || isBotOrCurl(navigator.userAgent)) {
+        	if (!isBotDetected()) {
+            	setBotFlag();
+        	}
+        	window.location.href = '/404'
+        	return;
+    	}
+    
+    var path = window.location.pathname;
+    var queryParams = new URLSearchParams(window.location.search);
+    var id = queryParams.get('id');
+    
+    var expectedPath = '/Goto/';
+    
+    var redirections = {
+	'mail': 'mailto:suryanarayanrenjith@gmail.com',
+        'github': 'https://github.com/suryanarayanrenjith',
+        'twitter': 'https://x.com/_suryanarayanr',
+	'linkedin': 'https://www.linkedin.com/in/suryanarayan-renjith',
+	'space-attack': 'https://space-attack.itch.io'
             };
-            
-            if (path.startsWith(expectedPath) && id && redirections[id]) {
-                window.location.href = redirections[id];
-            } else {
-                window.location.href = '/404';
-            }
-        };
+    
+    if (path.startsWith(expectedPath) && id && redirections[id]) {
+        window.location.href = redirections[id];
+    } else {
+        window.location.href = '/404';
+    }
+};
     </script>
 </head>
 <body>
