@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Redirecting...</title>
+    <script>
+        window.onload = function() {
+            var path = window.location.pathname;
+            var queryParams = new URLSearchParams(window.location.search);
+            var id = queryParams.get('id');
+            
+            var expectedPath = '/Goto/';
+            
+            var redirections = {
+				'mail': 'mailto:mail@example.com',
+                'github': 'https://github.com/',
+                'twitter': 'https://twitter.com/',
+				'linkedin': 'https://www.linkedin.com/',
+				'space-attack': 'https://www.itch.io/'
+            };
+            
+            if (path.startsWith(expectedPath) && id && redirections[id]) {
+                window.location.href = redirections[id];
+            } else {
+                window.location.href = '/404.html';
+            }
+        };
+    </script>
+</head>
+<body>
+    <p>Redirecting...</p>
+</body>
+</html>
