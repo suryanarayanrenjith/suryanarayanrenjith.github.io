@@ -39,10 +39,6 @@ function checkSpamAndRedirect() {
 }
 
 window.onload = function() {
-    if (!document.body) {
-        alert("Please enable JavaScript to enable redirection.");
-        return;
-    }
 
     if (checkSpamAndRedirect()) {
         return;
@@ -94,7 +90,10 @@ font-family: Arial, sans-serif;
 font-size: 24px;
 color: #333;
 }	
-</style>	
+</style>
+<noscript>
+<p>Please enable JavaScript for redirection.</p>
+</noscript>	
 <div class="text">
 <span>Redirecting...</span>
 </div>
