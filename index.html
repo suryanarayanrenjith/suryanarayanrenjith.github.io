@@ -151,6 +151,7 @@
         }).catch((error) => {
             console.error('Playback issue:', error);
             alert('Playback issue: Autoplay is not supported on this browser.');
+            popup.style.display = 'none';
         });
     }
 
