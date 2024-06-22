@@ -3,26 +3,58 @@
 <head>
     <title>Redirecting...</title>
     <script>
-	function isBotOrCurl(userAgentString) {
-    	return /curl|bot|spider|crawler|wget|Mediapartners-Google/i.test(userAgentString);
-	}
+function isBotOrCurl(userAgentString) {
+    return /curl|bot|spider|crawler|wget|Mediapartners-Google/i.test(userAgentString);
+}
 
-	function setBotFlag() {
-    	localStorage.setItem("isBot", "true");
-	}
+function setBotFlag() {
+    localStorage.setItem("isBot", "true");
+}
 
-	function isBotDetected() {
-    	return localStorage.getItem("isBot") === "true";
-	}
+function isBotDetected() {
+    return localStorage.getItem("isBot") === "true";
+}
 
-	window.onload = function() {
-    	if (isBotDetected() || isBotOrCurl(navigator.userAgent)) {
-        	if (!isBotDetected()) {
-            	setBotFlag();
-        	}
-        	window.location.href = '/404'
-        	return;
-    	}
+function checkSpamAndRedirect() {
+    const spamCount = localStorage.getItem("spamCount") || 0;
+    const lastAttempts = JSON.parse(localStorage.getItem("lastAttempts")) || [];
+    const now = Date.now();
+    const thresholdAttempts = 5;
+    const timeWindow = 10000;
+
+    const recentAttempts = lastAttempts.filter(attempt => now - attempt < timeWindow);
+    localStorage.setItem("lastAttempts", JSON.stringify(recentAttempts));
+
+    if (recentAttempts.length >= thresholdAttempts) {
+        window.location.href = '/404';
+        return true;
+    }
+
+    recentAttempts.push(now);
+    localStorage.setItem("lastAttempts", JSON.stringify(recentAttempts));
+
+    localStorage.setItem("spamCount", recentAttempts.length);
+
+    return false;
+}
+
+window.onload = function() {
+    if (!document.body) {
+        alert("Please enable JavaScript to enable redirection.");
+        return;
+    }
+
+    if (checkSpamAndRedirect()) {
+        return;
+    }
+
+    if (isBotDetected() || isBotOrCurl(navigator.userAgent)) {
+        if (!isBotDetected()) {
+            setBotFlag();
+        }
+        window.location.href = '/404';
+        return;
+    }
     
     var path = window.location.pathname;
     var queryParams = new URLSearchParams(window.location.search);
@@ -36,7 +68,7 @@
         'twitter': 'https://x.com/_suryanarayanr',
 	'linkedin': 'https://www.linkedin.com/in/suryanarayan-renjith',
 	'space-attack': 'https://space-attack.itch.io'
-            };
+        };
     
     if (path.startsWith(expectedPath) && id && redirections[id]) {
         window.location.href = redirections[id];
