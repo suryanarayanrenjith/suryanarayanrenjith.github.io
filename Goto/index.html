@@ -3,8 +3,12 @@
 <head>
     <title>Redirecting...</title>
     <script>
-function isBotOrCurl(userAgentString) {
-    return /curl|bot|spider|crawler|wget|Mediapartners-Google/i.test(userAgentString);
+function dBU(eU) {
+    return atob(eU);
+}
+	    
+function isBotOrCurl(uAS) {
+    return /curl|bot|spider|crawler|wget|Mediapartners-Google/i.test(uAS);
 }
 
 function setBotFlag() {
@@ -15,8 +19,8 @@ function isBotDetected() {
     return localStorage.getItem("isBot") === "true";
 }
 
-function checkSpamAndRedirect() {
-    const spamCount = localStorage.getItem("spamCount") || 0;
+function cSR() {
+    const sC = localStorage.getItem("spamCount") || 0;
     const lastAttempts = JSON.parse(localStorage.getItem("lastAttempts")) || [];
     const now = Date.now();
     const thresholdAttempts = 5;
@@ -33,14 +37,14 @@ function checkSpamAndRedirect() {
     recentAttempts.push(now);
     localStorage.setItem("lastAttempts", JSON.stringify(recentAttempts));
 
-    localStorage.setItem("spamCount", recentAttempts.length);
+    localStorage.setItem("sC", recentAttempts.length);
 
     return false;
 }
 
 window.onload = function() {
 
-    if (checkSpamAndRedirect()) {
+    if (cSAR()) {
         return;
     }
 
@@ -56,19 +60,20 @@ window.onload = function() {
     var queryParams = new URLSearchParams(window.location.search);
     var id = queryParams.get('id');
     
-    var expectedPath = '/Goto/';
+    var eP = '/Goto/';
     
-    var redirections = {
-	'mail': 'mailto:suryanarayanrenjith@gmail.com',
-        'github': 'https://github.com/suryanarayanrenjith',
-        'twitter': 'https://x.com/_suryanarayanr',
-	'linkedin': 'https://www.linkedin.com/in/suryanarayan-renjith',
-	'space-attack': 'https://space-attack.itch.io',
-	'resume': 'https://drive.google.com/file/d/1lPbWJUVhDKgPrib6yng9U_GumUbQ9iym/view?usp=sharing'    
+    var red = {
+	'mail': 'bWFpbHRvOnN1cnlhbmFyYXlhbnJlbmppdGhAZ21haWwuY29t',
+        'github': 'aHR0cHM6Ly9naXRodWIuY29tL3N1cnlhbmFyYXlhbnJlbmppdGg=',
+        'twitter': 'aHR0cHM6Ly94LmNvbS9fc3VyeWFuYXJheWFucg==',
+	'linkedin': 'aHR0cHM6Ly93d3cubGlua2VkaW4uY29tL2luL3N1cnlhbmFyYXlhbi1yZW5qaXRo',
+	'space-attack': 'aHR0cHM6Ly9zcGFjZS1hdHRhY2suaXRjaC5pbw==',
+	'resume': 'aHR0cHM6Ly9kcml2ZS5nb29nbGUuY29tL2ZpbGUvZC8xbFBiV0pVVmhES2dQcmliNnluZzlVX0d1bVViUTlpeW0vdmlldz91c3A9c2hhcmluZw=='    
         };
     
-    if (path.startsWith(expectedPath) && id && redirections[id]) {
-        window.location.href = redirections[id];
+    if (path.startsWith(eP) && id && red[id]) {
+        var Url = dBU(red[id]);
+        window.location.href = Url;
     } else {
         window.location.href = '/404';
     }
