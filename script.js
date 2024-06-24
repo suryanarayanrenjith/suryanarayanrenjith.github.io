@@ -44,9 +44,10 @@ window.addEventListener('resize', () => {
 });
 
 const stars = [];
-const numStars = 200;
-const minStars = 150;
-const maxStars = 250;
+const numStars = 300;
+const minStars = 250;
+const maxStars = 350;
+const edgeThreshold = 10; 
 
 function createStar() {
     return {
@@ -112,6 +113,11 @@ function draw() {
 
         star.x += tiltX * star.tiltFactor;
 
+        if (star.x < edgeThreshold) star.dx += (edgeThreshold - star.x) / edgeThreshold * 0.05;
+        if (star.x > canvas.width - edgeThreshold) star.dx -= (star.x - (canvas.width - edgeThreshold)) / edgeThreshold * 0.05;
+        if (star.y < edgeThreshold) star.dy += (edgeThreshold - star.y) / edgeThreshold * 0.05;
+        if (star.y > canvas.height - edgeThreshold) star.dy -= (star.y - (canvas.height - edgeThreshold)) / edgeThreshold * 0.05;
+
         if (star.x < 0) star.x = 0;
         if (star.x > canvas.width) star.x = canvas.width;
         if (star.y < 0) star.y = 0;
@@ -144,4 +150,4 @@ function draw() {
 
 draw();
 
-});                          
+});                     
