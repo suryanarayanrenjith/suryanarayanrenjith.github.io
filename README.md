@@ -4,7 +4,7 @@ Welcome to my awesome website! This repository hosts the source code for my port
 
 ## Description
 
-This website showcases my social media links. Feel free to contact me if you have any questions or feedback!
+This website showcases my projects, social media links and my skills. Feel free to contact me if you have any questions or feedback!
 
 ## License
 
