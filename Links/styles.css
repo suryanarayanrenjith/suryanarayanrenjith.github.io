@@ -152,6 +152,15 @@ canvas {
   animation: updown 1s infinite;
 }
 
+@keyframes updown {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
 .heading {
     position: relative;
     z-index: 2;
