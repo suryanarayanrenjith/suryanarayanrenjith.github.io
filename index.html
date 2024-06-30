@@ -23,6 +23,8 @@
         </nav>
     </header>
 
+    <div class="progress-bar"><div></div></div>
+
     <noscript>
         <div class="offline-message" style="display: block;">
             Please enable JavaScript to use this website.
@@ -159,8 +161,47 @@
                 event.preventDefault();
                 const section = event.target.getAttribute('data-section');
                 showContent(section);
+                updateProgressBar(section);
             });
         });
+
+        const sectionOrder = ['home', 'about', 'projects', 'resume'];
+        let currentSectionIndex = 0;
+        let isThrottled = false;
+
+        function updateProgressBar(section) {
+            const progressBar = document.querySelector('.progress-bar div');
+            const index = sectionOrder.indexOf(section);
+            const progress = index / (sectionOrder.length - 1) * 100;
+            progressBar.style.width = `${progress}%`;
+        }
+
+        function switchToNextSection(direction) {
+            if (isThrottled) return;
+            isThrottled = true;
+            setTimeout(() => { isThrottled = false }, 1000);
+
+            if (direction === 'down') {
+                currentSectionIndex = (currentSectionIndex + 1) % sectionOrder.length;
+            } else if (direction === 'up') {
+                currentSectionIndex = (currentSectionIndex - 1 + sectionOrder.length) % sectionOrder.length;
+            }
+
+            const nextSection = sectionOrder[currentSectionIndex];
+            showContent(nextSection);
+            updateProgressBar(nextSection);
+        }
+
+        window.addEventListener('wheel', (event) => {
+            if (event.deltaY > 0) {
+                switchToNextSection('down');
+            } else {
+                switchToNextSection('up');
+            }
+        });
+
+        showContent('home');
+        updateProgressBar('home');
         
         </script>
     
