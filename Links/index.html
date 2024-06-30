@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suryanarayan Renjith</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+        const fullText = "Suryanarayan Renjith";
+        const fixedChar = "S";
+        const dynamicText = fullText.slice(1);
+        let index = 0;
+        let isDeleting = false;
+    
+        function type() {
+            const speed = 300;
+    
+            if (isDeleting) {
+                document.title = fixedChar + dynamicText.substring(0, index - 1);
+                index--;
+                if (index === 0) {
+                    isDeleting = false;
+                }
+            } else {
+                document.title = fixedChar + dynamicText.substring(0, index + 1);
+                index++;
+                if (index === dynamicText.length) {
+                    isDeleting = true;
+                }
+            }
+    
+            setTimeout(type, speed);
+        }
+    
+        type();
+    });
+      </script>
+      <meta name="copyright" content="">
+      <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var preloader = document.getElementById('preloader');
+            preloader.style.display = 'flex';
+        });
+        window.addEventListener('load', function () {
+            var preloader = document.getElementById('preloader');
+            preloader.style.display = 'none';
+        });
+      </script>
+     <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
+     <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
+     <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png">
+     <link rel="manifest" href="/assets/favicon/site.webmanifest"> 
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="preloader">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+    </div>
+    <div class="offline-message" id="offline-message">
+        You are currently offline. Please check your internet connection.
+      </div>
+      <script>
+        function updateOnlineStatus() {
+          var offlineMessage = document.getElementById('offline-message');
+          if (navigator.onLine) {
+              offlineMessage.style.display = 'none';
+          } else {
+              offlineMessage.style.display = 'block';
+          }
+      }
+      
+      window.addEventListener('online', updateOnlineStatus);
+      window.addEventListener('offline', updateOnlineStatus);
+      
+      updateOnlineStatus();
+      </script>
+      <style>
+      .offline-message {
+          display: none;
+          background-color: black;
+          color: white;
+          z-index: 10000;
+          padding: 10px;
+          border-radius: 20px;
+          text-align: center;
+          word-wrap: break-word;
+          font-size: 18px;
+      }
+      
+      @media only screen and (max-width: 600px) {
+          .offline-message {
+              font-size: 14px;
+              padding: 8px;
+          }
+      }
+      
+      @media only screen and (min-width: 601px) and (max-width: 1024px) {
+          .offline-message {
+              font-size: 16px;
+          }
+      }
+      </style>
+
+<script>
+    const currentYear = new Date().getFullYear();
+    document.querySelector('meta[name="copyright"]').setAttribute('content', `Copyright © ${currentYear} Suryanarayan Renjith`);
+  </script>
+  <div class="javascript-disabled" id="javascript-disabled-message">
+    JavaScript is disabled in your browser. Please enable JavaScript to have full functionality and view this website links.
+</div>
+<style>
+  #preloader {
+          display: none;
+      }
+  
+  .javascript-disabled {
+    display: none;
+        background-color: black;
+        color: white;
+        padding: 10px;
+        border-radius: 20px;
+        text-align: center;
+        word-wrap: break-word;
+        font-size: 18px;
+        z-index: 1000;
+  }
+
+  @media only screen and (max-width: 600px) {
+        .javascript-disabled {
+            font-size: 14px;
+            padding: 8px;
+        }
+    }
+
+    @media only screen and (min-width: 601px) and (max-width: 1024px) {
+        .javascript-disabled {
+            font-size: 16px;
+        }
+    }
+</style>
+<noscript>
+  <style>
+      .javascript-disabled {
+          display: block !important;
+      }
+      .profile-container, .profile-pic {
+        display: none;
+      }
+  </style>
+<script>
+  document.getElementById('javascript-disabled-message').style.display = 'none';
+  document.getElementById('links').style.display = 'none';
+  document.getElementById('profile-pic').style.display = 'none';
+</script>
+</noscript>
+      
+    <canvas id="3dCanvas"></canvas>
+    <div class="heading" id="mainheading"></div>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+    const headingElement = document.getElementById("mainheading");
+    const finalText = "Suryanarayan Renjith";
+    const possibleCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+    function generateRandomString(length) {
+        let result = "";
+        for (let i = 0; i < length; i++) {
+            result += possibleCharacters.charAt(Math.floor(Math.random() * possibleCharacters.length));
+        }
+        return result;
+    }
+
+    function animateTextTransformation() {
+        const initialText = generateRandomString(finalText.length);
+        let currentText = initialText;
+        headingElement.textContent = initialText;
+
+        const startTime = performance.now();
+        const duration = 2000;
+
+        function updateText() {
+            const elapsed = performance.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const easedProgress = easeOutCubic(progress);
+
+            currentText = transformText(initialText, finalText, easedProgress);
+            headingElement.textContent = currentText;
+
+            if (progress < 1) {
+                requestAnimationFrame(updateText);
+            } else {
+                headingElement.textContent = finalText;
+            }
+        }
+
+        function easeOutCubic(t) {
+            return (--t) * t * t + 1;
+        }
+
+        function transformText(initialText, finalText, progress) {
+            let newText = "";
+            for (let i = 0; i < finalText.length; i++) {
+                if (Math.random() < progress) {
+                    newText += finalText.charAt(i);
+                } else {
+                    newText += initialText.charAt(i);
+                }
+            }
+            return newText;
+        }
+
+        requestAnimationFrame(updateText);
+    }
+
+    animateTextTransformation();
+});
+    </script>
+    <div class="prompt" id="clickPrompt">Click on my profile pic to view and collapse the links!</div>    
+    <div class="profile-container">
+        <div class="tooltip" id="tooltip">Connect with me</div>
+        <img src="profile-pic.jpg" alt="Profile Picture" class="profile-pic" id="profilePic">
+        <div class="social-links" id="socialLinks">
+            <a href="/Goto/?id=mail" target="_blank" class="social-link" data-tooltip="Email"><i class="fa-solid fa-envelope"></i></a>
+            <a href="/Goto/?id=github" target="_blank" class="social-link" data-tooltip="GitHub"><i class="fa-brands fa-github"></i></a>
+            <a href="/Goto/?id=twitter" target="_blank" class="social-link" data-tooltip="Twitter"><i class="fa-brands fa-twitter"></i></a>
+            <a href="/Goto/?id=linkedin" target="_blank" class="social-link" data-tooltip="LinkedIn"><i class="fa-brands fa-linkedin"></i></a>
+            <a href="/Goto/?id=space-attack" target="_blank" class="social-link" data-tooltip="Space Attack"><i class="fa-solid fa-gamepad"></i></a>
+        </div>
+    </div>
+        <script>
+            document.addEventListener('mousemove', function (e) {
+            var trail = document.createElement('div');
+            trail.className = 'mouse-trail';
+            trail.style.left = e.pageX + 'px';
+            trail.style.top = e.pageY + 'px';
+            document.body.appendChild(trail);
+            setTimeout(function () {
+              trail.remove();
+            }, 1000);
+          });
+          
+          window.onload = function() {
+            var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            if (isMobile) {
+              var mouseTrail = document.querySelector('.mouse-trail');
+              if (mouseTrail) {
+                mouseTrail.classList.add('no-animation');
+              }
+            }
+          };
+            </script>          
+    <script src="script.js"></script>
+</body>
+</html>
