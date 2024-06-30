@@ -125,14 +125,31 @@ canvas {
     left: 0;
 }
 
+#clickPrompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
 .prompt {
   position: relative;
   color: #fff;
   padding: 10px;
   z-index: 2;
-  margin-bottom: 50px;
   font-size: 16px;
   display: block;
+}
+
+
+.arrow {
+  display: block;
+  position: relative;
+  padding: 10px;
+  font-size: 2em;
+  z-index: 2;
+  color: #fff;
+  animation: updown 1s infinite;
 }
 
 .heading {
@@ -193,6 +210,18 @@ canvas {
     font-weight: bold;
     white-space: nowrap;
     z-index: 1;
+}
+
+@media (max-width: 768px) {
+  .tooltip {
+    padding: 5px 10px;
+    top: -35px;
+    font-size: 12px;
+  }
+
+  .arrow {
+  font-size: 1em;
+  }
 }
 
 .profile-container.show-tooltip:hover .tooltip {
