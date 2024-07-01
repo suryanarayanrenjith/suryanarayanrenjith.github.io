@@ -2,11 +2,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const text = document.querySelector('.animated-text');
     text.classList.add('animate');
 
-    const button = document.querySelector('.center-button');
-    button.addEventListener('click', () => {
-        window.location.href = '/Links';
-    });
-
     const footerText = document.getElementById('footer-text');
     const currentYear = new Date().getFullYear();
 
