@@ -1,3 +1,28 @@
+document.addEventListener("DOMContentLoaded", () => {
+
+    const footerText = document.getElementById('footer-text');
+    const currentYear = new Date().getFullYear();
+    
+    footerText.textContent = `© ${currentYear} Suryanarayan Renjith. All rights reserved.`;
+    
+    function changeTextWithDelay(newText) {
+        footerText.style.opacity = '0';
+        setTimeout(() => {
+            footerText.textContent = newText;
+            footerText.style.opacity = '1';
+        }, 300);
+    }
+    
+    footerText.addEventListener('mouseover', () => {
+        changeTextWithDelay('Music Credits: Suryanarayan Renjith');
+    });
+    
+    footerText.addEventListener('mouseout', () => {
+        changeTextWithDelay(`© ${currentYear} Suryanarayan Renjith. All rights reserved.`);
+    });
+    
+    footerText.style.transition = 'opacity 0.3s ease';
+    });
         const canvas = document.getElementById('3dCanvas');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth;
