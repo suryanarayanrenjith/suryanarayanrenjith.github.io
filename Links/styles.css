@@ -290,3 +290,11 @@ canvas {
 .social-link i {
   font-size: 18px;
 }
+
+footer {
+  position: absolute;
+  bottom: 10px;
+  color: #fff;
+  font-size: 0.9em;
+  z-index: 1;
+}
