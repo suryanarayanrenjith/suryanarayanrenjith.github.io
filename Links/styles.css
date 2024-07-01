@@ -166,6 +166,7 @@ canvas {
     z-index: 2;
     color: #fff;
     font-size: 48px;
+    font-weight: 600;
     margin-bottom: 70px;
     animation: fadeInUp 2s forwards;
 }
@@ -173,7 +174,7 @@ canvas {
 @media (max-width: 768px) {
   .heading {
     font-size: 20px;
-    margin-bottom: 60px;
+    margin-bottom: 50px;
 }
 }
 
