@@ -78,10 +78,6 @@ body, html {
         opacity: 0;
     }
 }
-
-.no-animation {
-    animation: none !important;
-}
   
   @keyframes bounce {
     to {
