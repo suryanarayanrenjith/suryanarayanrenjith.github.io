@@ -185,6 +185,10 @@ canvas {
     animation: fadeInUp 1.5s ease-in-out;
 }
 
+.profile-pic:focus {
+    outline: none;
+}
+
 @media (max-width: 768px) {
   .profile-pic {
     width: 100px;
