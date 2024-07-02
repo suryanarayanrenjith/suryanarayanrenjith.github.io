@@ -74,17 +74,24 @@ color: #fff;
 }
 
 .link_404 {
-    color: #fff!important;
-    padding: 10px 20px;
-    background: black;
-    margin: 20px 0;
-    display: inline-block;
-    text-decoration: none;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 20px;
-    font-weight: bold;
-    text-transform: uppercase;
-    border-radius: 5px;
+  color: #fff;
+  padding: 12px 24px;
+  background: linear-gradient(90deg, #000 0%, #202020 100%);
+  margin: 20px 0;
+  display: inline-block;
+  text-decoration: none;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 18px;
+  font-weight: bold;
+  text-transform: uppercase;
+  border-radius: 5px;
+  transition: all 0.3s ease;
+}
+
+.link_404:hover {
+  background: linear-gradient(90deg, #202020 0%, #000 100%);
+  color: #fff;
+  transform: translateY(-2px);
 }
 
 .error {
@@ -151,49 +158,57 @@ document.addEventListener('DOMContentLoaded', function () {
 <script>    
     var canvas = document.getElementById("space");
     var ctx = canvas.getContext("2d");
-  
+
     function initializeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
-  
+    }
+
+    function createStars(numStars) {
       var stars = [];
-      for (var i = 0; i < 1000; i++) {
+      for (var i = 0; i < numStars; i++) {
         stars.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
           radius: Math.random() * 2,
           speed: Math.random() * 0.5 + 0.1,
-          color: "white"
+          twinkle: Math.random() * 100
         });
       }
-  
       return stars;
     }
-  
-    var stars = initializeCanvas();
-  
+
     function animateStars() {
-      requestAnimationFrame(animateStars);
-      
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
+
       stars.forEach(function(star) {
-        star.x += star.speed; 
+        star.x += star.speed;
         if (star.x > canvas.width) star.x = 0;
         
+        star.twinkle += star.speed;
+        var twinkleFactor = Math.abs(Math.sin(star.twinkle * 0.05));
+
         ctx.beginPath();
-        ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-        ctx.fillStyle = star.color;
+        ctx.arc(star.x, star.y, star.radius * twinkleFactor, 0, Math.PI * 2);
+        ctx.fillStyle = "#FFFFFF";
         ctx.fill();
       });
-    }
-  
-    window.addEventListener("resize", function() {
 
-      stars = initializeCanvas();
-  
+      requestAnimationFrame(animateStars);
+    }
+
+    function resizeCanvas() {
+      initializeCanvas();
+      stars = createStars(1000);
       animateStars();
-    });
-  
+    }
+
+    initializeCanvas();
+    var stars = createStars(1000);
     animateStars();
+
+    window.addEventListener("resize", function() {
+      clearTimeout(resizeTimer);
+      var resizeTimer = setTimeout(resizeCanvas, 200);
+    });
   </script>
