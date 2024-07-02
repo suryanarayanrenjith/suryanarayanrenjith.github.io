@@ -235,46 +235,52 @@
     </div>
 
     <script>
-    document.addEventListener('mousemove', function (e) {
-    var trail = document.createElement('div');
-    trail.className = 'mouse-trail';
-
-    var trailType = Math.random();
-
-    if (trailType < 0.4) {
-        var isHorizontal = Math.random() > 0.5;
-        if (isHorizontal) {
-            trail.style.width = Math.floor(Math.random() * 30) + 10 + 'px';
-            trail.style.height = '1px';
-            trail.style.left = e.pageX + 'px';
-            trail.style.top = (e.pageY + Math.floor(Math.random() * 21) - 10) + 'px';
-        } else {
-            trail.style.height = Math.floor(Math.random() * 30) + 10 + 'px';
-            trail.style.width = '1px';
-            trail.style.left = (e.pageX + Math.floor(Math.random() * 21) - 10) + 'px';
-            trail.style.top = e.pageY + 'px';
+    function isTouchDevice() {
+            return 'ontouchstart' in window || navigator.maxTouchPoints;
         }
-    } else if (trailType < 0.7) {
-        trail.style.width = trail.style.height = Math.floor(Math.random() * 10) + 5 + 'px';
-        trail.style.left = (e.pageX + Math.floor(Math.random() * 21) - 10) + 'px';
-        trail.style.top = (e.pageY + Math.floor(Math.random() * 21) - 10) + 'px';
-        trail.style.borderRadius = '50%';
-        trail.style.background = 'transparent';
-        trail.style.border = '1px solid white';
-    } else {
-        trail.style.width = trail.style.height = Math.floor(Math.random() * 15) + 5 + 'px';
-        trail.style.left = (e.pageX + Math.floor(Math.random() * 21) - 10) + 'px';
-        trail.style.top = (e.pageY + Math.floor(Math.random() * 21) - 10) + 'px';
-        trail.style.background = 'transparent';
-        trail.style.border = '1px solid white';
-    }
 
-    document.body.appendChild(trail);
-    setTimeout(function () {
-        trail.remove();
-    }, 1000);
-});       
-</script>
+        if (!isTouchDevice()) {
+            document.addEventListener('mousemove', function (e) {
+                var trail = document.createElement('div');
+                trail.className = 'mouse-trail';
+
+                var trailType = Math.random();
+
+                if (trailType < 0.4) {
+                    var isHorizontal = Math.random() > 0.5;
+                    if (isHorizontal) {
+                        trail.style.width = Math.floor(Math.random() * 30) + 10 + 'px';
+                        trail.style.height = '1px';
+                        trail.style.left = e.pageX + 'px';
+                        trail.style.top = (e.pageY + Math.floor(Math.random() * 21) - 10) + 'px';
+                    } else {
+                        trail.style.height = Math.floor(Math.random() * 30) + 10 + 'px';
+                        trail.style.width = '1px';
+                        trail.style.left = (e.pageX + Math.floor(Math.random() * 21) - 10) + 'px';
+                        trail.style.top = e.pageY + 'px';
+                    }
+                } else if (trailType < 0.7) {
+                    trail.style.width = trail.style.height = Math.floor(Math.random() * 10) + 5 + 'px';
+                    trail.style.left = (e.pageX + Math.floor(Math.random() * 21) - 10) + 'px';
+                    trail.style.top = (e.pageY + Math.floor(Math.random() * 21) - 10) + 'px';
+                    trail.style.borderRadius = '50%';
+                    trail.style.background = 'transparent';
+                    trail.style.border = '1px solid white';
+                } else {
+                    trail.style.width = trail.style.height = Math.floor(Math.random() * 15) + 5 + 'px';
+                    trail.style.left = (e.pageX + Math.floor(Math.random() * 21) - 10) + 'px';
+                    trail.style.top = (e.pageY + Math.floor(Math.random() * 21) - 10) + 'px';
+                    trail.style.background = 'transparent';
+                    trail.style.border = '1px solid white';
+                }
+
+                document.body.appendChild(trail);
+                setTimeout(function () {
+                    trail.remove();
+                }, 1000);
+            });
+        }       
+    </script>
     
     <footer>
         <p id="footer-text"></p>
