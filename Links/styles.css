@@ -246,6 +246,7 @@ canvas {
   margin: 10px 0;
   width: 20px;
   padding: 10px 20px;
+  background-color: black;  
   color: white;
   border: 1px solid #ccc;
   text-decoration: none;
