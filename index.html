@@ -34,6 +34,29 @@
 
     <div class="progress-bar"><div></div></div>
 
+    <div id="keyboard-popups">
+    <button class="help-button" id="helpButton">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" width="24" height="24">
+                <path fill="currentColor" d="M64 112c-8.8 0-16 7.2-16 16v256c0 8.8 7.2 16 16 16h448c8.8 0 16-7.2 16-16V128c0-8.8-7.2-16-16-16H64zm0 16h448c17.7 0 32 14.3 32 32v224c0 17.7-14.3 32-32 32H64c-17.7 0-32-14.3-32-32V160c0-17.7 14.3-32 32-32zm112 192h192c8.8 0 16 7.2 16 16v16c0 8.8-7.2 16-16 16H176c-8.8 0-16-7.2-16-16v-16c0-8.8 7.2-16 16-16zm-72-72c0-8.8 7.2-16 16-16h16c8.8 0 16 7.2 16 16v16c0 8.8-7.2 16-16 16H120c-8.8 0-16-7.2-16-16v-16zm16-96h16c8.8 0 16 7.2 16 16v16c0 8.8-7.2 16-16 16H120c-8.8 0-16-7.2-16-16v-16zm64 96c0-8.8 7.2-16 16-16h16c8.8 0 16 7.2 16 16v16c0 8.8-7.2 16-16 16H200c-8.8 0-16-7.2-16-16v-16zm16-96h16c8.8 0 16 7.2 16 16v16c0 8.8-7.2 16-16 16H200c-8.8 0-16-7.2-16-16v-16zm64 96c0-8.8 7.2-16 16-16h16c8.8 0 16 7.2 16 16v16c0 8.8-7.2 16-16 16H280c-8.8 0-16-7.2-16-16v-16zm16-96h16c8.8 0 16 7.2 16 16v16c0 8.8-7.2 16-16 16H280c-8.8 0-16-7.2-16-16v-16zm64 96c0-8.8 7.2-16 16-16h16c8.8 0 16 7.2 16 16v16c0 8.8-7.2 16-16 16H360c-8.8 0-16-7.2-16-16v-16zm16-96h16c8.8 0 16 7.2 16 16v16c0 8.8-7.2 16-16 16H360c-8.8 0-16-7.2-16-16v-16zm64 96c0-8.8 7.2-16 16-16h16c8.8 0 16 7.2 16 16v16c0 8.8-7.2 16-16 16H440c-8.8 0-16-7.2-16-16v-16zm16-96h16c8.8 0 16 7.2 16 16v16c0 8.8-7.2 16-16 16H440c-8.8 0-16-7.2-16-16v-16z"/>
+              </svg>
+    </button>
+
+    <div class="modal-overlay" id="modalOverlay"></div>
+
+    <div class="shortcuts-modal" id="shortcutsModal">
+        <button class="close-modal" id="closeModal">&times;</button>
+        <h2 style="color: white;">Keyboard Shortcuts</h2>
+        <ul class="shortcuts-list">
+            <li><span class="shortcut-key">Alt + Shift + /</span> Open Keyboard Shortcuts</li>
+            <li><span class="shortcut-key">Alt + Shift + 5</span> Go to Home section</li>
+            <li><span class="shortcut-key">Alt + Shift + 6</span> Go to About section</li>
+            <li><span class="shortcut-key">Alt + Shift + 7</span> Go to Projects section</li>
+            <li><span class="shortcut-key">Alt + Shift + 8</span> Go to Resume section</li>
+        </ul>
+    </div>
+    </div>
+</div>
+
     <noscript>
         <div class="offline-message" style="display: block;">
             Please enable JavaScript to use this website.
@@ -71,12 +94,57 @@
 
     <script>
 
-        function showContent(section) {
+        document.addEventListener('keydown', (event) => {
+    if (event.ctrlKey && event.shiftKey && event.key === '?') {
+        showShortcuts();
+    }
+    else if (event.ctrlKey && event.shiftKey) {
+        switch (event.key) {
+            case '%':
+                showContent('home');
+                updateProgressBar('home');
+                break;
+            case '^':
+                showContent('about');
+                updateProgressBar('about');
+                break;
+            case '&':
+                showContent('projects');
+                updateProgressBar('projects');
+                break;
+            case '*':
+                showContent('resume');
+                updateProgressBar('resume');
+                break;
+            default:
+                return;
+        }
+    }
+});
+
+function showShortcuts() {
+    shortcutsModal.style.display = 'block';
+    modalOverlay.style.display = 'block';
+}
+
+function hideShortcuts() {
+    shortcutsModal.style.display = 'none';
+    modalOverlay.style.display = 'none';
+}
+
+helpButton.addEventListener('click', showShortcuts);
+
+closeModal.addEventListener('click', hideShortcuts);
+
+modalOverlay.addEventListener('click', hideShortcuts);
+
+
+function showContent(section) {
             const content = document.getElementById('content');
 
+            content.style.transition = 'transform 1s ease, opacity 1s ease';
+            content.style.transform = 'perspective(1000px) rotateY(90deg)';
             content.style.opacity = '0';
-        
-            content.style.transform = 'translateX(-100%)';
         
             setTimeout(() => {
                 let html = '';
@@ -158,14 +226,12 @@
                 }
         
                 content.innerHTML = html;
-        
+                content.style.transition = 'transform 1s ease, opacity 1s ease';
+                content.style.transform = 'perspective(1000px) rotateY(0deg)';
                 content.style.opacity = '1';
-                content.style.transform = 'translateX(0)';
-            }, 300);
-        
-            animationPaused = true;
+            }, 500);
         }
-        
+
         document.querySelectorAll('.menu-bar a').forEach(link => {
             link.addEventListener('click', (event) => {
                 event.preventDefault();
@@ -209,6 +275,27 @@
                 switchToNextSection('up');
             }
         });
+
+        let touchStartY = 0;
+        let touchEndY = 0;
+
+        window.addEventListener('touchstart', (event) => {
+            touchStartY = event.changedTouches[0].screenY;
+        });
+
+        window.addEventListener('touchend', (event) => {
+            touchEndY = event.changedTouches[0].screenY;
+            handleGesture();
+        });
+
+        function handleGesture() {
+            if (touchStartY - touchEndY > 50) {
+                switchToNextSection('down');
+            }
+            if (touchEndY - touchStartY > 50) {
+                switchToNextSection('up');
+            }
+        }
 
         showContent('home');
         updateProgressBar('home');
