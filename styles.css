@@ -289,6 +289,12 @@ header {
     bottom: 20px;
     right: 20px;
     z-index: 3;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.help-button:focus {
+    outline: none;
 }
 
 .help-button:hover {
@@ -366,6 +372,13 @@ header {
 }
 
 @media (max-width: 768px) {
+    .help-button {
+        width: 25px;
+        height: 25px;
+        right: 5px;
+        bottom: 5px;   
+    }
+    
     .shortcuts-modal {
         max-width: 80%;
         max-height: 80%;
