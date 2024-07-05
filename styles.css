@@ -373,35 +373,6 @@ header {
 
 @media (max-width: 768px) {
     .help-button {
-        width: 25px;
-        height: 25px;
-        right: 5px;
-        bottom: 5px;   
-    }
-    
-    .shortcuts-modal {
-        max-width: 80%;
-        max-height: 80%;
-    }
-}
-
-@media (max-width: 480px) {
-    .shortcuts-modal {
-        max-width: 90%;
-        max-height: 90%;
-        padding: 10px;
-    }
-
-    .close-modal {
-        font-size: 16px;
-        top: 5px;
-        right: 5px;
-    }
-
-    .shortcut-key {
-        min-width: 30px;
-        padding: 3px;
-        font-size: 14px;
-        margin-right: 5px;
+        display: none;  
     }
 }
