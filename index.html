@@ -94,11 +94,52 @@
 
     <script>
 
-        document.addEventListener('keydown', (event) => {
-    if (event.ctrlKey && event.shiftKey && event.key === '?') {
+const helpButton = document.getElementById('helpButton');
+const modalOverlay = document.getElementById('modalOverlay');
+const shortcutsModal = document.getElementById('shortcutsModal');
+const closeModal = document.getElementById('closeModal');
+
+let shortcutsVisible = false;
+
+function toggleShortcuts() {
+    shortcutsVisible = !shortcutsVisible;
+
+    if (shortcutsVisible) {
         showShortcuts();
+    } else {
+        hideShortcuts();
     }
-    else if (event.ctrlKey && event.shiftKey) {
+}
+
+function showShortcuts() {
+    modalOverlay.classList.add('active');
+    shortcutsModal.style.display = 'block';
+}
+
+function hideShortcuts() {
+    shortcutsVisible = false;
+    modalOverlay.classList.remove('active');
+    shortcutsModal.style.display = 'none';
+}
+
+helpButton.addEventListener('click', () => {
+    toggleShortcuts();
+});
+
+closeModal.addEventListener('click', () => {
+    hideShortcuts();
+});
+
+modalOverlay.addEventListener('click', (event) => {
+    if (event.target === modalOverlay && shortcutsVisible) {
+        toggleShortcuts();
+    }
+});
+
+document.addEventListener('keydown', (event) => {
+    if (event.ctrlKey && event.shiftKey && event.key === '?') {
+        toggleShortcuts();
+    } else if (event.ctrlKey && event.shiftKey) {
         switch (event.key) {
             case '%':
                 showContent('home');
@@ -121,23 +162,6 @@
         }
     }
 });
-
-function showShortcuts() {
-    shortcutsModal.style.display = 'block';
-    modalOverlay.style.display = 'block';
-}
-
-function hideShortcuts() {
-    shortcutsModal.style.display = 'none';
-    modalOverlay.style.display = 'none';
-}
-
-helpButton.addEventListener('click', showShortcuts);
-
-closeModal.addEventListener('click', hideShortcuts);
-
-modalOverlay.addEventListener('click', hideShortcuts);
-
 
 function showContent(section) {
             const content = document.getElementById('content');
