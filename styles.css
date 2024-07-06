@@ -240,6 +240,11 @@ header {
     position: relative; 
 }
 
+.menu-bar ul li a:focus, .menu-bar ul li a:active {
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
 .menu-bar ul li a::after {
     content: '';
     position: absolute;
