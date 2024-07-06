@@ -47,11 +47,13 @@
         <button class="close-modal" id="closeModal">&times;</button>
         <h2 style="color: white;">Keyboard Shortcuts</h2>
         <ul class="shortcuts-list">
-            <li><span class="shortcut-key">Alt + Shift + /</span> Open Keyboard Shortcuts</li>
-            <li><span class="shortcut-key">Alt + Shift + 5</span> Go to Home section</li>
-            <li><span class="shortcut-key">Alt + Shift + 6</span> Go to About section</li>
-            <li><span class="shortcut-key">Alt + Shift + 7</span> Go to Projects section</li>
-            <li><span class="shortcut-key">Alt + Shift + 8</span> Go to Resume section</li>
+            <li><span class="shortcut-key">Ctrl + Shift + /</span> Open Keyboard Shortcuts</li>
+            <li><span class="shortcut-key">Ctrl + Shift + 5</span> Go to Home section</li>
+            <li><span class="shortcut-key">Ctrl + Shift + 6</span> Go to About section</li>
+            <li><span class="shortcut-key">Ctrl + Shift + 7</span> Go to Projects section</li>
+            <li><span class="shortcut-key">Ctrl + Shift + 8</span> Go to Resume section</li>
+            <li><span class="shortcut-key">Ctrl + Shift + L</span> Open Links in new tab</li>
+            <li><span class="shortcut-key">Ctrl + Shift + V</span> Open Resume in new tab</li>
         </ul>
     </div>
     </div>
@@ -137,25 +139,43 @@ modalOverlay.addEventListener('click', (event) => {
 });
 
 document.addEventListener('keydown', (event) => {
-    if (event.ctrlKey && event.shiftKey && event.key === '?') {
-        toggleShortcuts();
-    } else if (event.ctrlKey && event.shiftKey) {
-        switch (event.key) {
-            case '%':
+    if (event.ctrlKey && event.shiftKey) {
+        switch (event.code) {
+            case 'Slash':
+                event.preventDefault();
+                toggleShortcuts();
+                break;
+            case 'Digit5':
+                event.preventDefault();
                 showContent('home');
                 updateProgressBar('home');
                 break;
-            case '^':
+            case 'Digit6':
+                event.preventDefault();
                 showContent('about');
                 updateProgressBar('about');
                 break;
-            case '&':
+            case 'Digit7':
+                event.preventDefault();
                 showContent('projects');
                 updateProgressBar('projects');
                 break;
-            case '*':
+            case 'Digit8':
+                event.preventDefault();
                 showContent('resume');
                 updateProgressBar('resume');
+                break;
+            case 'KeyL':
+                event.preventDefault();
+                setTimeout(() => {
+                    window.open('/Links', '_blank');
+                }, 100);
+                break;
+            case 'KeyV':
+                event.preventDefault();
+                setTimeout(() => {
+                    window.open('/Goto/?id=resume', '_blank');
+                }, 100);
                 break;
             default:
                 return;
