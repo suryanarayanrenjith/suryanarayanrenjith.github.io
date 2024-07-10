@@ -215,19 +215,13 @@ header {
     padding: 0;
     margin: 0;
     opacity: 0;
-    animation: menu-fade-in 1s ease-out forwards;
-    animation-delay: 0.5s;
+    transition: opacity 1s ease-out, transform 1s ease-out;
+    transform: translateY(-20px);
 }
 
-@keyframes menu-fade-in {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.menu-bar.animate-menu-bar {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .menu-bar ul {
@@ -236,54 +230,19 @@ header {
     justify-content: center;
     margin: 0;
     padding: 0;
-    opacity: 0;
-    animation: list-fade-in 1s ease-out forwards;
-    animation-delay: 1s;
-}
-
-@keyframes list-fade-in {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
 }
 
 .menu-bar ul li {
     margin-right: 20px;
     position: relative;
     opacity: 0;
-    animation: item-fade-in 1s ease-out forwards;
+    transform: translateY(-20px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
 }
 
-.menu-bar ul li:nth-child(1) {
-    animation-delay: 1.5s;
-}
-.menu-bar ul li:nth-child(2) {
-    animation-delay: 1.8s;
-}
-.menu-bar ul li:nth-child(3) {
-    animation-delay: 2.1s;
-}
-.menu-bar ul li:nth-child(4) {
-    animation-delay: 2.4s;
-}
-.menu-bar ul li:nth-child(5) {
-    animation-delay: 2.7s;
-}
-
-@keyframes item-fade-in {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.menu-bar ul li.animate-menu-item {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .menu-bar ul li:last-child {
@@ -306,13 +265,13 @@ header {
 .menu-bar ul li a::after {
     content: '';
     position: absolute;
-    bottom: -2px; 
+    bottom: -2px;
     left: 0;
     width: 100%;
-    height: 2px; 
+    height: 2px;
     background-color: #fff;
-    transform: scaleX(0); 
-    transform-origin: right; 
+    transform: scaleX(0);
+    transform-origin: right;
     transition: transform 0.3s ease-out, background-color 0.3s ease;
 }
 
@@ -323,7 +282,7 @@ header {
 .menu-bar ul li a:hover::after {
     transform: scaleX(1);
     transform-origin: left;
-    background-color: #ccc; 
+    background-color: #ccc;
 }
 
 @media (max-width: 768px) {
