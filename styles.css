@@ -214,6 +214,20 @@ header {
     justify-content: center;
     padding: 0;
     margin: 0;
+    opacity: 0;
+    animation: menu-fade-in 1s ease-out forwards;
+    animation-delay: 0.5s;
+}
+
+@keyframes menu-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .menu-bar ul {
@@ -221,12 +235,55 @@ header {
     display: flex;
     justify-content: center;
     margin: 0;
-    padding: 0; 
+    padding: 0;
+    opacity: 0;
+    animation: list-fade-in 1s ease-out forwards;
+    animation-delay: 1s;
+}
+
+@keyframes list-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .menu-bar ul li {
     margin-right: 20px;
-    position: relative; 
+    position: relative;
+    opacity: 0;
+    animation: item-fade-in 1s ease-out forwards;
+}
+
+.menu-bar ul li:nth-child(1) {
+    animation-delay: 1.5s;
+}
+.menu-bar ul li:nth-child(2) {
+    animation-delay: 1.8s;
+}
+.menu-bar ul li:nth-child(3) {
+    animation-delay: 2.1s;
+}
+.menu-bar ul li:nth-child(4) {
+    animation-delay: 2.4s;
+}
+.menu-bar ul li:nth-child(5) {
+    animation-delay: 2.7s;
+}
+
+@keyframes item-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .menu-bar ul li:last-child {
@@ -237,7 +294,8 @@ header {
     text-decoration: none;
     color: #fff;
     font-size: 1.2em;
-    position: relative; 
+    position: relative;
+    transition: color 0.3s ease;
 }
 
 .menu-bar ul li a:focus, .menu-bar ul li a:active {
@@ -255,12 +313,17 @@ header {
     background-color: #fff;
     transform: scaleX(0); 
     transform-origin: right; 
-    transition: transform 0.3s ease-out;
+    transition: transform 0.3s ease-out, background-color 0.3s ease;
+}
+
+.menu-bar ul li a:hover {
+    color: #ccc;
 }
 
 .menu-bar ul li a:hover::after {
     transform: scaleX(1);
-    transform-origin: left; 
+    transform-origin: left;
+    background-color: #ccc; 
 }
 
 @media (max-width: 768px) {
