@@ -374,7 +374,7 @@ function showContent(section) {
     function showPopup() {
         popup.style.display = 'flex';
         container.classList.add('disabled-container');
-        header.classList.add('no-border');
+        header.classList.add('no-display');
         helpButton.classList.add('hidden');
         modalOverlay.classList.add('hidden');
     }
@@ -392,7 +392,7 @@ function showContent(section) {
     function hidePopup() {
         popup.style.display = 'none';
         container.classList.remove('disabled-container');
-        header.classList.remove('no-border');
+        header.classList.remove('no-display');
         helpButton.classList.remove('hidden'); 
         modalOverlay.classList.remove('hidden');
         if (!animationsTriggered) {
