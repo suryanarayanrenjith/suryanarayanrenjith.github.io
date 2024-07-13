@@ -360,6 +360,8 @@ function showContent(section) {
     var audio = new Audio('/assets/bg_music.mp3');
     audio.loop = true;
     var animationsTriggered = false;
+    var container = document.querySelector('.container');
+    var header = document.querySelector('header');
 
     function preloadAudio() {
         audio.preload = 'auto';
@@ -368,6 +370,8 @@ function showContent(section) {
 
     function showPopup() {
         popup.style.display = 'flex';
+        container.classList.add('disabled-container');
+        header.classList.add('no-display');
     }
 
     function playMusic() {
@@ -382,6 +386,8 @@ function showContent(section) {
 
     function hidePopup() {
         popup.style.display = 'none';
+        container.classList.remove('disabled-container');
+        header.classList.remove('no-display');
         if (!animationsTriggered) {
             startAnimations();
             animationsTriggered = true;
