@@ -45,11 +45,31 @@ body, html {
     z-index: 1;
 }
 
+.disabled-container {
+    pointer-events: none;
+    position: relative;
+    z-index: 1;
+}
+
+.disabled-container::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 110%;
+    height: 120%;
+    background-color: rgba(0, 0, 0, 1);
+    pointer-events: none;
+    z-index: 2;
+    box-shadow: 0 0 10px 5px rgba(0, 0, 0, 0.5);
+}
+
 .animated-text {
     font-size: 3em;
     opacity: 0;
     transform: translateY(-20px);
     animation: fadeInUp 2s forwards;
+    color: #fff;
 }
 
 .tagline {
@@ -57,6 +77,7 @@ body, html {
     opacity: 0;
     transform: translateY(20px);
     animation: fadeInUp 2s 0.5s forwards;
+    color: #fff;
 }
 
 .center-button {
@@ -207,6 +228,10 @@ header {
     padding: 10px 20px;
     background-color: rgba(0, 0, 0, 0.8);
     display: inline-block;
+}
+
+.no-display {
+    border: none;
 }
 
 .menu-bar {
