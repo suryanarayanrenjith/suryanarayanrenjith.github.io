@@ -355,6 +355,7 @@ function showContent(section) {
     </div>
     
     <script>
+        
     document.addEventListener('DOMContentLoaded', function() {
     var popup = document.getElementById('music-popup');
     var audio = new Audio('/assets/bg_music.mp3');
@@ -362,6 +363,8 @@ function showContent(section) {
     var animationsTriggered = false;
     var container = document.querySelector('.container');
     var header = document.querySelector('header');
+    var helpButton = document.querySelector('.help-button');
+    var modalOverlay = document.querySelector('.modal-overlay');
 
     function preloadAudio() {
         audio.preload = 'auto';
@@ -371,7 +374,9 @@ function showContent(section) {
     function showPopup() {
         popup.style.display = 'flex';
         container.classList.add('disabled-container');
-        header.classList.add('no-display');
+        header.classList.add('no-border');
+        helpButton.classList.add('hidden');
+        modalOverlay.classList.add('hidden');
     }
 
     function playMusic() {
@@ -387,7 +392,9 @@ function showContent(section) {
     function hidePopup() {
         popup.style.display = 'none';
         container.classList.remove('disabled-container');
-        header.classList.remove('no-display');
+        header.classList.remove('no-border');
+        helpButton.classList.remove('hidden'); 
+        modalOverlay.classList.remove('hidden');
         if (!animationsTriggered) {
             startAnimations();
             animationsTriggered = true;
@@ -418,6 +425,7 @@ function showContent(section) {
     preloadAudio();
     showPopup();
 });
+        
     </script>
     
     <div id="preloader">
