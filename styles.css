@@ -345,6 +345,10 @@ header {
     -webkit-tap-highlight-color: transparent;
 }
 
+.help-button.hidden {
+    display: none;
+}
+
 .help-button:focus {
     outline: none;
 }
@@ -365,6 +369,10 @@ header {
     transition: opacity 0.3s ease, visibility 0s ease 0.3s;
     opacity: 0;
     visibility: hidden;
+}
+
+.modal-overlay.hidden {
+    display: none;
 }
 
 .modal-overlay.active {
