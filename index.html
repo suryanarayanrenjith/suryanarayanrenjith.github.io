@@ -285,64 +285,78 @@ function showContent(section) {
             });
         });
 
-        const sectionOrder = ['home', 'about', 'projects', 'resume'];
-        let currentSectionIndex = 0;
-        let isThrottled = false;
+const sectionOrder = ['home', 'about', 'projects', 'resume'];
+let currentSectionIndex = 0;
+let isThrottled = false;
 
-        function updateProgressBar(section) {
-            const progressBar = document.querySelector('.progress-bar div');
-            const index = sectionOrder.indexOf(section);
-            const progress = index / (sectionOrder.length - 1) * 100;
-            progressBar.style.width = `${progress}%`;
+function updateProgressBar(section) {
+    const progressBar = document.querySelector('.progress-bar div');
+    const index = sectionOrder.indexOf(section);
+    const progress = index / (sectionOrder.length - 1) * 100;
+    progressBar.style.width = `${progress}%`;
+}
+
+function switchToNextSection(direction) {
+    if (isThrottled) return;
+    isThrottled = true;
+    setTimeout(() => { isThrottled = false }, 1000);
+
+    if (direction === 'down' || direction === 'right') {
+        currentSectionIndex = (currentSectionIndex + 1) % sectionOrder.length;
+    } else if (direction === 'up' || direction === 'left') {
+        currentSectionIndex = (currentSectionIndex - 1 + sectionOrder.length) % sectionOrder.length;
+    }
+
+    const nextSection = sectionOrder[currentSectionIndex];
+    showContent(nextSection);
+    updateProgressBar(nextSection);
+}
+
+window.addEventListener('wheel', (event) => {
+    if (event.deltaY > 0) {
+        switchToNextSection('down');
+    } else {
+        switchToNextSection('up');
+    }
+});
+
+let touchStartX = 0;
+let touchStartY = 0;
+let touchEndX = 0;
+let touchEndY = 0;
+
+window.addEventListener('touchstart', (event) => {
+    touchStartX = event.changedTouches[0].screenX;
+    touchStartY = event.changedTouches[0].screenY;
+});
+
+window.addEventListener('touchend', (event) => {
+    touchEndX = event.changedTouches[0].screenX;
+    touchEndY = event.changedTouches[0].screenY;
+    handleGesture();
+});
+
+function handleGesture() {
+    const deltaX = touchStartX - touchEndX;
+    const deltaY = touchStartY - touchEndY;
+
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        if (deltaX > 50) {
+            switchToNextSection('left');
+        } else if (deltaX < -50) {
+            switchToNextSection('right');
         }
-
-        function switchToNextSection(direction) {
-            if (isThrottled) return;
-            isThrottled = true;
-            setTimeout(() => { isThrottled = false }, 1000);
-
-            if (direction === 'down') {
-                currentSectionIndex = (currentSectionIndex + 1) % sectionOrder.length;
-            } else if (direction === 'up') {
-                currentSectionIndex = (currentSectionIndex - 1 + sectionOrder.length) % sectionOrder.length;
-            }
-
-            const nextSection = sectionOrder[currentSectionIndex];
-            showContent(nextSection);
-            updateProgressBar(nextSection);
+    } else {
+        if (deltaY > 50) {
+            switchToNextSection('down');
+        } else if (deltaY < -50) {
+            switchToNextSection('up');
         }
+    }
+}
 
-        window.addEventListener('wheel', (event) => {
-            if (event.deltaY > 0) {
-                switchToNextSection('down');
-            } else {
-                switchToNextSection('up');
-            }
-        });
-
-        let touchStartY = 0;
-        let touchEndY = 0;
-
-        window.addEventListener('touchstart', (event) => {
-            touchStartY = event.changedTouches[0].screenY;
-        });
-
-        window.addEventListener('touchend', (event) => {
-            touchEndY = event.changedTouches[0].screenY;
-            handleGesture();
-        });
-
-        function handleGesture() {
-            if (touchStartY - touchEndY > 50) {
-                switchToNextSection('down');
-            }
-            if (touchEndY - touchStartY > 50) {
-                switchToNextSection('up');
-            }
-        }
-
-        showContent('home');
-        updateProgressBar('home');
+showContent('home');
+updateProgressBar('home');
         
         </script>
     
@@ -421,6 +435,14 @@ function showContent(section) {
             }, index * 100);
         });
     }
+
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            document.getElementById('enable-music').click();
+        } else if (event.key === 'Backspace') {
+            document.getElementById('disable-music').click();
+        }
+    });
 
     preloadAudio();
     showPopup();
