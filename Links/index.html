@@ -140,6 +140,10 @@ document.addEventListener('keydown', (event) => {
                 event.preventDefault();
                 toggleShortcuts();
                 break;
+            case 'Backspace':
+                event.preventDefault();
+                    closeWindow();
+                break;
             case 'Digit5':
                 event.preventDefault();
                 setTimeout(() => {
@@ -169,10 +173,6 @@ document.addEventListener('keydown', (event) => {
                 setTimeout(() => {
                     window.open('/Goto/?id=space-attack', '_blank');
                 }, 100);
-                break;
-            case 'Backspace':
-                event.preventDefault();
-                    closeWindow();
                 break;
             default:
                 return;
