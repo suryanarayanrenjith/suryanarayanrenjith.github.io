@@ -412,6 +412,7 @@ header {
 .shortcuts-list {
     list-style: none;
     padding: 0;
+    font-weight: bold;
 }
 
 .shortcuts-list li {
