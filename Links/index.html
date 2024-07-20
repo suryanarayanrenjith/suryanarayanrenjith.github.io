@@ -79,6 +79,7 @@
             <h2 style="color: white;">Keyboard Shortcuts</h2>
             <ul class="shortcuts-list">
                 <li><span class="shortcut-key">Ctrl + Shift + /</span> Open Keyboard Shortcuts</li>
+                <li><span class="shortcut-key">Ctrl + Shift + Backspace</span> Go back to Home Page</li>
                 <li><span class="shortcut-key">Ctrl + Shift + 5</span> Open Email in new tab</li>
                 <li><span class="shortcut-key">Ctrl + Shift + 6</span> Open GitHub in new tab</li>
                 <li><span class="shortcut-key">Ctrl + Shift + 7</span> Open Twitter in new tab</li>
@@ -169,11 +170,23 @@ document.addEventListener('keydown', (event) => {
                     window.open('/Goto/?id=space-attack', '_blank');
                 }, 100);
                 break;
+            case 'Backspace':
+                event.preventDefault();
+                    closeWindow();
+                break;
             default:
                 return;
         }
     }
-});   
+});
+
+function closeWindow() {
+    const closeHelper = window.open('', '_self');
+    closeHelper.close();
+    if (!closeHelper.closed) {
+        window.location = '/';
+    }
+}
     </script>
     
     <div class="offline-message" id="offline-message">
