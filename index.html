@@ -301,9 +301,9 @@ function switchToNextSection(direction) {
     isThrottled = true;
     setTimeout(() => { isThrottled = false }, 1000);
 
-    if (direction === 'down' || direction === 'right') {
+    if (direction === 'down' || direction === 'left') {
         currentSectionIndex = (currentSectionIndex + 1) % sectionOrder.length;
-    } else if (direction === 'up' || direction === 'left') {
+    } else if (direction === 'up' || direction === 'right') {
         currentSectionIndex = (currentSectionIndex - 1 + sectionOrder.length) % sectionOrder.length;
     }
 
