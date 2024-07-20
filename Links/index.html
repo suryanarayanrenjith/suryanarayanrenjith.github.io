@@ -68,6 +68,114 @@
         <div class="dot"></div>
         <div class="dot"></div>
     </div>
+
+    <div id="keyboard-popups">
+        <button class="help-button" id="helpButton"><i style='font-size: smaller;'class="fa-regular fa-keyboard"></i></button>
+    
+        <div class="modal-overlay" id="modalOverlay"></div>
+    
+        <div class="shortcuts-modal" id="shortcutsModal">
+            <button class="close-modal" id="closeModal">&times;</button>
+            <h2 style="color: white;">Keyboard Shortcuts</h2>
+            <ul class="shortcuts-list">
+                <li><span class="shortcut-key">Ctrl + Shift + /</span> Open Keyboard Shortcuts</li>
+                <li><span class="shortcut-key">Ctrl + Shift + 5</span> Open Email in new tab</li>
+                <li><span class="shortcut-key">Ctrl + Shift + 6</span> Open GitHub in new tab</li>
+                <li><span class="shortcut-key">Ctrl + Shift + 7</span> Open Twitter in new tab</li>
+                <li><span class="shortcut-key">Ctrl + Shift + 8</span> Open LinkedIn in new tab</li>
+                <li><span class="shortcut-key">Ctrl + Shift + 9</span> Open Space Attack in new tab</li>
+            </ul>
+        </div>
+        </div>
+    </div>
+
+    <script>
+const helpButton = document.getElementById('helpButton');
+const modalOverlay = document.getElementById('modalOverlay');
+const shortcutsModal = document.getElementById('shortcutsModal');
+const closeModal = document.getElementById('closeModal');
+
+let shortcutsVisible = false;
+
+function toggleShortcuts() {
+    shortcutsVisible = !shortcutsVisible;
+
+    if (shortcutsVisible) {
+        showShortcuts();
+    } else {
+        hideShortcuts();
+    }
+}
+
+function showShortcuts() {
+    modalOverlay.classList.add('active');
+    shortcutsModal.style.display = 'block';
+}
+
+function hideShortcuts() {
+    shortcutsVisible = false;
+    modalOverlay.classList.remove('active');
+    shortcutsModal.style.display = 'none';
+}
+
+helpButton.addEventListener('click', () => {
+    toggleShortcuts();
+});
+
+closeModal.addEventListener('click', () => {
+    hideShortcuts();
+});
+
+modalOverlay.addEventListener('click', (event) => {
+    if (event.target === modalOverlay && shortcutsVisible) {
+        toggleShortcuts();
+    }
+});
+
+document.addEventListener('keydown', (event) => {
+    if (event.ctrlKey && event.shiftKey) {
+        switch (event.code) {
+            case 'Slash':
+                event.preventDefault();
+                toggleShortcuts();
+                break;
+            case 'Digit5':
+                event.preventDefault();
+                setTimeout(() => {
+                    window.open('/Goto/?id=mail', '_blank');
+                }, 100);
+                break;
+            case 'Digit6':
+                event.preventDefault();
+                setTimeout(() => {
+                    window.open('/Goto/?id=github', '_blank');
+                }, 100);
+                break;
+            case 'Digit7':
+                event.preventDefault();
+                setTimeout(() => {
+                    window.open('/Goto/?id=twitter', '_blank');
+                }, 100);
+                break;
+            case 'Digit8':
+                event.preventDefault();
+                setTimeout(() => {
+                    window.open('/Goto/?id=linkedin', '_blank');
+                }, 100);
+                break;
+            case 'Digit9':
+                event.preventDefault();
+                setTimeout(() => {
+                    window.open('/Goto/?id=space-attack', '_blank');
+                }, 100);
+                break;
+            default:
+                return;
+        }
+    }
+});   
+    </script>
+    
     <div class="offline-message" id="offline-message">
         You are currently offline. Please check your internet connection.
       </div>
