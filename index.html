@@ -208,7 +208,7 @@ function showContent(section) {
                         <h1 class="animated-text">About Me</h1>
                         <p class="tagline">My name is Suryanarayan Renjith.</p>
                         <p>I have had a deep passion for computers since my childhood and over the years, I have channeled this passion into creating numerous innovative projects.</p>
-                        <p>My journey has led me to develop a<a href="/Goto/?id=space-attack" target="_blank" style="text-decoration: none; color: white; display: inline-block; padding: 5px; border-radius: 4px; transition: text-decoration 0.3s ease;"onmouseover="this.style.textDecoration='underline';"onmouseout="this.style.textDecoration='none';">game</a>of my own and craft solutions that create a huge impact.</p>
+                        <p>My journey has led me to develop a<a href="/Goto/?id=vexylon" target="_blank" style="text-decoration: none; color: white; display: inline-block; padding: 5px; border-radius: 4px; transition: text-decoration 0.3s ease;"onmouseover="this.style.textDecoration='underline';"onmouseout="this.style.textDecoration='none';">startup</a>and develop a<a href="/Goto/?id=space-attack" target="_blank" style="text-decoration: none; color: white; display: inline-block; padding: 5px; border-radius: 4px; transition: text-decoration 0.3s ease;"onmouseover="this.style.textDecoration='underline';"onmouseout="this.style.textDecoration='none';">game</a>of my own.</p>
                         <p>Feel free to<a href="/Links" target="_blank" style="text-decoration: none; color: white; display: inline-block; padding: 5px; border-radius: 4px; transition: text-decoration 0.3s ease;"onmouseover="this.style.textDecoration='underline';"onmouseout="this.style.textDecoration='none';">explore</a>and connect with me!</p>
                         </div>
                     `;
@@ -379,6 +379,7 @@ updateProgressBar('home');
     var header = document.querySelector('header');
     var helpButton = document.querySelector('.help-button');
     var modalOverlay = document.querySelector('.modal-overlay');
+    var keydownEventListener;
 
     function preloadAudio() {
         audio.preload = 'auto';
@@ -391,6 +392,7 @@ updateProgressBar('home');
         header.classList.add('no-display');
         helpButton.classList.add('hidden');
         modalOverlay.classList.add('hidden');
+        document.addEventListener('keydown', keydownEventListener);
     }
 
     function playMusic() {
@@ -409,6 +411,7 @@ updateProgressBar('home');
         header.classList.remove('no-display');
         helpButton.classList.remove('hidden'); 
         modalOverlay.classList.remove('hidden');
+        document.removeEventListener('keydown', keydownEventListener);
         if (!animationsTriggered) {
             startAnimations();
             animationsTriggered = true;
@@ -436,13 +439,13 @@ updateProgressBar('home');
         });
     }
 
-    document.addEventListener('keydown', function(event) {
+    keydownEventListener = function(event) {
         if (event.key === 'Enter') {
             document.getElementById('enable-music').click();
         } else if (event.key === 'Backspace') {
             document.getElementById('disable-music').click();
         }
-    });
+    };
 
     preloadAudio();
     showPopup();
