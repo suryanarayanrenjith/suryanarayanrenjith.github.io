@@ -16,6 +16,18 @@
     <link rel="manifest" href="/assets/favicon/site.webmanifest">
     <title>Redirecting...</title>
     <script>
+        setTimeout(function() {
+          var h1Element = document.querySelector('.container h1');
+          h1Element.classList.add('hidden');
+          setTimeout(function() {
+            h1Element.textContent = "It's taking longer than usual. If the page doesn't load soon, please try refreshing.";
+            h1Element.classList.remove('hidden');
+            h1Element.classList.add('visible');
+            h1Element.style.animation = 'none';
+          }, 1000);
+        }, 10000);
+      </script>
+    <script>
 function dBU(eU) {
     return atob(eU);
 }
@@ -217,6 +229,14 @@ h1 {
         font-size: 16px;
     }
 }
+
+.hidden {
+    opacity: 0;
+  }
+
+.visible {
+    opacity: 1;
+  }
 </style>	
 <div class="container">
 <div class="animation-wrapper">
