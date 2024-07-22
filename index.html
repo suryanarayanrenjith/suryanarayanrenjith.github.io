@@ -193,10 +193,10 @@ function showContent(section, direction = 'none') {
         transformValue = isMobile ? 'perspective(1000px) rotateX(-90deg)' : 'perspective(1000px) rotateY(90deg)';
     } else if (direction === 'up') {
         transformValue = isMobile ? 'perspective(1000px) rotateX(90deg)' : 'perspective(1000px) rotateY(-90deg)';
-    } else if (direction === 'right') {
-        transformValue = isMobile ? 'perspective(1000px) rotateY(180deg)' : 'perspective(1000px) rotateY(-180deg)';
     } else if (direction === 'left') {
         transformValue = isMobile ? 'perspective(1000px) rotateY(-180deg)' : 'perspective(1000px) rotateY(180deg)';
+    } else if (direction === 'right') {
+        transformValue = isMobile ? 'perspective(1000px) rotateY(180deg)' : 'perspective(1000px) rotateY(-180deg)';
     }
 
     content.style.transition = 'transform 1s ease, opacity 1s ease';
@@ -354,10 +354,18 @@ function handleGesture() {
     const deltaY = touchStartY - touchEndY;
 
     if (Math.abs(deltaX) > Math.abs(deltaY)) {
-        if (deltaX > 50) {
-            switchToNextSection('left');
-        } else if (deltaX < -50) {
-            switchToNextSection('right');
+        if (isMobile) {
+            if (deltaX > 50) {
+                switchToNextSection('right');
+            } else if (deltaX < -50) {
+                switchToNextSection('left');
+            }
+        } else {
+            if (deltaX > 50) {
+                switchToNextSection('left');
+            } else if (deltaX < -50) {
+                switchToNextSection('right');
+            }
         }
     } else {
         if (deltaY > 50) {
