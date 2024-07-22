@@ -183,12 +183,23 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
-function showContent(section) {
-            const content = document.getElementById('content');
+function showContent(section, direction = 'none') {
+    const content = document.getElementById('content');
+    let transformValue = 'perspective(1000px) rotateY(0deg)';
+    
+    if (direction === 'down') {
+        transformValue = 'perspective(1000px) rotateY(90deg)';
+    } else if (direction === 'up') {
+        transformValue = 'perspective(1000px) rotateY(-90deg)';
+    } else if (direction === 'left') {
+        transformValue = 'perspective(1000px) rotateY(180deg)';
+    } else if (direction === 'right') {
+        transformValue = 'perspective(1000px) rotateY(-180deg)';
+    }
 
-            content.style.transition = 'transform 1s ease, opacity 1s ease';
-            content.style.transform = 'perspective(1000px) rotateY(90deg)';
-            content.style.opacity = '0';
+    content.style.transition = 'transform 1s ease, opacity 1s ease';
+    content.style.transform = transformValue;
+    content.style.opacity = '0';
         
             setTimeout(() => {
                 let html = '';
@@ -269,21 +280,21 @@ function showContent(section) {
                         return;
                 }
         
-                content.innerHTML = html;
-                content.style.transition = 'transform 1s ease, opacity 1s ease';
-                content.style.transform = 'perspective(1000px) rotateY(0deg)';
-                content.style.opacity = '1';
-            }, 500);
-        }
+        content.innerHTML = html;
+        content.style.transition = 'transform 1s ease, opacity 1s ease';
+        content.style.transform = 'perspective(1000px) rotateY(0deg)';
+        content.style.opacity = '1';
+    }, 500);
+}
 
-        document.querySelectorAll('.menu-bar a').forEach(link => {
-            link.addEventListener('click', (event) => {
-                event.preventDefault();
-                const section = event.target.getAttribute('data-section');
-                showContent(section);
-                updateProgressBar(section);
-            });
-        });
+document.querySelectorAll('.menu-bar a').forEach(link => {
+    link.addEventListener('click', (event) => {
+        event.preventDefault();
+        const section = event.target.getAttribute('data-section');
+        showContent(section, 'none');
+        updateProgressBar(section);
+    });
+});
 
 const sectionOrder = ['home', 'about', 'projects', 'resume'];
 let currentSectionIndex = 0;
@@ -301,14 +312,14 @@ function switchToNextSection(direction) {
     isThrottled = true;
     setTimeout(() => { isThrottled = false }, 1000);
 
-    if (direction === 'down' || direction === 'left') {
+    if (direction === 'down' || direction === 'right') {
         currentSectionIndex = (currentSectionIndex + 1) % sectionOrder.length;
-    } else if (direction === 'up' || direction === 'right') {
+    } else if (direction === 'up' || direction === 'left') {
         currentSectionIndex = (currentSectionIndex - 1 + sectionOrder.length) % sectionOrder.length;
     }
 
     const nextSection = sectionOrder[currentSectionIndex];
-    showContent(nextSection);
+    showContent(nextSection, direction);
     updateProgressBar(nextSection);
 }
 
@@ -355,7 +366,7 @@ function handleGesture() {
     }
 }
 
-showContent('home');
+showContent('home', 'none');
 updateProgressBar('home');
         
         </script>
