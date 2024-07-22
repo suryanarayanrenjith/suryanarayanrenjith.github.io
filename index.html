@@ -183,18 +183,20 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
+let isMobile = /Mobi|Android/i.test(navigator.userAgent);
+
 function showContent(section, direction = 'none') {
     const content = document.getElementById('content');
     let transformValue = 'perspective(1000px) rotateY(0deg)';
-    
+
     if (direction === 'down') {
-        transformValue = 'perspective(1000px) rotateY(90deg)';
+        transformValue = isMobile ? 'perspective(1000px) rotateX(-90deg)' : 'perspective(1000px) rotateY(90deg)';
     } else if (direction === 'up') {
-        transformValue = 'perspective(1000px) rotateY(-90deg)';
+        transformValue = isMobile ? 'perspective(1000px) rotateX(90deg)' : 'perspective(1000px) rotateY(-90deg)';
     } else if (direction === 'left') {
-        transformValue = 'perspective(1000px) rotateY(180deg)';
+        transformValue = isMobile ? 'perspective(1000px) rotateY(180deg)' : 'perspective(1000px) rotateY(-180deg)';
     } else if (direction === 'right') {
-        transformValue = 'perspective(1000px) rotateY(-180deg)';
+        transformValue = isMobile ? 'perspective(1000px) rotateY(-180deg)' : 'perspective(1000px) rotateY(180deg)';
     }
 
     content.style.transition = 'transform 1s ease, opacity 1s ease';
