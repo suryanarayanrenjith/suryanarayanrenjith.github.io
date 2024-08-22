@@ -587,6 +587,14 @@ updateProgressBar('home');
     <canvas id="animationCanvas"></canvas>
     
     <style>
+        #loader {
+            position: fixed;
+            top: 30%;
+            left: 50%;
+            text-align: center;
+            z-index: 1000;
+        }
+        
         #preloader {
             display: none;
             position: fixed;
@@ -680,24 +688,30 @@ updateProgressBar('home');
     </style>
     
     <script>
-    document.addEventListener("DOMContentLoaded", () => {
-        const preloader = document.getElementById('preloader');
-        const blocks = document.querySelectorAll('.block');
+        document.addEventListener("DOMContentLoaded", () => {
+            const loader = document.getElementById('loader');
+            if (loader) {
+                loader.id = 'preloader';
+            }
     
-        preloader.style.display = 'flex';
+            const preloader = document.getElementById('preloader');
+            const blocks = document.querySelectorAll('.block');
     
-        setTimeout(() => {
-            blocks.forEach(block => {
-                block.style.willChange = 'transform, opacity';
-            });
-        }, 100);
+            preloader.style.display = 'flex';
     
-        setTimeout(() => {
-            document.body.classList.add('loaded');
-            preloader.style.display = 'none';
-        }, 4000);
-    });
+            setTimeout(() => {
+                blocks.forEach(block => {
+                    block.style.willChange = 'transform, opacity';
+                });
+            }, 100);
+    
+            setTimeout(() => {
+                document.body.classList.add('loaded');
+                preloader.style.display = 'none';
+            }, 4000);
+        });
     </script>
+    
     <script src="script.js"></script>
 </body>
 </html>
