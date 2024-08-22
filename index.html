@@ -568,7 +568,12 @@ updateProgressBar('home');
     </script>
     
     <div id="preloader">
-        <div id="preloader-inner"></div>
+        <div id="blocks">
+            <div class="block"></div>
+            <div class="block"></div>
+            <div class="block"></div>
+            <div class="block"></div>
+        </div>
     </div>
 
     <div class="container" id="content">
@@ -584,8 +589,6 @@ updateProgressBar('home');
     <style>
         #preloader {
             display: none;
-            justify-content: center;
-            align-items: center;
             position: fixed;
             top: 0;
             left: 0;
@@ -593,44 +596,107 @@ updateProgressBar('home');
             height: 100%;
             background-color: #000;
             z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            perspective: 1000px;
         }
-
-        #preloader-inner {
-            width: 50px;
-            height: 50px;
-            border: 2px solid #fff;
-            border-top-color: transparent;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+    
+        #blocks {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            will-change: transform, opacity;
         }
-
-        @keyframes spin {
+    
+        .block {
+            width: 100%;
+            height: 100%;
+            background-color: transparent;
+            border: 2px solid #ccc;
+            transform: translateZ(50px) scale(1);
+            opacity: 1;
+            animation: rotateAndShrink 4s infinite forwards;
+        }
+    
+        .block:nth-child(1) {
+            animation-delay: 0s;
+        }
+    
+        .block:nth-child(2) {
+            animation-delay: 0.3s;
+        }
+    
+        .block:nth-child(3) {
+            animation-delay: 0.6s;
+        }
+    
+        .block:nth-child(4) {
+            animation-delay: 0.9s;
+        }
+    
+        @keyframes rotateAndShrink {
             0% {
-                transform: rotate(0deg);
+                transform: rotateY(0deg) scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: rotateY(90deg) scale(0.5);
+                opacity: 0.7;
             }
             100% {
-                transform: rotate(360deg);
+                transform: rotateY(180deg) scale(0);
+                opacity: 0;
             }
         }
-
-        body.loaded #preloader {
-            display: none;
+    
+        @media screen and (max-width: 768px) {
+            #blocks {
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: 1fr 1fr;
+            }
+    
+            .block {
+                border-width: 1px;
+            }
+        }
+    
+        @media screen and (max-width: 480px) {
+            #blocks {
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr;
+            }
+    
+            .block {
+                width: 100vw;
+                height: 100vh;
+                border-width: 1px;
+            }
         }
     </style>
-
+    
     <script>
     document.addEventListener("DOMContentLoaded", () => {
-            const preloader = document.getElementById('preloader');
-            preloader.style.display = 'flex';
-
-            setTimeout(() => {
-                document.body.classList.add('loaded');
-            }, 500);
-
-            setTimeout(() => {
-                preloader.style.display = 'none';
-            }, 1000);
-        });
+        const preloader = document.getElementById('preloader');
+        const blocks = document.querySelectorAll('.block');
+    
+        preloader.style.display = 'flex';
+    
+        setTimeout(() => {
+            blocks.forEach(block => {
+                block.style.willChange = 'transform, opacity';
+            });
+        }, 100);
+    
+        setTimeout(() => {
+            document.body.classList.add('loaded');
+            preloader.style.display = 'none';
+        }, 4000);
+    });
     </script>
     <script src="script.js"></script>
 </body>
