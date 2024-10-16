@@ -60,7 +60,6 @@ const starMaterial = new THREE.PointsMaterial({
 
 const starField = new THREE.Points(stars, starMaterial);
 scene.add(starField);
-
 camera.position.z = 500;
 
 window.addEventListener('resize', () => {
@@ -149,7 +148,6 @@ function applyCentralGlitch() {
     stars.attributes.position.needsUpdate = true;
 }
 
-// Central explosion glitch
 function glitchExplosion() {
     const time = performance.now() * 0.0001;
 
@@ -200,4 +198,5 @@ function render() {
 setupMouseControl();
 setupGyroscopeControl();
 render();
+    
 });
