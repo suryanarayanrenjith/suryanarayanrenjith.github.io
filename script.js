@@ -1,3 +1,4 @@
+import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.142.0/three.module.js';
 document.addEventListener("DOMContentLoaded", () => {
     const text = document.querySelector('.animated-text');
     text.classList.add('animate');
@@ -26,165 +27,177 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     footerText.style.transition = 'opacity 0.3s ease';
-
 const canvas = document.getElementById('animationCanvas');
-const ctx = canvas.getContext('2d');
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(window.devicePixelRatio);
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+const pointLight = new THREE.PointLight(0xffffff, 1, 1000);
+pointLight.position.set(0, 0, 500);
+scene.add(pointLight);
+
+const starCount = 1500;
+const stars = new THREE.BufferGeometry();
+const starVertices = new Float32Array(starCount * 3);
+
+for (let i = 0; i < starCount * 3; i += 3) {
+    starVertices[i] = (Math.random() - 0.5) * 2000;
+    starVertices[i + 1] = (Math.random() - 0.5) * 2000;
+    starVertices[i + 2] = (Math.random() - 0.5) * 2000;
+}
+
+stars.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+
+const starMaterial = new THREE.PointsMaterial({
+    color: 0xffffff,
+    size: 2,
+    transparent: true,
+    opacity: 0.8,
+    blending: THREE.AdditiveBlending,
+});
+
+const starField = new THREE.Points(stars, starMaterial);
+scene.add(starField);
+
+camera.position.z = 500;
 
 window.addEventListener('resize', () => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
 });
 
-const stars = [];
-const minStars = 250;
-const maxStars = 500;
-const edgeThreshold = 10;
+let mouseX = 0, mouseY = 0;
+let targetMouseX = 0, targetMouseY = 0;
+let velocityX = 0, velocityY = 0;
+const mouseRotationEasing = 0.1;
+const acceleration = 0.002;
 
-function createStar() {
-    const speed = Math.random() * 0.5 + 0.1;
-    return {
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        radius: Math.random() * 3,
-        speed: speed,
-        alpha: Math.random(),
-        phase: Math.random() * 2 * Math.PI,
-        dx: (Math.random() - 0.5) * speed,
-        dy: (Math.random() - 0.5) * speed,
-        tiltFactor: Math.random() * 0.05 + 0.05,
-        trail: []
-    };
-}
+let alpha = 0, beta = 0, gamma = 0;
+let targetRotationX = 0, targetRotationY = 0;
+const rotationEasing = 0.05;
 
-for (let i = 0; i < minStars; i++) {
-    stars.push(createStar());
-}
+let glitchTime = 0;
+const glitchDuration = 0.4;
 
-let mouseX = canvas.width / 2;
-let mouseY = canvas.height / 2;
-const avoidanceRadius = 100;
-let lastMouseMoveTime = Date.now();
-const mouseInactiveThreshold = 3000;
-
-canvas.addEventListener('mousemove', (e) => {
-    mouseX = e.clientX;
-    mouseY = e.clientY;
-    lastMouseMoveTime = Date.now();
-});
-
-let tiltX = 0;
-
-window.addEventListener('deviceorientation', (e) => {
-    tiltX = e.gamma;
-});
-
-function deflectStar(star1, star2) {
-    const angle = Math.random() * 2 * Math.PI;
-    const speed = Math.random() * 0.5 + 0.1;
-    star1.dx = Math.cos(angle) * speed;
-    star1.dy = Math.sin(angle) * speed;
-    star2.dx = -Math.cos(angle) * speed;
-    star2.dy = -Math.sin(angle) * speed;
-}
-
-function applyAI(star) {
-    const now = Date.now();
-    const mouseInactive = now - lastMouseMoveTime > mouseInactiveThreshold;
-
-    if (!mouseInactive) {
-        const dx = star.x - mouseX;
-        const dy = star.y - mouseY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-
-        if (distance < avoidanceRadius) {
-            const angle = Math.atan2(dy, dx) + (Math.random() - 0.5) * Math.PI;
-            const speedFactor = (avoidanceRadius - distance) / avoidanceRadius;
-            star.dx = Math.cos(angle) * speedFactor * star.speed;
-            star.dy = Math.sin(angle) * speedFactor * star.speed;
-        } else {
-            star.dx += (Math.random() - 0.5) * 0.1;
-            star.dy += (Math.random() - 0.5) * 0.1;
-        }
-    } else {
-        star.dx += (Math.random() - 0.5) * 0.1;
-        star.dy += (Math.random() - 0.5) * 0.1;
-    }
-
-    star.x += star.dx;
-    star.y += star.dy;
-
-    star.x += tiltX * star.tiltFactor;
-
-    if (star.x < edgeThreshold) star.dx += (edgeThreshold - star.x) / edgeThreshold * 0.05;
-    if (star.x > canvas.width - edgeThreshold) star.dx -= (star.x - (canvas.width - edgeThreshold)) / edgeThreshold * 0.05;
-    if (star.y < edgeThreshold) star.dy += (edgeThreshold - star.y) / edgeThreshold * 0.05;
-    if (star.y > canvas.height - edgeThreshold) star.dy -= (star.y - (canvas.height - edgeThreshold)) / edgeThreshold * 0.05;
-
-    if (star.x < 0) star.x = 0;
-    if (star.x > canvas.width) star.x = canvas.width;
-    if (star.y < 0) star.y = 0;
-    if (star.y > canvas.height) star.y = canvas.height;
-
-    star.alpha = 0.5 + Math.cos(star.phase) * 0.5;
-    star.phase += star.speed * 0.05;
-
-    if (star.trail.length > 10) star.trail.shift();
-    star.trail.push({ x: star.x, y: star.y, alpha: star.alpha });
-}
-
-function handleCollisions() {
-    for (let i = 0; i < stars.length; i++) {
-        for (let j = i + 1; j < stars.length; j++) {
-            const star1 = stars[i];
-            const star2 = stars[j];
-            const dx = star1.x - star2.x;
-            const dy = star1.y - star2.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-
-            if (distance < (star1.radius + star2.radius)) {
-                deflectStar(star1, star2);
-            }
-        }
-    }
-}
-
-function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    while (stars.length < minStars) {
-        stars.push(createStar());
-    }
-
-    while (stars.length > maxStars) {
-        stars.pop();
-    }
-
-    stars.forEach(star => {
-        applyAI(star);
-
-        ctx.beginPath();
-        ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2, false);
-        ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`;
-        ctx.fill();
-
-        for (let j = 0; j < star.trail.length; j++) {
-            const t = star.trail[j];
-            const trailAlpha = t.alpha * (1 - j / star.trail.length);
-            const trailRadius = star.radius * (1 - j / star.trail.length);
-            ctx.beginPath();
-            ctx.arc(t.x, t.y, trailRadius, 0, Math.PI * 2, false);
-            ctx.fillStyle = `rgba(255, 255, 255, ${trailAlpha})`;
-            ctx.fill();
-        }
+function setupMouseControl() {
+    window.addEventListener('mousemove', (event) => {
+        targetMouseX = (event.clientX / window.innerWidth) * 2 - 1;
+        targetMouseY = -(event.clientY / window.innerHeight) * 2 + 1;
     });
-
-    handleCollisions();
-    requestAnimationFrame(draw);
 }
 
-draw();    
+function setupGyroscopeControl() {
+    window.addEventListener('deviceorientation', (event) => {
+        alpha = event.alpha;
+        beta = event.beta;
+        gamma = event.gamma;
+    });
+}
 
+function applyMouseAcceleration() {
+    const maxTiltX = 15;
+    const maxTiltY = 15;
+
+    velocityX += (targetMouseX - mouseX) * acceleration;
+    velocityY += (targetMouseY - mouseY) * acceleration;
+
+    velocityX *= 0.95;
+    velocityY *= 0.95;
+
+    mouseX += velocityX;
+    mouseY += velocityY;
+
+    const mouseTiltX = mouseY * maxTiltX;
+    const mouseTiltY = mouseX * maxTiltY;
+
+    camera.rotation.x += (THREE.MathUtils.degToRad(mouseTiltX) - camera.rotation.x) * mouseRotationEasing;
+    camera.rotation.y += (THREE.MathUtils.degToRad(mouseTiltY) - camera.rotation.y) * mouseRotationEasing;
+
+    pointLight.position.x += (mouseX * 100 - pointLight.position.x) * 0.05;
+    pointLight.position.y += (mouseY * 100 - pointLight.position.y) * 0.05;
+}
+
+function applyGyroscopeControl() {
+    const maxTiltX = 15;
+    const maxTiltY = 15;
+
+    targetRotationX = THREE.MathUtils.degToRad(beta / maxTiltX * Math.PI / 2);
+    targetRotationY = THREE.MathUtils.degToRad(gamma / maxTiltY * Math.PI / 2);
+
+    camera.rotation.x += (targetRotationX - camera.rotation.x) * rotationEasing;
+    camera.rotation.y += (targetRotationY - camera.rotation.y) * rotationEasing;
+}
+
+function applyCentralGlitch() {
+    const time = performance.now() * 0.0001;
+
+    for (let i = 0; i < starVertices.length; i += 3) {
+        const distanceToCenter = Math.sqrt(starVertices[i] ** 2 + starVertices[i + 1] ** 2);
+        const pulse = Math.sin(time * 10 + distanceToCenter * 0.02) * 0.5;
+
+        starVertices[i] += pulse;
+        starVertices[i + 1] += pulse;
+
+        if (Math.random() > 0.999) {
+            starVertices[i + 2] += (Math.random() - 0.5) * 50;
+        }
+    }
+
+    stars.attributes.position.needsUpdate = true;
+}
+
+// Central explosion glitch
+function glitchExplosion() {
+    const time = performance.now() * 0.0001;
+
+    for (let i = 0; i < starVertices.length; i += 3) {
+        const distToCenter = Math.sqrt(starVertices[i] ** 2 + starVertices[i + 1] ** 2);
+
+        if (distToCenter < 200) { 
+            const glitchIntensity = Math.sin(time * 10 + distToCenter) * 2.5;
+            starVertices[i] += glitchIntensity;
+            starVertices[i + 1] += glitchIntensity;
+        }
+    }
+}
+
+function cameraPulse() {
+    const pulse = Math.sin(performance.now() * 0.001) * 5;
+    camera.position.z = 500 + pulse;
+}
+
+function createGlitchEffect() {
+    if (Math.random() > 0.995) { 
+        glitchTime = glitchDuration;
+    }
+
+    if (glitchTime > 0) {
+        glitchExplosion();
+        glitchTime -= 0.02;
+    }
+}
+
+function animateStars() {
+    starField.rotation.x += 0.001;
+    starField.rotation.y += 0.001;
+}
+
+function render() {
+    applyCentralGlitch();
+    createGlitchEffect();    
+    applyMouseAcceleration(); 
+    applyGyroscopeControl(); 
+    animateStars();          
+    cameraPulse();       
+
+    renderer.render(scene, camera);
+    requestAnimationFrame(render);
+}
+
+setupMouseControl();
+setupGyroscopeControl();
+render();
 });
