@@ -193,7 +193,7 @@ document.addEventListener("DOMContentLoaded", () => {
         mouseY += velocityY;
     
         const mouseTiltX = mouseY * maxTiltX;
-        const mouseTiltY = mouseX * maxTiltY;
+        const mouseTiltY = -mouseX * maxTiltY;
     
         gsap.to(camera.rotation, {
             x: THREE.MathUtils.degToRad(mouseTiltX),  
