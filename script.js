@@ -29,6 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     footerText.style.transition = 'opacity 0.3s ease';
+
     const canvas = document.getElementById('animationCanvas');
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
@@ -43,6 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const starDensity = 0.002;
     let starCount = Math.floor(window.innerWidth * window.innerHeight * starDensity);
     
+
     const stars = new THREE.BufferGeometry();
     let starVertices = new Float32Array(starCount * 3);
     let starSpeeds = new Float32Array(starCount);
@@ -104,14 +106,6 @@ document.addEventListener("DOMContentLoaded", () => {
         window.addEventListener('mousemove', (event) => {
             targetMouseX = (event.clientX / window.innerWidth) * 2 - 1;
             targetMouseY = -(event.clientY / window.innerHeight) * 2 + 1;
-        });
-    }
-    
-    function setupGyroscopeControl() {
-        window.addEventListener('deviceorientation', (event) => {
-            alpha = event.alpha;
-            beta = event.beta;
-            gamma = event.gamma;
         });
     }
     
@@ -216,16 +210,30 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    function applyGyroscopeControl() {
+    function applyGyroscopeControl(alpha, beta, gamma) {
         const maxTiltX = 15;
         const maxTiltY = 15;
+        
+        const targetPositionX = (gamma / maxTiltY) * 200; 
+        const targetPositionY = -(beta / maxTiltX) * 200;  
+        const targetPositionZ = 1000;
     
-        targetRotationX = THREE.MathUtils.degToRad(beta / maxTiltX * Math.PI / 2);
-        targetRotationY = THREE.MathUtils.degToRad(gamma / maxTiltY * Math.PI / 2);
-    
-        camera.rotation.x += (targetRotationX - camera.rotation.x) * rotationEasing;
-        camera.rotation.y += (targetRotationY - camera.rotation.y) * rotationEasing;
+        gsap.to(camera.position, {
+            x: targetPositionX,
+            y: targetPositionY,
+            z: targetPositionZ,
+            duration: 0.5,       
+            ease: "power2.out"   
+        });
     }
+
+    window.addEventListener('deviceorientation', (event) => {
+        const alpha = event.alpha;
+        const beta = event.beta;
+        const gamma = event.gamma;
+    
+        applyGyroscopeControl(alpha, beta, gamma);
+    });
 
 function switchCameraPosition() {
     const randomX = (Math.random() - 0.5) * 400;
@@ -305,7 +313,6 @@ function handleGesture() {
 
     function render() {
         applyWarpSpeed();
-        applyGyroscopeControl();
         applyMouseAcceleration();        
         applyDynamicStarScaling(); 
         applyShockwaveEffect();   
@@ -318,8 +325,7 @@ function handleGesture() {
     }
     
     setupMouseControl();  
-    setupGyroscopeControl();
     switchCameraPosition();
-    render();
+    render(); 
     
 });
