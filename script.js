@@ -235,23 +235,89 @@ document.addEventListener("DOMContentLoaded", () => {
         applyGyroscopeControl(alpha, beta, gamma);
     });
 
-function switchCameraPosition() {
-    const randomX = (Math.random() - 0.5) * 400;
-    const randomY = (Math.random() - 0.5) * 400;
-    const randomZ = Math.random() * 500 + 500;
-
-    const randomRotationX = (Math.random() - 0.5) * Math.PI / 4;
-    const randomRotationY = (Math.random() - 0.5) * Math.PI / 4;
-
-    gsap.to(camera.position, { x: randomX, y: randomY, z: randomZ, duration: 2, ease: "power2.inOut" });
-    gsap.to(camera.rotation, { x: randomRotationX, y: randomRotationY, duration: 2, ease: "power2.inOut" });
-}
-
-document.querySelectorAll('.menu-bar ul li a').forEach(link => {
-    link.addEventListener('click', (event) => {
-        event.preventDefault();
-        switchCameraPosition();
+    function switchCameraPosition() {
+        const randomX = (Math.random() - 0.5) * 600;
+        const randomY = (Math.random() - 0.5) * 600;
+        const randomZ = Math.random() * 700 + 400;    
+    
+        const randomRotationX = (Math.random() - 0.5) * Math.PI / 6;  
+        const randomRotationY = (Math.random() - 0.5) * Math.PI / 6;  
+    
+        const zoomInFOV = Math.random() * 20 + 60;
+        const originalFOV = camera.fov;            
+    
+        const tl = gsap.timeline();
+    
+        tl.to(camera, {
+            fov: zoomInFOV,
+            duration: 1.5,
+            ease: "power3.inOut",
+            onUpdate: () => camera.updateProjectionMatrix()
+        });
+    
+        tl.to(camera.position, {
+            x: randomX,
+            y: randomY,
+            z: randomZ,
+            duration: 2,
+            ease: "power3.inOut"
+        }, 0);
+    
+        tl.to(camera.rotation, {
+            x: randomRotationX,
+            y: randomRotationY,
+            duration: 2,
+            ease: "power3.inOut"
+        }, 0);
+    
+        tl.to(camera.rotation, {
+            z: (Math.random() - 0.5) * Math.PI / 10,
+            duration: 0.8,
+            ease: "elastic.out(1, 0.3)"
+        }, "-=0.5");
+    
+        tl.to(camera, {
+            fov: originalFOV,
+            duration: 1.2,
+            ease: "power2.out",
+            onUpdate: () => camera.updateProjectionMatrix()
+        }, "-=0.5");
+    }
+    
+    document.querySelectorAll('.menu-bar ul li a').forEach(link => {
+        link.addEventListener('click', (event) => {
+            event.preventDefault();
+            switchCameraPosition();
+        });
     });
+
+document.addEventListener('keydown', (event) => {
+    if (event.ctrlKey && event.shiftKey) {
+        switch (event.code) {              
+            case 'Digit5':
+                event.preventDefault();
+                switchCameraPosition();
+                break;
+
+            case 'Digit6':
+                event.preventDefault();
+                switchCameraPosition();
+                break;
+
+            case 'Digit7':
+                event.preventDefault();
+                switchCameraPosition();
+                break;
+
+            case 'Digit8':
+                event.preventDefault();
+                switchCameraPosition();
+                break;
+
+            default:
+                return;
+        }
+    }
 });
 
 const sections = ['about', 'projects', 'resume', 'home'];
