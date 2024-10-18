@@ -10,25 +10,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
     footerText.textContent = `© ${currentYear} Suryanarayan Renjith. All rights reserved.`;
 
-    function changeTextWithDelay(newText) {
-        setTimeout(function() {
-            footerText.style.opacity = '0';
-            setTimeout(function() {
-            footerText.textContent = newText;
-            footerText.style.opacity = '1';
-        }, 300);
-        }, 100);
+    function changeTextWithGSAP(newText) {
+        gsap.to(footerText, {
+            duration: 0.3,
+            opacity: 0,
+            ease: "power2.out",
+            onComplete: function() {
+                footerText.textContent = newText;
+                gsap.to(footerText, {
+                    duration: 0.3,
+                    opacity: 1,
+                    ease: "power2.in"
+                });
+            }
+        });
     }
 
     footerText.addEventListener('mouseover', function() {
-    changeTextWithDelay('Music Credits: Suryanarayan Renjith');
+        changeTextWithGSAP('Music Credits: Suryanarayan Renjith.');
     });
 
     footerText.addEventListener('mouseout', function() {
-        changeTextWithDelay(`© ${currentYear} Suryanarayan Renjith. All rights reserved.`);
+        changeTextWithGSAP(`© ${currentYear} Suryanarayan Renjith. All rights reserved.`);
     });
-
-    footerText.style.transition = 'opacity 0.3s ease';
 
     function isWebGLAvailable() {
         try {
@@ -45,7 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const canvas = document.getElementById('animationCanvas');
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
-    const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true });
+    const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
 
