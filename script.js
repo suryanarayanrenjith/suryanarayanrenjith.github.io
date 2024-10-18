@@ -30,6 +30,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
     footerText.style.transition = 'opacity 0.3s ease';
 
+    function isWebGLAvailable() {
+        try {
+            const canvas = document.createElement('canvas');
+            return !!(window.WebGLRenderingContext && (
+                canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
+            ));
+        } catch (e) {
+            return false;
+        }
+    }
+    
+    if (isWebGLAvailable()) {
     const canvas = document.getElementById('animationCanvas');
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
@@ -210,31 +222,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    function applyGyroscopeControl(alpha, beta, gamma) {
-        const maxTiltX = 15;
-        const maxTiltY = 15;
-        
-        const targetPositionX = (gamma / maxTiltY) * 200; 
-        const targetPositionY = -(beta / maxTiltX) * 200;  
-        const targetPositionZ = 1000;
-    
-        gsap.to(camera.position, {
-            x: targetPositionX,
-            y: targetPositionY,
-            z: targetPositionZ,
-            duration: 0.5,       
-            ease: "power2.out"   
-        });
-    }
-
-    window.addEventListener('deviceorientation', (event) => {
-        const alpha = event.alpha;
-        const beta = event.beta;
-        const gamma = event.gamma;
-    
-        applyGyroscopeControl(alpha, beta, gamma);
-    });
-
     function switchCameraPosition() {
         const randomX = (Math.random() - 0.5) * 600;
         const randomY = (Math.random() - 0.5) * 600;
@@ -290,6 +277,17 @@ document.addEventListener("DOMContentLoaded", () => {
             switchCameraPosition();
         });
     });
+    
+
+window.addEventListener('wheel', (event) => {
+    if (event.deltaY > 0) {
+        switchToNextSection('down');
+        switchCameraPosition();
+    } else {
+        switchToNextSection('up');
+        switchCameraPosition();
+    }
+});
 
 document.addEventListener('keydown', (event) => {
     if (event.ctrlKey && event.shiftKey) {
@@ -317,24 +315,6 @@ document.addEventListener('keydown', (event) => {
             default:
                 return;
         }
-    }
-});
-
-const sections = ['about', 'projects', 'resume', 'home'];
-sections.forEach(section => {
-    const sectionElement = document.querySelector(`[data-section="${section}"]`);
-    if (sectionElement) {
-        sectionElement.addEventListener('load', switchCameraPosition);
-    }
-});
-
-window.addEventListener('wheel', (event) => {
-    if (event.deltaY > 0) {
-        switchToNextSection('down');
-        switchCameraPosition();
-    } else {
-        switchToNextSection('up');
-        switchCameraPosition();
     }
 });
 
@@ -389,9 +369,11 @@ function handleGesture() {
         renderer.render(scene, camera);
         requestAnimationFrame(render);
     }
-    
+
     setupMouseControl();  
     switchCameraPosition();
-    render(); 
+    render();
+    
+    }
     
 });
