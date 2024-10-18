@@ -13,6 +13,37 @@
     gtag('config', 'G-0QSEZ9VSPZ');
     </script> 
     <title>Suryanarayan Renjith</title>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const fullText = "Suryanarayan Renjith";
+        const fixedChar = "S";
+        const dynamicText = fullText.slice(1);
+        let index = 0;
+        let isDeleting = false;
+    
+        function type() {
+            const speed = 300;
+    
+            if (isDeleting) {
+                document.title = fixedChar + dynamicText.substring(0, index - 1);
+                index--;
+                if (index === 0) {
+                    isDeleting = false;
+                }
+            } else {
+                document.title = fixedChar + dynamicText.substring(0, index + 1);
+                index++;
+                if (index === dynamicText.length) {
+                    isDeleting = true;
+                }
+            }
+    
+            setTimeout(type, speed);
+        }
+    
+        type();
+});
+    </script>
     <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
