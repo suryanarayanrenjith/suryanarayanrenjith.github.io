@@ -124,6 +124,23 @@ document.addEventListener("DOMContentLoaded", () => {
             targetMouseY = -(event.clientY / window.innerHeight) * 2 + 1;
         });
     }
+
+    function setupGyroscopeControl(camera) {
+        if (window.DeviceOrientationEvent) {
+            window.addEventListener('deviceorientation', (event) => {
+                const beta = event.beta;
+                const gamma = event.gamma;
+    
+                const normalizedX = gamma / 90;
+                const normalizedY = beta / 180;
+    
+                camera.rotation.x += (normalizedY - camera.rotation.x) * 0.05; 
+                camera.rotation.y += (normalizedX - camera.rotation.y) * 0.05;
+            });
+        } else {
+            console.log("DeviceOrientationEvent is not supported on this device.");
+        }
+    }
     
     function applyWarpSpeed() {
         for (let i = 0; i < starVertices.length; i += 3) {
@@ -191,8 +208,24 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     
     function animateStars() {
-        starFieldWhite.rotation.x += 0.0005;
-        starFieldWhite.rotation.y += 0.0005;
+        const time = Date.now() * 0.001;
+    
+        const driftX = Math.sin(time * 0.3) * 0.001;
+        const driftY = Math.cos(time * 0.25) * 0.001;
+    
+        starFieldWhite.rotation.x += 0.0005 + driftX;
+        starFieldWhite.rotation.y += 0.0007 + driftY;
+    
+        starFieldWhite.position.z += Math.sin(time * 0.5) * 0.05;
+    
+        for (let i = 0; i < starFieldWhite.children.length; i++) {
+            const star = starFieldWhite.children[i];
+            const distanceFromCenter = star.position.length();
+    
+            const parallaxFactor = 1 / (distanceFromCenter + 1);
+            star.rotation.x += parallaxFactor * 0.001;
+            star.rotation.y += parallaxFactor * 0.001;
+        }
     }
     
     function applyMouseAcceleration() {
@@ -374,7 +407,8 @@ function handleGesture() {
         requestAnimationFrame(render);
     }
 
-    setupMouseControl();  
+    setupMouseControl();
+    setupGyroscopeControl(camera);
     switchCameraPosition();
     render();
     
