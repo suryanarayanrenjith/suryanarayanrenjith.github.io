@@ -46,19 +46,6 @@
     });
       </script>
       <meta name="copyright" content="">
-      <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            var preloader = document.getElementById('preloader');
-            preloader.style.display = 'flex';
-        });
-
-        window.addEventListener('load', function () {
-            var preloader = document.getElementById('preloader');
-            setTimeout(function () {
-            preloader.style.display = 'none';
-            }, 2000);
-        });
-      </script>
      <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
      <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
      <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png">
@@ -293,9 +280,23 @@ function closeWindow() {
     <canvas id="3dCanvas"></canvas>
     <div class="heading" id="mainheading"></div>
     <script>
-    document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener('DOMContentLoaded', function () {
+    var preloader = document.getElementById('preloader');
+    preloader.style.display = 'flex';
+});
+
+window.addEventListener('load', function () {
+    var preloader = document.getElementById('preloader');
+    
+    setTimeout(function () {
+        preloader.style.display = 'none';
+        animateTextTransformation();
+    }, 2000);
+});
+
+function animateTextTransformation() {
     const headingElement = document.getElementById("mainheading");
-    const finalText = "Suryanarayan Renjith";
+    const finalText = "Suryanarayan Renjith"; 
     const possibleCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
     function generateRandomString(length) {
@@ -306,50 +307,46 @@ function closeWindow() {
         return result;
     }
 
-    function animateTextTransformation() {
-        const initialText = generateRandomString(finalText.length);
-        let currentText = initialText;
-        headingElement.textContent = initialText;
+    const initialText = generateRandomString(finalText.length);
+    let currentText = initialText;
+    headingElement.textContent = initialText;
 
-        const startTime = performance.now();
-        const duration = 2000;
+    const startTime = performance.now();
+    const duration = 2000;
 
-        function updateText() {
-            const elapsed = performance.now() - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            const easedProgress = easeOutCubic(progress);
+    function updateText() {
+        const elapsed = performance.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const easedProgress = easeOutCubic(progress);
 
-            currentText = transformText(initialText, finalText, easedProgress);
-            headingElement.textContent = currentText;
+        currentText = transformText(initialText, finalText, easedProgress);
+        headingElement.textContent = currentText;
 
-            if (progress < 1) {
-                requestAnimationFrame(updateText);
-            } else {
-                headingElement.textContent = finalText;
-            }
+        if (progress < 1) {
+            requestAnimationFrame(updateText);
+        } else {
+            headingElement.textContent = finalText;
         }
-
-        function easeOutCubic(t) {
-            return (--t) * t * t + 1;
-        }
-
-        function transformText(initialText, finalText, progress) {
-            let newText = "";
-            for (let i = 0; i < finalText.length; i++) {
-                if (Math.random() < progress) {
-                    newText += finalText.charAt(i);
-                } else {
-                    newText += initialText.charAt(i);
-                }
-            }
-            return newText;
-        }
-
-        requestAnimationFrame(updateText);
     }
 
-    animateTextTransformation();
-});
+    function easeOutCubic(t) {
+        return (--t) * t * t + 1;
+    }
+
+    function transformText(initialText, finalText, progress) {
+        let newText = "";
+        for (let i = 0; i < finalText.length; i++) {
+            if (Math.random() < progress) {
+                newText += finalText.charAt(i);
+            } else {
+                newText += initialText.charAt(i);
+            }
+        }
+        return newText;
+    }
+
+    requestAnimationFrame(updateText);
+}
     </script>
     <div id="clickPrompt">
     <div class="prompt">Click on my profile pic to view and collapse the links!</div>
