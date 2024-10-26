@@ -13,6 +13,7 @@
     gtag('config', 'G-0QSEZ9VSPZ');
     </script> 
     <title>Suryanarayan Renjith</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script>
     document.addEventListener("DOMContentLoaded", function() {
         const fullText = "Suryanarayan Renjith";
@@ -59,6 +60,14 @@
                 <li><a href="#" data-section="about">About</a></li>
                 <li><a href="#" data-section="projects">Projects</a></li>
                 <li><a href="#" data-section="resume">Resume</a></li>
+                <li class="music-button-container" id="buttonhide">
+                    <button class="music-button" id="unmuteButton" aria-label="Toggle Music">
+                        <i class="fas fa-volume-mute"></i>
+                    </button>
+                    <button class="music-button hidden" id="muteButton" aria-label="Toggle Music">
+                        <i class="fas fa-volume-up"></i>
+                    </button>
+                </li>
             </ul>
         </nav>
     </header>
@@ -67,9 +76,7 @@
 
     <div id="keyboard-popups">
     <button class="help-button" id="helpButton">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" width="24" height="24">
-                <path fill="currentColor" d="M64 112c-8.8 0-16 7.2-16 16v256c0 8.8 7.2 16 16 16h448c8.8 0 16-7.2 16-16V128c0-8.8-7.2-16-16-16H64zm0 16h448c17.7 0 32 14.3 32 32v224c0 17.7-14.3 32-32 32H64c-17.7 0-32-14.3-32-32V160c0-17.7 14.3-32 32-32zm112 192h192c8.8 0 16 7.2 16 16v16c0 8.8-7.2 16-16 16H176c-8.8 0-16-7.2-16-16v-16c0-8.8 7.2-16 16-16zm-72-72c0-8.8 7.2-16 16-16h16c8.8 0 16 7.2 16 16v16c0 8.8-7.2 16-16 16H120c-8.8 0-16-7.2-16-16v-16zm16-96h16c8.8 0 16 7.2 16 16v16c0 8.8-7.2 16-16 16H120c-8.8 0-16-7.2-16-16v-16zm64 96c0-8.8 7.2-16 16-16h16c8.8 0 16 7.2 16 16v16c0 8.8-7.2 16-16 16H200c-8.8 0-16-7.2-16-16v-16zm16-96h16c8.8 0 16 7.2 16 16v16c0 8.8-7.2 16-16 16H200c-8.8 0-16-7.2-16-16v-16zm64 96c0-8.8 7.2-16 16-16h16c8.8 0 16 7.2 16 16v16c0 8.8-7.2 16-16 16H280c-8.8 0-16-7.2-16-16v-16zm16-96h16c8.8 0 16 7.2 16 16v16c0 8.8-7.2 16-16 16H280c-8.8 0-16-7.2-16-16v-16zm64 96c0-8.8 7.2-16 16-16h16c8.8 0 16 7.2 16 16v16c0 8.8-7.2 16-16 16H360c-8.8 0-16-7.2-16-16v-16zm16-96h16c8.8 0 16 7.2 16 16v16c0 8.8-7.2 16-16 16H360c-8.8 0-16-7.2-16-16v-16zm64 96c0-8.8 7.2-16 16-16h16c8.8 0 16 7.2 16 16v16c0 8.8-7.2 16-16 16H440c-8.8 0-16-7.2-16-16v-16zm16-96h16c8.8 0 16 7.2 16 16v16c0 8.8-7.2 16-16 16H440c-8.8 0-16-7.2-16-16v-16z"/>
-              </svg>
+        <i style='font-size: smaller;'class="fa-regular fa-keyboard"></i>
     </button>
 
     <div class="modal-overlay" id="modalOverlay"></div>
@@ -523,8 +530,40 @@ updateProgressBar('home');
     var container = document.querySelector('.container');
     var header = document.querySelector('header');
     var helpButton = document.querySelector('.help-button');
+    var uButton = document.getElementById('unmuteButton');
+    var mButton = document.getElementById('muteButton');
+    var buttonhide = document.getElementById('buttonhide');
+    var menubar = document.querySelector('.menu-bar');
     var modalOverlay = document.querySelector('.modal-overlay');
     var keydownEventListener;
+
+    uButton.classList.add('hidden');
+    mButton.classList.add('hidden');
+
+    function autoCollapse() {
+        buttonhide.style.display = 'none';
+        menubar.style.marginRight = '-20px';
+    }
+
+    function expandHeader() {
+        buttonhide.style.display = 'block';
+        menubar.style.marginRight = '0px';
+    }
+
+    function isMobileDevice() {
+        if (navigator.userAgentData) {
+            return navigator.userAgentData.mobile;
+        }
+        
+        const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|Windows Phone|Opera Mini|IEMobile|Mobile/i;
+        return mobileRegex.test(navigator.userAgent);
+    }
+
+    if (!isMobileDevice()) {
+    setTimeout(autoCollapse, 20000);
+    header.addEventListener('mouseenter', expandHeader);
+    header.addEventListener('mouseleave', autoCollapse);
+    }
 
     function preloadAudio() {
         audio.preload = 'auto';
@@ -543,9 +582,12 @@ updateProgressBar('home');
     function playMusic() {
         audio.play().then(() => {
             hidePopup();
+            toggleMusicButtons();
         }).catch((error) => {
             console.error('Playback issue:', error);
             alert('Playback issue: Autoplay is not supported on this browser.');
+            header.removeEventListener('mouseenter', expandHeader);
+            autoCollapse();
             hidePopup();
         });
     }
@@ -557,11 +599,26 @@ updateProgressBar('home');
         helpButton.classList.remove('hidden'); 
         modalOverlay.classList.remove('hidden');
         document.removeEventListener('keydown', keydownEventListener);
+        uButton.classList.remove('hidden');
         if (!animationsTriggered) {
             startAnimations();
             animationsTriggered = true;
         }
     }
+
+    function toggleMusicButtons() {
+        uButton.classList.toggle('hidden');
+        mButton.classList.toggle('hidden');
+    }
+
+    unmuteButton.addEventListener('click', function() {
+        playMusic();
+    });
+
+    muteButton.addEventListener('click', function() {
+        audio.pause();
+        toggleMusicButtons();
+    });
 
     document.getElementById('enable-music').addEventListener('click', function() {
         playMusic();
