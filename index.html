@@ -15,6 +15,106 @@
     <title>Suryanarayan Renjith</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <script>
+    document.addEventListener('DOMContentLoaded', function () {
+    const userAgent = navigator.userAgent;
+    const blockedKey = 'blockedUser';
+    const verifiedKey = 'verifiedUser';
+    const fingerprintKey = 'browserFingerprint';
+    const verificationAttemptsKey = 'verificationAttempts';
+
+    const botPatterns = [
+        /bot/i, /crawl/i, /spider/i, /curl/i, /wget/i, /python/i, /scrapy/i,
+        /httpclient/i, /java/i, /photon/i, /nikto/i, /libwww/i, /scan/i,
+        /sqlmap/i, /masscan/i, /nmap/i, /zmeu/i, /datanyze/i, /pingdom/i
+    ];
+
+    if (localStorage.getItem(blockedKey)) {
+        window.location.href = '/404';
+        return;
+    }
+
+    if (localStorage.getItem(verifiedKey)) {
+        return;
+    }
+
+    function fingerprintBrowser() {
+        return `${navigator.userAgent}-${screen.width}-${screen.height}-${navigator.language}-${window.devicePixelRatio}`;
+    }
+
+    function generateCaptchaString(length) {
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let result = '';
+        for (let i = 0; i < length; i++) {
+            result += characters.charAt(Math.floor(Math.random() * characters.length));
+        }
+        return result;
+    }
+
+    function blockUser() {
+        localStorage.setItem(blockedKey, 'true');
+        window.location.href = '/404';
+    }
+
+    function showCaptcha() {
+        const captchaString = generateCaptchaString(6);
+        const userInput = prompt(`Please enter the following code to verify you're human: ${captchaString}`);
+        
+        if (userInput === captchaString) {
+            alert("Verification successful.");
+            localStorage.setItem(verifiedKey, 'true');
+        } else {
+            alert("Verification failed.");
+            blockUser();
+        }
+    }
+
+    const isBot = botPatterns.some(pattern => pattern.test(userAgent));
+    if (isBot) {
+        showCaptcha();
+        return;
+    }
+
+    const browserFingerprint = fingerprintBrowser();
+    const storedFingerprint = localStorage.getItem(fingerprintKey);
+
+    if (!storedFingerprint) {
+        localStorage.setItem(fingerprintKey, browserFingerprint);
+        localStorage.setItem(verificationAttemptsKey, '0');
+    } else if (storedFingerprint !== browserFingerprint) {
+        const attempts = parseInt(localStorage.getItem(verificationAttemptsKey), 10);
+
+        if (attempts >= 2) {
+            showCaptcha();
+        } else {
+            localStorage.setItem(verificationAttemptsKey, (attempts + 1).toString());
+        }
+        return;
+    }
+
+    function monitorUserBehavior() {
+        let mouseMoved = false;
+        let interactionDetected = false;
+
+        document.addEventListener('mousemove', function () {
+            mouseMoved = true;
+            interactionDetected = true;
+        });
+
+        document.addEventListener('keydown', function () {
+            interactionDetected = true;
+        });
+
+        setTimeout(function () {
+            if (!mouseMoved || !interactionDetected) {
+                showCaptcha();
+            }
+        }, 7000);
+    }
+
+    monitorUserBehavior();
+});
+      </script>
+    <script>
     document.addEventListener("DOMContentLoaded", function() {
         const fullText = "Suryanarayan Renjith";
         const fixedChar = "S";
