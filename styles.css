@@ -236,6 +236,7 @@ footer {
 
 header {
     position: absolute;
+    width: auto;
     top: 20px;
     left: 50%;
     transform: translateX(-50%);
@@ -262,6 +263,7 @@ header {
 
 .menu-bar.animate-menu-bar {
     opacity: 1;
+    transition: cubic-bezier(1, 0.05, 0.5, 0.1) 0.5s;
     transform: translateY(0);
 }
 
@@ -326,6 +328,32 @@ header {
     background-color: #ccc;
 }
 
+.music-button-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.music-button {
+    background-color: transparent;
+    border: none;
+    color: white;
+    font-size: 1.1em;
+    cursor: pointer;
+    outline: none;
+    transition: transform 0.2s ease, color 0.3s ease;
+}
+
+.music-button:hover {
+    transform: scale(1.1);
+    color: #ccc;
+}
+
+.music-button.hidden {
+    display: none !important;
+}
+
 @media (max-width: 768px) {
     header {
         border: 1px solid #ccc;
@@ -338,6 +366,13 @@ header {
 
     .menu-bar ul li a {
         font-size: small !important;
+    }
+
+    .music-button {
+        width: 10px;
+        height: 10px;
+        margin-right: 5px;
+        font-size: 10px;
     }
 }
 
