@@ -160,11 +160,11 @@ document.addEventListener("DOMContentLoaded", () => {
             const userInput = prompt(`Please enter the following code to verify you're human: ${captchaString}`);
             
             if (userInput === captchaString) {
-                alert("Verification successful. You may proceed.");
+                alert("Verified.");
                 localStorage.setItem(verifiedKey, 'true');
                 clearBotFlag();
             } else {
-                alert("Verification failed. You will be blocked.");
+                alert("Verification failed.");
                 hideForBot();
                 window.location.href = '/404';
             }
