@@ -127,6 +127,8 @@ const tooltip = document.getElementById('tooltip');
 const clickPrompt = document.getElementById('clickPrompt');
 const linksContainer = document.querySelector('.profile-container');
 
+const verifiedKey = 'verifiedUser';
+
 function isBotOrCurl(userAgentString) {
     return /curl|bot|spider|crawler|wget|Mediapartners-Google/i.test(userAgentString);
 }
@@ -157,18 +159,22 @@ function hideForBot() {
     }
 }
 
-if (isBotOrCurl(navigator.userAgent)) {
-    setBotFlag();
-    hideForBot();
-    console.log("Bot Detected!");
-}
-
-window.onload = function() {
-    if (isBotDetected()) {
+if (localStorage.getItem(verifiedKey)) {
+    console.log("User already verified. Skipping all checks.");
+} else {
+    if (isBotOrCurl(navigator.userAgent)) {
+        setBotFlag();
         hideForBot();
-        console.log("User Banned!");
+        console.log("Bot Detected!");
     }
-};
+
+    window.onload = function() {
+        if (isBotDetected()) {
+            hideForBot();
+            console.log("User Banned!");
+        }
+    };
+}
 
 profilePic.addEventListener('click', function() {
     if (!isBotDetected()) {
