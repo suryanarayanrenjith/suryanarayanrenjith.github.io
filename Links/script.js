@@ -121,88 +121,109 @@ document.addEventListener("DOMContentLoaded", () => {
 
         drawGrid();
 
-const profilePic = document.getElementById('profilePic');
-const socialLinks = document.getElementById('socialLinks');
-const tooltip = document.getElementById('tooltip');
-const clickPrompt = document.getElementById('clickPrompt');
-const linksContainer = document.querySelector('.profile-container');
-
-const verifiedKey = 'verifiedUser';
-
-function isBotOrCurl(userAgentString) {
-    return /curl|bot|spider|crawler|wget|Mediapartners-Google/i.test(userAgentString);
-}
-
-function setBotFlag() {
-    localStorage.setItem("isBot", "true");
-}
-
-function isBotDetected() {
-    return localStorage.getItem("isBot") === "true";
-}
-
-function hideForBot() {
-    const linksHeading = document.getElementById('links');
-    const pfp = document.getElementById('profilePic');
-    const socialLinks = document.getElementById('socialLinks');
-
-    if (linksHeading) {
-        linksHeading.style.display = 'none';
-    }
-
-    if (pfp) {
-        pfp.style.display = 'none';
-    }
-
-    if (socialLinks) {
-        socialLinks.style.display = 'none';
-    }
-}
-
-if (localStorage.getItem(verifiedKey)) {
-    console.log("User Verified.");
-} else {
-    if (isBotOrCurl(navigator.userAgent)) {
-        setBotFlag();
-        hideForBot();
-        console.log("Bot Detected!");
-    }
-
-    window.onload = function() {
-        if (isBotDetected()) {
-            hideForBot();
-            console.log("User Banned!");
+        const profilePic = document.getElementById('profilePic');
+        const socialLinks = document.getElementById('socialLinks');
+        const tooltip = document.getElementById('tooltip');
+        const clickPrompt = document.getElementById('clickPrompt');
+        const linksContainer = document.querySelector('.profile-container');
+    
+        const verifiedKey = 'verifiedUser';
+        const isBotKey = 'isBot';
+    
+        function isBotOrCurl(userAgentString) {
+            return /curl|bot|spider|crawler|wget|Mediapartners-Google/i.test(userAgentString);
         }
-    };
-}
-
-profilePic.addEventListener('click', function() {
-    if (!isBotDetected()) {
-        if (socialLinks.style.display === 'flex') {
-            socialLinks.style.display = 'none';
-            document.querySelector('.profile-container').classList.add('show-tooltip');
+    
+        function setBotFlag() {
+            localStorage.setItem(isBotKey, 'true');
+        }
+    
+        function clearBotFlag() {
+            localStorage.removeItem(isBotKey);
+        }
+    
+        function isBotDetected() {
+            return localStorage.getItem(isBotKey) === "true";
+        }
+    
+        function hideForBot() {
+            const elementsToHide = [document.getElementById('links'), profilePic, socialLinks];
+            elementsToHide.forEach(element => {
+                if (element) {
+                    element.style.display = 'none';
+                }
+            });
+        }
+    
+        function showCaptcha() {
+            const captchaString = generateCaptchaString(6);
+            const userInput = prompt(`Please enter the following code to verify you're human: ${captchaString}`);
+            
+            if (userInput === captchaString) {
+                alert("Verification successful. You may proceed.");
+                localStorage.setItem(verifiedKey, 'true');
+                clearBotFlag();
+            } else {
+                alert("Verification failed. You will be blocked.");
+                hideForBot();
+                window.location.href = '/404';
+            }
+        }
+    
+        function generateCaptchaString(length) {
+            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                result += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+            return result;
+        }
+    
+        if (localStorage.getItem(verifiedKey)) {
+            console.log("User already verified. Skipping all checks.");
         } else {
-            socialLinks.style.display = 'flex';
-            document.querySelector('.profile-container').classList.remove('show-tooltip');
+            if (isBotOrCurl(navigator.userAgent)) {
+                setBotFlag();
+                showCaptcha();
+            }
+    
+            window.onload = function() {
+                if (isBotDetected()) {
+                    hideForBot();
+                    console.log("User Banned!");
+                }
+            };
         }
-        clickPrompt.style.display = 'none';
-        localStorage.setItem('promptHidden', 'true');
-    }
-});
-
-if (localStorage.getItem('promptHidden') === 'true') {
-    clickPrompt.style.display = 'none';
-    }
-
-profilePic.addEventListener('mouseenter', function() {
-    if (socialLinks.style.display !== 'flex' && !isBotDetected()) {
-        tooltip.style.display = 'block';
-    }
-});
-
-profilePic.addEventListener('mouseleave', function() {
-    tooltip.style.display = 'none';
-});
+    
+        if (profilePic && socialLinks && clickPrompt && linksContainer) {
+            profilePic.addEventListener('click', function () {
+                if (!isBotDetected()) {
+                    if (window.getComputedStyle(socialLinks).display === 'flex') {
+                        socialLinks.style.display = 'none';
+                        linksContainer.classList.add('show-tooltip');
+                    } else {
+                        socialLinks.style.display = 'flex';
+                        linksContainer.classList.remove('show-tooltip');
+                    }
+                    clickPrompt.style.display = 'none';
+                    localStorage.setItem('promptHidden', 'true');
+                }
+            });
+    
+            profilePic.addEventListener('mouseenter', function() {
+                if (window.getComputedStyle(socialLinks).display !== 'flex' && !isBotDetected()) {
+                    tooltip.style.display = 'block';
+                }
+            });
+    
+            profilePic.addEventListener('mouseleave', function() {
+                tooltip.style.display = 'none';
+            });
+        }
+    
+        if (localStorage.getItem('promptHidden') === 'true' && clickPrompt) {
+            clickPrompt.style.display = 'none';
+        }
 
 window.addEventListener('resize', () => {
     canvas.width = window.innerWidth;
