@@ -60,7 +60,7 @@
         const userInput = prompt(`Please enter the following code to verify you're human: ${captchaString}`);
         
         if (userInput === captchaString) {
-            alert("Verification successful.");
+            alert("Verified.");
             localStorage.setItem(verifiedKey, 'true');
         } else {
             alert("Verification failed.");
