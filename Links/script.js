@@ -160,7 +160,7 @@ function hideForBot() {
 }
 
 if (localStorage.getItem(verifiedKey)) {
-    console.log("User already verified. Skipping all checks.");
+    console.log("User Verified.");
 } else {
     if (isBotOrCurl(navigator.userAgent)) {
         setBotFlag();
