@@ -170,20 +170,24 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("Verified.");
         cBF();
     } else {
+        let suspicious = false;
+
         if (rLC()) {
             return;
         }
 
         if (isBUA(uA)) {
+            suspicious = true;
             sBF();
         }
 
         if (!vF()) {
             console.log("Fingerprint mismatch.");
+            suspicious = true;
             sBF();
         }
 
-        if (isB()) {
+        if (suspicious && isB()) {
             sC();
         }
     }
