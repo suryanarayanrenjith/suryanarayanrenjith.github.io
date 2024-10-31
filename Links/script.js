@@ -156,19 +156,35 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     
         function showCaptcha() {
-            const captchaString = generateCaptchaString(6);
-            const userInput = prompt(`Please enter the following code to verify you're human: ${captchaString}`);
-            
-            if (userInput === captchaString) {
+            let captchaString = generateCaptchaString(6);
+            let regenerateAttempts = 0;
+            let verificationAttempts = 0;
+
+                while (verificationAttempts < 3) {
+                    const userInput = prompt(
+                    `Please enter the following code to verify you're human: ${captchaString}\n` +
+                    `Or type 'R' to regenerate the code (${3 - regenerateAttempts} regenerate attempts left)`
+                );
+
+                if (userInput === captchaString) {
                 alert("Verified.");
                 localStorage.setItem(verifiedKey, 'true');
                 clearBotFlag();
-            } else {
-                alert("Verification failed.");
-                hideForBot();
-                window.location.href = '/404';
+                return;
+                } else if (userInput && userInput.toUpperCase() === 'R' && regenerateAttempts < 3) {
+                regenerateAttempts += 1;
+                captchaString = generateCaptchaString(6);
+                alert(`New code: ${captchaString}`);
+                } else {
+                verificationAttempts += 1;
+                alert(`Incorrect attempt ${verificationAttempts}/3.`);
+                }
             }
-        }
+
+        alert("Verification failed.");
+        hideForBot();
+        window.location.href = '/404';
+    }
     
         function generateCaptchaString(length) {
             const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
