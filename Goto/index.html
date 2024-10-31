@@ -33,7 +33,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const bK = 'isBot';
     const fK = 'fingerprint';
     const aK = 'attemptCount';
-    const rA = 'regenerateAttempts';
 
     function d(u) {
         return atob(u);
@@ -84,42 +83,28 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function sC() {
-        let cS = gC(6);
-        let rA = parseInt(localStorage.getItem(rA)) || 0;
-        let aC = parseInt(localStorage.getItem(aK)) || 0;
-
-        while (aC < 3) {
-            const uI = prompt(`Enter code: ${cS}\nOr type 'R' to regenerate (${3 - rA} attempts left)`);
-
-            if (uI === cS) {
-                alert("Verified.");
-                localStorage.setItem(vK, 'true');
-                cB();
-                return;
-            } else if (uI && uI.toUpperCase() === 'R' && rA < 3) {
-                rA += 1;
-                localStorage.setItem(rA, rA);
-                cS = gC(6);
-                alert(`New Captcha: ${cS}`);
-            } else {
-                aC += 1;
-                localStorage.setItem(aK, aC);
-                alert(`Incorrect attempt ${aC}/3.`);
-            }
+        const cS = gC(6);
+        const uI = prompt(Please enter the following code: ${cS});
+        
+        if (uI === cS) {
+            alert("Verified.");
+            localStorage.setItem(vK, 'true');
+            cB();
+        } else {
+            alert("Verification failed.");
+            window.location.href = '/404';
         }
-        alert("Verification failed.");
-        window.location.href = '/404';
     }
 
     function gF() {
-        const sD = `${screen.width}x${screen.height}-${screen.colorDepth}`;
+        const sD = ${screen.width}x${screen.height}-${screen.colorDepth};
         const t = Intl.DateTimeFormat().resolvedOptions().timeZone;
         const l = navigator.language;
         const p = navigator.platform;
         const u = navigator.userAgent;
         const dP = window.devicePixelRatio;
 
-        const fD = `${sD}-${t}-${l}-${p}-${dP}-${u}`;
+        const fD = ${sD}-${t}-${l}-${p}-${dP}-${u};
         return btoa(fD);
     }
 
