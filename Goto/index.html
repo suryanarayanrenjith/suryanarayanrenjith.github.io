@@ -27,49 +27,51 @@
           }, 1000);
         }, 10000);
       </script>
-    <script>
+   <script>
 document.addEventListener("DOMContentLoaded", () => {
+    const uA = navigator.userAgent;
+    const bK = 'blockedUser';
     const vK = 'verifiedUser';
-    const bK = 'isBot';
-    const fK = 'fingerprint';
-    const aK = 'attemptCount';
+    const fK = 'browserFingerprint';
+    const vAKey = 'verificationAttempts';
+    const rAKey = 'regenerateAttempts';
 
-    function d(u) {
+    function dB64(u) {
         return atob(u);
     }
 
-    function bC(u) {
+    function isBUA(u) {
         return /curl|bot|spider|crawler|wget|Mediapartners-Google/i.test(u);
     }
 
-    function sB() {
+    function sBF() {
         localStorage.setItem(bK, 'true');
     }
 
-    function cB() {
+    function cBF() {
         localStorage.removeItem(bK);
     }
 
-    function bD() {
+    function isB() {
         return localStorage.getItem(bK) === "true";
     }
 
-    function rL() {
-        const lA = JSON.parse(localStorage.getItem("lA")) || [];
+    function rLC() {
+        const aL = JSON.parse(localStorage.getItem("attemptLog")) || [];
         const n = Date.now();
-        const tA = 5;
+        const mA = 5;
         const tW = 10000;
 
-        const rA = lA.filter(a => n - a < tW);
-        localStorage.setItem("lA", JSON.stringify(rA));
+        const rA = aL.filter(a => n - a < tW);
+        localStorage.setItem("attemptLog", JSON.stringify(rA));
 
-        if (rA.length >= tA) {
+        if (rA.length >= mA) {
             window.location.href = '/404';
             return true;
         }
 
         rA.push(n);
-        localStorage.setItem("lA", JSON.stringify(rA));
+        localStorage.setItem("attemptLog", JSON.stringify(rA));
         return false;
     }
 
@@ -83,63 +85,80 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function sC() {
-        const cS = gC(6);
-        const uI = prompt(Please enter the following code: ${cS});
-        
-        if (uI === cS) {
-            alert("Verified.");
-            localStorage.setItem(vK, 'true');
-            cB();
-        } else {
-            alert("Verification failed.");
-            window.location.href = '/404';
+        let cS = gC(6);
+        let rA = parseInt(localStorage.getItem(rAKey)) || 0;
+        let vA = parseInt(localStorage.getItem(vAKey)) || 0;
+
+        while (vA < 3) {
+            const uI = prompt(`Enter code: ${cS}\nOr type 'R' to regenerate (${3 - rA} attempts left)`);
+
+            if (uI === cS) {
+                alert("Verified.");
+                localStorage.setItem(vK, 'true');
+                cBF();
+                return;
+            } else if (uI && uI.toUpperCase() === 'R' && rA < 3) {
+                rA += 1;
+                localStorage.setItem(rAKey, rA);
+                cS = gC(6);
+                alert(`New Captcha: ${cS}`);
+            } else {
+                vA += 1;
+                localStorage.setItem(vAKey, vA);
+                alert(`Incorrect attempt ${vA}/3.`);
+            }
         }
+        alert("Verification failed.");
+        window.location.href = '/404';
     }
 
     function gF() {
-        const sD = ${screen.width}x${screen.height}-${screen.colorDepth};
-        const t = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const sD = `${screen.width}x${screen.height}-${screen.colorDepth}`;
+        const tZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
         const l = navigator.language;
         const p = navigator.platform;
-        const u = navigator.userAgent;
         const dP = window.devicePixelRatio;
 
-        const fD = ${sD}-${t}-${l}-${p}-${dP}-${u};
+        const fD = `${sD}-${tZ}-${l}-${p}-${dP}-${uA}`;
         return btoa(fD);
     }
 
     function vF() {
-        const sF = localStorage.getItem(fK);
-        const cF = gF();
+        try {
+            const sF = localStorage.getItem(fK);
+            const cF = gF();
 
-        if (!sF) {
-            localStorage.setItem(fK, cF);
-        } else if (sF !== cF) {
-            return false;
+            if (!sF) {
+                localStorage.setItem(fK, cF);
+            } else if (sF !== cF) {
+                return false;
+            }
+            return true;
+        } catch (error) {
+            console.error("Error generating fingerprint:", error);
+            return true;
         }
-
-        return true;
     }
 
     function rP() {
         const p = window.location.pathname;
         const qP = new URLSearchParams(window.location.search);
-        const i = qP.get('id');
+        const id = qP.get('id');
         const eP = '/Goto/';
 
-        const r = {
-	'mail': 'bWFpbHRvOnN1cnlhbmFyYXlhbnJlbmppdGhAZ21haWwuY29t',
-    	'github': 'aHR0cHM6Ly9naXRodWIuY29tL3N1cnlhbmFyYXlhbnJlbmppdGg=',
-    	'twitter': 'aHR0cHM6Ly94LmNvbS9fc3VyeWFuYXJheWFucg==',
-	'linkedin': 'aHR0cHM6Ly93d3cubGlua2VkaW4uY29tL2luL3N1cnlhbmFyYXlhbi1yZW5qaXRo',
-	'space-attack': 'aHR0cHM6Ly9zcGFjZS1hdHRhY2suaXRjaC5pbw==',
-	'resume': 'aHR0cHM6Ly9kcml2ZS5nb29nbGUuY29tL2ZpbGUvZC8xbFBiV0pVVmhES2dQcmliNnluZzlVX0d1bVViUTlpeW0vdmlldz91c3A9c2hhcmluZw==',
-	'vexylon': 'aHR0cHM6Ly92ZXh5bG9uaW5ub3ZhdGlvbnMuZG9yaWsuaW8v'
+        const rL = {
+		'mail': 'bWFpbHRvOnN1cnlhbmFyYXlhbnJlbmppdGhAZ21haWwuY29t',
+		'github': 'aHR0cHM6Ly9naXRodWIuY29tL3N1cnlhbmFyYXlhbnJlbmppdGg=',
+		'twitter': 'aHR0cHM6Ly94LmNvbS9fc3VyeWFuYXJheWFucg==',
+		'linkedin': 'aHR0cHM6Ly93d3cubGlua2VkaW4uY29tL2luL3N1cnlhbmFyYXlhbi1yZW5qaXRo',
+		'space-attack': 'aHR0cHM6Ly9zcGFjZS1hdHRhY2suaXRjaC5pbw==',
+		'resume': 'aHR0cHM6Ly9kcml2ZS5nb29nbGUuY29tL2ZpbGUvZC8xbFBiV0pVVmhES2dQcmliNnluZzlVX0d1bVViUTlpeW0vdmlldz91c3A9c2hhcmluZw==',
+		'vexylon': 'aHR0cHM6Ly92ZXh5bG9uaW5ub3ZhdGlvbnMuZG9yaWsuaW8v'
         };
 
         setTimeout(function() {
-            if (p.startsWith(eP) && i && r[i]) {
-                var u = d(r[i]);
+            if (p.startsWith(eP) && id && rL[id]) {
+                const u = dB64(rL[id]);
                 window.location.href = u;
             } else {
                 window.location.href = '/404';
@@ -149,28 +168,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (localStorage.getItem(vK)) {
         console.log("Verified.");
-        cB();
+        cBF();
     } else {
-        if (rL()) {
+        if (rLC()) {
             return;
         }
 
-        if (bC(navigator.userAgent)) {
-            sB();
+        if (isBUA(uA)) {
+            sBF();
         }
 
         if (!vF()) {
             console.log("Fingerprint mismatch.");
-            sB();
+            sBF();
         }
 
-        if (bD()) {
+        if (isB()) {
             sC();
         }
     }
 
     window.onload = function() {
-        if (bD()) {
+        if (isB()) {
             window.location.href = '/404';
         } else {
             rP();
