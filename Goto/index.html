@@ -33,6 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const bK = 'isBot';
     const fK = 'fingerprint';
     const aK = 'attemptCount';
+    const rA = 'regenerateAttempts';
 
     function d(u) {
         return atob(u);
@@ -83,17 +84,31 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function sC() {
-        const cS = gC(6);
-        const uI = prompt(`Please enter the following code: ${cS}`);
-        
-        if (uI === cS) {
-            alert("Verified.");
-            localStorage.setItem(vK, 'true');
-            cB();
-        } else {
-            alert("Verification failed.");
-            window.location.href = '/404';
+        let cS = gC(6);
+        let rA = parseInt(localStorage.getItem(rA)) || 0;
+        let aC = parseInt(localStorage.getItem(aK)) || 0;
+
+        while (aC < 3) {
+            const uI = prompt(`Enter code: ${cS}\nOr type 'R' to regenerate (${3 - rA} attempts left)`);
+
+            if (uI === cS) {
+                alert("Verified.");
+                localStorage.setItem(vK, 'true');
+                cB();
+                return;
+            } else if (uI && uI.toUpperCase() === 'R' && rA < 3) {
+                rA += 1;
+                localStorage.setItem(rA, rA);
+                cS = gC(6);
+                alert(`New Captcha: ${cS}`);
+            } else {
+                aC += 1;
+                localStorage.setItem(aK, aC);
+                alert(`Incorrect attempt ${aC}/3.`);
+            }
         }
+        alert("Verification failed.");
+        window.location.href = '/404';
     }
 
     function gF() {
@@ -129,8 +144,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const r = {
 	'mail': 'bWFpbHRvOnN1cnlhbmFyYXlhbnJlbmppdGhAZ21haWwuY29t',
-        'github': 'aHR0cHM6Ly9naXRodWIuY29tL3N1cnlhbmFyYXlhbnJlbmppdGg=',
-        'twitter': 'aHR0cHM6Ly94LmNvbS9fc3VyeWFuYXJheWFucg==',
+    	'github': 'aHR0cHM6Ly9naXRodWIuY29tL3N1cnlhbmFyYXlhbnJlbmppdGg=',
+    	'twitter': 'aHR0cHM6Ly94LmNvbS9fc3VyeWFuYXJheWFucg==',
 	'linkedin': 'aHR0cHM6Ly93d3cubGlua2VkaW4uY29tL2luL3N1cnlhbmFyYXlhbi1yZW5qaXRo',
 	'space-attack': 'aHR0cHM6Ly9zcGFjZS1hdHRhY2suaXRjaC5pbw==',
 	'resume': 'aHR0cHM6Ly9kcml2ZS5nb29nbGUuY29tL2ZpbGUvZC8xbFBiV0pVVmhES2dQcmliNnluZzlVX0d1bVViUTlpeW0vdmlldz91c3A9c2hhcmluZw==',
