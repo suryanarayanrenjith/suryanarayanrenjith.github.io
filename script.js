@@ -1,5 +1,4 @@
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.168.0/three.module.js';
-import DeviceOrientationControls from 'https://cdn.jsdelivr.net/npm/device-orientation-controls@1.1.0/+esm';
 import { gsap } from 'https://cdn.jsdelivr.net/npm/gsap@3.10.4/index.js';
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -125,25 +124,6 @@ document.addEventListener("DOMContentLoaded", () => {
             targetMouseY = -(event.clientY / window.innerHeight) * 2 + 1;
         });
     }
-
-    let controls;
-
-    function setupGyroscopeControl(camera) {
-        if (window.DeviceOrientationEvent) {
-            controls = new DeviceOrientationControls(camera);
-            window.addEventListener('deviceorientation', (event) => {
-                if (event.alpha !== null) {
-                    controls.update();
-                } else {
-                    console.log("Device orientation data is not available on this device.");
-                }
-            });
-        } else {
-            console.log("DeviceOrientationEvent is not supported on this device.");
-        }
-    }
-
-    setupGyroscopeControl(camera);
     
     function applyWarpSpeed() {
         for (let i = 0; i < starVertices.length; i += 3) {
@@ -398,9 +378,6 @@ function handleGesture() {
 }
 
     function render() {
-        if (controls) {
-        controls.update();
-        }
         applyWarpSpeed();
         applyMouseAcceleration();        
         applyDynamicStarScaling(); 
