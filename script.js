@@ -1,4 +1,5 @@
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.168.0/three.module.js';
+import DeviceOrientationControls from 'https://cdn.jsdelivr.net/npm/device-orientation-controls@1.1.0/+esm';
 import { gsap } from 'https://cdn.jsdelivr.net/npm/gsap@3.10.4/index.js';
 
 document.addEventListener("DOMContentLoaded", () => {
