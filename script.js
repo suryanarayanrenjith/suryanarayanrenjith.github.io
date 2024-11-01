@@ -125,22 +125,24 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    let controls;
+
     function setupGyroscopeControl(camera) {
         if (window.DeviceOrientationEvent) {
+            controls = new DeviceOrientationControls(camera);
             window.addEventListener('deviceorientation', (event) => {
-                const beta = event.beta;
-                const gamma = event.gamma;
-    
-                const normalizedX = gamma / 90;
-                const normalizedY = beta / 180;
-    
-                camera.rotation.x += (normalizedY - camera.rotation.x) * 0.05; 
-                camera.rotation.y += (normalizedX - camera.rotation.y) * 0.05;
+                if (event.alpha !== null) {
+                    controls.update();
+                } else {
+                    console.log("Device orientation data is not available on this device.");
+                }
             });
         } else {
             console.log("DeviceOrientationEvent is not supported on this device.");
         }
     }
+
+    setupGyroscopeControl(camera);
     
     function applyWarpSpeed() {
         for (let i = 0; i < starVertices.length; i += 3) {
@@ -395,6 +397,9 @@ function handleGesture() {
 }
 
     function render() {
+        if (controls) {
+        controls.update();
+        }
         applyWarpSpeed();
         applyMouseAcceleration();        
         applyDynamicStarScaling(); 
@@ -408,7 +413,6 @@ function handleGesture() {
     }
 
     setupMouseControl();
-    setupGyroscopeControl(camera);
     switchCameraPosition();
     render();
     
