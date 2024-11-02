@@ -6,6 +6,10 @@ html {
     scrollbar-width: none;
 }
 
+body {
+    cursor: none;
+}
+
 body, html {
     margin: 0;
     padding: 0;
@@ -18,6 +22,49 @@ body, html {
     font-family: 'Arial', sans-serif;
     overflow: hidden;
 }
+
+.cursor-dot-outline,
+  .cursor-dot {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  .cursor-dot-outline {
+    width: 32px;
+    height: 32px;
+    border: 2px solid #ccc;
+    box-shadow: 0 0 8px #ccc;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+  }
+
+  .cursor-dot {
+    width: 8px;
+    height: 8px;
+    background-color: #ffffff;
+    z-index: 10000;
+    transform: translate(-50%, -50%);
+    animation: orbit 2s linear infinite;
+  }
+
+  @keyframes orbit {
+    0% {
+      transform: translate(8px, 0);
+    }
+    25% {
+      transform: translate(0, 8px);
+    }
+    50% {
+      transform: translate(-16px, 0);
+    }
+    75% {
+      transform: translate(0, -16px);
+    }
+    100% {
+      transform: translate(8px, 0);
+    }
+  }
 
 .progress-bar {
     position: fixed;
