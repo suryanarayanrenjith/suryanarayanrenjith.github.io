@@ -66,12 +66,6 @@ body, html {
     }
   }
 
-@media (max-width: 768px) {
-    .cursor-dot-outline,
-    .cursor-dot {
-    display: none !important;
-  }
-
 .progress-bar {
     position: fixed;
     bottom: 0;
