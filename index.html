@@ -193,17 +193,19 @@
 </head>
 <body>
 
-<div class="cursor-dot-outline"></div>
-<div class="cursor-dot"></div>
-
 <script>
 function isDesktop() {
     return window.innerWidth > 768 && !('ontouchstart' in window || navigator.maxTouchPoints > 0);
   }
 
-  if (isDesktop()) {
-    const cursorDot = document.querySelector(".cursor-dot");
-    const cursorOutline = document.querySelector(".cursor-dot-outline");
+  function initializeCursor() {
+    const cursorDot = document.createElement("div");
+    cursorDot.classList.add("cursor-dot");
+    document.body.appendChild(cursorDot);
+
+    const cursorOutline = document.createElement("div");
+    cursorOutline.classList.add("cursor-dot-outline");
+    document.body.appendChild(cursorOutline);
 
     let mouseX = 0;
     let mouseY = 0;
@@ -213,40 +215,44 @@ function isDesktop() {
     let dotY = 0;
 
     document.addEventListener("mousemove", (e) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
+        mouseX = e.clientX;
+        mouseY = e.clientY;
     });
 
     function animateCursor() {
-      outlineX += (mouseX - outlineX) * 0.15;
-      outlineY += (mouseY - outlineY) * 0.15;
-      
-      dotX += (mouseX - dotX) * 0.1;
-      dotY += (mouseY - dotY) * 0.1;
+        outlineX += (mouseX - outlineX) * 0.15;
+        outlineY += (mouseY - outlineY) * 0.15;
 
-      cursorOutline.style.left = `${outlineX}px`;
-      cursorOutline.style.top = `${outlineY}px`;
-      cursorDot.style.left = `${dotX}px`;
-      cursorDot.style.top = `${dotY}px`;
+        dotX += (mouseX - dotX) * 0.1;
+        dotY += (mouseY - dotY) * 0.1;
 
-      requestAnimationFrame(animateCursor);
+        cursorOutline.style.left = `${outlineX}px`;
+        cursorOutline.style.top = `${outlineY}px`;
+        cursorDot.style.left = `${dotX}px`;
+        cursorDot.style.top = `${dotY}px`;
+
+        requestAnimationFrame(animateCursor);
     }
 
     animateCursor();
 
     const addCursorHoverEffect = () => {
-      document.body.classList.add("cursor-hover");
+        document.body.classList.add("cursor-hover");
     };
 
     const removeCursorHoverEffect = () => {
-      document.body.classList.remove("cursor-hover");
+        document.body.classList.remove("cursor-hover");
     };
 
     document.querySelectorAll("a, button, .hover-target").forEach((el) => {
-      el.addEventListener("mouseenter", addCursorHoverEffect);
-      el.addEventListener("mouseleave", removeCursorHoverEffect);
+        el.addEventListener("mouseenter", addCursorHoverEffect);
+        el.addEventListener("mouseleave", removeCursorHoverEffect);
     });
-  }
+}
+
+    if (isDesktop()) {
+    initializeCursor();
+    }
       </script>
 
     <header>
