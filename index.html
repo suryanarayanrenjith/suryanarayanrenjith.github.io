@@ -231,6 +231,7 @@ function initializeCursor() {
         cursorDot.style.left = `${dotX}px`;
         cursorDot.style.top = `${dotY}px`;
 
+        // Check if the cursor is moving correctly
         if (Math.abs(lastX - outlineX) < 0.1 && Math.abs(lastY - outlineY) < 0.1) {
             isCursorMoving = false;
         } else {
@@ -261,10 +262,12 @@ function initializeCursor() {
             cursorDot.style.display = "none";
             cursorOutline.style.display = "none";
             document.body.classList.add("default-cursor");
+            document.body.style.cursor = "auto";
         } else {
             cursorDot.style.display = "block";
             cursorOutline.style.display = "block";
             document.body.classList.remove("default-cursor");
+            document.body.style.cursor = "none";
             isCursorMoving = false;
         }
     }, 1000);
