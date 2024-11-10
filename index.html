@@ -195,7 +195,7 @@
 
 <script>
 function isDesktop() {
-    return window.innerWidth > 768 && !('ontouchstart' in window || navigator.maxTouchPoints > 0);
+    return window.innerWidth > 768 && !("ontouchstart" in window || navigator.maxTouchPoints > 0);
   }
 
   function initializeCursor() {
@@ -215,44 +215,44 @@ function isDesktop() {
     let dotY = 0;
 
     document.addEventListener("mousemove", (e) => {
-        mouseX = e.clientX;
-        mouseY = e.clientY;
+      mouseX = e.clientX;
+      mouseY = e.clientY;
     });
 
     function animateCursor() {
-        outlineX += (mouseX - outlineX) * 0.15;
-        outlineY += (mouseY - outlineY) * 0.15;
+      outlineX += (mouseX - outlineX) * 0.15;
+      outlineY += (mouseY - outlineY) * 0.15;
 
-        dotX += (mouseX - dotX) * 0.1;
-        dotY += (mouseY - dotY) * 0.1;
+      dotX += (mouseX - dotX) * 0.1;
+      dotY += (mouseY - dotY) * 0.1;
 
-        cursorOutline.style.left = ${outlineX}px;
-        cursorOutline.style.top = ${outlineY}px;
-        cursorDot.style.left = ${dotX}px;
-        cursorDot.style.top = ${dotY}px;
+      cursorOutline.style.left = `${outlineX}px`;
+      cursorOutline.style.top = `${outlineY}px`;
+      cursorDot.style.left = `${dotX}px`;
+      cursorDot.style.top = `${dotY}px`;
 
-        requestAnimationFrame(animateCursor);
+      requestAnimationFrame(animateCursor);
     }
 
     animateCursor();
 
     const addCursorHoverEffect = () => {
-        document.body.classList.add("cursor-hover");
+      document.body.classList.add("cursor-hover");
     };
 
     const removeCursorHoverEffect = () => {
-        document.body.classList.remove("cursor-hover");
+      document.body.classList.remove("cursor-hover");
     };
 
     document.querySelectorAll("a, button, .hover-target").forEach((el) => {
-        el.addEventListener("mouseenter", addCursorHoverEffect);
-        el.addEventListener("mouseleave", removeCursorHoverEffect);
+      el.addEventListener("mouseenter", addCursorHoverEffect);
+      el.addEventListener("mouseleave", removeCursorHoverEffect);
     });
-}
+  }
 
-    if (isDesktop()) {
+  if (isDesktop()) {
     initializeCursor();
-    }
+  }
       </script>
     
     <header>
