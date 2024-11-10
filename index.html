@@ -194,11 +194,11 @@
 <body>
 
 <script>
-    function isDesktop() {
+function isDesktop() {
     return window.innerWidth > 768 && !('ontouchstart' in window || navigator.maxTouchPoints > 0);
-}
+  }
 
-function initializeCursor() {
+  function initializeCursor() {
     const cursorDot = document.createElement("div");
     cursorDot.classList.add("cursor-dot");
     document.body.appendChild(cursorDot);
@@ -207,16 +207,16 @@ function initializeCursor() {
     cursorOutline.classList.add("cursor-dot-outline");
     document.body.appendChild(cursorOutline);
 
-    let mouseX = 0, mouseY = 0;
-    let outlineX = 0, outlineY = 0;
-    let dotX = 0, dotY = 0;
-    let lastX = 0, lastY = 0;
-    let isCursorMoving = true;
+    let mouseX = 0;
+    let mouseY = 0;
+    let outlineX = 0;
+    let outlineY = 0;
+    let dotX = 0;
+    let dotY = 0;
 
     document.addEventListener("mousemove", (e) => {
         mouseX = e.clientX;
         mouseY = e.clientY;
-        isCursorMoving = true;
     });
 
     function animateCursor() {
@@ -226,18 +226,10 @@ function initializeCursor() {
         dotX += (mouseX - dotX) * 0.1;
         dotY += (mouseY - dotY) * 0.1;
 
-        cursorOutline.style.left = `${outlineX}px`;
-        cursorOutline.style.top = `${outlineY}px`;
-        cursorDot.style.left = `${dotX}px`;
-        cursorDot.style.top = `${dotY}px`;
-
-        // Check if the cursor is moving correctly
-        if (Math.abs(lastX - outlineX) < 0.1 && Math.abs(lastY - outlineY) < 0.1) {
-            isCursorMoving = false;
-        } else {
-            lastX = outlineX;
-            lastY = outlineY;
-        }
+        cursorOutline.style.left = ${outlineX}px;
+        cursorOutline.style.top = ${outlineY}px;
+        cursorDot.style.left = ${dotX}px;
+        cursorDot.style.top = ${dotY}px;
 
         requestAnimationFrame(animateCursor);
     }
@@ -256,26 +248,11 @@ function initializeCursor() {
         el.addEventListener("mouseenter", addCursorHoverEffect);
         el.addEventListener("mouseleave", removeCursorHoverEffect);
     });
-
-    setInterval(() => {
-        if (!isCursorMoving) {
-            cursorDot.style.display = "none";
-            cursorOutline.style.display = "none";
-            document.body.classList.add("default-cursor");
-            document.body.style.cursor = "auto";
-        } else {
-            cursorDot.style.display = "block";
-            cursorOutline.style.display = "block";
-            document.body.classList.remove("default-cursor");
-            document.body.style.cursor = "none";
-            isCursorMoving = false;
-        }
-    }, 1000);
 }
 
-if (isDesktop()) {
+    if (isDesktop()) {
     initializeCursor();
-}
+    }
 </script>
 
     <header>
