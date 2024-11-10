@@ -66,10 +66,6 @@ body, html {
     }
   }
 
-.default-cursor * {
-    cursor: auto;
-  }
-
 .progress-bar {
     position: fixed;
     bottom: 0;
