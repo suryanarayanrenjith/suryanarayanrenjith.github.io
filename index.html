@@ -292,6 +292,7 @@ function isDesktop() {
             <li><span class="shortcut-key">Ctrl + Shift + 6</span> Go to About section</li>
             <li><span class="shortcut-key">Ctrl + Shift + 7</span> Go to Projects section</li>
             <li><span class="shortcut-key">Ctrl + Shift + 8</span> Go to Resume section</li>
+            <li><span class="shortcut-key">Ctrl + Shift + T</span> Open Terminal in new tab</li>
             <li><span class="shortcut-key">Ctrl + Shift + L</span> Open Links in new tab</li>
             <li><span class="shortcut-key">Ctrl + Shift + V</span> Open Resume in new tab</li>
         </ul>
@@ -404,6 +405,12 @@ document.addEventListener('keydown', (event) => {
                 event.preventDefault();
                 showContent('resume');
                 updateProgressBar('resume');
+                break;
+            case 'KeyT':
+                event.preventDefault();
+                setTimeout(() => {
+                    window.open('/Cli', '_blank');
+                }, 100);
                 break;
             case 'KeyL':
                 event.preventDefault();
