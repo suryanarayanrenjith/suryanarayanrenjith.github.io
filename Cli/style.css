@@ -5,42 +5,50 @@
 }
 
 body {
-    background-color: #000;
-    color: #fff;
-    font-family: 'Courier New', Courier, monospace;
+    background-color: #0d0d0d;
+    font-family: 'Fira Code', monospace;
     display: flex;
     align-items: center;
     justify-content: center;
     height: 100vh;
     margin: 0;
+    color: #ccc;
+    overflow: hidden;
+}
+
+.terminal-container {
+    position: relative;
+    width: 95%;
+    max-width: 850px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 0 50px #ccc;
 }
 
 .terminal {
-    width: 80%;
-    max-width: 800px;
-    background-color: #000;
-    border: 1px solid #fff;
-    border-radius: 8px;
     padding: 20px;
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
     overflow-y: auto;
     max-height: 80vh;
+    background: linear-gradient(145deg, #141414, #0f0f0f);
+    border: 1px solid #ccc;
+    color: white;
 }
 
 .header {
-    font-weight: bold;
     font-size: 1.2em;
-    margin-bottom: 10px;
-    color: #fff;
+    font-weight: bold;
     text-align: center;
-    border-bottom: 1px solid #fff;
+    color: #ccc;
     padding-bottom: 10px;
+    border-bottom: 1px solid #ccc;
+    margin-bottom: 15px;
 }
 
 #output {
+    font-size: 1em;
     margin-bottom: 15px;
     white-space: pre-wrap;
-    color: #ddd;
+    word-wrap: break-word;
 }
 
 .input-line {
@@ -48,17 +56,31 @@ body {
 }
 
 .prompt {
-    color: #fff;
     margin-right: 10px;
+    color: #ccc;
+    font-weight: bold;
 }
 
 input[type="text"] {
     background: none;
     border: none;
-    color: #fff;
+    color: inherit;
     width: 100%;
     outline: none;
     font-family: inherit;
+    font-size: 1em;
+    caret-color: #ccc;
+}
+
+a {
+    color: #ccc;
+    text-decoration: none;
+    transition: color 0.3s, text-shadow 0.3s;
+}
+
+a:hover {
+    color: #ccc;
+    text-shadow: 0 0 5px white;
 }
 
 .terminal::-webkit-scrollbar {
@@ -66,26 +88,51 @@ input[type="text"] {
 }
 
 .terminal::-webkit-scrollbar-track {
-    background: #333; 
+    background: #141414;
 }
 
 .terminal::-webkit-scrollbar-thumb {
-    background: #fff;
+    background: #ccc;
     border-radius: 4px;
 }
 
-.terminal .prompt,
-.terminal div {
-    color: #fff;
-    margin-bottom: 5px;
+@media screen and (max-width: 768px) {
+    .terminal {
+        padding: 15px;
+        font-size: 0.9em;
+    }
+
+    .header {
+        font-size: 1em;
+    }
 }
 
-a {
-    color: #fff;
-    text-decoration: underline;
-    transition: color 0.3s;
+@media screen and (max-width: 480px) {
+    .terminal {
+        padding: 10px;
+        font-size: 0.8em;
+    }
+
+    .header {
+        font-size: 0.9em;
+    }
+
+    #output {
+        font-size: 0.8em;
+    }
 }
 
-a:hover {
-    color: #ddd;
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.terminal {
+    animation: fadeIn 0.8s ease-out;
 }
