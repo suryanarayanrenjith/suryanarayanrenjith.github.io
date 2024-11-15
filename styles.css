@@ -535,3 +535,47 @@ header {
         display: none;  
     }
 }
+
+    .terminal-button {
+    background-color: white;
+    color: black;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1000;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
+    transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.terminal-button:focus {
+    outline: none;
+}
+
+.terminal-button:hover {
+    background-color: black;
+    color: white;
+    transform: scale(1.1); 
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); 
+}
+
+.terminal-button.hidden {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .terminal-button {
+        width: 30px;
+        height: 30px;
+        top: 25px;
+        font-size: 16px;
+    }
+}
