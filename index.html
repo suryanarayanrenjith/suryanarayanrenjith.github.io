@@ -300,6 +300,16 @@ function isDesktop() {
     </div>
 </div>
 
+<button class="terminal-button" id="terminalButton">
+    <i class="fa-solid fa-terminal"></i>
+</button>
+
+<script>
+    document.getElementById('terminalButton').addEventListener('click', function () {
+        window.location.href = '/Cli';
+    });
+</script>
+    
     <noscript>
         <div class="offline-message" style="display: block;">
             Please enable JavaScript to use this website.
@@ -739,6 +749,7 @@ updateProgressBar('home');
     var container = document.querySelector('.container');
     var header = document.querySelector('header');
     var helpButton = document.querySelector('.help-button');
+    var terminalButton = document.querySelector('.terminal-button');
     var uButton = document.getElementById('unmuteButton');
     var mButton = document.getElementById('muteButton');
     var buttonhide = document.getElementById('buttonhide');
@@ -784,6 +795,7 @@ updateProgressBar('home');
         container.classList.add('disabled-container');
         header.classList.add('no-display');
         helpButton.classList.add('hidden');
+        terminalButton.classList.add('hidden');
         modalOverlay.classList.add('hidden');
         document.addEventListener('keydown', keydownEventListener);
     }
@@ -805,7 +817,8 @@ updateProgressBar('home');
         popup.style.display = 'none';
         container.classList.remove('disabled-container');
         header.classList.remove('no-display');
-        helpButton.classList.remove('hidden'); 
+        helpButton.classList.remove('hidden');
+        terminalButton.classList.remove('hidden');
         modalOverlay.classList.remove('hidden');
         document.removeEventListener('keydown', keydownEventListener);
         uButton.classList.remove('hidden');
