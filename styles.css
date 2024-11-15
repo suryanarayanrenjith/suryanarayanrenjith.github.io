@@ -536,7 +536,7 @@ header {
     }
 }
 
-    .terminal-button {
+.terminal-button {
     background-color: white;
     color: black;
     border: none;
@@ -576,6 +576,7 @@ header {
         width: 30px;
         height: 30px;
         top: 25px;
+        left: 15px;
         font-size: 16px;
     }
 }
