@@ -1034,6 +1034,9 @@ updateProgressBar('home');
         }
 
     function fallbackToCanvasAnimation() {
+
+    document.body.style.cursor = 'crosshair';
+    
     const canvas = document.getElementById('animationCanvas');
     const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth;
@@ -1204,6 +1207,8 @@ updateProgressBar('home');
 
     draw();
 }
+
+document.body.style.cursor = 'none';
 
         if (!isWebGLAvailable()) {
             console.log("WebGL is not supported. Switching to fallback animation.");
