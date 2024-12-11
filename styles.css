@@ -237,6 +237,7 @@ footer {
 #popup-content {
     display: inline-block;
     margin: 20% auto;
+    height: fit-content;
     padding: 20px;
     background-color: black;
     border-radius: 20px;
