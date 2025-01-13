@@ -1208,12 +1208,29 @@ updateProgressBar('home');
     draw();
 }
 
+function isOldBrowser() {
+    const userAgent = navigator.userAgent;
+
+    const oldBrowserRegex = /MSIE|Trident|Edge\/\d{1,2}\./; 
+            const oldSafariRegex = /Version\/[1-9]\.\d Safari\//; 
+            const oldFirefoxRegex = /Firefox\/[1-9][0-9]?\./; 
+            const oldChromeRegex = /Chrome\/[1-5]\d\./;
+            const oldOperaRegex = /Opera\/[1-9]\d\./;
+            const oldAndroidRegex = /Android [1-4]\./;
+            const oldiOSRegex = /CPU iPhone OS [1-9]_/;
+
+    return oldBrowserRegex.test(userAgent) || oldSafariRegex.test(userAgent);
+}
+
 document.body.style.cursor = 'none';
 
-        if (!isWebGLAvailable()) {
-            console.log("WebGL is not supported. Switching to fallback animation.");
-            fallbackToCanvasAnimation();
-        }
+    if (!isWebGLAvailable() || isOldBrowser()) {
+        console.log("WebGL is not supported or the browser is outdated. Switching to fallback animation.");
+        document.querySelectorAll(".cursor-dot, .cursor-dot-outline").forEach(element => {
+            element.remove();
+        });
+         fallbackToCanvasAnimation();
+    }
     </script>
     
     <script type="module" src="script.js"></script>
