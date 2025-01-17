@@ -1241,13 +1241,19 @@ document.body.style.cursor = 'none';
     testIcon.className = "fas fa-home";
     testIcon.style.position = "absolute";
     testIcon.style.visibility = "hidden";
+    testIcon.style.fontSize = "24px";
     document.body.appendChild(testIcon);
 
-    const isFontAwesomeLoaded = window.getComputedStyle(testIcon).fontFamily.includes("Font Awesome");
+    const computedStyle = window.getComputedStyle(testIcon);
+
+    const isFontAwesomeBlocked =
+      !computedStyle.fontFamily.includes("Font Awesome") ||
+      testIcon.offsetWidth === 0 ||
+      computedStyle.content === "none"; 
 
     document.body.removeChild(testIcon);
 
-    if (!isFontAwesomeLoaded) {
+    if (isFontAwesomeBlocked) {
       console.warn(
         "%cFont Awesome icons are not loading.%c Please consider whitelisting this website to allow the icons to display correctly.",
         "color: red; font-weight: bold;",
