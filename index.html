@@ -37,7 +37,6 @@
     gtag('config', 'G-0QSEZ9VSPZ');
     </script> 
     <title>Suryanarayan Renjith</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <script>
     document.addEventListener('DOMContentLoaded', function () {
         const userAgent = navigator.userAgent;
@@ -1234,6 +1233,28 @@ document.body.style.cursor = 'none';
     </script>
     
     <script type="module" src="script.js"></script>
-    
+
+    <script>
+  (async function loadFontAwesome() {
+    try {
+      const response = await fetch('https://cdn.jsdelivr.net/gh/aquawolf04/font-awesome-pro@5cd1511/css/all.css');
+
+      if (!response.ok) {
+        throw new Error('Font Awesome CDN blocked or unavailable.');
+      }
+
+      const fontAwesomeCSS = await response.text();
+
+      const styleElement = document.createElement('style');
+      styleElement.textContent = fontAwesomeCSS;
+
+      document.head.appendChild(styleElement);
+
+      console.log('Font Awesome loaded dynamically');
+    } catch (error) {
+      console.error('Failed to load Font Awesome:', error);
+    }
+  })();
+</script>
 </body>
 </html>
