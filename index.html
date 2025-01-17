@@ -278,8 +278,31 @@ function isDesktop() {
 
     <div id="keyboard-popups">
     <button class="help-button" id="helpButton">
-        <i style='font-size: smaller;'class="fa-regular fa-keyboard"></i>
+        <i style='font-size: smaller;'class="fa-regular fa-keyboard" aria-hidden="true"></i>
     </button>
+
+        <style>
+.fa,
+.fas,
+.fa-regular,
+.fa-solid {
+  font-family: "Font Awesome 6 Free";
+}
+
+.fa-regular.fa-keyboard::before {
+  content: "\f11c"; 
+  font-family: Arial, sans-serif;
+}
+
+.fa::before,
+.fas::before,
+.fa-regular::before,
+.fa-solid::before {
+  content: "[icon]";
+  font-family: Arial, sans-serif;
+  visibility: visible;
+}
+            </style>
 
     <div class="modal-overlay" id="modalOverlay"></div>
 
