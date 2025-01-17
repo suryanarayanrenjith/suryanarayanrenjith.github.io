@@ -1235,5 +1235,27 @@ document.body.style.cursor = 'none';
     
     <script type="module" src="script.js"></script>
 
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+    const testIcon = document.createElement("i");
+    testIcon.className = "fas fa-home";
+    testIcon.style.position = "absolute";
+    testIcon.style.visibility = "hidden";
+    document.body.appendChild(testIcon);
+
+    const isFontAwesomeLoaded = window.getComputedStyle(testIcon).fontFamily.includes("Font Awesome");
+
+    document.body.removeChild(testIcon);
+
+    if (!isFontAwesomeLoaded) {
+      console.warn(
+        "%cFont Awesome icons are not loading.%c Please consider whitelisting this website to allow the icons to display correctly.",
+        "color: red; font-weight: bold;",
+        "color: inherit; font-weight: normal;"
+      );
+    }
+  });
+</script>
+
 </body>
 </html>
