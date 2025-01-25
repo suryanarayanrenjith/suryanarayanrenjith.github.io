@@ -520,6 +520,15 @@ function addAnimationStyles() {
     document.head.appendChild(style);
 }
 
+document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const sectionFromQuery = urlParams.get('section');
+    const sectionFromHash = window.location.hash.substring(1);
+
+    const sectionToLoad = sectionFromQuery || sectionFromHash || 'home';
+    showContent(sectionToLoad);
+});
+
 function showContent(section, direction = 'none') {
     const content = document.getElementById('content');
     let animationClass = '';
