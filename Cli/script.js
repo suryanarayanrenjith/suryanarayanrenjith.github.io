@@ -37,6 +37,10 @@ Feel free to <a href="#" onclick="openLink('/Links')">explore</a> and connect wi
 };
 
 const fileLinks = {
+    "about": "/?section=about",
+    "projects": "/?section=projects",
+    "resume": "/?section=resume",
+    "view-resume": "/Goto/?id=resume",
     "projects": "/Goto/?id=linkedin",
     "linkedin": "/Goto/?id=linkedin",
     "github": "/Goto/?id=github",
@@ -48,13 +52,39 @@ const fileLinks = {
 };
 
 function handleKeyPress(event) {
+    const commandInput = document.getElementById("commandInput");
+    const inputText = commandInput.value.trim();
+
     if (event.key === "Enter") {
         processCommand();
-    } else if (event.key === "ArrowUp") {
+    }
+
+    else if (event.key === "ArrowUp") {
         loadPreviousCommand();
     } else if (event.key === "ArrowDown") {
         loadNextCommand();
     }
+
+    else if (event.ctrlKey && event.shiftKey && event.key === "Q") {
+        closeTerminal();
+    }
+
+    else if (event.ctrlKey && event.shiftKey && event.key === "L") {
+        clearTerminal();
+    }
+}
+
+function closeTerminal() {
+    const closeHelper = window.open('', '_self');
+    closeHelper.close();
+    if (!closeHelper.closed) {
+        window.location = '/';
+    }
+}
+
+function clearTerminal() {
+    outputDiv.innerHTML = "";
+    document.getElementById("commandInput").value = "";
 }
 
 function processCommand() {
@@ -182,5 +212,7 @@ function displayHelp() {
     - clear: Clears the terminal screen.\n
     - echo <text>: Prints the specified text.\n
     - suggest: Provides suggestions for using the terminal.\n
-    - explain <command>: Provides an explanation of a specified command.`;
+    - explain <command>: Provides an explanation of a specified command.\n
+    - Ctrl + Shift + Q: Closes the terminal.\n
+    - Ctrl + Shift + L: Clears the terminal screen.\n`;
 }
