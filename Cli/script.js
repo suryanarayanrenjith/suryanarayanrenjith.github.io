@@ -41,11 +41,11 @@ const fileLinks = {
     "projects": "/?section=projects",
     "resume": "/?section=resume",
     "view-resume": "/Goto/?id=resume",
-    "projects": "/Goto/?id=linkedin",
     "linkedin": "/Goto/?id=linkedin",
     "github": "/Goto/?id=github",
     "twitter": "/Goto/?id=twitter",
     "startup": "/Goto/?id=vexylon",
+    "vexylon": "/Goto/?id=vexylon",
     "game": "/Goto/?id=space-attack",
     "links": "/Links",
     "explore": "/Links"
