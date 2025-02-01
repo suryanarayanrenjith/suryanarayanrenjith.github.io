@@ -34,7 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return false;
           }
         }
-
+      
         function runFallbackAnimation() {
           let canvas = document.getElementById("3dCanvas");
           if (!canvas) {
@@ -149,13 +149,16 @@ document.addEventListener("DOMContentLoaded", () => {
               let depth = 500;
               let angleX = 0, angleY = 0;
               let speedX = 0.01, speedY = 0.02;
-              let wireframe = true;
               let colorModeIndex = 0;
-
+      
               let mouseInfluenceX = 0, mouseInfluenceY = 0;
       
               p.setup = function () {
                 p.createCanvas(window.innerWidth, window.innerHeight, p.WEBGL);
+                const storedColorMode = localStorage.getItem("colorModeIndex");
+                if (storedColorMode !== null) {
+                  colorModeIndex = parseInt(storedColorMode, 10);
+                }
                 p.stroke(255);
                 p.noFill();
                 p.pixelDensity(1);
@@ -333,6 +336,7 @@ document.addEventListener("DOMContentLoaded", () => {
               p.keyPressed = function () {
                 if (p.key === 'c' || p.key === 'C') {
                   colorModeIndex = (colorModeIndex + 1) % 10;
+                  localStorage.setItem("colorModeIndex", colorModeIndex);
                 }
               };
             }, webglContainer);
