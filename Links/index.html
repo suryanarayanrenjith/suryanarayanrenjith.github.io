@@ -288,8 +288,10 @@ function closeWindow() {
 
     window.addEventListener('load', function () {
         var preloader = document.getElementById('preloader');
-        preloader.style.display = 'none';
-        animateTextTransformation();
+        setTimeout(function () {
+            preloader.style.display = 'none';
+            animateTextTransformation();
+    }, 500);
     });
 
 function animateTextTransformation() {
