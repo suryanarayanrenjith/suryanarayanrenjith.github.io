@@ -281,19 +281,16 @@ function closeWindow() {
     <canvas id="3dCanvas"></canvas>
     <div class="heading" id="mainheading"></div>
     <script>
-document.addEventListener('DOMContentLoaded', function () {
-    var preloader = document.getElementById('preloader');
-    preloader.style.display = 'flex';
-});
+    document.addEventListener('DOMContentLoaded', function () {
+        var preloader = document.getElementById('preloader');
+        preloader.style.display = 'flex';
+    });
 
-window.addEventListener('load', function () {
-    var preloader = document.getElementById('preloader');
-    
-    setTimeout(function () {
+    window.addEventListener('load', function () {
+        var preloader = document.getElementById('preloader');
         preloader.style.display = 'none';
         animateTextTransformation();
-    }, 2000);
-});
+    });
 
 function animateTextTransformation() {
     const headingElement = document.getElementById("mainheading");
