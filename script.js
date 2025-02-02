@@ -247,54 +247,55 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    function switchCameraPosition() {
-        const randomX = (Math.random() - 0.5) * 600;
-        const randomY = (Math.random() - 0.5) * 600;
-        const randomZ = Math.random() * 700 + 400;    
-    
-        const randomRotationX = (Math.random() - 0.5) * Math.PI / 6;  
-        const randomRotationY = (Math.random() - 0.5) * Math.PI / 6;  
-    
-        const zoomInFOV = Math.random() * 20 + 60;
-        const originalFOV = camera.fov;            
-    
-        const tl = gsap.timeline();
-    
-        tl.to(camera, {
-            fov: zoomInFOV,
-            duration: 1.5,
-            ease: "power3.inOut",
-            onUpdate: () => camera.updateProjectionMatrix()
-        });
-    
-        tl.to(camera.position, {
-            x: randomX,
-            y: randomY,
-            z: randomZ,
-            duration: 2,
-            ease: "power3.inOut"
-        }, 0);
-    
-        tl.to(camera.rotation, {
-            x: randomRotationX,
-            y: randomRotationY,
-            duration: 2,
-            ease: "power3.inOut"
-        }, 0);
-    
-        tl.to(camera.rotation, {
-            z: (Math.random() - 0.5) * Math.PI / 10,
-            duration: 0.8,
-            ease: "elastic.out(1, 0.3)"
-        }, "-=0.5");
-    
-        tl.to(camera, {
-            fov: originalFOV,
-            duration: 1.2,
-            ease: "power2.out",
-            onUpdate: () => camera.updateProjectionMatrix()
-        }, "-=0.5");
-    }
+function switchCameraPosition() {
+    const randomX = (Math.random() - 0.5) * 500;
+    const randomY = (Math.random() - 0.5) * 400;
+    const randomZ = Math.random() * 600 + 300;
+
+    const randomRotationX = (Math.random() - 0.5) * Math.PI / 12;  
+    const randomRotationY = (Math.random() - 0.5) * Math.PI / 12;
+
+    const zoomInFOV = Math.random() * 5 + 65;
+    const originalFOV = camera.fov;
+
+    const tl = gsap.timeline();
+
+    tl.to(camera, {
+        fov: zoomInFOV,
+        duration: 1,
+        ease: "power1.inOut",
+        onUpdate: () => camera.updateProjectionMatrix()
+    });
+
+    tl.to(camera.position, {
+        x: randomX,
+        y: randomY,
+        z: randomZ,
+        duration: 2,
+        ease: "power2.inOut",
+        onUpdate: () => {
+            camera.position.x += Math.sin(performance.now() * 0.001) * 0.3;
+        }
+    }, 0);
+
+    tl.to(camera.rotation, {
+        x: randomRotationX,
+        y: randomRotationY,
+        duration: 2,
+        ease: "power2.inOut",
+        onUpdate: () => {
+            camera.rotation.x += Math.sin(performance.now() * 0.0008) * 0.0015;
+            camera.rotation.y += Math.cos(performance.now() * 0.0008) * 0.0015;
+        }
+    }, 0);
+
+    tl.to(camera, {
+        fov: originalFOV,
+        duration: 1.5,
+        ease: "power1.out",
+        onUpdate: () => camera.updateProjectionMatrix()
+    }, "-=0.8");
+}
     
     document.querySelectorAll('.menu-bar ul li a').forEach(link => {
         link.addEventListener('click', (event) => {
