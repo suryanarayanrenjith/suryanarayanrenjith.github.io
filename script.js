@@ -174,21 +174,26 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     
     function applyTwinkleEffect() {
-        const time = Date.now() * 0.001;
+    const time = Date.now() * 0.001;
 
-    
-        for (let i = 0; i < starTwinkles.length; i++) {
-            const sineWave = Math.sin(time * 5 + starTwinkles[i] * 20); 
-            const cosineWave = Math.cos(time * 2.5 + starTwinkles[i] * 10);
+    for (let i = 0; i < starTwinkles.length; i++) {
+        const baseSineWave = Math.sin(time * 5 + starTwinkles[i] * 20);
+        const baseCosineWave = Math.cos(time * 2.5 + starTwinkles[i] * 10);
+        const flicker = Math.sin(time * 8 + starTwinkles[i] * 40) * 0.3;
+        const noise = (Math.random() - 0.5) * 0.15;
+        const pulse = Math.sin(time * 0.6 + starTwinkles[i] * 15) * 0.5 + 0.5;
+        const slowBreath = Math.sin(time * 0.3 + starTwinkles[i] * 5) * 0.2 + 0.8;
+        const layeredEffect = Math.sin(time * 1.2 + Math.sin(time * 0.7) * 2 + starTwinkles[i] * 25) * 0.4 + 0.6;
+        const depthEffect = Math.sin(time * 0.2 + starTwinkles[i] * 50) * 0.3 + 0.7;
 
-            const randomFactor = Math.random() * 0.05;
+        const twinkleIntensity = 
+            (baseSineWave * 0.3 + baseCosineWave * 0.3 + flicker * 0.2 + noise * 0.1) * slowBreath * layeredEffect * depthEffect;
 
-            const twinkleIntensity = (sineWave + cosineWave + randomFactor) * 0.5 + 0.5;
-
-            starMaterialWhite.opacity = 0.6 + twinkleIntensity * 0.4;
-            starMaterialWhite.size = 1.5 + twinkleIntensity * 2;
-        }
+        starMaterialWhite.opacity = 0.5 + twinkleIntensity * 0.5;
+        starMaterialWhite.size = 1.5 + twinkleIntensity * 3;
     }
+}
+
     
     function animateStars() {
         const time = Date.now() * 0.001;
