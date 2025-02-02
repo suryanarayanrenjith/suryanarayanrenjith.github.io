@@ -7,6 +7,8 @@
 📝 This website showcases my projects, social media links and my skills. Feel free to contact me if you have any questions or feedback!
 
 ## License
-🔒 This project is licensed under a custom **All Rights Reserved License**. Copying, modifying, redistributing or using the code without explicit permission is prohibited.  
+🔒 This project is licensed under a custom **All Rights Reserved License**.
+
+⛔ You may not copy, modify, redistribute, or use the code in any way without explicit written permission from the copyright holder!
 
 See the [LICENSE](LICENSE) file for full terms and details.
