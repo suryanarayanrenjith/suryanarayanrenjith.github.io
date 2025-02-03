@@ -189,7 +189,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const twinkleIntensity = 
             (baseSineWave * 0.3 + baseCosineWave * 0.3 + flicker * 0.2 + noise * 0.1) * slowBreath * layeredEffect * depthEffect;
 
-        starMaterialWhite.opacity = 0.5 + twinkleIntensity * 0.5;
+        starMaterialWhite.opacity = 2.0 + twinkleIntensity * 0.5;
         starMaterialWhite.size = 1.5 + twinkleIntensity * 3;
     }
 }
