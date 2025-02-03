@@ -172,8 +172,8 @@ document.addEventListener("DOMContentLoaded", () => {
             stars.attributes.position.needsUpdate = true;
         }
     }
-    
-    function applyTwinkleEffect() {
+
+function applyTwinkleEffect() {
     const time = Date.now() * 0.001;
 
     for (let i = 0; i < starTwinkles.length; i++) {
@@ -187,13 +187,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const depthEffect = Math.sin(time * 0.2 + starTwinkles[i] * 50) * 0.3 + 0.7;
 
         const twinkleIntensity = 
-            (baseSineWave * 0.3 + baseCosineWave * 0.3 + flicker * 0.2 + noise * 0.1) * slowBreath * layeredEffect * depthEffect;
+            (baseSineWave * 0.3 + baseCosineWave * 0.3 + flicker * 0.2 + noise * 0.1) 
+            * slowBreath * layeredEffect * depthEffect;
 
-        starMaterialWhite.opacity = 2.0 + twinkleIntensity * 0.5;
-        starMaterialWhite.size = 1.5 + twinkleIntensity * 3;
+        starMaterialWhite.opacity = 3.0 + twinkleIntensity * 0.8; 
+        starMaterialWhite.size = 2.0 + twinkleIntensity * 4.0;
     }
 }
-
     
     function animateStars() {
         const time = Date.now() * 0.001;
