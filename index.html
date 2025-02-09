@@ -857,6 +857,7 @@ updateProgressBar('home');
 
     document.getElementById('disable-music').addEventListener('click', function() {
         audio.pause();
+        localStorage.setItem('musicPopupDisabled', 'true');
         hidePopup();
     });
 
@@ -881,10 +882,25 @@ updateProgressBar('home');
     };
 
     preloadAudio();
-    showPopup();
+    
+    if (!localStorage.getItem('musicPopupDisabled')) {
+        showPopup();
+    } else {
+        popup.style.display = 'none';
+        container.classList.remove('disabled-container');
+        header.classList.remove('no-display');
+        helpButton.classList.remove('hidden');
+        terminalButton.classList.remove('hidden');
+        modalOverlay.classList.remove('hidden');
+        uButton.classList.remove('hidden');
+        if (!animationsTriggered) {
+            startAnimations();
+            animationsTriggered = true;
+        }
+    }
 });
         
-    </script>
+</script>
     
     <div id="preloader">
         <div id="blocks">
