@@ -364,6 +364,68 @@ function animateTextTransformation() {
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mo-js/1.7.1/mo.umd.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          var mojsAvailable = (typeof mojs !== 'undefined');
+          if (!mojsAvailable) {
+            console.warn("mo.js library not loaded. Falling back to a simple animation.");
+          }
+
+          document.querySelectorAll('.social-link').forEach(link => {
+            link.addEventListener('mouseenter', function(e) {
+              if (!mojsAvailable) {
+                this.style.transition = 'transform 0.3s ease-out';
+                this.style.transform = 'scale(1.2)';
+                setTimeout(() => {
+                  this.style.transform = 'scale(1)';
+                }, 300);
+                return;
+              }
+        
+              const rect = this.getBoundingClientRect();
+              const centerX = rect.left + rect.width / 2;
+              const centerY = rect.top + rect.height / 2;
+
+              const timeline = new mojs.Timeline();
+
+              const squarePulse = new mojs.Shape({
+                left: centerX,
+                top: centerY,
+                shape: 'rect',
+                stroke: '#fff',
+                strokeWidth: { 6: 0 },
+                fill: 'transparent',
+                angle: { 0: 90 },
+                scale: { 0: 1.5 },
+                duration: 800,
+                easing: 'cubic.out'
+              });
+
+              const squareBurst = new mojs.Burst({
+                left: centerX,
+                top: centerY,
+                count: 4,
+                radius: { 0: rect.width * 1.2 },
+                children: {
+                  shape: 'rect',
+                  stroke: '#fff',
+                  strokeWidth: { 4: 0 },
+                  fill: 'transparent',
+                  angle: { 0: 90 },
+                  duration: 800,
+                  easing: 'cubic.out'
+                }
+              });
+
+              timeline.add(squarePulse, squareBurst);
+              timeline.play();
+            });
+          });
+        });
+        </script>
+
     <script>
     function isTouchDevice() {
             return 'ontouchstart' in window || navigator.maxTouchPoints;
