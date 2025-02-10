@@ -367,64 +367,116 @@ function animateTextTransformation() {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mo-js/1.7.1/mo.umd.min.js"></script>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-          var mojsAvailable = (typeof mojs !== 'undefined');
-          if (!mojsAvailable) {
-            console.warn("mo.js library not loaded. Falling back to a simple animation.");
-          }
+    document.addEventListener('DOMContentLoaded', function() {
 
-          document.querySelectorAll('.social-link').forEach(link => {
-            link.addEventListener('mouseenter', function(e) {
-              if (!mojsAvailable) {
-                this.style.transition = 'transform 0.3s ease-out';
-                this.style.transform = 'scale(1.2)';
-                setTimeout(() => {
-                  this.style.transform = 'scale(1)';
-                }, 300);
-                return;
-              }
-        
-              const rect = this.getBoundingClientRect();
-              const centerX = rect.left + rect.width / 2;
-              const centerY = rect.top + rect.height / 2;
+  function map(value, in_min, in_max, out_min, out_max) {
+    return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+  }
 
-              const timeline = new mojs.Timeline();
+  function computeStrokeColor(x, y) {
+    const storedColorMode = localStorage.getItem("colorModeIndex");
+    let colorModeIndex = storedColorMode !== null ? parseInt(storedColorMode, 10) : 0;
+    let t = performance.now() / 1000;
 
-              const squarePulse = new mojs.Shape({
-                left: centerX,
-                top: centerY,
-                shape: 'rect',
-                stroke: '#fff',
-                strokeWidth: { 6: 0 },
-                fill: 'transparent',
-                angle: { 0: 90 },
-                scale: { 0: 1.5 },
-                duration: 800,
-                easing: 'cubic.out'
-              });
+    if (colorModeIndex === 0) {
+      return '#fff';
+    } else if (colorModeIndex === 1) {
+      let col = map(x, 0, window.innerWidth, 100, 255);
+      return `rgb(${Math.floor(col)}, 100, ${Math.floor(255 - col)})`;
+    } else if (colorModeIndex === 2) {
+      let r = map(Math.sin(t + x * 0.01), -1, 1, 100, 255);
+      let g = map(Math.cos(t + y * 0.01), -1, 1, 100, 255);
+      let b = map(Math.sin(t + (x + y) * 0.005), -1, 1, 100, 255);
+      return `rgb(${Math.floor(r)}, ${Math.floor(g)}, ${Math.floor(b)})`;
+    } else if (colorModeIndex === 3) {
+      let neon = map(Math.sin(t * 2 + x * 0.01), -1, 1, 180, 255);
+      return `rgb(${Math.floor(neon)}, 50, 255)`;
+    } else if (colorModeIndex === 4) {
+      let heat = map(Math.sin(t * 2 + x * 0.02), -1, 1, 150, 255);
+      return `rgb(255, ${Math.floor(heat)}, 50)`;
+    } else if (colorModeIndex === 5) {
+      let galacticR = map(Math.sin(t * 1.5 + x * 0.02), -1, 1, 150, 255);
+      let galacticB = map(Math.cos(t * 2 + y * 0.02), -1, 1, 50, 255);
+      return `rgb(${Math.floor(galacticR)}, 50, ${Math.floor(galacticB)})`;
+    } else if (colorModeIndex === 6) {
+      let solarR = map(Math.sin(t * 2 + x * 0.01), -1, 1, 180, 255);
+      let solarG = map(Math.cos(t * 2.5 + y * 0.02), -1, 1, 80, 180);
+      return `rgb(${Math.floor(solarR)}, ${Math.floor(solarG)}, 30)`;
+    } else if (colorModeIndex === 7) {
+      let aurora = map(Math.cos(t * 2 + y * 0.01), -1, 1, 100, 255);
+      return `rgb(50, ${Math.floor(aurora)}, 200)`;
+    } else if (colorModeIndex === 8) {
+      let infrared = map(Math.sin(t * 1.2 + x * 0.02), -1, 1, 50, 255);
+      return `rgb(255, 0, ${Math.floor(infrared)})`;
+    } else if (colorModeIndex === 9) {
+      let mystic = map(Math.cos(t * 1.5 + y * 0.015), -1, 1, 100, 255);
+      return `rgb(${Math.floor(mystic)}, 50, 255)`;
+    } else {
+      return '#fff';
+    }
+  }
 
-              const squareBurst = new mojs.Burst({
-                left: centerX,
-                top: centerY,
-                count: 4,
-                radius: { 0: rect.width * 1.2 },
-                children: {
-                  shape: 'rect',
-                  stroke: '#fff',
-                  strokeWidth: { 4: 0 },
-                  fill: 'transparent',
-                  angle: { 0: 90 },
-                  duration: 800,
-                  easing: 'cubic.out'
-                }
-              });
+  var mojsAvailable = (typeof mojs !== 'undefined');
+  if (!mojsAvailable) {
+    console.warn("mo.js library not loaded. Falling back to a simple animation.");
+  }
 
-              timeline.add(squarePulse, squareBurst);
-              timeline.play();
-            });
-          });
-        });
-        </script>
+  document.querySelectorAll('.social-link').forEach(link => {
+    link.addEventListener('mouseenter', function(e) {
+      const rect = this.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const dynamicStroke = computeStrokeColor(centerX, centerY);
+      
+      if (!mojsAvailable) {
+        const originalBorderColor = this.style.borderColor;
+        this.style.transition = 'transform 0.3s ease-out, border-color 0.3s ease-out';
+        this.style.transform = 'scale(1.2)';
+        this.style.borderColor = dynamicStroke;
+        setTimeout(() => {
+          this.style.transform = 'scale(1)';
+          this.style.borderColor = originalBorderColor;
+        }, 300);
+        return;
+      }
+
+      const timeline = new mojs.Timeline();
+
+      const squarePulse = new mojs.Shape({
+        left: centerX,
+        top: centerY,
+        shape: 'rect',
+        stroke: dynamicStroke,
+        strokeWidth: { 6: 0 },
+        fill: 'transparent',
+        angle: { 0: 90 },
+        scale: { 0: 1.5 },
+        duration: 800,
+        easing: 'cubic.out'
+      });
+
+      const squareBurst = new mojs.Burst({
+        left: centerX,
+        top: centerY,
+        count: 4,
+        radius: { 0: rect.width * 1.2 },
+        children: {
+          shape: 'rect',
+          stroke: dynamicStroke,
+          strokeWidth: { 4: 0 },
+          fill: 'transparent',
+          angle: { 0: 90 },
+          duration: 800,
+          easing: 'cubic.out'
+        }
+      });
+
+      timeline.add(squarePulse, squareBurst);
+      timeline.play();
+    });
+  });
+});
+</script>
 
     <script>
     function isTouchDevice() {
