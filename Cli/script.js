@@ -33,14 +33,14 @@ Feel free to <a href="#" onclick="openLink('/Links')">explore</a> and connect wi
 6. <a href="#" onclick="openLink('/Links')">Explore more</a>`,
 
     "resume": `View my professional resume to learn about my skills and experience:\n
-<a href="#" onclick="openLink('/Goto/?id=resume')">View Resume</a>`
+<a href="#" onclick="openLink('/Resume')">View Resume</a>`
 };
 
 const fileLinks = {
     "about": "/?section=about",
     "projects": "/?section=projects",
     "resume": "/?section=resume",
-    "view-resume": "/Goto/?id=resume",
+    "view-resume": "/Resume",
     "linkedin": "/Goto/?id=linkedin",
     "github": "/Goto/?id=github",
     "twitter": "/Goto/?id=twitter",
