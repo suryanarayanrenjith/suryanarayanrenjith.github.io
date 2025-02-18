@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-0QSEZ9VSPZ"></script>
+  <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-0QSEZ9VSPZ');
+  </script>
+  <title>Help & Support</title>
+  <style>
+    * {
+  box-sizing: border-box;
+}
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1a1a1a;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #f1f1f1;
+  border-radius: 10px;
+  border: 2px solid #1a1a1a;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #b3b3b3;
+}
+
+body {
+  background: #000;
+  color: #fff;
+  font-family: 'Arial', sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 800px;
+  margin: 80px auto 40px;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+h1 {
+  font-size: 3em;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  border-bottom: 2px solid #fff;
+  padding-bottom: 10px;
+}
+
+p {
+  font-size: 1.2em;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+a {
+  color: #fff;
+  text-decoration: underline;
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: #ccc;
+}
+
+footer {
+  text-align: center;
+  padding: 20px;
+  font-size: 0.9em;
+  background: #111;
+  position: relative;
+  bottom: 0;
+  width: 100%;
+  margin-top: auto;
+}
+
+@media (max-width: 768px) {
+  .container {
+    max-width: 95%;
+    margin: 60px auto 30px;
+    padding: 30px 15px;
+  }
+  h1 {
+    font-size: 2.5em;
+    margin-bottom: 15px;
+  }
+  p {
+    font-size: 1em;
+  }
+  footer {
+    padding: 15px;
+    font-size: 0.8em;
+  }
+}
+  </style>
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
+  <link rel="manifest" href="assets/favicon/site.webmanifest">
+</head>
+<body>
+  <div class="container">
+    <h1>Help & Support</h1>
+    <p>
+      Welcome to our Help page. We understand that you might need assistance with managing your account.
+      Please note that, for security reasons, features such as resetting or deleting your account are not available through the user interface.
+    </p>
+    <p>
+        If you require any of these actions, please <a href="/Links">contact us</a> directly and we will be happy to assist you.
+    </p>
+    <p>
+      In addition, we reserve the right to disable your account if we determine that it is being used with malicious intent.
+    </p>
+    <p>
+      Also, the verification link sent to your email is valid for one use only. If you need a new verification link, please reach out via our <a href="/Links">contact page</a>.
+    </p>
+    <p>
+      Thank you for your understanding.
+    </p>
+  </div>
+  <footer>
+    © <span id="year"></span> Suryanarayan Renjith. All rights reserved.
+  </footer>
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-0QSEZ9VSPZ"></script>
+  <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-0QSEZ9VSPZ');
+  </script>
+  <title>Secure Resume Access</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/11.1.0/firebase-app-compat.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/11.1.0/firebase-auth-compat.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/11.1.0/firebase-firestore-compat.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const userAgent = navigator.userAgent;
+        const blockedKey = 'blockedUser';
+        const verifiedKey = 'verifiedUser';
+        const fingerprintKey = 'browserFingerprint';
+        const verificationAttemptsKey = 'verificationAttempts';
+        const regenerateAttemptsKey = 'regenerateAttempts';
+
+        const botPatterns = [
+            /bot/i, /crawl/i, /spider/i, /curl/i, /wget/i, /python/i, /scrapy/i,
+            /httpclient/i, /java/i, /photon/i, /nikto/i, /libwww/i, /scan/i,
+            /sqlmap/i, /masscan/i, /nmap/i, /zmeu/i, /datanyze/i, /pingdom/i
+        ];
+
+        if (localStorage.getItem(blockedKey)) {
+            window.location.href = '/404';
+            return;
+        }
+
+        if (localStorage.getItem(verifiedKey)) {
+            return;
+        }
+
+        function fingerprintBrowser() {
+            return `${navigator.userAgent}-${screen.width}-${screen.height}-${navigator.language}-${window.devicePixelRatio}`;
+        }
+
+        function generateCaptchaString(length) {
+            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                result += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+            return result;
+        }
+
+        function blockUser() {
+            localStorage.setItem(blockedKey, 'true');
+            window.location.href = '/404';
+        }
+
+        function showCaptcha() {
+            let captchaString = generateCaptchaString(6);
+            let regenerateAttempts = parseInt(localStorage.getItem(regenerateAttemptsKey)) || 0;
+            let verificationAttempts = parseInt(localStorage.getItem(verificationAttemptsKey)) || 0;
+
+            while (verificationAttempts < 3) {
+                const userInput = prompt(`Enter the code to verify you're human: ${captchaString}\n\nOr type 'R' to regenerate captcha (${3 - regenerateAttempts} attempts left)`);
+
+                if (userInput === captchaString) {
+                    alert("Verified.");
+                    localStorage.setItem(verifiedKey, 'true');
+                    return;
+                } else if (userInput && userInput.toUpperCase() === 'R' && regenerateAttempts < 3) {
+                    regenerateAttempts += 1;
+                    localStorage.setItem(regenerateAttemptsKey, regenerateAttempts);
+                    captchaString = generateCaptchaString(6);
+                    alert(`New Captcha: ${captchaString}`);
+                } else {
+                    verificationAttempts += 1;
+                    localStorage.setItem(verificationAttemptsKey, verificationAttempts);
+                    alert(`Incorrect attempt ${verificationAttempts}/3.`);
+                }
+            }
+            alert("Verification failed.");
+            blockUser();
+        }
+
+        const isBot = botPatterns.some(pattern => pattern.test(userAgent));
+        if (isBot) {
+            showCaptcha();
+            return;
+        }
+
+        const browserFingerprint = fingerprintBrowser();
+        const storedFingerprint = localStorage.getItem(fingerprintKey);
+
+        if (!storedFingerprint) {
+            localStorage.setItem(fingerprintKey, browserFingerprint);
+            localStorage.setItem(verificationAttemptsKey, '0');
+            localStorage.setItem(regenerateAttemptsKey, '0');
+        } else if (storedFingerprint !== browserFingerprint) {
+            const attempts = parseInt(localStorage.getItem(verificationAttemptsKey), 10);
+
+            if (attempts >= 2) {
+                showCaptcha();
+            } else {
+                localStorage.setItem(verificationAttemptsKey, (attempts + 1).toString());
+            }
+            return;
+        }
+
+        function monitorUserBehavior() {
+            let mouseMoved = false;
+            let interactionDetected = false;
+
+            document.addEventListener('mousemove', function () {
+                mouseMoved = true;
+                interactionDetected = true;
+            });
+
+            document.addEventListener('keydown', function () {
+                interactionDetected = true;
+            });
+
+            setTimeout(function () {
+                if (!mouseMoved || !interactionDetected) {
+                    showCaptcha();
+                }
+            }, 7000);
+        }
+
+        monitorUserBehavior();
+    });
+</script>
+<link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
+<link rel="manifest" href="assets/favicon/site.webmanifest">
+</head>
+<body>
+
+  <canvas id="dotCanvas"></canvas>
+
+  <div class="container" id="auth-choice">
+    <h1>Welcome to Secure Resume Access</h1>
+    <button id="go-signup-btn">Sign Up</button>
+    <button id="go-signin-btn">Sign In</button>
+    <p class="powered-by">Powered by surya.is-a.dev</p>
+  </div>
+
+  <div class="container" id="signup-container" style="display:none;">
+    <h1>Sign Up</h1>
+    <input type="email" id="signup-email" placeholder="Enter your email">
+    <input type="password" id="signup-password" placeholder="Enter your password">
+    <a href="#" class="show-password" onclick="togglePassword('signup-password', event)">Show</a>
+    <button id="signup-submit-btn">Sign Up</button>
+    <button id="signup-back-btn">Back</button>
+    <p id="signup-message"></p>
+  </div>
+
+  <div class="container" id="signin-container" style="display:none;">
+    <h1>Sign In</h1>
+    <input type="email" id="signin-email" placeholder="Enter your email">
+    <input type="password" id="signin-password" placeholder="Enter your password">
+    <a href="#" class="show-password" onclick="togglePassword('signin-password', event)">Show</a>
+    <button id="signin-submit-btn">Sign In</button>
+    <button id="signin-back-btn">Back</button>
+    <p id="signin-message"></p>
+  </div>
+
+  <div class="container" id="decryption-container" style="display:none;">
+  <h2>Welcome, <span id="user-email"></span>!</h2>
+  <p>Your email is verified. Check the verification email for the decryption password to view the resume.</p>
+  <input type="text" id="decrypt-password" placeholder="Enter decryption password">
+  <button id="decrypt-btn">Decrypt and View Resume</button>
+  <p id="decryption-message"></p>
+  <button id="signout-btn">Sign Out</button>
+  </div> 
+
+  <div class="container" id="resume-container" style="display:none;">
+    <button id="signout">Sign Out</button>
+    <h2>Resume</h2>
+    <iframe id="resume-frame"></iframe>
+  </div>
+  
+  <a href="help.html" class="help-icon" title="Need Help?">?</a>
+
+  <script>
+    const canvas = document.getElementById('dotCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const dots = [];
+
+    function Dot(x, y) {
+        this.x = x;
+        this.y = y;
+        this.radius = 2;
+        this.color = '#ffffff';
+        this.speed = { x: Math.random() * 2 - 1, y: Math.random() * 2 - 1 };
+    }
+
+    Dot.prototype.draw = function () {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+    };
+
+    Dot.prototype.update = function () {
+        this.x += this.speed.x;
+        this.y += this.speed.y;
+
+        if (this.x < 0 || this.x > canvas.width) {
+            this.speed.x *= -1;
+        }
+        if (this.y < 0 || this.y > canvas.height) {
+            this.speed.y *= -1;
+        }
+    };
+
+    function connectDots() {
+        for (let i = 0; i < dots.length; i++) {
+            for (let j = i + 1; j < dots.length; j++) {
+                const dx = dots[i].x - dots[j].x;
+                const dy = dots[i].y - dots[j].y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < 100) {
+                    ctx.beginPath();
+                    ctx.moveTo(dots[i].x, dots[i].y);
+                    ctx.lineTo(dots[j].x, dots[j].y);
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+                    ctx.lineWidth = 0.5;
+                    ctx.stroke();
+                }
+            }
+        }
+    }
+
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        dots.forEach(dot => {
+            dot.update();
+            dot.draw();
+        });
+        connectDots();
+        requestAnimationFrame(animate);
+    }
+
+    function createDots() {
+        for (let i = 0; i < 100; i++) {
+            const x = Math.random() * canvas.width;
+            const y = Math.random() * canvas.height;
+            dots.push(new Dot(x, y));
+        }
+    }
+
+    createDots();
+    animate();
+
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+  </script>
+  
+  <script src="script.js"></script>
+</body>
+</html>
