@@ -248,8 +248,13 @@ function startLoader(button) {
 
 signupSubmitBtn.addEventListener('click', async () => {
   const email = signupEmailInput.value.trim();
-  const password = signupPasswordInput.value;
+  const password = signupPasswordInput.value.trim();
 
+  if (!email || !password) {
+    signupMessageEl.style.color = 'red';
+    signupMessageEl.textContent = 'Email and password cannot be empty.';
+    return;
+  }
   if (!validateEmail(email)) {
     signupMessageEl.style.color = 'red';
     signupMessageEl.textContent = 'Invalid email format.';
@@ -262,10 +267,17 @@ signupSubmitBtn.addEventListener('click', async () => {
     return;
   }
   
-  const isDisposable = await checkDisposable(email);
-  if (isDisposable) {
+  try {
+    const isDisposable = await checkDisposable(email);
+    if (isDisposable) {
+      signupMessageEl.style.color = 'red';
+      signupMessageEl.textContent = 'Disposable email addresses are not allowed. Please use a valid email.';
+      return;
+    }
+  } catch (err) {
+    console.error("Error during disposable check", err);
     signupMessageEl.style.color = 'red';
-    signupMessageEl.textContent = 'Disposable email addresses are not allowed. Please use a valid email.';
+    signupMessageEl.textContent = 'Unable to validate email. Please try again later.';
     return;
   }
 
@@ -283,14 +295,20 @@ signupSubmitBtn.addEventListener('click', async () => {
     }, 5000);
   } catch (error) {
     loader.stop();
+    console.error("Sign-up error", error);
     signupMessageEl.style.color = 'red';
-    signupMessageEl.textContent = error.message;
+    signupMessageEl.textContent = 'Sign-up failed. Please try again later.';
   }
 });
 
 signinSubmitBtn.addEventListener('click', async () => {
   const email = signinEmailInput.value.trim();
-  const password = signinPasswordInput.value;
+  const password = signinPasswordInput.value.trim();
+  if (!email || !password) {
+    signinMessageEl.style.color = 'red';
+    signinMessageEl.textContent = 'Email and password cannot be empty.';
+    return;
+  }
   const loader = startLoader(signinSubmitBtn);
   try {
     const userCredential = await auth.signInWithEmailAndPassword(email, password);
@@ -307,20 +325,29 @@ signinSubmitBtn.addEventListener('click', async () => {
     userEmailSpan.textContent = user.email;
   } catch (error) {
     loader.stop();
+    console.error("Sign-in error", error);
     signinMessageEl.style.color = 'red';
-    signinMessageEl.textContent = error.message;
+    signinMessageEl.textContent = 'Sign-in failed. Please check your credentials and try again.';
   }
 });
 
 signoutBtn.addEventListener('click', async () => {
-  await auth.signOut();
-  location.reload();
-});
-signout.addEventListener('click', async () => {
-  await auth.signOut();
+  try {
+    await auth.signOut();
+  } catch (error) {
+    console.error("Sign-out error", error);
+  }
   location.reload();
 });
 
+signout.addEventListener('click', async () => {
+  try {
+    await auth.signOut();
+  } catch (error) {
+    console.error("Sign-out error", error);
+  }
+  location.reload();
+});
 
 function base64ToArrayBuffer(base64) {
   const binaryString = window.atob(base64);
