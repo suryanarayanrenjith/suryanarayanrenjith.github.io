@@ -337,6 +337,7 @@ signoutBtn.addEventListener('click', async () => {
   } catch (error) {
     console.error("Sign-out error", error);
   }
+  localStorage.removeItem("Key");
   location.reload();
 });
 
@@ -346,6 +347,7 @@ signout.addEventListener('click', async () => {
   } catch (error) {
     console.error("Sign-out error", error);
   }
+  localStorage.removeItem("Key");
   location.reload();
 });
 
@@ -417,6 +419,13 @@ async function fetchEncryptionKeys() {
   }
 }
 
+document.addEventListener("DOMContentLoaded", function() {
+  const savedKey = localStorage.getItem("Key");
+  if (savedKey) {
+    document.getElementById("decrypt-password").value = savedKey;
+  }
+});
+
   document.getElementById('decrypt-btn').addEventListener('click', async () => {
     const decryptPassword = document.getElementById('decrypt-password').value.trim();
     if (!decryptPassword) {
@@ -434,6 +443,7 @@ async function fetchEncryptionKeys() {
       }
       const encryptedData = await response.arrayBuffer();
       const decryptedBuffer = await decryptResume(encryptedData, decryptPassword, salt, iv);
+      localStorage.setItem("Key", decryptPassword);
       const blob = new Blob([decryptedBuffer], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       document.getElementById('resume-frame').src = url;
