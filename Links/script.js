@@ -161,17 +161,21 @@ document.addEventListener("DOMContentLoaded", () => {
         let mouseInfluenceX = 0,
           mouseInfluenceY = 0;
 
-        let startTime = p.millis();
+        const gracePeriod = 1000;
+        const monitorPeriod = 2000;
+        const fallbackDeltaThreshold = 150;
+        const consecutiveSlowFramesThreshold = 5;
+        const ewmaAlpha = 0.1;
+        let ewmaDelta = 0;
+        let consecutiveSlowFrames = 0;
+        let lowPerfStartTime = null;
+        let startTime = 0;
         let frameCounter = 0;
-        let slowFrameCount = 0;
-        const instantDeltaThreshold = 150;
-        const consecutiveSlowFramesThreshold = 10;
-        const avgFPSCheckDuration = 1000;
-        const avgFPSThreshold = 10;
 
         p.setup = function () {
           p.createCanvas(window.innerWidth, window.innerHeight, p.WEBGL);
           startTime = p.millis();
+          ewmaDelta = p.deltaTime;
 
           const storedColorMode = localStorage.getItem("colorModeIndex");
           if (storedColorMode !== null) {
@@ -197,31 +201,40 @@ document.addEventListener("DOMContentLoaded", () => {
           let currentTime = p.millis();
           let elapsed = currentTime - startTime;
 
-          if (p.deltaTime > instantDeltaThreshold) {
-            slowFrameCount++;
-          } else {
-            slowFrameCount = 0;
+          if (elapsed > gracePeriod) {
+            ewmaDelta = (p.deltaTime * ewmaAlpha) + (ewmaDelta * (1 - ewmaAlpha));
+
+            if (p.deltaTime > fallbackDeltaThreshold) {
+              consecutiveSlowFrames++;
+            } else {
+              consecutiveSlowFrames = 0;
+            }
+
+            if (ewmaDelta > fallbackDeltaThreshold) {
+              if (lowPerfStartTime === null) {
+                lowPerfStartTime = currentTime;
+              }
+            } else {
+              lowPerfStartTime = null;
+            }
+
+            if (
+              consecutiveSlowFrames >= consecutiveSlowFramesThreshold ||
+              (lowPerfStartTime !== null && currentTime - lowPerfStartTime >= monitorPeriod)
+            ) {
+              console.warn(
+                "Low performance detected (EWMA delta: " +
+                  ewmaDelta.toFixed(2) +
+                  "ms, consecutive slow frames: " +
+                  consecutiveSlowFrames +
+                  "). Switching to fallback animation."
+              );
+              localStorage.setItem("forceFallback", "true");
+              window.location.reload();
+              return;
+            }
           }
 
-          let avgFPS = frameCounter / (elapsed / 1000);
-
-          if (
-            (elapsed >= avgFPSCheckDuration && avgFPS < avgFPSThreshold) ||
-            slowFrameCount >= consecutiveSlowFramesThreshold
-          ) {
-            console.warn(
-              "Low performance detected (avg FPS: " +
-                avgFPS.toFixed(2) +
-                ", consecutive slow frames: " +
-                slowFrameCount +
-                "). Switching to fallback animation."
-            );
-            localStorage.setItem("forceFallback", "true");
-            window.location.reload();
-            return;
-          }
-
-          // Animation drawing code
           let t = currentTime / 1000;
           p.background(0);
           p.ambientLight(50);
@@ -430,7 +443,6 @@ document.addEventListener("DOMContentLoaded", () => {
     runFallbackAnimation();
   });
 })();
-
         const profilePic = document.getElementById('profilePic');
         const socialLinks = document.getElementById('socialLinks');
         const tooltip = document.getElementById('tooltip');
