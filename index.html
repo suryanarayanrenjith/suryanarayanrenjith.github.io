@@ -193,6 +193,26 @@
 </head>
 <body>
 
+<style>
+#fa-test {
+    position: absolute;
+    visibility: hidden;
+        }
+</style>
+
+<i id="fa-test" class="fa-solid fa-circle-exclamation"></i>
+
+<script>
+    function isFontAwesomeLoaded() {
+    const testIcon = document.getElementById('fa-test');
+    const iconWidth = window.getComputedStyle(testIcon).width;   
+    if (!iconWidth || parseFloat(iconWidth) === 0) {
+        alert("Font Awesome icons are not loading correctly. Please whitelist the Font Awesome CDN in your ad blocker settings to ensure proper icon display.");
+    }
+}
+window.onload = isFontAwesomeLoaded;
+</script>
+
 <script>
 function isDesktop() {
     return window.innerWidth > 768 && !("ontouchstart" in window || navigator.maxTouchPoints > 0);
