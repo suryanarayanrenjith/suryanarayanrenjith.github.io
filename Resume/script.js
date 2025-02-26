@@ -464,3 +464,21 @@ document.addEventListener("DOMContentLoaded", function() {
         passwordInput.type = "password";
     }
   }
+
+  signupContainer.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      signupSubmitBtn.click();
+    }
+  });
+
+  signinContainer.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      signinSubmitBtn.click();
+    }
+  });
+
+  decryptionContainer.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      document.getElementById('decrypt-btn').click();
+    }
+  });
