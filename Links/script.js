@@ -161,13 +161,13 @@ document.addEventListener("DOMContentLoaded", () => {
         let mouseInfluenceX = 0,
           mouseInfluenceY = 0;
 
+        let startTime = p.millis();
         let frameCounter = 0;
-        let startTime = 0;
-        let lowFPSFrameCount = 0;
-        const measureDuration = 3000;
+        let slowFrameCount = 0;
+        const instantDeltaThreshold = 150;
+        const consecutiveSlowFramesThreshold = 10;
+        const avgFPSCheckDuration = 1000;
         const avgFPSThreshold = 10;
-        const consecutiveFrameThreshold = 30;
-        const instantFPSThreshold = 10;
 
         p.setup = function () {
           p.createCanvas(window.innerWidth, window.innerHeight, p.WEBGL);
@@ -194,8 +194,35 @@ document.addEventListener("DOMContentLoaded", () => {
 
         p.draw = function () {
           frameCounter++;
+          let currentTime = p.millis();
+          let elapsed = currentTime - startTime;
 
-          let t = p.millis() / 1000;
+          if (p.deltaTime > instantDeltaThreshold) {
+            slowFrameCount++;
+          } else {
+            slowFrameCount = 0;
+          }
+
+          let avgFPS = frameCounter / (elapsed / 1000);
+
+          if (
+            (elapsed >= avgFPSCheckDuration && avgFPS < avgFPSThreshold) ||
+            slowFrameCount >= consecutiveSlowFramesThreshold
+          ) {
+            console.warn(
+              "Low performance detected (avg FPS: " +
+                avgFPS.toFixed(2) +
+                ", consecutive slow frames: " +
+                slowFrameCount +
+                "). Switching to fallback animation."
+            );
+            localStorage.setItem("forceFallback", "true");
+            window.location.reload();
+            return;
+          }
+
+          // Animation drawing code
+          let t = currentTime / 1000;
           p.background(0);
           p.ambientLight(50);
           p.pointLight(
@@ -222,7 +249,6 @@ document.addEventListener("DOMContentLoaded", () => {
           speedX += mouseInfluenceY;
 
           let scaleFactor = 1 + 0.05 * p.sin(t * 0.5);
-
           p.push();
           p.scale(scaleFactor);
           p.translate(0, 0, 50 * p.sin(t * 0.3));
@@ -354,25 +380,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
           }
           p.pop();
-
-          let elapsed = p.millis() - startTime;
-          if (elapsed > measureDuration) {
-            let avgFps = frameCounter / (elapsed / 1000);
-            let instantFps = 1000 / p.deltaTime;
-            if (instantFps < instantFPSThreshold) {
-              lowFPSFrameCount++;
-            } else {
-              lowFPSFrameCount = Math.max(lowFPSFrameCount - 1, 0);
-            }
-            if (avgFps < avgFPSThreshold && lowFPSFrameCount > consecutiveFrameThreshold) {
-              console.warn(
-                "Low performance detected (avg FPS: " + avgFps.toFixed(2) + 
-                ", consecutive low-fps frames: " + lowFPSFrameCount + "). Switching to fallback animation."
-              );
-              localStorage.setItem("forceFallback", "true");
-              window.location.reload();
-            }
-          }
         };
 
         p.windowResized = function () {
