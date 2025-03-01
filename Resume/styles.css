@@ -198,7 +198,9 @@ iframe {
     width: 95%;
     max-width: 90%;
     padding: 15px;
-    margin: 15px;
+    margin: 15px auto;
+    position: fixed;
+    top: 30%;
   }
   
   h1, h2 {
