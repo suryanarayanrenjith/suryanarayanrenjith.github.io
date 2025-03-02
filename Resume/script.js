@@ -247,106 +247,107 @@ function startLoader(button) {
 }
 
 function solveCaptcha() {
-    return new Promise((resolve, reject) => {
-      const modal = document.getElementById("captcha-modal");
-      const captchaImage = document.getElementById("captcha-image");
-      const captchaInput = document.getElementById("captcha-input");
-      const verifyBtn = document.getElementById("captcha-verify-btn");
-      const refreshBtn = document.getElementById("captcha-refresh-btn");
-      const closeBtn = document.getElementById("captcha-close-btn");
-      const captchaError = document.getElementById("captcha-error");
-      let captchaToken = "";
-  
-      function loadCaptcha() {
-        captchaError.textContent = "";
-        captchaInput.value = "";
-        fetch("https://surya-api.vercel.app/api/captcha")
-          .then(res => {
-            if (res.status === 429) {
-              throw new Error("Too many refresh requests. Please wait a moment.");
-            }
-            return res.json();
-          })
-          .then(data => {
-            captchaImage.src = "data:image/svg+xml;base64," + btoa(data.image);
-            captchaToken = data.token;
-          })
-          .catch(err => {
-            captchaError.textContent = err.message || "Error loading captcha.";
-            console.error("Captcha load error:", err);
-            refreshBtn.disabled = true;
-            setTimeout(() => {
-              refreshBtn.disabled = false;
-            }, 1000);
-          });
-      }
-  
-      loadCaptcha();
-      console.log("Endpoints loaded successfully.");
-      modal.style.display = "flex";
-  
-      verifyBtn.onclick = function() {
-        const answer = captchaInput.value.trim();
-    
-        if (!answer) {
-          captchaError.textContent = "Please enter the captcha.";
-          return;
-        }
-        if (answer.length !== 6) {
-          captchaError.textContent = "Captcha must be exactly 6 characters.";
-          return;
-        }
-        const captchaRegex = /^[A-Za-z0-9]{6}$/;
-        if (!captchaRegex.test(answer)) {
-          captchaError.textContent = "Captcha can only contain letters and numbers.";
-          return;
-        }
-        
-        fetch("https://surya-api.vercel.app/api/verify-captcha", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token: captchaToken, answer })
-        })
+  return new Promise((resolve, reject) => {
+    const modal = document.getElementById("captcha-modal");
+    const captchaImage = document.getElementById("captcha-image");
+    const captchaInput = document.getElementById("captcha-input");
+    const verifyBtn = document.getElementById("captcha-verify-btn");
+    const refreshBtn = document.getElementById("captcha-refresh-btn");
+    const closeBtn = document.getElementById("captcha-close-btn");
+    const captchaError = document.getElementById("captcha-error");
+    let captchaToken = "";
+
+    function loadCaptcha() {
+      captchaError.textContent = "";
+      captchaInput.value = "";
+      fetch("https://surya-api.vercel.app/api/captcha")
         .then(res => {
           if (res.status === 429) {
-            throw new Error("Too many verification attempts. Please wait a moment.");
+            throw new Error("Too many refresh requests. Please wait a moment.");
           }
           return res.json();
         })
         .then(data => {
-          if (data.success) {
-            modal.style.display = "none";
-            resolve();
-          } else {
-            captchaError.textContent = data.error || "Incorrect captcha. Please try again.";
-          }
+          captchaImage.src = "data:image/svg+xml;base64," + btoa(data.image);
+          captchaToken = data.token;
         })
         .catch(err => {
-          captchaError.textContent = err.message || "Error verifying captcha.";
-          console.error("Captcha verify error:", err);
-          verifyBtn.disabled = true;
+          captchaError.textContent = err.message || "Error loading captcha.";
+          console.error("Captcha load error:", err);
+          refreshBtn.disabled = true;
           setTimeout(() => {
-            verifyBtn.disabled = false;
+            refreshBtn.disabled = false;
           }, 1000);
         });
-      };
-  
-      refreshBtn.onclick = function() {
-        loadCaptcha();
-      };
-  
-      closeBtn.onclick = function() {
-        modal.style.display = "none";
-        reject(new Error("User closed captcha"));
-      };
-    
-      captchaInput.addEventListener('keydown', function(e) {
-        if (e.key === "Enter") {
-          verifyBtn.click();
+    }
+
+    loadCaptcha();
+    modal.style.display = "flex";
+
+    verifyBtn.onclick = function() {
+      const answer = captchaInput.value.trim();
+      if (!answer) {
+        captchaError.textContent = "Please enter the captcha.";
+        return;
+      }
+      if (answer.length !== 6) {
+        captchaError.textContent = "Captcha must be exactly 6 characters.";
+        return;
+      }
+      const captchaRegex = /^[A-Za-z0-9]{6}$/;
+      if (!captchaRegex.test(answer)) {
+        captchaError.textContent = "Captcha can only contain letters and numbers.";
+        return;
+      }
+      
+      fetch("https://surya-api.vercel.app/api/verify-captcha", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: captchaToken, answer })
+      })
+      .then(res => {
+        if (res.status === 429) {
+          throw new Error("Too many verification attempts. Please wait a moment.");
         }
+        return res.json();
+      })
+      .then(data => {
+        if (data.success) {
+          localStorage.setItem("verifiedCaptcha", data.verifiedCaptcha);
+          localStorage.setItem("captchaVerifiedAt", Date.now().toString());
+
+          modal.style.display = "none";
+          resolve();
+        } else {
+          captchaError.textContent = data.error || "Incorrect captcha. Please try again.";
+        }
+      })
+      .catch(err => {
+        captchaError.textContent = err.message || "Error verifying captcha.";
+        console.error("Captcha verify error:", err);
+        verifyBtn.disabled = true;
+        setTimeout(() => {
+          verifyBtn.disabled = false;
+        }, 1000);
       });
+    };
+
+    refreshBtn.onclick = function() {
+      loadCaptcha();
+    };
+
+    closeBtn.onclick = function() {
+      modal.style.display = "none";
+      reject(new Error("User closed captcha"));
+    };
+
+    captchaInput.addEventListener('keydown', function(e) {
+      if (e.key === "Enter") {
+        verifyBtn.click();
+      }
     });
-  }
+  });
+}
 
 signupSubmitBtn.addEventListener('click', async () => {
   const email = signupEmailInput.value.trim();
@@ -419,15 +420,29 @@ signinSubmitBtn.addEventListener('click', async () => {
     signinMessageEl.textContent = 'Email and password cannot be empty.';
     return;
   }
-  
-  try {
-    await solveCaptcha();
-  } catch (err) {
-    signinMessageEl.style.color = 'red';
-    signinMessageEl.textContent = 'Captcha verification failed or cancelled. Please try again.';
-    return;
+
+  const storedCaptcha = localStorage.getItem('verifiedCaptcha');
+  const storedTimestamp = parseInt(localStorage.getItem('captchaVerifiedAt'), 10);
+  const MAX_CAPTCHA_AGE = 5 * 60 * 1000;
+
+  let captchaValid = false;
+  if (storedCaptcha && storedTimestamp) {
+    const age = Date.now() - storedTimestamp;
+    if (age <= MAX_CAPTCHA_AGE) {
+      captchaValid = true;
+    }
   }
-  
+
+  if (!captchaValid) {
+    try {
+      await solveCaptcha();
+    } catch (err) {
+      signinMessageEl.style.color = 'red';
+      signinMessageEl.textContent = 'Captcha verification failed or cancelled. Please try again.';
+      return;
+    }
+  }
+
   const loader = startLoader(signinSubmitBtn);
   try {
     const userCredential = await auth.signInWithEmailAndPassword(email, password);
