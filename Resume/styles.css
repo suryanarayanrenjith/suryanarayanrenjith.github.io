@@ -239,3 +239,138 @@ iframe {
     line-height: 40px;
   }
 }
+
+.captcha-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 10px;
+}
+
+.captcha-modal-content {
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  padding: 20px 20px 30px;
+  margin: 20px;
+  border: 2px solid #ccc;
+  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  width: 100%;
+  max-width: 320px;
+  text-align: center;
+  font-family: Arial, sans-serif;
+  position: relative;
+}
+
+.captcha-close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 24px;
+  cursor: pointer;
+  color: #fff;
+  background: transparent;
+  border: none;
+  outline: none;
+}
+
+#captcha-image-container {
+  margin: 20px auto;
+  display: inline-block;
+  border: 2px solid #ccc;
+  background: #111;
+  line-height: 0;
+}
+
+#captcha-image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+#captcha-input {
+  width: 80%;
+  padding: 12px 15px;
+  margin: 10px 0;
+  font-size: 1em;
+  border: 1px solid #ccc;
+  background: #111;
+  color: #fff;
+  text-align: center;
+}
+
+.captcha-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.captcha-buttons button {
+  padding: 12px 15px;
+  font-size: 1em;
+  background: #fff;
+  color: #000;
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+  flex: 1;
+}
+
+.captcha-buttons button:hover {
+  background: #e0e0e0;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
+}
+
+.captcha-error {
+  text-align: center;
+  margin-top: 10px;
+  color: #ff5555;
+  font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .captcha-modal-content {
+    max-width: 90%;
+    padding: 15px;
+  }
+  
+  #captcha-input {
+    width: 90%;
+    padding: 10px;
+  }
+  
+  .captcha-buttons button {
+    padding: 10px;
+    font-size: 0.9em;
+  }
+}
+
+@media (max-width: 480px) {
+  .captcha-modal-content {
+    max-width: 95%;
+    padding: 10px;
+  }
+  
+  #captcha-input {
+    width: 100%;
+    padding: 8px;
+  }
+  
+  .captcha-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .captcha-buttons button {
+    width: 100%;
+    flex: none;
+  }
+}
