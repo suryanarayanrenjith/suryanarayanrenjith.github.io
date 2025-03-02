@@ -411,6 +411,26 @@ signupSubmitBtn.addEventListener('click', async () => {
   }
 });
 
+function startSessionTimer() {
+    const signoutBtn = document.getElementById('signout-btn');
+    const countdownEl = document.getElementById('countdown-timer');
+
+    let timeLeft = 120;
+
+    const countdown = setInterval(() => {
+      if (timeLeft <= 0) {
+        clearInterval(countdown);
+        signoutBtn.click();
+      } else {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        const display = `${minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
+        countdownEl.textContent = `Time left: ${display}`;
+        timeLeft -= 1;
+      }
+    }, 1000);
+  }
+
 signinSubmitBtn.addEventListener('click', async () => {
   const email = signinEmailInput.value.trim();
   const password = signinPasswordInput.value.trim();
@@ -442,6 +462,7 @@ signinSubmitBtn.addEventListener('click', async () => {
     signinContainer.style.display = 'none';
     decryptionContainer.style.display = 'block';
     userEmailSpan.textContent = user.email;
+    startSessionTimer();
   } catch (error) {
     loader.stop();
     console.error("Sign-in error", error);
