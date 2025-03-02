@@ -214,12 +214,28 @@
   <div class="container" id="decryption-container" style="display:none;">
   <h2>Welcome, <span id="user-email"></span>!</h2>
   <p>Your email is verified. Check the verification email for the decryption password to view the resume.</p>
-  <div id="countdown-timer" style="font-weight: bold; margin: 10px 0;"></div>
-  <input type="text" id="decrypt-password" placeholder="Enter decryption password">
+  <div class="timer-wrapper" style="position: relative; margin: 10px 0;">
+    <input
+      type="text"
+      id="decrypt-password"
+      placeholder="Enter decryption password"
+      style="padding-right: 70px; width: 100%; box-sizing: border-box;"
+    >
+    <div
+      id="countdown-timer"
+      style="
+        position: absolute;
+        top: 50%;
+        right: 10px;
+        transform: translateY(-50%);
+        font-weight: bold;
+      "
+    ></div>
+  </div>
   <button id="decrypt-btn">Decrypt and View Resume</button>
   <p id="decryption-message"></p>
   <button id="signout-btn">Sign Out</button>
-  </div> 
+</div> 
 
   <div class="container" id="resume-container" style="display:none;">
     <button id="signout">Sign Out</button>
