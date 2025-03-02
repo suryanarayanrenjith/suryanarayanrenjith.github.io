@@ -3,7 +3,7 @@ let firestore;
 
   async function initializeFirebase() {
     try {
-      const response = await fetch("/assets/config/config.json");
+      const response = await fetch("https://surya-api.vercel.app/api/config");
       if (!response.ok) {
         throw new Error(`Failed to fetch Config`);
       }
@@ -260,7 +260,7 @@ function solveCaptcha() {
       function loadCaptcha() {
         captchaError.textContent = "";
         captchaInput.value = "";
-        fetch("https://surya-captcha-api.vercel.app/api/captcha")
+        fetch("https://surya-api.vercel.app/api/captcha")
           .then(res => {
             if (res.status === 429) {
               throw new Error("Too many refresh requests. Please wait a moment.");
@@ -302,7 +302,7 @@ function solveCaptcha() {
           return;
         }
         
-        fetch("https://surya-captcha-api.vercel.app/api/verify-captcha", {
+        fetch("https://surya-api.vercel.app/api/verify-captcha", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token: captchaToken, answer })
