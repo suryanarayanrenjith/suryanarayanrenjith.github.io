@@ -175,6 +175,22 @@
     <p class="powered-by">Powered by surya.is-a.dev</p>
   </div>
 
+  <div id="captcha-modal" class="captcha-modal" style="display:none;">
+    <div class="captcha-modal-content">
+      <span id="captcha-close-btn" class="captcha-close-btn">&times;</span>
+      <h3>CAPTCHA Verification</h3>
+      <div id="captcha-image-container">
+        <img id="captcha-image" src="" alt="Captcha Image" />
+      </div>
+      <input type="text" id="captcha-input" placeholder="Enter Captcha" />
+      <div class="captcha-buttons">
+        <button id="captcha-verify-btn">Verify</button>
+        <button id="captcha-refresh-btn">Refresh</button>
+      </div>
+      <p id="captcha-error" class="captcha-error"></p>
+    </div>
+  </div>
+
   <div class="container" id="signup-container" style="display:none;">
     <h1>Sign Up</h1>
     <input type="email" id="signup-email" placeholder="Enter your email">
