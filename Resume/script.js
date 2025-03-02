@@ -290,45 +290,36 @@ function solveCaptcha() {
         captchaError.textContent = "Please enter the captcha.";
         return;
       }
-      if (answer.length !== 6) {
-        captchaError.textContent = "Captcha must be exactly 6 characters.";
-        return;
-      }
-      const captchaRegex = /^[A-Za-z0-9]{6}$/;
-      if (!captchaRegex.test(answer)) {
-        captchaError.textContent = "Captcha can only contain letters and numbers.";
-        return;
-      }
-      
+
       fetch("https://surya-api.vercel.app/api/verify-captcha", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: captchaToken, answer })
       })
-      .then(res => {
-        if (res.status === 429) {
-          throw new Error("Too many verification attempts. Please wait a moment.");
-        }
-        return res.json();
-      })
-      .then(data => {
-        if (data.success) {
-          localStorage.setItem("verifiedCaptcha", data.verifiedCaptcha);
-          localStorage.setItem("captchaVerifiedAt", Date.now().toString());
-          modal.style.display = "none";
-          resolve();
-        } else {
-          captchaError.textContent = data.error || "Incorrect captcha. Please try again.";
-        }
-      })
-      .catch(err => {
-        captchaError.textContent = err.message || "Error verifying captcha.";
-        console.error("Captcha verify error:", err);
-        verifyBtn.disabled = true;
-        setTimeout(() => {
-          verifyBtn.disabled = false;
-        }, 1000);
-      });
+        .then(res => {
+          if (res.status === 429) {
+            throw new Error("Too many verification attempts. Please wait a moment.");
+          }
+          return res.json();
+        })
+        .then(data => {
+          if (data.success) {
+            localStorage.setItem("verifiedCaptcha", data.verifiedCaptcha);
+            localStorage.setItem("captchaVerifiedAt", Date.now().toString());
+            modal.style.display = "none";
+            resolve();
+          } else {
+            captchaError.textContent = data.error || "Error verifying captcha. Please try again.";
+          }
+        })
+        .catch(err => {
+          captchaError.textContent = err.message || "Error verifying captcha.";
+          console.error("Captcha verify error:", err);
+          verifyBtn.disabled = true;
+          setTimeout(() => {
+            verifyBtn.disabled = false;
+          }, 1000);
+        });
     };
 
     refreshBtn.onclick = function() {
@@ -340,7 +331,7 @@ function solveCaptcha() {
       reject(new Error("User closed captcha"));
     };
 
-    captchaInput.addEventListener('keydown', function(e) {
+    captchaInput.addEventListener("keydown", function(e) {
       if (e.key === "Enter") {
         verifyBtn.click();
       }
