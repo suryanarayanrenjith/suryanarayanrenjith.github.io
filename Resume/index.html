@@ -236,28 +236,6 @@
   </noscript>
 
   <script>
-    function startSessionTimer() {
-    const signoutBtn = document.getElementById('signout-btn');
-    const countdownEl = document.getElementById('countdown-timer');
-
-    let timeLeft = 120;
-
-    const countdown = setInterval(() => {
-      if (timeLeft <= 0) {
-        clearInterval(countdown);
-        signoutBtn.click(); 
-      } else {
-        const minutes = Math.floor(timeLeft / 60);
-        const seconds = timeLeft % 60;
-        const display = `${minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
-        countdownEl.textContent = `Time left: ${display}`;
-        timeLeft -= 1;
-      }
-    }, 1000);
-  }
-  </script>
-
-  <script>
     const canvas = document.getElementById('dotCanvas');
     const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth;
