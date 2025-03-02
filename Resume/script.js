@@ -261,12 +261,7 @@ function solveCaptcha() {
       captchaError.textContent = "";
       captchaInput.value = "";
       fetch("https://surya-api.vercel.app/api/captcha")
-        .then(res => {
-          if (res.status === 429) {
-            throw new Error("Too many refresh requests. Please wait a moment.");
-          }
-          return res.json();
-        })
+        .then(res => res.json())
         .then(data => {
           captchaImage.src = "data:image/svg+xml;base64," + btoa(data.image);
           captchaToken = data.token;
@@ -274,10 +269,6 @@ function solveCaptcha() {
         .catch(err => {
           captchaError.textContent = err.message || "Error loading captcha.";
           console.error("Captcha load error:", err);
-          refreshBtn.disabled = true;
-          setTimeout(() => {
-            refreshBtn.disabled = false;
-          }, 1000);
         });
     }
 
@@ -290,62 +281,36 @@ function solveCaptcha() {
         captchaError.textContent = "Please enter the captcha.";
         return;
       }
-      if (answer.length !== 6) {
-        captchaError.textContent = "Captcha must be exactly 6 characters.";
-        return;
-      }
-      const captchaRegex = /^[A-Za-z0-9]{6}$/;
-      if (!captchaRegex.test(answer)) {
-        captchaError.textContent = "Captcha can only contain letters and numbers.";
-        return;
-      }
-      
+
       fetch("https://surya-api.vercel.app/api/verify-captcha", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: captchaToken, answer })
       })
-      .then(res => {
-        if (res.status === 429) {
-          throw new Error("Too many verification attempts. Please wait a moment.");
-        }
-        return res.json();
-      })
+      .then(res => res.json())
       .then(data => {
         if (data.success) {
-          localStorage.setItem("verifiedCaptcha", data.verifiedCaptcha);
-          localStorage.setItem("captchaVerifiedAt", Date.now().toString());
-
+          if (data.bypassKey) {
+            localStorage.setItem("bypassKey", data.bypassKey);
+          }
           modal.style.display = "none";
           resolve();
         } else {
-          captchaError.textContent = data.error || "Incorrect captcha. Please try again.";
+          captchaError.textContent = data.error || "Incorrect captcha.";
         }
       })
       .catch(err => {
         captchaError.textContent = err.message || "Error verifying captcha.";
         console.error("Captcha verify error:", err);
-        verifyBtn.disabled = true;
-        setTimeout(() => {
-          verifyBtn.disabled = false;
-        }, 1000);
       });
     };
 
-    refreshBtn.onclick = function() {
-      loadCaptcha();
-    };
+    refreshBtn.onclick = loadCaptcha;
 
     closeBtn.onclick = function() {
       modal.style.display = "none";
       reject(new Error("User closed captcha"));
     };
-
-    captchaInput.addEventListener('keydown', function(e) {
-      if (e.key === "Enter") {
-        verifyBtn.click();
-      }
-    });
   });
 }
 
@@ -421,19 +386,26 @@ signinSubmitBtn.addEventListener('click', async () => {
     return;
   }
 
-  const storedCaptcha = localStorage.getItem('verifiedCaptcha');
-  const storedTimestamp = parseInt(localStorage.getItem('captchaVerifiedAt'), 10);
-  const MAX_CAPTCHA_AGE = 5 * 60 * 1000;
+  const storedBypassKey = localStorage.getItem('bypassKey');
+  let captchaNeeded = true;
 
-  let captchaValid = false;
-  if (storedCaptcha && storedTimestamp) {
-    const age = Date.now() - storedTimestamp;
-    if (age <= MAX_CAPTCHA_AGE) {
-      captchaValid = true;
+  if (storedBypassKey) {
+    try {
+      const res = await fetch("https://surya-api.vercel.app/api/verify-captcha", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bypassKey: storedBypassKey })
+      });
+      const data = await res.json();
+      if (data.success && data.bypass === true) {
+        captchaNeeded = false;
+      }
+    } catch (err) {
+      console.error("Bypass check error:", err);
     }
   }
 
-  if (!captchaValid) {
+  if (captchaNeeded) {
     try {
       await solveCaptcha();
     } catch (err) {
