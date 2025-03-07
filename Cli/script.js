@@ -46,7 +46,7 @@ const fileLinks = {
     "twitter": "/Goto/?id=twitter",
     "startup": "/Goto/?id=vexylon",
     "vexylon": "/Goto/?id=vexylon",
-    "game": "/Goto/?id=space-attack",
+    "game": "/Goto/?id=space_attack",
     "links": "/Links",
     "explore": "/Links"
 };
