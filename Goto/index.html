@@ -27,70 +27,80 @@
           }, 1000);
         }, 10000);
       </script>
-   <script>
+<script>
 document.addEventListener("DOMContentLoaded", () => {
-    const uA = navigator.userAgent;
+    if (!window.localStorage) {
+        console.warn("localStorage is not available. Redirecting to /404.");
+        window.location.href = '/404';
+        return;
+    }
+
+    if (!window.fetch) {
+        console.warn("fetch is not available. Redirecting to /404.");
+        window.location.href = '/404';
+        return;
+    }
+
     const bK = 'blockedUser';
     const vK = 'verifiedUser';
+    const userAgent = navigator.userAgent;
 
-    function dB64(u) {
-        return atob(u);
+    function isBotUA(uA) {
+        return /curl|bot|spider|crawler|wget|Mediapartners-Google/i.test(uA);
     }
 
-    function isBUA(u) {
-        return /curl|bot|spider|crawler|wget|Mediapartners-Google/i.test(u);
-    }
-
-    function sBF() {
+    function setBlocked() {
         localStorage.setItem(bK, 'true');
     }
 
-    function cBF() {
+    function clearBlocked() {
         localStorage.removeItem(bK);
     }
 
-    function isB() {
+    function isBlocked() {
         return localStorage.getItem(bK) === "true";
     }
 
-    function rLC() {
-        const aL = JSON.parse(localStorage.getItem("attemptLog")) || [];
-        const n = Date.now();
-        const mA = 5;
-        const tW = 10000;
+    function rateLimitCheck() {
+        const attempts = JSON.parse(localStorage.getItem("attemptLog")) || [];
+        const now = Date.now();
+        const maxAttempts = 5;
+        const timeWindow = 10000;
 
-        const rA = aL.filter(a => n - a < tW);
-        localStorage.setItem("attemptLog", JSON.stringify(rA));
+        const recent = attempts.filter(ts => now - ts < timeWindow);
+        localStorage.setItem("attemptLog", JSON.stringify(recent));
 
-        if (rA.length >= mA) {
+        if (recent.length >= maxAttempts) {
             window.location.href = '/404';
             return true;
         }
 
-        rA.push(n);
-        localStorage.setItem("attemptLog", JSON.stringify(rA));
+        recent.push(now);
+        localStorage.setItem("attemptLog", JSON.stringify(recent));
         return false;
     }
 
-    function rP() {
-        const p = window.location.pathname;
-        const qP = new URLSearchParams(window.location.search);
-        const id = qP.get('id');
-        const eP = '/Goto/';
+    async function redirectPath() {
+        const path = window.location.pathname;
+        const query = new URLSearchParams(window.location.search);
+        const id = query.get('id');
+        const gotoPath = '/Goto/';
 
-        const rL = {
-		'mail': 'bWFpbHRvOnN1cnlhbmFyYXlhbnJlbmppdGhAZ21haWwuY29t',
-		'github': 'aHR0cHM6Ly9naXRodWIuY29tL3N1cnlhbmFyYXlhbnJlbmppdGg=',
-		'twitter': 'aHR0cHM6Ly94LmNvbS9fc3VyeWFuYXJheWFucg==',
-		'linkedin': 'aHR0cHM6Ly93d3cubGlua2VkaW4uY29tL2luL3N1cnlhbmFyYXlhbi1yZW5qaXRo',
-		'space-attack': 'aHR0cHM6Ly9zcGFjZS1hdHRhY2suaXRjaC5pbw==',
-		'vexylon': 'aHR0cHM6Ly92ZXh5bG9uaW5ub3ZhdGlvbnMuZG9yaWsuaW8v'
-        };
+        setTimeout(async () => {
+            if (path.startsWith(gotoPath) && id) {
+                try {
+                    const response = await fetch(`https://surya-api.vercel.app/api/getLink?id=${encodeURIComponent(id)}`);
+                    const data = await response.json();
 
-        setTimeout(function() {
-            if (p.startsWith(eP) && id && rL[id]) {
-                const u = dB64(rL[id]);
-                window.location.href = u;
+                    if (data.link) {
+                        window.location.href = data.link;
+                    } else {
+                        window.location.href = '/404';
+                    }
+                } catch (error) {
+                    console.error('Fetch error:', error);
+                    window.location.href = '/404';
+                }
             } else {
                 window.location.href = '/404';
             }
@@ -98,25 +108,25 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (localStorage.getItem(vK)) {
-        console.log("Verified.");
-        cBF();
+        console.log("Verified user detected. Unblocking if blocked.");
+        clearBlocked();
     } else {
-        if (rLC()) {
+
+        if (rateLimitCheck()) {
             return;
         }
 
-        if (isBUA(uA)) {
-            sBF();
+        if (isBotUA(userAgent)) {
+            console.warn("Bot detected. Blocking user.");
+            setBlocked();
         }
     }
 
-    window.onload = function() {
-        if (isB()) {
-            window.location.href = '/404';
-        } else {
-            rP();
-        }
-    };
+    if (isBlocked()) {
+        window.location.href = '/404';
+    } else {
+        redirectPath();
+    }
 });
 </script>
 </head>
