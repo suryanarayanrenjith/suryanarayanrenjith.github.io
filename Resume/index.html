@@ -166,6 +166,35 @@
 </head>
 <body>
 
+  <div id="preloader">
+    <div class="loader">
+    </div>
+    <div class="loader-text">Loading</div>
+  </div>
+
+  <script>
+  window.addEventListener('load', function() {
+  var spinner = document.querySelector('.loader');
+  if (spinner) {
+    var preloader = spinner.parentElement;
+    setTimeout(function() {
+      spinner.style.animation = 'none';
+      preloader.style.opacity = '0';
+      setTimeout(function() {
+        preloader.style.display = 'none';
+        document.body.style.overflow = 'auto';
+      }, 500);
+    }, 1000);
+  }
+});
+</script>
+
+<noscript>
+  <style>
+    #preloader { display: none; }
+  </style>
+</noscript>
+
   <canvas id="dotCanvas"></canvas>
 
   <div class="container" id="auth-choice">
