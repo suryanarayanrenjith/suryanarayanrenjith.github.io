@@ -336,6 +336,48 @@ iframe {
   font-weight: bold;
 }
 
+#preloader {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      z-index: 1001;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+
+    .loader {
+      position: relative;
+      width: 60px;
+      height: 60px;
+      border: 4px solid #fff;
+      border-top: 4px solid transparent;
+      border-radius: 50%;
+      animation: spin 1.5s linear infinite;
+    }
+
+    .loader-text {
+      margin-top: 20px;
+      font-size: 1.5em;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      animation: glow 1.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @keyframes glow {
+      from { text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff; }
+      to   { text-shadow: 0 0 20px #fff, 0 0 30px #fff, 0 0 40px #fff; }
+    }
+
 @media (max-width: 768px) {
   .captcha-modal-content {
     max-width: 90%;
