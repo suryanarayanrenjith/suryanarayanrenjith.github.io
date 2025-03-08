@@ -13,7 +13,7 @@ gtag('config', 'G-0QSEZ9VSPZ');
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
 <link rel="manifest" href="assets/favicon/site.webmanifest">
 </head>
-<canvas id="space"></canvas>
+<canvas id="halftoneCanvas"></canvas>
 <div id="main">
     <div class="fof">
     <p class="item"></p>
@@ -70,7 +70,8 @@ canvas {
     top: 0;
     left: 0;
     z-index: -1;
-    background: #2c003e;
+    background: black;
+    filter: blur(3px);
 }    
 
 .item {
@@ -178,7 +179,8 @@ color: #fff;
     }
 
     canvas {
-        background: #2c003e;
+        background: black;
+        filter: blur(3px);
         position: fixed;
         top: 0;
         left: 0;
@@ -241,7 +243,8 @@ color: #fff;
     }
 
     canvas {
-        background: #2c003e;
+        background: black;
+        filter: blur(3px);
         position: fixed;
         top: 0;
         left: 0;
@@ -269,59 +272,57 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 
 <script>    
-    var canvas = document.getElementById("space");
-    var ctx = canvas.getContext("2d");
-
-    function initializeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-
-    function createStars(numStars) {
-      var stars = [];
-      for (var i = 0; i < numStars; i++) {
-        stars.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          radius: Math.random() * 2,
-          speed: Math.random() * 0.5 + 0.1,
-          twinkle: Math.random() * 100
-        });
-      }
-      return stars;
-    }
-
-    function animateStars() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      stars.forEach(function(star) {
-        star.x += star.speed;
-        if (star.x > canvas.width) star.x = 0;
+        const canvas = document.getElementById('halftoneCanvas');
+        const ctx = canvas.getContext('2d');
         
-        star.twinkle += star.speed;
-        var twinkleFactor = Math.abs(Math.sin(star.twinkle * 0.05));
-
-        ctx.beginPath();
-        ctx.arc(star.x, star.y, star.radius * twinkleFactor, 0, Math.PI * 2);
-        ctx.fillStyle = "#FFFFFF";
-        ctx.fill();
-      });
-
-      requestAnimationFrame(animateStars);
-    }
-
-    function resizeCanvas() {
-      initializeCanvas();
-      stars = createStars(1000);
-      animateStars();
-    }
-
-    initializeCanvas();
-    var stars = createStars(1000);
-    animateStars();
-
-    window.addEventListener("resize", function() {
-      clearTimeout(resizeTimer);
-      var resizeTimer = setTimeout(resizeCanvas, 200);
-    });
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        const cols = 120;
+        const rows = 60;
+        const dotMaxSize = 6;
+        const waveSpeed = 0.1;
+        let time = 0;
+        
+        function drawHalftone() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            let gridWidth = canvas.width / cols;
+            let gridHeight = canvas.height / rows;
+            
+            for (let y = 0; y < rows; y++) {
+                for (let x = 0; x < cols; x++) {
+                    let dx = (x / cols - 0.5) * 2;
+                    let dy = (y / rows - 0.5) * 2;
+                    let distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    let wave = Math.sin(distance * 15 - time) * 0.5 + 0.5;
+                    let distortion = Math.cos(time * 0.5 + x * 0.1) * Math.sin(time * 0.5 + y * 0.1);
+                    let dotSize = Math.max(0, (wave + distortion * 0.3) * dotMaxSize);
+                    
+                    let posX = x * gridWidth + gridWidth / 2 + Math.sin(time * 0.3 + x * 0.05) * 5;
+                    let posY = y * gridHeight + gridHeight / 2 + Math.cos(time * 0.3 + y * 0.05) * 5;
+                    
+                    ctx.fillStyle = "white";
+                    ctx.beginPath();
+                    ctx.arc(posX, posY, dotSize, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+        
+        function animate() {
+            time += waveSpeed;
+            drawHalftone();
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
   </script>
