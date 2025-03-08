@@ -17,24 +17,135 @@ gtag('config', 'G-0QSEZ9VSPZ');
 <div id="main">
     <div class="fof">
     <p class="item"></p>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="200" height="200">
-    <circle cx="256" cy="256" r="150" fill="#FFD700"/>
-    <circle cx="200" cy="200" r="20" fill="#FFD700"/>
-    <line x1="185" y1="185" x2="215" y2="215" stroke="#000" stroke-width="5"/>
-    <line x1="185" y1="215" x2="215" y2="185" stroke="#000" stroke-width="5"/>
-    <circle cx="312" cy="200" r="20" fill="#FFD700"/>
-    <line x1="297" y1="185" x2="327" y2="215" stroke="#000" stroke-width="5"/>
-    <line x1="297" y1="215" x2="327" y2="185" stroke="#000" stroke-width="5"/>
-    <path d="M180 160 Q200 140 220 160" stroke="#000" stroke-width="10" fill="none"/>
-    <path d="M292 160 Q312 140 332 160" stroke="#000" stroke-width="10" fill="none"/>
-    <path d="M256 240 Q240 280 256 320" stroke="#000" stroke-width="10" fill="none"/>
-    <ellipse cx="190" cy="360" rx="40" ry="20" fill="#FFD700">
-        <animate attributeName="cy" attributeType="XML" 
-            values="360; 355; 360" 
-            dur="1s" repeatCount="indefinite"/>
-    </ellipse>
-    <path d="M256 100 Q256 50 306 50" stroke="#000" stroke-width="10" fill="none"/>
-    <circle cx="306" cy="50" r="10" fill="#000"/>
+        <svg
+    width="300"
+    height="300"
+    viewBox="0 0 300 300"
+    xmlns="http://www.w3.org/2000/svg"
+>
+  <line x1="150" y1="10" x2="150" y2="30"
+        stroke="#000"
+        stroke-width="3" />
+
+  <circle cx="150" cy="10" r="6" fill="#000">
+    <animate
+      attributeName="r"
+      values="6;9;6"
+      dur="1s"
+      repeatCount="indefinite"
+    />
+    <animate
+      attributeName="fill"
+      values="#000;#fff;#000"
+      dur="1.5s"
+      repeatCount="indefinite"
+    />
+  </circle>
+
+  <path
+    d="
+      M150,30
+      C  70,30   30,90   30,130
+      C  30,200  80,250  150,250
+      C 220,250 270,200  270,130
+      C 270,90  230,30   150,30
+      Z
+    "
+    fill="#fff"
+    stroke="#000"
+    stroke-width="3"
+  />
+
+  <g id="left-eye">
+    <circle 
+      id="leftEyeSclera"
+      cx="100"
+      cy="115"
+      r="15"
+      fill="#fff"
+      stroke="#000"
+      stroke-width="2"
+    >
+      <animate
+        attributeName="r"
+        values="15;15;0;15"
+        keyTimes="0;0.75;0.85;1"
+        dur="2s"
+        repeatCount="indefinite"
+      />
+    </circle>
+    <circle 
+      id="leftEyePupil"
+      cx="100"
+      cy="115"
+      r="5"
+      fill="#000"
+    >
+      <animate 
+        attributeName="cx"
+        values="95;105;95"
+        dur="4s"
+        repeatCount="indefinite"
+      />
+    </circle>
+  </g>
+
+  <g id="right-eye">
+    <circle 
+      id="rightEyeSclera"
+      cx="200"
+      cy="115"
+      r="15"
+      fill="#fff"
+      stroke="#000"
+      stroke-width="2"
+    >
+      <animate
+        attributeName="r"
+        values="15;15;0;15"
+        keyTimes="0;0.75;0.85;1"
+        dur="2s"
+        begin="0.2s"
+        repeatCount="indefinite"
+      />
+    </circle>
+    <circle 
+      id="rightEyePupil"
+      cx="200"
+      cy="115"
+      r="5"
+      fill="#000"
+    >
+      <animate 
+        attributeName="cx"
+        values="195;205;195"
+        dur="4s"
+        begin="1s"
+        repeatCount="indefinite"
+      />
+    </circle>
+  </g>
+
+  <path 
+    d="
+      M115,175
+      L185,175
+      Q190,185 185,195
+      L115,195
+      Q110,185 115,175
+      Z
+    "
+    fill="none"
+    stroke="#000"
+    stroke-width="3"
+  >
+    <animate
+      attributeName="stroke-width"
+      values="3;5;3"
+      dur="2s"
+      repeatCount="indefinite"
+    />
+  </path>
 </svg>
         <h1 class="error">Error 404</h1>
         <p class="description">The item you're looking for is lost in this <a href="/Game">Space game.</a></p>
