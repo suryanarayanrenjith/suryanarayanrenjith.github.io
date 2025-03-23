@@ -12,134 +12,431 @@
   gtag('config', 'G-0QSEZ9VSPZ');
   </script>
   <title>Help & Support</title>
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
+  <link rel="manifest" href="assets/favicon/site.webmanifest">
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap');
+    
     * {
-  box-sizing: border-box;
-}
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    :root {
+      --primary-bg: #000;
+      --secondary-bg: #111;
+      --accent-color: rgba(255, 255, 255, 0.8);
+      --text-color: #fff;
+      --text-secondary: rgba(255, 255, 255, 0.7);
+      --border-color: rgba(255, 255, 255, 0.1);
+      --highlight: rgba(255, 255, 255, 0.03);
+    }
+    
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: var(--secondary-bg);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.4);
+    }
+    
+    body {
+      background: var(--primary-bg);
+      color: var(--text-color);
+      font-family: 'Montserrat', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow-x: hidden;
+    }
+    
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 30% 10%, rgba(255, 255, 255, 0.03) 0%, transparent 60%),
+                  radial-gradient(circle at 70% 90%, rgba(255, 255, 255, 0.02) 0%, transparent 40%);
+      pointer-events: none;
+    }
+    
+    .header {
+      padding: 30px 0;
+      text-align: center;
+      position: relative;
+    }
+    
+    .header::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
+    }
+    
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 60px 40px;
+      position: relative;
+      z-index: 1;
+    }
+    
+    h1 {
+      font-size: 3.5rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      margin-bottom: 30px;
+      position: relative;
+      display: inline-block;
+      text-transform: uppercase;
+    }
+    
+    h1::before, h1::after {
+      content: "";
+      position: absolute;
+      width: 40px;
+      height: 3px;
+      background: var(--accent-color);
+    }
+    
+    h1::before {
+      top: 50%;
+      left: -60px;
+    }
+    
+    h1::after {
+      top: 50%;
+      right: -60px;
+    }
+    
+    .support-card {
+      background: var(--secondary-bg);
+      border-radius: 15px;
+      padding: 40px;
+      margin: 30px 0;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      border: 1px solid var(--border-color);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .support-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(120deg, var(--highlight), transparent);
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    
+    .support-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8);
+    }
+    
+    p {
+      font-size: 1.1rem;
+      line-height: 1.8;
+      margin-bottom: 25px;
+      color: var(--text-secondary);
+      position: relative;
+    }
+    
+    p:last-child {
+      margin-bottom: 0;
+    }
+    
+    a {
+      color: var(--text-color);
+      text-decoration: none;
+      position: relative;
+      padding: 0 2px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    
+    a::after {
+      content: "";
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background: var(--accent-color);
+      transform: scaleX(0);
+      transform-origin: right;
+      transition: transform 0.3s ease;
+    }
+    
+    a:hover {
+      color: #fff;
+    }
+    
+    a:hover::after {
+      transform: scaleX(1);
+      transform-origin: left;
+    }
+    
+    .cta-button {
+      display: inline-block;
+      padding: 12px 30px;
+      margin-top: 20px;
+      background: transparent;
+      color: var(--text-color);
+      border: 1px solid var(--accent-color);
+      border-radius: 30px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .cta-button::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      transition: all 0.6s ease;
+    }
+    
+    .cta-button:hover {
+      background: rgba(255, 255, 255, 0.05);
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+      transform: translateY(-3px);
+    }
+    
+    .cta-button:hover::before {
+      left: 100%;
+    }
+    
+    .support-info {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 30px;
+      margin-top: 50px;
+    }
+    
+    .info-card {
+      flex: 1 1 250px;
+      background: rgba(17, 17, 17, 0.7);
+      padding: 30px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      transition: all 0.3s ease;
+    }
+    
+    .info-card:hover {
+      background: rgba(25, 25, 25, 0.7);
+      transform: translateY(-5px);
+    }
+    
+    .info-card h3 {
+      font-size: 1.3rem;
+      margin-bottom: 15px;
+      letter-spacing: 1px;
+    }
+    
+    .info-card p {
+      font-size: 0.95rem;
+      margin-bottom: 0;
+    }
+    
+    footer {
+      background: var(--secondary-bg);
+      padding: 30px;
+      text-align: center;
+      margin-top: auto;
+      position: relative;
+    }
+    
+    footer::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 200px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border-color), transparent);
+    }
+    
+    footer p {
+      font-size: 0.9rem;
+      opacity: 0.7;
+      margin: 0;
+    }
+    
+    .highlight {
+      color: #fff;
+      font-weight: 600;
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        padding: 40px 20px;
+      }
+      
+      h1 {
+        font-size: 2.5rem;
+      }
+      
+      h1::before, h1::after {
+        width: 20px;
+        left: -30px;
+      }
+      
+      h1::after {
+        right: -30px;
+      }
+      
+      .support-card {
+        padding: 30px 20px;
+      }
+      
+      p {
+        font-size: 1rem;
+      }
+      
+      .support-info {
+        gap: 20px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 2rem;
+      }
+      
+      h1::before, h1::after {
+        display: none;
+      }
+    }
 
-::-webkit-scrollbar {
-  width: 12px;
-  height: 10px;
-}
-
-::-webkit-scrollbar-track {
-  background: #1a1a1a;
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #f1f1f1;
-  border-radius: 10px;
-  border: 2px solid #1a1a1a;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #b3b3b3;
-}
-
-body {
-  background: #000;
-  color: #fff;
-  font-family: 'Arial', sans-serif;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
-.container {
-  max-width: 800px;
-  margin: 80px auto 40px;
-  padding: 40px 20px;
-  text-align: center;
-}
-
-h1 {
-  font-size: 3em;
-  margin-bottom: 20px;
-  text-transform: uppercase;
-  letter-spacing: 3px;
-  border-bottom: 2px solid #fff;
-  padding-bottom: 10px;
-}
-
-p {
-  font-size: 1.2em;
-  line-height: 1.6;
-  margin-bottom: 20px;
-}
-
-a {
-  color: #fff;
-  text-decoration: underline;
-  transition: color 0.3s ease;
-}
-
-a:hover {
-  color: #ccc;
-}
-
-footer {
-  text-align: center;
-  padding: 20px;
-  font-size: 0.9em;
-  background: #111;
-  position: relative;
-  bottom: 0;
-  width: 100%;
-  margin-top: auto;
-}
-
-@media (max-width: 768px) {
-  .container {
-    max-width: 95%;
-    margin: 60px auto 30px;
-    padding: 30px 15px;
-  }
-  h1 {
-    font-size: 2.5em;
-    margin-bottom: 15px;
-  }
-  p {
-    font-size: 1em;
-  }
-  footer {
-    padding: 15px;
-    font-size: 0.8em;
-  }
-}
+    .fade-in {
+      animation: fadeIn 0.8s ease forwards;
+      opacity: 0;
+    }
+    
+    .fade-in-up {
+      animation: fadeInUp 0.8s ease forwards;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
   </style>
-  <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png">
-  <link rel="manifest" href="/assets/favicon/site.webmanifest">
 </head>
 <body>
   <div class="container">
-    <h1>Help & Support</h1>
-    <p>
-      Welcome to our Help page. We understand that you might need assistance with managing your account.
-      Please note that, for security reasons, features such as resetting or deleting your account are not available through the user interface.
-    </p>
-    <p>
-        If you require any of these actions, please <a href="/Links">contact us</a> directly and we will be happy to assist you.
-    </p>
-    <p>
-      In addition, we reserve the right to disable your account if we determine that it is being used with malicious intent.
-    </p>
-    <p>
-      Also, the verification link sent to your email is valid for one use only. If you need a new verification link, please reach out via our <a href="/Links">contact page</a>.
-    </p>
-    <p>
-      Thank you for your understanding.
-    </p>
+    <div class="header fade-in">
+      <h1>Help & Support</h1>
+    </div>
+    
+    <div class="support-card fade-in-up" style="animation-delay: 0.1s;">
+      <p>
+        Welcome to my <span class="highlight">Help & Support Center</span>. I'm committed to providing you with the best possible assistance for managing your account and solving any issues you might encounter.
+      </p>
+      <p>
+        For security reasons, certain account management features such as resetting or deleting your account are not available through the standard user interface. This additional layer of protection helps ensure that your data remains secure.
+      </p>
+      <p>
+        If you require assistance with these actions, I'm here to help you personally. Please don't hesitate to <a href="/Links">contact me directly</a> for prompt and secure assistance.
+      </p>
+      <a href="/Links" class="cta-button">Get in Touch</a>
+    </div>
+    
+    <div class="support-info">
+      <div class="info-card fade-in-up" style="animation-delay: 0.2s;">
+        <h3>Account Security</h3>
+        <p>
+          I reserve the right to disable accounts that show signs of malicious activity or violate my terms of service. This helps me maintain a safe environment for all visitors.
+        </p>
+      </div>
+      
+      <div class="info-card fade-in-up" style="animation-delay: 0.3s;">
+        <h3>Verification</h3>
+        <p>
+          Email verification links are valid for one use only. If you need a new verification link, please reach out through my <a href="/Links">contact page</a>.
+        </p>
+      </div>
+      
+      <div class="info-card fade-in-up" style="animation-delay: 0.4s;">
+        <h3>Additional Help</h3>
+        <p>
+          Thank you for your understanding and trust. I'm personally committed to providing you with the best possible support experience.
+        </p>
+      </div>
+    </div>
   </div>
+  
   <footer>
-    © <span id="year"></span> Suryanarayan Renjith. All rights reserved.
+    <p>© <span id="year"></span> Suryanarayan Renjith. All rights reserved.</p>
   </footer>
+  
   <script>
     document.getElementById("year").textContent = new Date().getFullYear();
+    document.addEventListener('DOMContentLoaded', () => {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.style.animationPlayState = 'running';
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.1 });
+      
+      document.querySelectorAll('.fade-in, .fade-in-up').forEach(el => {
+        el.style.animationPlayState = 'paused';
+        observer.observe(el);
+      });
+    });
   </script>
 </body>
 </html>
