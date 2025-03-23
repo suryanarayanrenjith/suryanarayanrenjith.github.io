@@ -31,22 +31,24 @@
             background-color: black;
             color: white;
             font-family: Arial, sans-serif;
+            touch-action: manipulation;
         }
 
         #game {
             position: relative;
-            width: 90vw;
+            width: 95vw;
             max-width: 800px;
-            height: 80vh;
+            height: 85vh;
             max-height: 600px;
             border: 2px solid white;
             overflow: hidden;
-            padding-top: 40px; 
+            padding-top: 40px;
         }
 
         #canvas {
             width: 100%;
-            height: calc(100% - 40px);
+            height: 100%;
+            touch-action: manipulation;
         }
 
         #game-over {
@@ -55,7 +57,8 @@
             left: 50%;
             transform: translate(-50%, -50%);
             text-align: center;
-            font-size: 2em;
+            font-size: min(2em, 8vw);
+            z-index: 10;
         }
 
         #restart {
@@ -64,20 +67,23 @@
             font-size: 1em;
             border-radius: 10px;
             cursor: pointer;
+            background-color: #333;
+            color: white;
+            border: 2px solid white;
         }
 
         #score-counter {
             position: absolute;
-            top: 20px;
+            top: 10px;
             left: 20px;
-            font-size: 1vw;
+            font-size: clamp(0.8rem, 2vw, 1.2rem);
         }
 
         #high-score-counter {
             position: absolute;
-            top: 20px;
+            top: 10px;
             right: 20px;
-            font-size: 1vw;
+            font-size: clamp(0.8rem, 2vw, 1.2rem);
         }
 
         #tap-to-start {
@@ -85,20 +91,39 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 4vw;
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
             cursor: pointer;
             z-index: 1;
+            text-align: center;
+            width: 80%;
         }
 
         #game-over-text {
             margin-bottom: 20px;
+        }
+
+        @media (max-height: 500px) {
+            #game {
+                height: 80vh;
+                padding-top: 20px;
+            }
+            #score-counter, #high-score-counter {
+                top: 5px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            #game {
+                width: 95vw;
+                border-width: 1px;
+            }
         }
     </style>
     <div id="game">
         <canvas id="canvas"></canvas>
         <div id="score-counter">Score: <span id="live-score">0</span></div>
         <div id="high-score-counter">High Score: <span id="live-high-score">0</span></div>
-        <div id="tap-to-start">Tap to Start</div>
+        <div id="tap-to-start">Tap to Start<br><small>(Tap asteroids to destroy them)</small></div>
     </div>
     <div id="game-over" style="display: none;">
         <div id="game-over-text">Game Over!</div>
@@ -107,57 +132,86 @@
     <script>
 let canvas = document.getElementById('canvas');
 let ctx = canvas.getContext('2d');
-canvas.width = 800;
-canvas.height = 560;
-
-let gameWidth = canvas.width;
-let gameHeight = canvas.height;
-let speed = 5;
+let gameWidth = 0;
+let gameHeight = 0;
+let baseSpeed = 3;
+let speed = baseSpeed;
 let score = 0;
-let highScore = localStorage.getItem('highScore') ? parseInt(localStorage.getItem('highScore')) : 0;
+let highScore = 0;
 let gameOverText = document.getElementById('game-over');
 let gameOverButtonText = document.getElementById('game-over-text');
-let scoreText = document.getElementById('score');
-let highScoreText = document.getElementById('high-score');
 let restartButton = document.getElementById('restart');
-let gameInterval;
 let liveScore = document.getElementById('live-score');
 let liveHighScore = document.getElementById('live-high-score');
-let asteroid;
 let tapToStart = document.getElementById('tap-to-start');
+let animationId;
+let gameActive = false;
+let asteroids = [];
+let maxAsteroids = 3;
+let lastTime = 0;
+const FPS = 60;
+const frameTime = 1000 / FPS;
+let touchStartX = 0;
+let touchStartY = 0;
+
+function resizeCanvas() {
+    const gameContainer = document.getElementById('game');
+    const containerWidth = gameContainer.clientWidth;
+    const containerHeight = gameContainer.clientHeight - 40;
+    
+    canvas.width = containerWidth;
+    canvas.height = containerHeight;
+
+    gameWidth = canvas.width;
+    gameHeight = canvas.height;
+}
+
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
 
 function generateAsteroid() {
-    let asteroidSize = Math.random() * 50 + 20;
-    let asteroidX = 0;
+    let asteroidSize = Math.random() * (gameWidth * 0.08) + (gameWidth * 0.05);
+    let asteroidX = -asteroidSize;
     let asteroidY = Math.random() * (gameHeight - asteroidSize);
-    let rotationSpeed = Math.random() * 0.2 - 0.1;
-    asteroid = {
+    let speedMultiplier = Math.random() * 0.5 + 0.2;
+    let rotationSpeed = Math.random() * 0.04 - 0.02;
+    let points = [];
+    let numPoints = Math.floor(Math.random() * 6) + 5;
+    for (let i = 0; i < numPoints; i++) {
+        let angle = (i / numPoints) * Math.PI * 2;
+        let radius = asteroidSize / 2;
+        let radiusVar = Math.random() * 0.3 + 0.7;
+        let x = Math.cos(angle) * radius * radiusVar;
+        let y = Math.sin(angle) * radius * radiusVar;
+        points.push({x, y});
+    }
+    
+    return {
         size: asteroidSize,
         x: asteroidX,
         y: asteroidY,
         rotation: 0,
-        rotationSpeed: rotationSpeed
+        rotationSpeed: rotationSpeed,
+        speedMultiplier: speedMultiplier,
+        points: points
     };
 }
 
-function drawAsteroid() {
+function drawAsteroid(asteroid) {
     ctx.save();
     ctx.translate(asteroid.x + asteroid.size / 2, asteroid.y + asteroid.size / 2);
     ctx.rotate(asteroid.rotation);
     ctx.beginPath();
 
-    let numPoints = Math.floor(Math.random() * 6) + 5;
-    let radius = asteroid.size / 2;
-    for (let i = 0; i < numPoints; i++) {
-        let angle = (i / numPoints) * Math.PI * 2;
-        let x = Math.cos(angle) * radius * (Math.random() * 0.5 + 0.5);
-        let y = Math.sin(angle) * radius * (Math.random() * 0.5 + 0.5);
+    for (let i = 0; i < asteroid.points.length; i++) {
+        let point = asteroid.points[i];
         if (i === 0) {
-            ctx.moveTo(x, y);
+            ctx.moveTo(point.x, point.y);
         } else {
-            ctx.lineTo(x, y);
+            ctx.lineTo(point.x, point.y);
         }
     }
+    
     ctx.closePath();
     ctx.fillStyle = 'gray';
     ctx.fill();
@@ -167,7 +221,9 @@ function drawAsteroid() {
 }
 
 function drawBackground() {
-    let stars = 100;
+    let starDensity = 0.0003;
+    let stars = Math.floor(gameWidth * gameHeight * starDensity);
+    
     ctx.fillStyle = 'black';
     ctx.fillRect(0, 0, gameWidth, gameHeight);
 
@@ -186,90 +242,152 @@ function clearCanvas() {
     ctx.clearRect(0, 0, gameWidth, gameHeight);
 }
 
-function moveAsteroid() {
-    if (asteroid.x > gameWidth) {
-        gameOver();
-    } else {
-        asteroid.x += speed;
-        asteroid.rotation += asteroid.rotationSpeed;
-        clearCanvas();
-        drawBackground();
-        drawAsteroid();
+function moveAsteroids(deltaTime) {
+    let frameRatioAdjustment = deltaTime / frameTime;
+
+    if (asteroids.length < maxAsteroids && Math.random() < 0.02 * frameRatioAdjustment) {
+        asteroids.push(generateAsteroid());
+    }
+
+    for (let i = asteroids.length - 1; i >= 0; i--) {
+        let asteroid = asteroids[i];
+        
+        asteroid.x += speed * asteroid.speedMultiplier * frameRatioAdjustment;
+        asteroid.rotation += asteroid.rotationSpeed * frameRatioAdjustment;
+
+        if (asteroid.x > gameWidth) {
+            gameOver();
+            return;
+        }
+    }
+
+    clearCanvas();
+    drawBackground();
+
+    for (let asteroid of asteroids) {
+        drawAsteroid(asteroid);
     }
 }
 
 function gameOver() {
-    clearInterval(gameInterval);
+    gameActive = false;
+    cancelAnimationFrame(animationId);
+    
     if (score > highScore) {
         highScore = score;
-        localStorage.setItem('highScore', highScore);
-        highScoreText.innerText = highScore;
         liveHighScore.innerText = highScore;
     }
+    
     gameOverText.style.display = 'block';
-    restartButton.style.display = 'block';
-    gameOverButtonText.innerText = 'Game Over!';
 }
 
 function resetGame() {
-    generateAsteroid();
+    asteroids = [];
     score = 0;
-    speed = 5;
+    speed = baseSpeed;
     gameOverText.style.display = 'none';
-    restartButton.style.display = 'none';
-    gameOverButtonText.innerText = '';
-    gameInterval = setInterval(updateGame, 100);
+    liveScore.innerText = score;
+    liveHighScore.innerText = highScore;
+    gameActive = true;
+    
+    lastTime = performance.now();
+    animationId = requestAnimationFrame(gameLoop);
 }
 
-let acceleration = 0.05;
+let acceleration = 0.0003;
 
-function updateGame() {
-    moveAsteroid();
-    score++;
+function updateScore(deltaTime) {
+    score += Math.floor(deltaTime / 20);
     liveScore.innerText = score;
+    
     if (score > highScore) {
         highScore = score;
-        localStorage.setItem('highScore', highScore);
         liveHighScore.innerText = highScore;
     }
-    if (score % 100 === 0) {
-        speed += 1;
-    }
-    accelerateAsteroid();
+
+    speed += acceleration * deltaTime;
+
+    maxAsteroids = Math.min(5, 3 + Math.floor(score / 500));
 }
 
-function accelerateAsteroid() {
-    speed += acceleration;
+function gameLoop(timestamp) {
+    if (!gameActive) return;
+
+    const deltaTime = timestamp - lastTime;
+    lastTime = timestamp;
+
+    moveAsteroids(deltaTime);
+    updateScore(deltaTime);
+
+    animationId = requestAnimationFrame(gameLoop);
+}
+
+function handleTap(x, y) {
+    if (!gameActive) {
+        tapToStart.style.display = 'none';
+        resetGame();
+        return;
+    }
+
+    for (let i = asteroids.length - 1; i >= 0; i--) {
+        let asteroid = asteroids[i];
+        let centerX = asteroid.x + asteroid.size / 2;
+        let centerY = asteroid.y + asteroid.size / 2;
+
+        let distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
+
+        if (distance <= asteroid.size / 2) {
+            asteroids.splice(i, 1);
+            score += 50;
+            liveScore.innerText = score;
+            break;
+        }
+    }
 }
 
 canvas.addEventListener('click', function(event) {
-    if (!gameInterval) {
-        tapToStart.style.display = 'none';
-        resetGame();
-    } else {
-        let rect = canvas.getBoundingClientRect();
-        let mouseX = event.clientX - rect.left;
-        let mouseY = event.clientY - rect.top;
+    let rect = canvas.getBoundingClientRect();
+    let mouseX = event.clientX - rect.left;
+    let mouseY = event.clientY - rect.top;
+    handleTap(mouseX, mouseY);
+});
 
-        if (mouseX >= asteroid.x && mouseX <= asteroid.x + asteroid.size && mouseY >= asteroid.y && mouseY <= asteroid.y + asteroid.size) {
-            generateAsteroid();
-        }
+canvas.addEventListener('touchstart', function(event) {
+    event.preventDefault();
+    let rect = canvas.getBoundingClientRect();
+    let touchX = event.touches[0].clientX - rect.left;
+    let touchY = event.touches[0].clientY - rect.top;
+    touchStartX = touchX;
+    touchStartY = touchY;
+});
+
+canvas.addEventListener('touchend', function(event) {
+    event.preventDefault();
+    let rect = canvas.getBoundingClientRect();
+    let touchX = event.changedTouches[0].clientX - rect.left;
+    let touchY = event.changedTouches[0].clientY - rect.top;
+    
+    let moveDistance = Math.sqrt(
+        Math.pow(touchX - touchStartX, 2) + 
+        Math.pow(touchY - touchStartY, 2)
+    );
+    
+    if (moveDistance < 20) {
+        handleTap(touchX, touchY);
     }
 });
 
-restartButton.addEventListener('click', resetGame);
+restartButton.addEventListener('click', function() {
+    tapToStart.style.display = 'none';
+    resetGame();
+});
 
 function startGame() {
     clearCanvas();
     drawBackground();
-    generateAsteroid();
-    score = 0;
-    speed = 5;
-    liveScore.innerText = score;
+    liveScore.innerText = 0;
     liveHighScore.innerText = highScore;
-    highScoreText.innerText = highScore;
     gameOverText.style.display = 'none';
-    restartButton.style.display = 'none';
 }
 
 startGame();
