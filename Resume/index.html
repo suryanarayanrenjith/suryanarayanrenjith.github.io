@@ -198,83 +198,231 @@
   </noscript>
 
   <script>
-    const canvas = document.getElementById('dotCanvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+const canvas = document.getElementById('dotCanvas');
+const ctx = canvas.getContext('2d');
 
-    const dots = [];
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-    function Dot(x, y) {
-        this.x = x;
-        this.y = y;
-        this.radius = 2;
-        this.color = '#ffffff';
-        this.speed = { x: Math.random() * 2 - 1, y: Math.random() * 2 - 1 };
+let dots = [];
+let ripples = [];
+
+function drawBackground() {
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+class Dot {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.baseRadius = Math.random() * 1.8 + 0.8;
+    this.radius = this.baseRadius;
+    this.speed = {
+      x: Math.random() * 0.5 - 0.25,
+      y: Math.random() * 0.5 - 0.25
+    };
+    this.opacity = Math.random() * 0.7 + 0.3;
+  }
+  
+  update() {
+    this.x += this.speed.x;
+    this.y += this.speed.y;
+
+    if (this.x < 0 || this.x > canvas.width) {
+      this.speed.x *= -0.97;
+      this.x = Math.max(0, Math.min(canvas.width, this.x));
+    }
+    if (this.y < 0 || this.y > canvas.height) {
+      this.speed.y *= -0.97;
+      this.y = Math.max(0, Math.min(canvas.height, this.y));
     }
 
-    Dot.prototype.draw = function () {
+    this.radius = this.baseRadius + Math.sin(Date.now() * 0.002) * 0.4;
+  }
+  
+  draw() {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,255,255,${this.opacity})`;
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = `rgba(255,255,255,${this.opacity})`;
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+class Ripple {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.radius = 0;
+    this.maxRadius = 150;
+    this.opacity = 0.5;
+  }
+  
+  update() {
+    this.radius += 2;
+    this.opacity -= 0.005;
+  }
+  
+  draw() {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(255,255,255,${this.opacity})`;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function connectDots() {
+  for (let i = 0; i < dots.length; i++) {
+    for (let j = i + 1; j < dots.length; j++) {
+      const dx = dots[i].x - dots[j].x;
+      const dy = dots[i].y - dots[j].y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      const maxDistance = 180;
+      
+      if (distance < maxDistance) {
+        const lineOpacity = 0.15 * (1 - distance / maxDistance);
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = this.color;
-        ctx.fill();
-    };
-
-    Dot.prototype.update = function () {
-        this.x += this.speed.x;
-        this.y += this.speed.y;
-
-        if (this.x < 0 || this.x > canvas.width) {
-            this.speed.x *= -1;
-        }
-        if (this.y < 0 || this.y > canvas.height) {
-            this.speed.y *= -1;
-        }
-    };
-
-    function connectDots() {
-        for (let i = 0; i < dots.length; i++) {
-            for (let j = i + 1; j < dots.length; j++) {
-                const dx = dots[i].x - dots[j].x;
-                const dy = dots[i].y - dots[j].y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                if (distance < 100) {
-                    ctx.beginPath();
-                    ctx.moveTo(dots[i].x, dots[i].y);
-                    ctx.lineTo(dots[j].x, dots[j].y);
-                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-                    ctx.lineWidth = 0.5;
-                    ctx.stroke();
-                }
-            }
-        }
+        ctx.moveTo(dots[i].x, dots[i].y);
+        ctx.lineTo(dots[j].x, dots[j].y);
+        ctx.strokeStyle = `rgba(255,255,255,${lineOpacity})`;
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
     }
+  }
+}
 
-    function animate() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        dots.forEach(dot => {
-            dot.update();
-            dot.draw();
-        });
-        connectDots();
-        requestAnimationFrame(animate);
+function addGradientOverlay() {
+  const gradient = ctx.createRadialGradient(
+    canvas.width / 2, canvas.height / 2, 0,
+    canvas.width / 2, canvas.height / 2, Math.max(canvas.width, canvas.height)
+  );
+  gradient.addColorStop(0, 'rgba(0,0,0,0)');
+  gradient.addColorStop(0.8, 'rgba(0,0,0,0)');
+  gradient.addColorStop(1, 'rgba(0,0,0,0.7)');
+  
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+function animate() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawBackground();
+  
+  dots.forEach(dot => {
+    dot.update();
+    dot.draw();
+  });
+
+  connectDots();
+  
+  for (let i = ripples.length - 1; i >= 0; i--) {
+    ripples[i].update();
+    ripples[i].draw();
+    if (ripples[i].radius > ripples[i].maxRadius || ripples[i].opacity <= 0) {
+      ripples.splice(i, 1);
     }
+  }
+  
+  addGradientOverlay();
+  requestAnimationFrame(animate);
+}
 
-    function createDots() {
-        for (let i = 0; i < 100; i++) {
-            const x = Math.random() * canvas.width;
-            const y = Math.random() * canvas.height;
-            dots.push(new Dot(x, y));
-        }
+function createDots() {
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height / 2;
+  
+  for (let i = 0; i < 150; i++) {
+    let x, y;
+    const theta = i * 2.39996;
+    const r = Math.sqrt(i) * 8;
+    
+    if (i < 100) {
+      x = centerX + Math.cos(theta) * r * (canvas.width / 800);
+      y = centerY + Math.sin(theta) * r * (canvas.height / 800);
+      x += (Math.random() - 0.5) * 100;
+      y += (Math.random() - 0.5) * 100;
+    } else {
+      x = Math.random() * canvas.width;
+      y = Math.random() * canvas.height;
     }
+    
+    x = Math.max(0, Math.min(canvas.width, x));
+    y = Math.max(0, Math.min(canvas.height, y));
+    
+    dots.push(new Dot(x, y));
+  }
+}
 
-    createDots();
-    animate();
+canvas.addEventListener('mousemove', (e) => {
+  const mouseX = e.clientX;
+  const mouseY = e.clientY;
+  
+  dots.forEach(dot => {
+    const dx = mouseX - dot.x;
+    const dy = mouseY - dot.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance < 250) {
+      const angle = Math.atan2(dy, dx);
+      const force = 0.015 * (1 - distance / 250);
+      
+      dot.speed.x += Math.cos(angle + Math.PI/2) * force;
+      dot.speed.y += Math.sin(angle + Math.PI/2) * force;
+      dot.speed.x += dx * force * 0.01 / distance;
+      dot.speed.y += dy * force * 0.01 / distance;
+      
+      dot.speed.x *= 0.985;
+      dot.speed.y *= 0.985;
+      
+      const maxSpeed = 1.8;
+      const currentSpeed = Math.sqrt(dot.speed.x * dot.speed.x + dot.speed.y * dot.speed.y);
+      if (currentSpeed > maxSpeed) {
+        dot.speed.x = (dot.speed.x / currentSpeed) * maxSpeed;
+        dot.speed.y = (dot.speed.y / currentSpeed) * maxSpeed;
+      }
+    }
+  });
+});
 
-    window.addEventListener('resize', () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    });
+canvas.addEventListener('click', (e) => {
+  const mouseX = e.clientX;
+  const mouseY = e.clientY;
+  
+  ripples.push(new Ripple(mouseX, mouseY));
+  
+  dots.forEach(dot => {
+    const dx = dot.x - mouseX;
+    const dy = dot.y - mouseY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance < 300) {
+      const force = (1 - distance / 300) * 3;
+      const angle = Math.atan2(dy, dx);
+      
+      dot.speed.x += Math.cos(angle) * force;
+      dot.speed.y += Math.sin(angle) * force;
+    }
+  });
+});
+
+createDots();
+animate();
+
+window.addEventListener('resize', () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  dots = [];
+  ripples = [];
+  createDots();
+});
   </script>
   
   <script src="script.js"></script>
