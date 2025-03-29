@@ -57,7 +57,7 @@ const scalerStd  = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
 let model = null;
 async function loadModel() {
   if (!model) {
-    const modelPath = '/assets/tfjs_model/model.json';
+    const modelPath = 'https://model.suryanarayanrenjith.workers.dev/model.json';
     model = await tf.loadLayersModel(modelPath);
     console.log("Model loaded successfully.");
   }
