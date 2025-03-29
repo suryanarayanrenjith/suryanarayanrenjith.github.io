@@ -298,399 +298,297 @@ function isDesktop() {
 </style>
 
     <script>
-
-const helpButton = document.getElementById('helpButton');
-const modalOverlay = document.getElementById('modalOverlay');
-const shortcutsModal = document.getElementById('shortcutsModal');
-const closeModal = document.getElementById('closeModal');
-
-let shortcutsVisible = false;
-
-function toggleShortcuts() {
-    shortcutsVisible = !shortcutsVisible;
-
-    if (shortcutsVisible) {
-        showShortcuts();
-    } else {
-        hideShortcuts();
-    }
-}
-
-function showShortcuts() {
-    modalOverlay.classList.add('active');
-    shortcutsModal.style.display = 'block';
-}
-
-function hideShortcuts() {
-    shortcutsVisible = false;
-    modalOverlay.classList.remove('active');
-    shortcutsModal.style.display = 'none';
-}
-
-helpButton.addEventListener('click', () => {
-    toggleShortcuts();
-});
-
-closeModal.addEventListener('click', () => {
-    hideShortcuts();
-});
-
-modalOverlay.addEventListener('click', (event) => {
-    if (event.target === modalOverlay && shortcutsVisible) {
-        toggleShortcuts();
-    }
-});
-
-document.addEventListener('keydown', (event) => {
-    if (event.ctrlKey && event.shiftKey) {
-        switch (event.code) {
-            case 'Slash':
-                event.preventDefault();
+        const helpButton = document.getElementById('helpButton');
+        const modalOverlay = document.getElementById('modalOverlay');
+        const shortcutsModal = document.getElementById('shortcutsModal');
+        const closeModal = document.getElementById('closeModal');
+        
+        let shortcutsVisible = false;
+        
+        const CLOUD_FLARE_WORKER_URL = 'https://pages.suryanarayanrenjith.workers.dev/';
+        
+        function toggleShortcuts() {
+            shortcutsVisible = !shortcutsVisible;
+            if (shortcutsVisible) {
+                showShortcuts();
+            } else {
+                hideShortcuts();
+            }
+        }
+        
+        function showShortcuts() {
+            modalOverlay.classList.add('active');
+            shortcutsModal.style.display = 'block';
+        }
+        
+        function hideShortcuts() {
+            shortcutsVisible = false;
+            modalOverlay.classList.remove('active');
+            shortcutsModal.style.display = 'none';
+        }
+        
+        helpButton.addEventListener('click', () => {
+            toggleShortcuts();
+        });
+        
+        closeModal.addEventListener('click', () => {
+            hideShortcuts();
+        });
+        
+        modalOverlay.addEventListener('click', (event) => {
+            if (event.target === modalOverlay && shortcutsVisible) {
                 toggleShortcuts();
-                break;
-            case 'Digit5':
-                event.preventDefault();
-                showContent('home');
-                updateProgressBar('home');
-                break;
-            case 'Digit6':
-                event.preventDefault();
-                showContent('about');
-                updateProgressBar('about');
-                break;
-            case 'Digit7':
-                event.preventDefault();
-                showContent('projects');
-                updateProgressBar('projects');
-                break;
-            case 'Digit8':
-                event.preventDefault();
-                showContent('resume');
-                updateProgressBar('resume');
-                break;
-            case 'KeyK':
-                event.preventDefault();
-                setTimeout(() => {
-                    window.open('/Cli', '_blank');
-                }, 100);
-                break;
-            case 'KeyL':
-                event.preventDefault();
-                setTimeout(() => {
-                    window.open('/Links', '_blank');
-                }, 100);
-                break;
-            case 'KeyV':
-                event.preventDefault();
-                setTimeout(() => {
-                    window.open('/Resume', '_blank');
-                }, 100);
-                break;
-            default:
-                return;
-        }
-    }
-});
-
-let isMobile = /Mobi|Android/i.test(navigator.userAgent);
-
-function addAnimationStyles() {
-    const style = document.createElement('style');
-    style.innerHTML = `
-        @keyframes slideUp {
-            0% { transform: translateY(100%) scale(0.8); opacity: 0; }
-            100% { transform: translateY(0) scale(1); opacity: 1; }
-        }
-
-        @keyframes slideDown {
-            0% { transform: translateY(-100%) scale(0.8); opacity: 0; }
-            100% { transform: translateY(0) scale(1); opacity: 1; }
-        }
-
-        @keyframes mobileRotateX90 {
-            0% { transform: perspective(1000px) rotateX(0) scale(1); opacity: 1; }
-            100% { transform: perspective(1000px) rotateX(90deg) scale(0.5); opacity: 0; }
-        }
-
-        @keyframes mobileRotateXNeg90 {
-            0% { transform: perspective(1000px) rotateX(0) scale(1); opacity: 1; }
-            100% { transform: perspective(1000px) rotateX(-90deg) scale(0.5); opacity: 0; }
-        }
-
-        @keyframes mobileRotateY180 {
-            0% { transform: perspective(1000px) rotateY(0) scale(1); opacity: 1; }
-            100% { transform: perspective(1000px) rotateY(180deg) scale(0.5); opacity: 0; }
-        }
-
-        @keyframes mobileRotateYNeg180 {
-            0% { transform: perspective(1000px) rotateY(0) scale(1); opacity: 1; }
-            100% { transform: perspective(1000px) rotateY(-180deg) scale(0.5); opacity: 0; }
-        }
-
-        @keyframes desktopRotateY90 {
-            0% { transform: perspective(1000px) rotateY(0) scale(1); opacity: 1; }
-            100% { transform: perspective(1000px) rotateY(90deg) scale(0.8); opacity: 0; }
-        }
-
-        @keyframes desktopRotateYNeg90 {
-            0% { transform: perspective(1000px) rotateY(0) scale(1); opacity: 1; }
-            100% { transform: perspective(1000px) rotateY(-90deg) scale(0.8); opacity: 0; }
-        }
-
-        .slide-up {
-            animation: slideUp 1s ease-in-out forwards;
-        }
-
-        .slide-down {
-            animation: slideDown 1s ease-in-out forwards;
-        }
-
-        .mobile-rotate-x-90 {
-            animation: mobileRotateX90 1s ease-in-out forwards;
-        }
-
-        .mobile-rotate-x-neg-90 {
-            animation: mobileRotateXNeg90 1s ease-in-out forwards;
-        }
-
-        .mobile-rotate-y-180 {
-            animation: mobileRotateY180 1s ease-in-out forwards;
-        }
-
-        .mobile-rotate-y-neg-180 {
-            animation: mobileRotateYNeg180 1s ease-in-out forwards;
-        }
-
-        .desktop-rotate-y-90 {
-            animation: desktopRotateY90 1s ease-in-out forwards;
-        }
-
-        .desktop-rotate-y-neg-90 {
-            animation: desktopRotateYNeg90 1s ease-in-out forwards;
-        }
-    `;
-    document.head.appendChild(style);
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const sectionFromQuery = urlParams.get('section');
-    const sectionFromHash = window.location.hash.substring(1);
-
-    const sectionToLoad = sectionFromQuery || sectionFromHash || 'home';
-    showContent(sectionToLoad);
-});
-
-function showContent(section, direction = 'none') {
-    const content = document.getElementById('content');
-    let animationClass = '';
-
-    if (isMobile) {
-        if (direction === 'down') {
-            animationClass = 'mobile-rotate-x-90';
-        } else if (direction === 'up') {
-            animationClass = 'mobile-rotate-x-neg-90';
-        } else if (direction === 'left') {
-            animationClass = 'mobile-rotate-y-neg-180';
-        } else if (direction === 'right') {
-            animationClass = 'mobile-rotate-y-180';
-        }
-    } else {
-        if (direction === 'down') {
-            animationClass = 'slide-down';
-        } else if (direction === 'up') {
-            animationClass = 'slide-up';
-        } else if (direction === 'left') {
-            animationClass = 'desktop-rotate-y-neg-90';
-        } else if (direction === 'right') {
-            animationClass = 'desktop-rotate-y-90';
-        }
-    }
-
-    content.style.opacity = '0';
+            }
+        });
         
-            setTimeout(() => {
-                let html = '';
-        
-                switch (section) {
-                    case 'home':
-                        html = `
-                            <h1 class="animated-text">Fusing Imagination with Innovation</h1>
-                            <p class="tagline">Explore Boundless Creativity.</p>
-                            <button class="center-button"><a href="/Links" target="_blank">Discover Now</a></button>
-                        `;
+        document.addEventListener('keydown', (event) => {
+            if (event.ctrlKey && event.shiftKey) {
+                switch (event.code) {
+                    case 'Slash':
+                        event.preventDefault();
+                        toggleShortcuts();
                         break;
-                    case 'about':
-                        html = `
-                        <div class="about-content">
-                        <img src="/assets/profile-pic.jpg" alt="Profile Picture" class="logo" style="width: 90px; height: 90px; border-radius: 50%;">
-                        <h1 class="animated-text">About Me</h1>
-                        <p class="tagline">My name is Suryanarayan Renjith.</p>
-                        <p>I have had a deep passion for computers since my childhood and over the years, I have channeled this passion into creating numerous innovative projects.</p>
-                        <p>My journey has led me to develop a<a href="/Goto/?id=vexylon" target="_blank" style="text-decoration: none; color: white; display: inline-block; padding: 5px; border-radius: 4px; transition: text-decoration 0.3s ease;"onmouseover="this.style.textDecoration='underline';"onmouseout="this.style.textDecoration='none';">startup</a>and a<a href="/Goto/?id=space_attack" target="_blank" style="text-decoration: none; color: white; display: inline-block; padding: 5px; border-radius: 4px; transition: text-decoration 0.3s ease;"onmouseover="this.style.textDecoration='underline';"onmouseout="this.style.textDecoration='none';">game</a>of my own.</p>
-                        <p>Feel free to<a href="/Links" target="_blank" style="text-decoration: none; color: white; display: inline-block; padding: 5px; border-radius: 4px; transition: text-decoration 0.3s ease;"onmouseover="this.style.textDecoration='underline';"onmouseout="this.style.textDecoration='none';">explore</a>and connect with me!</p>
-                        </div>
-                    `;
-                    break;
-                    case 'projects':
-                        html = `
-                            <h1 class="animated-text" style="margin-bottom: 8px;">Projects</h1>
-                            <p class="tagline" style="font-size: 16px; margin-bottom: 8px;">Explore some of the projects I have worked on.</p>
-                            <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 15px; margin-left: -8px; margin-right: -8px;">
-                            <li style="width: calc(50% - 16px); border: 1px solid #ccc; padding: 6px; box-sizing: border-box; margin-bottom: 15px; margin-left: 8px;">
-                            <i class="fa-solid fa-lightbulb"></i><br><a href="/Goto/?id=linkedin" target="_blank" style="text-decoration: none; color: white; display: block; padding: 8px; border-radius: 4px; transition: text-decoration 0.3s ease;"
-                            onmouseover="this.style.textDecoration='underline';"
-                            onmouseout="this.style.textDecoration='none';">
-                            <h3 style="font-size: 14px; margin-top: 0; margin-bottom: 4px;">Snake and animal repellent</h3>
-                            </a>
-                            </li>
-                            <li style="width: calc(50% - 16px); border: 1px solid #ccc; padding: 6px; box-sizing: border-box; margin-bottom: 15px;">
-                            <i class="fa-solid fa-lightbulb"></i><br><a href="/Goto/?id=linkedin" target="_blank" style="text-decoration: none; color: white; display: block; padding: 8px; border-radius: 4px; transition: text-decoration 0.3s ease;"
-                            onmouseover="this.style.textDecoration='underline';"
-                            onmouseout="this.style.textDecoration='none';">
-                            <h3 style="font-size: 14px; margin-top: 0; margin-bottom: 4px;">CryptoRipo</h3>
-                            </a>
-                            </li>
-                            <li style="width: calc(50% - 16px); border: 1px solid #ccc; padding: 6px; box-sizing: border-box; margin-bottom: 15px; margin-left: 8px;">
-                            <i class="fa-solid fa-lightbulb"></i><br><a href="/Goto/?id=linkedin" target="_blank" style="text-decoration: none; color: white; display: block; padding: 8px; border-radius: 4px; transition: text-decoration 0.3s ease;"
-                            onmouseover="this.style.textDecoration='underline';"
-                            onmouseout="this.style.textDecoration='none';">
-                            <h3 style="font-size: 14px; margin-top: 0; margin-bottom: 4px;">OPD Queuing Model</h3>
-                            </a>
-                            </li>
-                            <li style="width: calc(50% - 16px); border: 1px solid #ccc; padding: 6px; box-sizing: border-box; margin-bottom: 15px;">
-                            <i class="fa-solid fa-lightbulb"></i><br><a href="/Goto/?id=linkedin" target="_blank" style="text-decoration: none; color: white; display: block; padding: 8px; border-radius: 4px; transition: text-decoration 0.3s ease;"
-                            onmouseover="this.style.textDecoration='underline';"
-                            onmouseout="this.style.textDecoration='none';">
-                            <h3 style="font-size: 14px; margin-top: 0; margin-bottom: 4px;">macOS VMX Patcher</h3>
-                            </a>
-                            </li>
-                            <li style="width: calc(50% - 16px); border: 1px solid #ccc; padding: 6px; box-sizing: border-box; margin-bottom: 15px; margin-left: 8px;">
-                            <i class="fa-solid fa-lightbulb"></i><br><a href="/Goto/?id=linkedin" target="_blank" style="text-decoration: none; color: white; display: block; padding: 8px; border-radius: 4px; transition: text-decoration 0.3s ease;"
-                            onmouseover="this.style.textDecoration='underline';"
-                            onmouseout="this.style.textDecoration='none';">
-                            <h3 style="font-size: 14px; margin-top: 0; margin-bottom: 4px;">Website Checker</h3>
-                            </a>
-                            </li>
-                            <p style="font-size: 14px; margin-top: 8px; position: absolute; right: 20%; bottom: 5%;"><a href="/Links" target="_blank" style="text-decoration: none; color: white; display: inline-block; padding: 5px; border-radius: 4px; transition: text-decoration 0.3s ease;"onmouseover="this.style.textDecoration='underline';"onmouseout="this.style.textDecoration='none';">Explore more...</a></p>
-                            </ul>
-                        `;
+                    case 'Digit5':
+                        event.preventDefault();
+                        showContent('home');
+                        updateProgressBar('home');
                         break;
+                    case 'Digit6':
+                        event.preventDefault();
+                        showContent('about');
+                        updateProgressBar('about');
                         break;
-                    case 'resume':
-                        html = `
-                            <h1 class="animated-text">Resume</h1>
-                            <p class="tagline">View my professional resume to learn about my skills and experience.</p>
-                            <button class="center-button"><a href="/Resume" target="_blank">View Resume</a></button>
-                        `;
+                    case 'Digit7':
+                        event.preventDefault();
+                        showContent('projects');
+                        updateProgressBar('projects');
+                        break;
+                    case 'Digit8':
+                        event.preventDefault();
+                        showContent('resume');
+                        updateProgressBar('resume');
+                        break;
+                    case 'KeyK':
+                        event.preventDefault();
+                        setTimeout(() => {
+                            window.open('/Cli', '_blank');
+                        }, 100);
+                        break;
+                    case 'KeyL':
+                        event.preventDefault();
+                        setTimeout(() => {
+                            window.open('/Links', '_blank');
+                        }, 100);
+                        break;
+                    case 'KeyV':
+                        event.preventDefault();
+                        setTimeout(() => {
+                            window.open('/Resume', '_blank');
+                        }, 100);
                         break;
                     default:
                         return;
                 }
-        
-        content.innerHTML = html;
-        content.style.transition = 'opacity 1s ease';
-        content.style.opacity = '1';
-        content.classList.add(animationClass);
-        setTimeout(() => {
-            content.classList.remove(animationClass);
-        }, 1000);
-    }, 500);
-}
-
-document.querySelectorAll('.menu-bar a').forEach(link => {
-    link.addEventListener('click', (event) => {
-        event.preventDefault();
-        const section = event.target.getAttribute('data-section');
-        showContent(section, 'none');
-        updateProgressBar(section);
-    });
-});
-
-const sectionOrder = ['home', 'about', 'projects', 'resume'];
-let currentSectionIndex = 0;
-let isThrottled = false;
-
-function updateProgressBar(section) {
-    const progressBar = document.querySelector('.progress-bar div');
-    const index = sectionOrder.indexOf(section);
-    const progress = index / (sectionOrder.length - 1) * 100;
-    progressBar.style.width = `${progress}%`;
-}
-
-function switchToNextSection(direction) {
-    if (isThrottled) return;
-    isThrottled = true;
-    setTimeout(() => { isThrottled = false }, 1000);
-
-    if (direction === 'down' || direction === 'right') {
-        currentSectionIndex = (currentSectionIndex + 1) % sectionOrder.length;
-    } else if (direction === 'up' || direction === 'left') {
-        currentSectionIndex = (currentSectionIndex - 1 + sectionOrder.length) % sectionOrder.length;
-    }
-
-    const nextSection = sectionOrder[currentSectionIndex];
-    showContent(nextSection, direction);
-    updateProgressBar(nextSection);
-}
-
-window.addEventListener('wheel', (event) => {
-    if (event.deltaY > 0) {
-        switchToNextSection('down');
-    } else {
-        switchToNextSection('up');
-    }
-});
-
-let touchStartX = 0;
-let touchStartY = 0;
-let touchEndX = 0;
-let touchEndY = 0;
-
-window.addEventListener('touchstart', (event) => {
-    touchStartX = event.changedTouches[0].screenX;
-    touchStartY = event.changedTouches[0].screenY;
-});
-
-window.addEventListener('touchend', (event) => {
-    touchEndX = event.changedTouches[0].screenX;
-    touchEndY = event.changedTouches[0].screenY;
-    handleGesture();
-});
-
-function handleGesture() {
-    const deltaX = touchStartX - touchEndX;
-    const deltaY = touchStartY - touchEndY;
-
-    if (Math.abs(deltaX) > Math.abs(deltaY)) {
-        if (isMobile) {
-            if (deltaX > 50) {
-                switchToNextSection('right');
-            } else if (deltaX < -50) {
-                switchToNextSection('left');
             }
-        } else {
-            if (deltaX > 50) {
-                switchToNextSection('left');
-            } else if (deltaX < -50) {
-                switchToNextSection('right');
+        });
+        
+        let isMobile = /Mobi|Android/i.test(navigator.userAgent);
+        
+        function addAnimationStyles() {
+            const style = document.createElement('style');
+            style.innerHTML = `
+                @keyframes slideUp {
+                    0% { transform: translateY(100%) scale(0.8); opacity: 0; }
+                    100% { transform: translateY(0) scale(1); opacity: 1; }
+                }
+                @keyframes slideDown {
+                    0% { transform: translateY(-100%) scale(0.8); opacity: 0; }
+                    100% { transform: translateY(0) scale(1); opacity: 1; }
+                }
+                @keyframes mobileRotateX90 {
+                    0% { transform: perspective(1000px) rotateX(0) scale(1); opacity: 1; }
+                    100% { transform: perspective(1000px) rotateX(90deg) scale(0.5); opacity: 0; }
+                }
+                @keyframes mobileRotateXNeg90 {
+                    0% { transform: perspective(1000px) rotateX(0) scale(1); opacity: 1; }
+                    100% { transform: perspective(1000px) rotateX(-90deg) scale(0.5); opacity: 0; }
+                }
+                @keyframes mobileRotateY180 {
+                    0% { transform: perspective(1000px) rotateY(0) scale(1); opacity: 1; }
+                    100% { transform: perspective(1000px) rotateY(180deg) scale(0.5); opacity: 0; }
+                }
+                @keyframes mobileRotateYNeg180 {
+                    0% { transform: perspective(1000px) rotateY(0) scale(1); opacity: 1; }
+                    100% { transform: perspective(1000px) rotateY(-180deg) scale(0.5); opacity: 0; }
+                }
+                @keyframes desktopRotateY90 {
+                    0% { transform: perspective(1000px) rotateY(0) scale(1); opacity: 1; }
+                    100% { transform: perspective(1000px) rotateY(90deg) scale(0.8); opacity: 0; }
+                }
+                @keyframes desktopRotateYNeg90 {
+                    0% { transform: perspective(1000px) rotateY(0) scale(1); opacity: 1; }
+                    100% { transform: perspective(1000px) rotateY(-90deg) scale(0.8); opacity: 0; }
+                }
+                .slide-up { animation: slideUp 1s ease-in-out forwards; }
+                .slide-down { animation: slideDown 1s ease-in-out forwards; }
+                .mobile-rotate-x-90 { animation: mobileRotateX90 1s ease-in-out forwards; }
+                .mobile-rotate-x-neg-90 { animation: mobileRotateXNeg90 1s ease-in-out forwards; }
+                .mobile-rotate-y-180 { animation: mobileRotateY180 1s ease-in-out forwards; }
+                .mobile-rotate-y-neg-180 { animation: mobileRotateYNeg180 1s ease-in-out forwards; }
+                .desktop-rotate-y-90 { animation: desktopRotateY90 1s ease-in-out forwards; }
+                .desktop-rotate-y-neg-90 { animation: desktopRotateYNeg90 1s ease-in-out forwards; }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const sectionFromQuery = urlParams.get('section');
+            const sectionFromHash = window.location.hash.substring(1);
+            const sectionToLoad = sectionFromQuery || sectionFromHash || 'home';
+            showContent(sectionToLoad);
+        });
+        
+        function showContent(section, direction = 'none') {
+            const content = document.getElementById('content');
+            let animationClass = '';
+            
+            if (isMobile) {
+                if (direction === 'down') {
+                    animationClass = 'mobile-rotate-x-90';
+                } else if (direction === 'up') {
+                    animationClass = 'mobile-rotate-x-neg-90';
+                } else if (direction === 'left') {
+                    animationClass = 'mobile-rotate-y-neg-180';
+                } else if (direction === 'right') {
+                    animationClass = 'mobile-rotate-y-180';
+                }
+            } else {
+                if (direction === 'down') {
+                    animationClass = 'slide-down';
+                } else if (direction === 'up') {
+                    animationClass = 'slide-up';
+                } else if (direction === 'left') {
+                    animationClass = 'desktop-rotate-y-neg-90';
+                } else if (direction === 'right') {
+                    animationClass = 'desktop-rotate-y-90';
+                }
+            }
+            
+            content.style.opacity = '0';
+            
+            setTimeout(() => {
+                fetch(`${CLOUD_FLARE_WORKER_URL}?section=${section}`)
+                    .then(response => response.text())
+                    .then(html => {
+                        content.innerHTML = html;
+                        content.style.transition = 'opacity 1s ease';
+                        content.style.opacity = '1';
+                        if (animationClass) {
+                            content.classList.add(animationClass);
+                            setTimeout(() => {
+                                content.classList.remove(animationClass);
+                            }, 1000);
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error fetching content:", error);
+                        content.innerHTML = `<p>Error loading content.</p>`;
+                        content.style.opacity = '1';
+                    });
+            }, 500);
+        }
+        
+        document.querySelectorAll('.menu-bar a').forEach(link => {
+            link.addEventListener('click', (event) => {
+                event.preventDefault();
+                const section = event.target.getAttribute('data-section');
+                showContent(section, 'none');
+                updateProgressBar(section);
+            });
+        });
+        
+        const sectionOrder = ['home', 'about', 'projects', 'resume'];
+        let currentSectionIndex = 0;
+        let isThrottled = false;
+        
+        function updateProgressBar(section) {
+            const progressBar = document.querySelector('.progress-bar div');
+            const index = sectionOrder.indexOf(section);
+            const progress = index / (sectionOrder.length - 1) * 100;
+            progressBar.style.width = `${progress}%`;
+        }
+        
+        function switchToNextSection(direction) {
+            if (isThrottled) return;
+            isThrottled = true;
+            setTimeout(() => { isThrottled = false; }, 1000);
+        
+            if (direction === 'down' || direction === 'right') {
+                currentSectionIndex = (currentSectionIndex + 1) % sectionOrder.length;
+            } else if (direction === 'up' || direction === 'left') {
+                currentSectionIndex = (currentSectionIndex - 1 + sectionOrder.length) % sectionOrder.length;
+            }
+        
+            const nextSection = sectionOrder[currentSectionIndex];
+            showContent(nextSection, direction);
+            updateProgressBar(nextSection);
+        }
+        
+        window.addEventListener('wheel', (event) => {
+            if (event.deltaY > 0) {
+                switchToNextSection('down');
+            } else {
+                switchToNextSection('up');
+            }
+        });
+        
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchEndX = 0;
+        let touchEndY = 0;
+        
+        window.addEventListener('touchstart', (event) => {
+            touchStartX = event.changedTouches[0].screenX;
+            touchStartY = event.changedTouches[0].screenY;
+        });
+        
+        window.addEventListener('touchend', (event) => {
+            touchEndX = event.changedTouches[0].screenX;
+            touchEndY = event.changedTouches[0].screenY;
+            handleGesture();
+        });
+        
+        function handleGesture() {
+            const deltaX = touchStartX - touchEndX;
+            const deltaY = touchStartY - touchEndY;
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                if (isMobile) {
+                    if (deltaX > 50) {
+                        switchToNextSection('right');
+                    } else if (deltaX < -50) {
+                        switchToNextSection('left');
+                    }
+                } else {
+                    if (deltaX > 50) {
+                        switchToNextSection('left');
+                    } else if (deltaX < -50) {
+                        switchToNextSection('right');
+                    }
+                }
+            } else {
+                if (deltaY > 50) {
+                    switchToNextSection('down');
+                } else if (deltaY < -50) {
+                    switchToNextSection('up');
+                }
             }
         }
-    } else {
-        if (deltaY > 50) {
-            switchToNextSection('down');
-        } else if (deltaY < -50) {
-            switchToNextSection('up');
-        }
-    }
-}
-
-addAnimationStyles();
-
-showContent('home', 'none');
-updateProgressBar('home');
         
-        </script>
+        addAnimationStyles();
+        showContent('home', 'none');
+        updateProgressBar('home');
+    </script>
     
     <div id="music-popup">
         <div id="popup-content">
