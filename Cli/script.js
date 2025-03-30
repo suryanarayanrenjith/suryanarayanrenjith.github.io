@@ -20,18 +20,18 @@ const aiCommands = {
 };
 
 const fileLinks = {
-  "about": "https://pages.suryanarayanrenjith.workers.dev/?section=about",
-  "projects": "https://pages.suryanarayanrenjith.workers.dev/?section=projects",
-  "resume": "https://pages.suryanarayanrenjith.workers.dev/?section=resume",
-  "view-resume": "/Resume",
-  "linkedin": "/Goto/?id=linkedin",
-  "github": "/Goto/?id=github",
-  "twitter": "/Goto/?id=twitter",
-  "startup": "/Goto/?id=vexylon",
-  "vexylon": "/Goto/?id=vexylon",
-  "game": "/Goto/?id=space_attack",
-  "links": "/Links",
-  "explore": "/Links"
+    "about": "/?section=about",
+    "projects": "/?section=projects",
+    "resume": "/?section=resume",
+    "view-resume": "/Resume",
+    "linkedin": "/Goto/?id=linkedin",
+    "github": "/Goto/?id=github",
+    "twitter": "/Goto/?id=twitter",
+    "startup": "/Goto/?id=vexylon",
+    "vexylon": "/Goto/?id=vexylon",
+    "game": "/Goto/?id=space_attack",
+    "links": "/Links",
+    "explore": "/Links"
 };
 
 async function processCommand() {
