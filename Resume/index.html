@@ -158,7 +158,7 @@
   </div>
 
   <div class="container" id="decryption-container" style="display:none;">
-  <h2>Welcome, <span id="user-email"></span>!</h2>
+  <h2><span id="greeting"></span>, <span id="user-email"></span>!</h2>
   <p>Your email is verified. Check the verification email for the decryption password to view the resume.</p>
   <div class="timer-wrapper" style="position: relative; margin: 10px 0;">
     <input
@@ -190,6 +190,20 @@
   </div>
   
   <a href="help.html" class="help-icon" title="Need Help?">?</a>
+
+  <script>
+function getTimeBasedGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  const greeting = getTimeBasedGreeting();
+  document.getElementById("greeting").textContent = greeting;
+});
+  </script>
 
   <noscript>
     <div style="position:fixed; bottom:0; left:0; width:100%; color:#fff; text-align:center; padding:10px; z-index:9999;">
