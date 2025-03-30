@@ -195,3 +195,56 @@ function displayHelp() {
 - Ctrl + Shift + Q: Closes the terminal.
 - Ctrl + Shift + L: Clears the terminal screen.`;
 }
+
+async function streamEventsToText(stream) {
+  const reader = stream.getReader();
+  const decoder = new TextDecoder("utf-8");
+  let resultText = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const chunk = decoder.decode(value, { stream: true });
+    const lines = chunk.split("\n");
+    for (const line of lines) {
+      if (line.startsWith("data:")) {
+        const jsonStr = line.replace(/^data:\s*/, "").trim();
+        if (jsonStr === "[DONE]") continue;
+        try {
+          const parsed = JSON.parse(jsonStr);
+          if (parsed.response) {
+            resultText += parsed.response;
+          }
+        } catch (e) {
+          console.error("Error parsing line:", line, e);
+        }
+      }
+    }
+  }
+  return resultText;
+}
+
+function cleanHeadline(text) {
+  text = text.trim();
+  if (text.startsWith('"')) {
+    text = text.substring(1);
+  }
+  const colonIndex = text.indexOf(':');
+  if (colonIndex !== -1) {
+    text = text.substring(0, colonIndex);
+  }
+  text = text.trim();
+  text = text.replace(/\band\b[\s.,!?:;]*$/i, "");
+  return text.trim();
+}
+
+function cleanTagline(text) {
+  text = text.trim().replace(/\s+/g, " ");
+  if (text.startsWith('"')) {
+    text = text.substring(1);
+  }
+  if (text.endsWith('"')) {
+    text = text.substring(0, text.length - 1);
+  }
+  text = text.replace(/our website/gi, "my website");
+  return text.trim();
+}
