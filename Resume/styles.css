@@ -452,7 +452,6 @@ iframe {
   }
 }
 
-/* Small Mobile Devices */
 @media (max-width: 480px) {
   body {
     padding-top: 20px;
