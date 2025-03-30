@@ -51,30 +51,16 @@
       }
     })();
   </script>
-<script>
-    (function() {
-      function checkOrientation() {
-        if ('orientation' in screen && screen.orientation) {
-          const orientationType = screen.orientation.type; 
-          if (orientationType.startsWith('portrait')) {
-            alert('Your device is in portrait mode. Please switch to landscape for best experience.');
-          }
-        } else {
-          if (window.innerHeight > window.innerWidth) {
-            alert('Your device is in portrait mode. Please switch to landscape for best experience.');
-          }
-        }
-      }
-
-      checkOrientation();
-
-      if ('orientation' in screen && screen.orientation && 'onchange' in screen.orientation) {
-        screen.orientation.addEventListener('change', checkOrientation);
-      } else {
-        window.addEventListener('orientationchange', checkOrientation);
-        window.addEventListener('resize', checkOrientation);
-      }
-    })();
+  <script>
+  document.addEventListener("DOMContentLoaded", function () {
+  const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (isMobile) {
+    const showPasswordLink = document.querySelector('.show-password');
+    if (showPasswordLink) {
+      showPasswordLink.style.display = 'none';
+    }
+  }
+});
   </script>
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
