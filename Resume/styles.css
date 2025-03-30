@@ -41,6 +41,9 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
 .container {
@@ -48,10 +51,11 @@ body {
   max-width: 500px;
   background: rgba(0, 0, 0, 0.85);
   padding: 20px;
-  margin: 20px;
+  margin: 20px auto;
   border: 2px solid #ccc;
   box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
 }
 
 h1, h2 {
@@ -65,6 +69,7 @@ h1, h2 {
   color: #666;
   margin-bottom: 20px;
   font-style: italic;
+  text-align: center;
 }
 
 input[type="email"],
@@ -187,57 +192,11 @@ iframe {
   text-decoration: none;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   transition: background 0.3s, transform 0.2s;
+  z-index: 100;
 }
 
 .help-icon:hover {
   transform: scale(1.1);
-}
-
-@media (max-width: 768px) {
-  .container {
-    width: 95%;
-    max-width: 90%;
-    padding: 15px;
-    margin: 15px auto;
-    position: fixed;
-    top: 30%;
-  }
-  
-  h1, h2 {
-    font-size: 1.8em;
-    margin-bottom: 15px;
-  }
-  
-  input[type="email"],
-  input[type="password"],
-  input[type="text"] {
-    padding: 10px 12px;
-    font-size: 0.9em;
-  }
-  
-  button {
-    padding: 10px 12px;
-    font-size: 0.9em;
-  }
-  
-  iframe {
-    height: 400px;
-  }
-  
-  #signout {
-    top: 10px;
-    right: 30px;
-    width: 80px;
-    padding: 8px 10px;
-    font-size: 0.9em;
-  }
-  
-  .help-icon {
-    width: 40px;
-    height: 40px;
-    font-size: 20px;
-    line-height: 40px;
-  }
 }
 
 .captcha-modal {
@@ -337,48 +296,146 @@ iframe {
 }
 
 #preloader {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: #000;
-      z-index: 1001;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-    }
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  z-index: 1001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
 
-    .loader {
-      position: relative;
-      width: 60px;
-      height: 60px;
-      border: 4px solid #fff;
-      border-top: 4px solid transparent;
-      border-radius: 50%;
-      animation: spin 1.5s linear infinite;
-    }
+.loader {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border: 4px solid #fff;
+  border-top: 4px solid transparent;
+  border-radius: 50%;
+  animation: spin 1.5s linear infinite;
+}
 
-    .loader-text {
-      margin-top: 20px;
-      font-size: 1.5em;
-      letter-spacing: 4px;
-      text-transform: uppercase;
-      animation: glow 1.5s ease-in-out infinite alternate;
-    }
+.loader-text {
+  margin-top: 20px;
+  font-size: 1.5em;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  animation: glow 1.5s ease-in-out infinite alternate;
+}
 
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
 
-    @keyframes glow {
-      from { text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff; }
-      to   { text-shadow: 0 0 20px #fff, 0 0 30px #fff, 0 0 40px #fff; }
-    }
+@keyframes glow {
+  from { text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff; }
+  to   { text-shadow: 0 0 20px #fff, 0 0 30px #fff, 0 0 40px #fff; }
+}
+
+@media (max-width: 1024px) {
+  .container {
+    width: 85%;
+    max-width: 600px;
+    padding: 22px;
+    margin: 25px auto;
+  }
+  
+  h1 {
+    font-size: 2.2em;
+  }
+  
+  h2 {
+    font-size: 1.8em;
+  }
+  
+  iframe {
+    height: 550px;
+  }
+  
+  input[type="email"],
+  input[type="password"],
+  input[type="text"] {
+    font-size: 1.1em;
+    padding: 14px 16px;
+  }
+  
+  button {
+    font-size: 1.1em;
+    padding: 14px 16px;
+  }
+  
+  .help-icon {
+    width: 55px;
+    height: 55px;
+    font-size: 28px;
+    line-height: 55px;
+  }
+}
 
 @media (max-width: 768px) {
+  body {
+    justify-content: flex-start;
+    padding-top: 40px;
+  }
+  
+  .container {
+    width: 92%;
+    max-width: none;
+    padding: 18px;
+    margin: 15px auto;
+    border-width: 1px;
+  }
+  
+  h1 {
+    font-size: 1.8em;
+    margin-bottom: 15px;
+  }
+  
+  h2 {
+    font-size: 1.6em;
+    margin-bottom: 12px;
+  }
+  
+  input[type="email"],
+  input[type="password"],
+  input[type="text"] {
+    padding: 12px 14px;
+    font-size: 1em;
+    margin: 8px 0;
+  }
+  
+  button {
+    padding: 12px 14px;
+    font-size: 1em;
+    margin: 8px 0;
+  }
+  
+  iframe {
+    height: 450px;
+  }
+  
+  #signout {
+    top: 10px;
+    right: 10px;
+    width: 90px;
+    padding: 8px 12px;
+    font-size: 0.9em;
+  }
+  
+  .help-icon {
+    width: 45px;
+    height: 45px;
+    font-size: 22px;
+    line-height: 45px;
+    bottom: 15px;
+    right: 15px;
+  }
+  
   .captcha-modal-content {
     max-width: 90%;
     padding: 15px;
@@ -395,10 +452,60 @@ iframe {
   }
 }
 
+/* Small Mobile Devices */
 @media (max-width: 480px) {
+  body {
+    padding-top: 20px;
+  }
+  
+  .container {
+    width: 95%;
+    padding: 15px;
+    margin: 10px auto;
+  }
+  
+  h1 {
+    font-size: 1.6em;
+    margin-bottom: 12px;
+  }
+  
+  h2 {
+    font-size: 1.4em;
+    margin-bottom: 10px;
+  }
+  
+  input[type="email"],
+  input[type="password"],
+  input[type="text"] {
+    padding: 10px 12px;
+    font-size: 0.95em;
+  }
+  
+  button {
+    padding: 10px 12px;
+    font-size: 0.95em;
+  }
+  
+  iframe {
+    height: 400px;
+  }
+  
+  #signout {
+    width: 80px;
+    padding: 6px 10px;
+    font-size: 0.85em;
+  }
+  
+  .help-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    line-height: 40px;
+  }
+  
   .captcha-modal-content {
     max-width: 95%;
-    padding: 10px;
+    padding: 12px;
   }
   
   #captcha-input {
@@ -408,11 +515,84 @@ iframe {
   
   .captcha-buttons {
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
   }
   
   .captcha-buttons button {
     width: 100%;
     flex: none;
+    padding: 10px;
+  }
+  
+  .loader {
+    width: 50px;
+    height: 50px;
+    border-width: 3px;
+  }
+  
+  .loader-text {
+    font-size: 1.2em;
+    letter-spacing: 3px;
+  }
+}
+
+@media (orientation: portrait) {
+  .container {
+    position: static;
+    transform: none;
+    top: auto;
+  }
+  
+  #resume-container {
+    height: auto;
+    overflow: auto;
+  }
+  
+  iframe {
+    height: 500px;
+  }
+  
+  input[type="password"],
+  input[type="text"] {
+    width: 100%;
+    padding-right: 15px;
+  }
+  
+  .show-password {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+  }
+  
+  .timer-wrapper {
+    position: relative;
+  }
+  
+  #decrypt-password {
+    width: 100%;
+    padding-right: 75px;
+  }
+  
+  #countdown-timer {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+}
+
+@media (max-height: 600px) {
+  body {
+    justify-content: flex-start;
+    padding-top: 10px;
+  }
+  
+  .container {
+    margin: 5px auto;
+    padding: 12px;
+  }
+  
+  iframe {
+    height: 350px;
   }
 }
