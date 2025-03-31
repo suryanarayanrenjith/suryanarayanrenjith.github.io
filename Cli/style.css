@@ -72,6 +72,78 @@ input[type="text"] {
     caret-color: #ccc;
 }
 
+.html-content {
+    padding: 10px 0;
+    border-radius: 5px;
+    margin: 10px 0;
+}
+
+.html-content h1, 
+.html-content h2, 
+.html-content h3 {
+    margin-bottom: 10px;
+    color: #fff;
+}
+
+.html-content .animated-text {
+    animation: glow 1.5s ease-in-out infinite alternate;
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.html-content .tagline {
+    font-style: italic;
+    color: #ccc;
+    margin-bottom: 15px;
+}
+
+.html-content p {
+    margin-bottom: 10px;
+    line-height: 1.5;
+}
+
+.html-content ul {
+    margin-left: 20px;
+    margin-bottom: 15px;
+}
+
+.html-content li {
+    margin-bottom: 5px;
+}
+
+.html-content .center-button {
+    display: block;
+    width: fit-content;
+    margin: 15px auto;
+    background-color: #1a1a1a;
+    border: 1px solid #ccc;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.html-content .center-button:hover {
+    background-color: #333;
+}
+
+.html-content .center-button a {
+    color: #ccc;
+    text-decoration: none;
+}
+
+.html-content .about-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.html-content .logo {
+    margin-bottom: 15px;
+    border: 2px solid #ccc;
+}
+
 a {
     color: #ccc;
     text-decoration: none;
@@ -81,6 +153,11 @@ a {
 a:hover {
     color: #ccc;
     text-shadow: 0 0 5px white;
+}
+
+.html-content ul {
+    list-style: none;
+    padding: 0;
 }
 
 .terminal::-webkit-scrollbar {
@@ -96,29 +173,12 @@ a:hover {
     border-radius: 4px;
 }
 
-@media screen and (max-width: 768px) {
-    .terminal {
-        padding: 15px;
-        font-size: 0.9em;
+@keyframes glow {
+    from {
+        text-shadow: 0 0 2px #fff, 0 0 4px #fff, 0 0 6px #ccc, 0 0 8px #ccc;
     }
-
-    .header {
-        font-size: 1em;
-    }
-}
-
-@media screen and (max-width: 480px) {
-    .terminal {
-        padding: 10px;
-        font-size: 0.8em;
-    }
-
-    .header {
-        font-size: 0.9em;
-    }
-
-    #output {
-        font-size: 0.8em;
+    to {
+        text-shadow: 0 0 4px #fff, 0 0 6px #fff, 0 0 8px #fff, 0 0 10px #ccc, 0 0 12px #ccc;
     }
 }
 
@@ -135,4 +195,38 @@ a:hover {
 
 .terminal {
     animation: fadeIn 0.8s ease-out;
+}
+
+@media screen and (max-width: 768px) {
+    .terminal {
+        padding: 15px;
+        font-size: 0.9em;
+    }
+
+    .header {
+        font-size: 1em;
+    }
+    
+    .html-content .animated-text {
+        font-size: 20px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .terminal {
+        padding: 10px;
+        font-size: 0.8em;
+    }
+
+    .header {
+        font-size: 0.9em;
+    }
+
+    #output {
+        font-size: 0.8em;
+    }
+    
+    .html-content .animated-text {
+        font-size: 18px;
+    }
 }
