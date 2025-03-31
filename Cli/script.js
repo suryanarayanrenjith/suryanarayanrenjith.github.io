@@ -173,7 +173,7 @@ function explainCommand(command) {
 function readFileContent(fileName) {
   const validFiles = ["about", "projects", "resume"];
   if (validFiles.includes(fileName)) {
-    return fetch(`https://pages.suryanarayanrenjith.workers.dev/?section=${fileName}`)
+    return fetch(`https://pages.surya-ops.workers.dev/?section=${fileName}`)
       .then(response => response.text())
       .catch(err => `cat: ${fileName}: Error fetching content`);
   } else {
