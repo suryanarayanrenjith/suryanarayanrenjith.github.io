@@ -1,396 +1,805 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Global site tag (gtag.js) - Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-0QSEZ9VSPZ"></script>
-    <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-0QSEZ9VSPZ"></script>
+  <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
 
-    gtag('config', 'G-0QSEZ9VSPZ');
-    </script> 
-    <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png">
-    <link rel="manifest" href="/assets/favicon/site.webmanifest">
-    <title>Space Game</title>
+  gtag('config', 'G-0QSEZ9VSPZ');
+  </script> 
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png" />
+  <link rel="manifest" href="/assets/favicon/site.webmanifest" />
+  <title>Space Game</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+    body, html {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #000;
+      color: #fff;
+      font-family: 'Orbitron', sans-serif;
+      touch-action: manipulation;
+    }
+
+    #game {
+      position: relative;
+      width: 95vw;
+      max-width: 800px;
+      height: 85vh;
+      max-height: 600px;
+      border: 2px solid rgba(255, 255, 255, 0.8);
+      border-radius: 4px;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.2), inset 0 0 10px rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+      padding-top: 40px;
+    }
+
+    #canvas {
+      width: 100%;
+      height: 100%;
+      touch-action: manipulation;
+    }
+
+    .game-ui {
+      position: absolute;
+      text-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
+      z-index: 2;
+    }
+
+    #game-over {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      font-size: min(2em, 8vw);
+      z-index: 10;
+      background-color: rgba(0, 0, 0, 0.8);
+      padding: 20px;
+      border-radius: 15px;
+      border: 2px solid white;
+      box-shadow: 0 0 30px rgba(255, 255, 255, 0.4);
+      display: none;
+    }
+
+    #restart {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 1em;
+      border-radius: 10px;
+      cursor: pointer;
+      background-color: #333;
+      color: white;
+      border: 2px solid white;
+      font-family: 'Orbitron', sans-serif;
+      transition: all 0.2s ease;
+    }
+
+    #restart:hover {
+      background-color: #555;
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+      transform: scale(1.05);
+    }
+
+    #score-container {
+      position: absolute;
+      top: 10px;
+      left: 20px;
+      font-size: clamp(0.8rem, 2vw, 1.2rem);
+      display: flex;
+      flex-direction: column;
+    }
+
+    #score-counter, #high-score-counter {
+      margin-bottom: 5px;
+    }
+
+    #level-indicator {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      font-size: clamp(0.8rem, 2vw, 1.2rem);
+    }
+
+    #power-bar-container {
+      position: absolute;
+      bottom: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80%;
+      height: 10px;
+      background-color: rgba(50, 50, 50, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    #power-bar {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(to right, #fff, #aaa);
+      transform-origin: left;
+      transform: scaleX(1);
+      transition: transform 0.3s ease-out;
+    }
+
+    #tap-to-start {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: clamp(1.5rem, 4vw, 2.5rem);
+      cursor: pointer;
+      z-index: 5;
+      text-align: center;
+      width: 80%;
+      animation: pulse 1.5s infinite ease-in-out;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+    }
+
+    #game-over-text {
+      margin-bottom: 20px;
+      font-size: min(2.5em, 9vw);
+      animation: glowText 1.5s infinite alternate;
+    }
+
+    .final-score {
+      margin-bottom: 15px;
+      font-size: 1.2em;
+    }
+
+    #special-attack {
+      position: absolute;
+      bottom: 35px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 5px 15px;
+      background-color: rgba(255, 255, 255, 0.2);
+      border: 1px solid white;
+      color: white;
+      border-radius: 15px;
+      font-size: 0.9em;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      opacity: 0.7;
+    }
+
+    #special-attack:hover {
+      background-color: rgba(255, 255, 255, 0.3);
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    }
+
+    #special-attack.disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+      50% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+      100% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+    }
+
+    @keyframes glowText {
+      0% { text-shadow: 0 0 5px rgba(255, 255, 255, 0.7); }
+      100% { text-shadow: 0 0 20px rgba(255, 255, 255, 1); }
+    }
+
+    @media (max-height: 500px) {
+      #game {
+        height: 80vh;
+        padding-top: 20px;
+      }
+      #score-counter, #high-score-counter {
+        top: 5px;
+      }
+      #power-bar-container {
+        bottom: 5px;
+      }
+      #special-attack {
+        bottom: 25px;
+      }
+    }
+
+    @media (max-width: 400px) {
+      #game {
+        width: 95vw;
+        border-width: 1px;
+      }
+    }
+  </style>
 </head>
 <body>
-    <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: black;
-            color: white;
-            font-family: Arial, sans-serif;
-            touch-action: manipulation;
-        }
-
-        #game {
-            position: relative;
-            width: 95vw;
-            max-width: 800px;
-            height: 85vh;
-            max-height: 600px;
-            border: 2px solid white;
-            overflow: hidden;
-            padding-top: 40px;
-        }
-
-        #canvas {
-            width: 100%;
-            height: 100%;
-            touch-action: manipulation;
-        }
-
-        #game-over {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            font-size: min(2em, 8vw);
-            z-index: 10;
-        }
-
-        #restart {
-            margin-top: 20px;
-            padding: 10px 20px;
-            font-size: 1em;
-            border-radius: 10px;
-            cursor: pointer;
-            background-color: #333;
-            color: white;
-            border: 2px solid white;
-        }
-
-        #score-counter {
-            position: absolute;
-            top: 10px;
-            left: 20px;
-            font-size: clamp(0.8rem, 2vw, 1.2rem);
-        }
-
-        #high-score-counter {
-            position: absolute;
-            top: 10px;
-            right: 20px;
-            font-size: clamp(0.8rem, 2vw, 1.2rem);
-        }
-
-        #tap-to-start {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: clamp(1.5rem, 4vw, 2.5rem);
-            cursor: pointer;
-            z-index: 1;
-            text-align: center;
-            width: 80%;
-        }
-
-        #game-over-text {
-            margin-bottom: 20px;
-        }
-
-        @media (max-height: 500px) {
-            #game {
-                height: 80vh;
-                padding-top: 20px;
-            }
-            #score-counter, #high-score-counter {
-                top: 5px;
-            }
-        }
-
-        @media (max-width: 400px) {
-            #game {
-                width: 95vw;
-                border-width: 1px;
-            }
-        }
-    </style>
-    <div id="game">
-        <canvas id="canvas"></canvas>
-        <div id="score-counter">Score: <span id="live-score">0</span></div>
-        <div id="high-score-counter">High Score: <span id="live-high-score">0</span></div>
-        <div id="tap-to-start">Tap to Start<br><small>(Tap asteroids to destroy them)</small></div>
+  <div id="game">
+    <canvas id="canvas"></canvas>
+    <div id="score-container" class="game-ui">
+      <div id="score-counter">Score: <span id="live-score">0</span></div>
+      <div id="high-score-counter">High Score: <span id="live-high-score">0</span></div>
     </div>
-    <div id="game-over" style="display: none;">
-        <div id="game-over-text">Game Over!</div>
-        <button id="restart">Restart</button>
+    <div id="level-indicator" class="game-ui">Level: <span id="current-level">1</span></div>
+    <div id="power-bar-container" class="game-ui">
+      <div id="power-bar"></div>
     </div>
-    <script>
-let canvas = document.getElementById('canvas');
-let ctx = canvas.getContext('2d');
-let gameWidth = 0;
-let gameHeight = 0;
-let baseSpeed = 3;
-let speed = baseSpeed;
-let score = 0;
-let highScore = 0;
-let gameOverText = document.getElementById('game-over');
-let gameOverButtonText = document.getElementById('game-over-text');
-let restartButton = document.getElementById('restart');
-let liveScore = document.getElementById('live-score');
-let liveHighScore = document.getElementById('live-high-score');
-let tapToStart = document.getElementById('tap-to-start');
-let animationId;
-let gameActive = false;
-let asteroids = [];
-let maxAsteroids = 3;
-let lastTime = 0;
-const FPS = 60;
-const frameTime = 1000 / FPS;
-let touchStartX = 0;
-let touchStartY = 0;
+    <button id="special-attack" class="game-ui disabled">BLAST (SPACE)</button>
+    <div id="tap-to-start">TAP TO START</div>
+  </div>
+  <div id="game-over">
+    <div id="game-over-text">GAME OVER</div>
+    <div class="final-score">Final Score: <span id="final-score">0</span></div>
+    <button id="restart">RESTART</button>
+  </div>
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let gameWidth = 0;
+    let gameHeight = 0;
+    const baseSpeed = 2.5;
+    let speed = baseSpeed;
+    let score = 0;
+    let highScore = localStorage.getItem('highScore') ? parseInt(localStorage.getItem('highScore')) : 0;
+    let level = 1;
+    let power = 100;
+    let specialReady = true;
+    let specialCooldown = 0;
+    const specialCooldownTime = 8000;
+    let gameActive = false;
+    let asteroids = [];
+    let particles = [];
+    let stars = [];
+    const starCount = 150;
+    let lastTime = 0;
+    let lastAsteroidTime = 0;
+    let lastPowerRegenTime = performance.now();
+    const FPS = 60;
+    const frameTime = 1000 / FPS;
+    let screenShaking = false;
+    let screenShakeIntensity = 0;
+    let screenShakeDuration = 0;
+    const levelThresholds = [0, 300, 700, 1200, 2000, 3000, 4500, 6500, 9000, 12000];
+    let comboCounter = 0;
+    let comboTimer = 0;
+    let animationId;
 
-function resizeCanvas() {
-    const gameContainer = document.getElementById('game');
-    const containerWidth = gameContainer.clientWidth;
-    const containerHeight = gameContainer.clientHeight - 40;
-    
-    canvas.width = containerWidth;
-    canvas.height = containerHeight;
+    const gameOverElem = document.getElementById('game-over');
+    const gameOverText = document.getElementById('game-over-text');
+    const restartButton = document.getElementById('restart');
+    const liveScore = document.getElementById('live-score');
+    const finalScoreElem = document.getElementById('final-score');
+    const liveHighScore = document.getElementById('live-high-score');
+    const currentLevel = document.getElementById('current-level');
+    const tapToStart = document.getElementById('tap-to-start');
+    const powerBar = document.getElementById('power-bar');
+    const specialAttackBtn = document.getElementById('special-attack');
+    liveHighScore.innerText = highScore;
 
-    gameWidth = canvas.width;
-    gameHeight = canvas.height;
-}
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    let soundEnabled = true;
+    const soundEffects = {};
 
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
+    function initSounds() {
+      soundEffects.laser = {
+        play: function() {
+          if (!soundEnabled || !gameActive) return;
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          oscillator.type = 'sawtooth';
+          oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+          oscillator.frequency.exponentialRampToValueAtTime(110, audioContext.currentTime + 0.15);
+          gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          oscillator.start();
+          oscillator.stop(audioContext.currentTime + 0.15);
+        }
+      };
 
-function generateAsteroid() {
-    let asteroidSize = Math.random() * (gameWidth * 0.08) + (gameWidth * 0.05);
-    let asteroidX = -asteroidSize;
-    let asteroidY = Math.random() * (gameHeight - asteroidSize);
-    let speedMultiplier = Math.random() * 0.5 + 0.2;
-    let rotationSpeed = Math.random() * 0.04 - 0.02;
-    let points = [];
-    let numPoints = Math.floor(Math.random() * 6) + 5;
-    for (let i = 0; i < numPoints; i++) {
+      soundEffects.explosion = {
+        play: function() {
+          if (!soundEnabled || !gameActive) return;
+          const noise = audioContext.createBufferSource();
+          const buffer = audioContext.createBuffer(1, audioContext.sampleRate * 0.5, audioContext.sampleRate);
+          const data = buffer.getChannelData(0);
+          for (let i = 0; i < buffer.length; i++) {
+            data[i] = Math.random() * 2 - 1;
+          }
+          const gainNode = audioContext.createGain();
+          const filter = audioContext.createBiquadFilter();
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime(1000, audioContext.currentTime);
+          filter.frequency.exponentialRampToValueAtTime(20, audioContext.currentTime + 0.5);
+          gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+          noise.buffer = buffer;
+          noise.connect(filter);
+          filter.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          noise.start();
+          noise.stop(audioContext.currentTime + 0.5);
+        }
+      };
+
+      soundEffects.special = {
+        play: function() {
+          if (!soundEnabled || !gameActive) return;
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          oscillator.type = 'sine';
+          oscillator.frequency.setValueAtTime(220, audioContext.currentTime);
+          oscillator.frequency.exponentialRampToValueAtTime(880, audioContext.currentTime + 0.1);
+          oscillator.frequency.exponentialRampToValueAtTime(110, audioContext.currentTime + 0.3);
+          gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+          gainNode.gain.linearRampToValueAtTime(0.8, audioContext.currentTime + 0.1);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          oscillator.start();
+          oscillator.stop(audioContext.currentTime + 0.3);
+        }
+      };
+
+      soundEffects.gameOver = {
+        play: function() {
+          if (!soundEnabled) return;
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          oscillator.type = 'sine';
+          oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+          oscillator.frequency.exponentialRampToValueAtTime(110, audioContext.currentTime + 1.5);
+          gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+          gainNode.gain.setValueAtTime(0.3, audioContext.currentTime + 1.0);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1.5);
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          oscillator.start();
+          oscillator.stop(audioContext.currentTime + 1.5);
+        }
+      };
+
+      soundEffects.levelUp = {
+        play: function() {
+          if (!soundEnabled || !gameActive) return;
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          oscillator.type = 'sine';
+          oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+          oscillator.frequency.setValueAtTime(660, audioContext.currentTime + 0.15);
+          oscillator.frequency.setValueAtTime(880, audioContext.currentTime + 0.3);
+          gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+          gainNode.gain.setValueAtTime(0.3, audioContext.currentTime + 0.45);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.6);
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          oscillator.start();
+          oscillator.stop(audioContext.currentTime + 0.6);
+        }
+      };
+    }
+
+    function initStars() {
+      stars = [];
+      for (let i = 0; i < starCount; i++) {
+        stars.push({
+          x: Math.random() * gameWidth,
+          y: Math.random() * gameHeight,
+          size: Math.random() * 1.8 + 0.5,
+          speed: Math.random() * 0.3 + 0.1
+        });
+      }
+    }
+
+    function resizeCanvas() {
+      const gameContainer = document.getElementById('game');
+      const containerWidth = gameContainer.clientWidth;
+      const containerHeight = gameContainer.clientHeight - 40;
+      canvas.width = containerWidth;
+      canvas.height = containerHeight;
+      gameWidth = canvas.width;
+      gameHeight = canvas.height;
+      initStars();
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function generateAsteroid() {
+      let sizeFactor = 0.06 + (level * 0.005);
+      let asteroidSize = Math.random() * (gameWidth * sizeFactor) + (gameWidth * 0.04);
+      let asteroidX = -asteroidSize;
+      let asteroidY = Math.random() * (gameHeight - asteroidSize);
+      let speedMultiplier = Math.random() * 0.5 + 0.2 + (level * 0.1);
+      let rotationSpeed = Math.random() * 0.04 - 0.02;
+      let points = [];
+      let numPoints = Math.floor(Math.random() * 6) + 5;
+      let hp = Math.min(Math.floor(level / 2) + 1, 3);
+      for (let i = 0; i < numPoints; i++) {
         let angle = (i / numPoints) * Math.PI * 2;
         let radius = asteroidSize / 2;
         let radiusVar = Math.random() * 0.3 + 0.7;
         let x = Math.cos(angle) * radius * radiusVar;
         let y = Math.sin(angle) * radius * radiusVar;
-        points.push({x, y});
-    }
-    
-    return {
+        points.push({ x, y });
+      }
+      return {
         size: asteroidSize,
         x: asteroidX,
         y: asteroidY,
         rotation: 0,
         rotationSpeed: rotationSpeed,
         speedMultiplier: speedMultiplier,
-        points: points
-    };
-}
+        points: points,
+        hp: hp,
+        initialHp: hp,
+        glowing: false,
+        glowTimer: 0
+      };
+    }
 
-function drawAsteroid(asteroid) {
-    ctx.save();
-    ctx.translate(asteroid.x + asteroid.size / 2, asteroid.y + asteroid.size / 2);
-    ctx.rotate(asteroid.rotation);
-    ctx.beginPath();
-
-    for (let i = 0; i < asteroid.points.length; i++) {
+    function drawAsteroid(asteroid) {
+      ctx.save();
+      ctx.translate(asteroid.x + asteroid.size / 2, asteroid.y + asteroid.size / 2);
+      ctx.rotate(asteroid.rotation);
+      ctx.beginPath();
+      for (let i = 0; i < asteroid.points.length; i++) {
         let point = asteroid.points[i];
         if (i === 0) {
-            ctx.moveTo(point.x, point.y);
+          ctx.moveTo(point.x, point.y);
         } else {
-            ctx.lineTo(point.x, point.y);
+          ctx.lineTo(point.x, point.y);
         }
-    }
-    
-    ctx.closePath();
-    ctx.fillStyle = 'gray';
-    ctx.fill();
-    ctx.strokeStyle = 'white';
-    ctx.stroke();
-    ctx.restore();
-}
-
-function drawBackground() {
-    let starDensity = 0.0003;
-    let stars = Math.floor(gameWidth * gameHeight * starDensity);
-    
-    ctx.fillStyle = 'black';
-    ctx.fillRect(0, 0, gameWidth, gameHeight);
-
-    for (let i = 0; i < stars; i++) {
-        let x = Math.random() * gameWidth;
-        let y = Math.random() * gameHeight;
-        let radius = Math.random() * 1.5;
+      }
+      ctx.closePath();
+      const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, asteroid.size / 2);
+      gradient.addColorStop(0, '#555');
+      gradient.addColorStop(1, '#222');
+      ctx.fillStyle = gradient;
+      ctx.fill();
+      if (asteroid.glowing) {
+        ctx.strokeStyle = 'rgba(255, 255, 255, ' + (asteroid.glowTimer / 10) + ')';
+        ctx.lineWidth = 3;
+        asteroid.glowTimer -= 1;
+        if (asteroid.glowTimer <= 0) {
+          asteroid.glowing = false;
+        }
+      } else {
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.lineWidth = 1;
+      }
+      ctx.stroke();
+      let craters = Math.floor(Math.random() * 3) + 1;
+      for (let i = 0; i < craters; i++) {
         ctx.beginPath();
-        ctx.arc(x, y, radius, 0, Math.PI * 2);
-        ctx.fillStyle = 'white';
+        let craterX = (Math.random() - 0.5) * asteroid.size * 0.5;
+        let craterY = (Math.random() - 0.5) * asteroid.size * 0.5;
+        let craterSize = Math.random() * (asteroid.size * 0.15) + (asteroid.size * 0.1);
+        ctx.arc(craterX, craterY, craterSize, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(50, 50, 50, 0.7)';
         ctx.fill();
+      }
+      if (asteroid.initialHp > 1) {
+        const healthPercentage = asteroid.hp / asteroid.initialHp;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.fillRect(-asteroid.size / 4, asteroid.size / 3, asteroid.size / 2, 3);
+        ctx.fillStyle = 'rgba(200, 200, 200, 0.8)';
+        ctx.fillRect(-asteroid.size / 4, asteroid.size / 3, (asteroid.size / 2) * healthPercentage, 3);
+      }
+      ctx.restore();
     }
-}
 
-function clearCanvas() {
-    ctx.clearRect(0, 0, gameWidth, gameHeight);
-}
+    function drawBackground(deltaTime) {
+      ctx.fillStyle = 'black';
+      ctx.fillRect(0, 0, gameWidth, gameHeight);
+      for (let i = 0; i < stars.length; i++) {
+        let star = stars[i];
+        star.x -= star.speed * (deltaTime / 16) * (speed / baseSpeed);
+        if (star.x < 0) {
+          star.x = gameWidth;
+          star.y = Math.random() * gameHeight;
+        }
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, ' + (0.5 + Math.random() * 0.5) + ')';
+        ctx.fill();
+        if (Math.random() < 0.01) {
+          ctx.beginPath();
+          ctx.arc(star.x, star.y, star.size * 1.5, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+          ctx.fill();
+        }
+      }
+    }
 
-function moveAsteroids(deltaTime) {
-    let frameRatioAdjustment = deltaTime / frameTime;
+    function clearCanvas() {
+      ctx.clearRect(0, 0, gameWidth, gameHeight);
+    }
 
-    if (asteroids.length < maxAsteroids && Math.random() < 0.02 * frameRatioAdjustment) {
+    function createExplosion(x, y, size) {
+      let particleCount = Math.floor(size / 2) + 10;
+      for (let i = 0; i < particleCount; i++) {
+        let speed = Math.random() * 3 + 1;
+        let angle = Math.random() * Math.PI * 2;
+        let life = Math.random() * 30 + 20;
+        particles.push({
+          x: x,
+          y: y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          size: Math.random() * 3 + 1,
+          life: life,
+          maxLife: life,
+          color: `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.5})`
+        });
+      }
+    }
+
+    function updateParticles(deltaTime) {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        let p = particles[i];
+        p.x += p.vx * (deltaTime / 16);
+        p.y += p.vy * (deltaTime / 16);
+        p.life -= (deltaTime / 16);
+        if (p.life <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
+        let alpha = p.life / p.maxLife;
+        let size = p.size * alpha;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
+        ctx.fillStyle = p.color.replace(')', `, ${alpha})`);
+        ctx.fill();
+      }
+    }
+
+    function shakeScreen(intensity, duration) {
+      screenShaking = true;
+      screenShakeIntensity = intensity;
+      screenShakeDuration = duration;
+    }
+
+    function applyScreenShake(deltaTime) {
+      if (screenShaking) {
+        screenShakeDuration -= deltaTime;
+        if (screenShakeDuration <= 0) {
+          screenShaking = false;
+          document.getElementById('game').style.transform = '';
+        } else {
+          let shakeX = (Math.random() - 0.5) * screenShakeIntensity;
+          let shakeY = (Math.random() - 0.5) * screenShakeIntensity;
+          document.getElementById('game').style.transform = `translate(${shakeX}px, ${shakeY}px)`;
+        }
+      }
+    }
+
+    function moveAsteroids(deltaTime) {
+      const frameRatioAdjustment = deltaTime / frameTime;
+      let currentTime = performance.now();
+      const asteroidSpawnRate = Math.max(2000 - (level * 150), 500);
+      if (currentTime - lastAsteroidTime > asteroidSpawnRate && asteroids.length < 3) {
         asteroids.push(generateAsteroid());
-    }
-
-    for (let i = asteroids.length - 1; i >= 0; i--) {
+        lastAsteroidTime = currentTime;
+      }
+      for (let i = asteroids.length - 1; i >= 0; i--) {
         let asteroid = asteroids[i];
-        
         asteroid.x += speed * asteroid.speedMultiplier * frameRatioAdjustment;
         asteroid.rotation += asteroid.rotationSpeed * frameRatioAdjustment;
-
         if (asteroid.x > gameWidth) {
-            gameOver();
-            return;
+          gameOver();
+          return;
         }
-    }
-
-    clearCanvas();
-    drawBackground();
-
-    for (let asteroid of asteroids) {
+      }
+      clearCanvas();
+      drawBackground(deltaTime);
+      updateParticles(deltaTime);
+      for (let asteroid of asteroids) {
         drawAsteroid(asteroid);
-    }
-}
-
-function gameOver() {
-    gameActive = false;
-    cancelAnimationFrame(animationId);
-    
-    if (score > highScore) {
-        highScore = score;
-        liveHighScore.innerText = highScore;
-    }
-    
-    gameOverText.style.display = 'block';
-}
-
-function resetGame() {
-    asteroids = [];
-    score = 0;
-    speed = baseSpeed;
-    gameOverText.style.display = 'none';
-    liveScore.innerText = score;
-    liveHighScore.innerText = highScore;
-    gameActive = true;
-    
-    lastTime = performance.now();
-    animationId = requestAnimationFrame(gameLoop);
-}
-
-let acceleration = 0.0003;
-
-function updateScore(deltaTime) {
-    score += Math.floor(deltaTime / 20);
-    liveScore.innerText = score;
-    
-    if (score > highScore) {
-        highScore = score;
-        liveHighScore.innerText = highScore;
-    }
-
-    speed += acceleration * deltaTime;
-
-    maxAsteroids = Math.min(5, 3 + Math.floor(score / 500));
-}
-
-function gameLoop(timestamp) {
-    if (!gameActive) return;
-
-    const deltaTime = timestamp - lastTime;
-    lastTime = timestamp;
-
-    moveAsteroids(deltaTime);
-    updateScore(deltaTime);
-
-    animationId = requestAnimationFrame(gameLoop);
-}
-
-function handleTap(x, y) {
-    if (!gameActive) {
-        tapToStart.style.display = 'none';
-        resetGame();
-        return;
-    }
-
-    for (let i = asteroids.length - 1; i >= 0; i--) {
-        let asteroid = asteroids[i];
-        let centerX = asteroid.x + asteroid.size / 2;
-        let centerY = asteroid.y + asteroid.size / 2;
-
-        let distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
-
-        if (distance <= asteroid.size / 2) {
-            asteroids.splice(i, 1);
-            score += 50;
-            liveScore.innerText = score;
-            break;
+      }
+      if (comboTimer > 0) {
+        comboTimer -= deltaTime;
+        if (comboTimer <= 0) {
+          comboCounter = 0;
+        } else {
+          let alpha = Math.min(comboTimer / 500, 1);
+          ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+          ctx.font = '20px Orbitron';
+          ctx.textAlign = 'center';
+          ctx.fillText(`${comboCounter}x COMBO!`, gameWidth / 2, gameHeight / 2 - 50);
         }
+      }
     }
-}
 
-canvas.addEventListener('click', function(event) {
-    let rect = canvas.getBoundingClientRect();
-    let mouseX = event.clientX - rect.left;
-    let mouseY = event.clientY - rect.top;
-    handleTap(mouseX, mouseY);
-});
-
-canvas.addEventListener('touchstart', function(event) {
-    event.preventDefault();
-    let rect = canvas.getBoundingClientRect();
-    let touchX = event.touches[0].clientX - rect.left;
-    let touchY = event.touches[0].clientY - rect.top;
-    touchStartX = touchX;
-    touchStartY = touchY;
-});
-
-canvas.addEventListener('touchend', function(event) {
-    event.preventDefault();
-    let rect = canvas.getBoundingClientRect();
-    let touchX = event.changedTouches[0].clientX - rect.left;
-    let touchY = event.changedTouches[0].clientY - rect.top;
-    
-    let moveDistance = Math.sqrt(
-        Math.pow(touchX - touchStartX, 2) + 
-        Math.pow(touchY - touchStartY, 2)
-    );
-    
-    if (moveDistance < 20) {
-        handleTap(touchX, touchY);
+    function specialAttack() {
+      if (!specialReady || power < 50) return;
+      soundEffects.special.play();
+      let waveRadius = 0;
+      let maxRadius = Math.max(gameWidth, gameHeight);
+      let destroyed = 0;
+      let waveInterval = setInterval(() => {
+        if (!gameActive) {
+          clearInterval(waveInterval);
+          return;
+        }
+        waveRadius += 20;
+        for (let i = asteroids.length - 1; i >= 0; i--) {
+          let asteroid = asteroids[i];
+          let asteroidCenterX = asteroid.x + asteroid.size / 2;
+          let asteroidCenterY = asteroid.y + asteroid.size / 2;
+          let distToCenter = Math.sqrt(
+            Math.pow(asteroidCenterX - gameWidth / 2, 2) +
+            Math.pow(asteroidCenterY - gameHeight / 2, 2)
+          );
+          if (distToCenter <= waveRadius && distToCenter > waveRadius - 20) {
+            createExplosion(asteroidCenterX, asteroidCenterY, asteroid.size);
+            asteroids.splice(i, 1);
+            destroyed++;
+            let scoreValue = Math.floor(50 + (asteroid.size * level / 10));
+            score += scoreValue;
+            liveScore.innerText = score;
+          }
+        }
+        if (waveRadius >= maxRadius) {
+          clearInterval(waveInterval);
+          if (destroyed > 0) {
+            shakeScreen(10, 500);
+          }
+          power -= 50;
+          specialReady = false;
+          specialCooldown = 0;
+          specialAttackBtn.classList.add('disabled');
+        }
+      }, 30);
     }
-});
 
-restartButton.addEventListener('click', function() {
-    tapToStart.style.display = 'none';
-    resetGame();
-});
+    function gameLoop(timestamp) {
+      if (!gameActive) return;
+      if (!lastTime) lastTime = timestamp;
+      let deltaTime = timestamp - lastTime;
+      lastTime = timestamp;
+      if (performance.now() - lastPowerRegenTime > 100) {
+        power = Math.min(100, power + 1);
+        lastPowerRegenTime = performance.now();
+        powerBar.style.transform = 'scaleX(' + (power / 100) + ')';
+      }
+      if (!specialReady) {
+        specialCooldown += deltaTime;
+        if (specialCooldown >= specialCooldownTime) {
+          specialReady = true;
+          specialCooldown = 0;
+          specialAttackBtn.classList.remove('disabled');
+        }
+      }
+      if (level < levelThresholds.length && score >= levelThresholds[level]) {
+        level++;
+        currentLevel.innerText = level;
+        soundEffects.levelUp.play();
+        speed = baseSpeed + level * 0.5;
+      }
+      moveAsteroids(deltaTime);
+      applyScreenShake(deltaTime);
+      animationId = requestAnimationFrame(gameLoop);
+    }
 
-function startGame() {
-    clearCanvas();
-    drawBackground();
-    liveScore.innerText = 0;
-    liveHighScore.innerText = highScore;
-    gameOverText.style.display = 'none';
-}
+    function gameOver() {
+      gameActive = false;
+      cancelAnimationFrame(animationId);
+      soundEffects.gameOver.play();
+      gameOverElem.style.display = 'block';
+      finalScoreElem.innerText = score;
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem('highScore', highScore);
+        liveHighScore.innerText = highScore;
+      }
+    }
 
-startGame();
-    </script>
+    function startGame() {
+      gameActive = true;
+      score = 0;
+      level = 1;
+      power = 100;
+      specialReady = true;
+      specialCooldown = 0;
+      comboCounter = 0;
+      comboTimer = 0;
+      asteroids = [];
+      particles = [];
+      lastTime = 0;
+      lastAsteroidTime = performance.now();
+      lastPowerRegenTime = performance.now();
+      gameOverElem.style.display = 'none';
+      tapToStart.style.display = 'none';
+      liveScore.innerText = score;
+      currentLevel.innerText = level;
+      animationId = requestAnimationFrame(gameLoop);
+    }
+
+    canvas.addEventListener('click', function(e) {
+      if (!gameActive) return;
+      const rect = canvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+      for (let i = asteroids.length - 1; i >= 0; i--) {
+        const asteroid = asteroids[i];
+        const centerX = asteroid.x + asteroid.size / 2;
+        const centerY = asteroid.y + asteroid.size / 2;
+        const dx = clickX - centerX;
+        const dy = clickY - centerY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < asteroid.size / 2) {
+          asteroid.hp--;
+          asteroid.glowing = true;
+          asteroid.glowTimer = 10;
+          if (asteroid.hp <= 0) {
+            createExplosion(centerX, centerY, asteroid.size);
+            asteroids.splice(i, 1);
+            let scoreValue = Math.floor(50 + (asteroid.size * level / 10));
+            score += scoreValue;
+            liveScore.innerText = score;
+            comboCounter++;
+            comboTimer = 500;
+            shakeScreen(5, 200);
+          }
+          soundEffects.laser.play();
+          break;
+        }
+      }
+    });
+
+    canvas.addEventListener('touchstart', function(e) {
+      if (!gameActive) return;
+      const touch = e.touches[0];
+      const rect = canvas.getBoundingClientRect();
+      const touchX = touch.clientX - rect.left;
+      const touchY = touch.clientY - rect.top;
+      for (let i = asteroids.length - 1; i >= 0; i--) {
+        const asteroid = asteroids[i];
+        const centerX = asteroid.x + asteroid.size / 2;
+        const centerY = asteroid.y + asteroid.size / 2;
+        const dx = touchX - centerX;
+        const dy = touchY - centerY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < asteroid.size / 2) {
+          asteroid.hp--;
+          asteroid.glowing = true;
+          asteroid.glowTimer = 10;
+          if (asteroid.hp <= 0) {
+            createExplosion(centerX, centerY, asteroid.size);
+            asteroids.splice(i, 1);
+            let scoreValue = Math.floor(50 + (asteroid.size * level / 10));
+            score += scoreValue;
+            liveScore.innerText = score;
+            comboCounter++;
+            comboTimer = 500;
+            shakeScreen(5, 200);
+          }
+          soundEffects.laser.play();
+          break;
+        }
+      }
+    });
+
+    tapToStart.addEventListener('click', startGame);
+    restartButton.addEventListener('click', startGame);
+    specialAttackBtn.addEventListener('click', specialAttack);
+    document.addEventListener('keydown', function(e) {
+      if (e.code === 'Space') {
+        specialAttack();
+      }
+    });
+
+    initSounds();
+  </script>
 </body>
 </html>
