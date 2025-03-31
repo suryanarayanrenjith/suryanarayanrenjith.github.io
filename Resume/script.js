@@ -1,56 +1,56 @@
 let auth;
 let firestore;
 
-  async function initializeFirebase() {
-    try {
-      const response = await fetch("https://surya-api.vercel.app/api/config");
-      if (!response.ok) {
-        throw new Error(`Failed to fetch Config`);
-      }
-
-      const encryptedJSON = await response.json();
-
-      const key = unscrambleData(encryptedJSON.alpha);
-      const iv = unscrambleData(encryptedJSON.beta);
-      const encryptedData = unscrambleData(encryptedJSON.gamma);
-
-      const firebaseConfig = JSON.parse(decryptAES(encryptedData, key, iv));
-
-      firebase.initializeApp(firebaseConfig);
-      auth = firebase.auth();
-      firestore = firebase.firestore();
-    } catch (error) {
-      console.error("Error initializing Config:", error);
+async function initializeFirebase() {
+  try {
+    const response = await fetch("https://surya-api.vercel.app/api/config");
+    if (!response.ok) {
+      throw new Error(`Failed to fetch Config`);
     }
-  }
 
-  function unscrambleData(scrambledText) {
-    return scrambledText.slice(16, scrambledText.length - 16);
-  }
+    const encryptedJSON = await response.json();
 
-  function decryptAES(encryptedText, key, iv) {
-    const cryptoKey = CryptoJS.enc.Hex.parse(key);
-    const cryptoIV = CryptoJS.enc.Hex.parse(iv);
-    const ciphertextWordArray = CryptoJS.enc.Hex.parse(encryptedText);
-    const cipherParams = CryptoJS.lib.CipherParams.create({
-      ciphertext: ciphertextWordArray
-    });
-    const decrypted = CryptoJS.AES.decrypt(cipherParams, cryptoKey, {
-      iv: cryptoIV,
-      mode: CryptoJS.mode.CBC,
-      padding: CryptoJS.pad.Pkcs7,
-    });
-    return decrypted.toString(CryptoJS.enc.Utf8);
-  }
+    const key = unscrambleData(encryptedJSON.alpha);
+    const iv = unscrambleData(encryptedJSON.beta);
+    const encryptedData = unscrambleData(encryptedJSON.gamma);
 
-  const hostname = window.location.hostname;
-  if (hostname === "is-a.dev" || hostname.endsWith(".is-a.dev")) {
-    initializeFirebase();
-  } else {
-    console.error("Unauthorized domain");
-  }
+    const firebaseConfig = JSON.parse(decryptAES(encryptedData, key, iv));
 
-  
+    firebase.initializeApp(firebaseConfig);
+    auth = firebase.auth();
+    firestore = firebase.firestore();
+  } catch (error) {
+    console.error("Error initializing Config:", error);
+  }
+}
+
+function unscrambleData(scrambledText) {
+  return scrambledText.slice(16, scrambledText.length - 16);
+}
+
+function decryptAES(encryptedText, key, iv) {
+  const cryptoKey = CryptoJS.enc.Hex.parse(key);
+  const cryptoIV = CryptoJS.enc.Hex.parse(iv);
+  const ciphertextWordArray = CryptoJS.enc.Hex.parse(encryptedText);
+  const cipherParams = CryptoJS.lib.CipherParams.create({
+    ciphertext: ciphertextWordArray
+  });
+  const decrypted = CryptoJS.AES.decrypt(cipherParams, cryptoKey, {
+    iv: cryptoIV,
+    mode: CryptoJS.mode.CBC,
+    padding: CryptoJS.pad.Pkcs7,
+  });
+  return decrypted.toString(CryptoJS.enc.Utf8);
+}
+
+const hostname = window.location.hostname;
+if (hostname === "is-a.dev" || hostname.endsWith(".is-a.dev")) {
+  initializeFirebase();
+} else {
+  console.error("Unauthorized domain");
+}
+
+
 const scalerMean = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 const scalerStd  = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
 
@@ -62,8 +62,6 @@ async function loadModel() {
     console.log("Model loaded successfully.");
   }
 }
-
-document.addEventListener('DOMContentLoaded', loadModel);
 
 function computeEntropy(s) {
   if (s.length === 0) return 0;
@@ -153,12 +151,13 @@ async function checkDisposable(email) {
       return true;
     }
   } catch (error) {
-    console.error("Error checking email", error);
+    console.error("Error checking email with API", error);
     return true;
   }
 
   if (lowerEmail.endsWith('@gmail.com')) {
     try {
+      if (!model) await loadModel();  // Load the ML model after captcha verification
       const features = extractFeatures(email);
       const scaledFeatures = scaleFeatures(features);
 
@@ -373,6 +372,15 @@ signupSubmitBtn.addEventListener('click', async () => {
   }
   
   try {
+    // First, require captcha verification before running the disposable checks.
+    await solveCaptcha();
+  } catch (err) {
+    signupMessageEl.style.color = 'red';
+    signupMessageEl.textContent = 'Captcha verification failed or cancelled. Please try again.';
+    return;
+  }
+
+  try {
     const isDisposable = await checkDisposable(email);
     if (isDisposable) {
       signupMessageEl.style.color = 'red';
@@ -383,14 +391,6 @@ signupSubmitBtn.addEventListener('click', async () => {
     console.error("Error during disposable check", err);
     signupMessageEl.style.color = 'red';
     signupMessageEl.textContent = 'Unable to validate email. Please try again later.';
-    return;
-  }
-
-  try {
-    await solveCaptcha();
-  } catch (err) {
-    signupMessageEl.style.color = 'red';
-    signupMessageEl.textContent = 'Captcha verification failed or cancelled. Please try again.';
     return;
   }
 
@@ -569,59 +569,59 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 });
 
-  document.getElementById('decrypt-btn').addEventListener('click', async () => {
-    const decryptPassword = document.getElementById('decrypt-password').value.trim();
-    if (!decryptPassword) {
-      decryptionMessageEl.style.color = "red";
-      decryptionMessageEl.textContent = "Please enter the decryption password.";
-      return;
-    }
-    decryptionMessageEl.style.color = "black";
-    decryptionMessageEl.textContent = "Fetching encryption keys, verifying password, and decrypting resume, please wait...";
-    try {
-      const { salt, iv } = await fetchEncryptionKeys();
-      const response = await fetch("/assets/CV.enc");
-      if (!response.ok) {
-        throw new Error("Failed to load the encrypted resume file.");
-      }
-      const encryptedData = await response.arrayBuffer();
-      const decryptedBuffer = await decryptResume(encryptedData, decryptPassword, salt, iv);
-      localStorage.setItem("Key", decryptPassword);
-      const blob = new Blob([decryptedBuffer], { type: "application/pdf" });
-      const url = URL.createObjectURL(blob);
-      document.getElementById('resume-frame').src = url;
-      decryptionContainer.style.display = "none";
-      resumeContainer.style.display = "block";
-    } catch (error) {
-      decryptionMessageEl.style.color = "red";
-      decryptionMessageEl.textContent = error.message;
-    }
-  });
-
-  function togglePassword(inputId, event) {
-    event.preventDefault();
-    var passwordInput = document.getElementById(inputId);
-    if (passwordInput.type === "password") {
-        passwordInput.type = "text";
-    } else {
-        passwordInput.type = "password";
-    }
+document.getElementById('decrypt-btn').addEventListener('click', async () => {
+  const decryptPassword = document.getElementById('decrypt-password').value.trim();
+  if (!decryptPassword) {
+    decryptionMessageEl.style.color = "red";
+    decryptionMessageEl.textContent = "Please enter the decryption password.";
+    return;
   }
-
-  signupContainer.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-      signupSubmitBtn.click();
+  decryptionMessageEl.style.color = "black";
+  decryptionMessageEl.textContent = "Fetching encryption keys, verifying password, and decrypting resume, please wait...";
+  try {
+    const { salt, iv } = await fetchEncryptionKeys();
+    const response = await fetch("/assets/CV.enc");
+    if (!response.ok) {
+      throw new Error("Failed to load the encrypted resume file.");
     }
-  });
+    const encryptedData = await response.arrayBuffer();
+    const decryptedBuffer = await decryptResume(encryptedData, decryptPassword, salt, iv);
+    localStorage.setItem("Key", decryptPassword);
+    const blob = new Blob([decryptedBuffer], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+    document.getElementById('resume-frame').src = url;
+    decryptionContainer.style.display = "none";
+    resumeContainer.style.display = "block";
+  } catch (error) {
+    decryptionMessageEl.style.color = "red";
+    decryptionMessageEl.textContent = error.message;
+  }
+});
 
-  signinContainer.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-      signinSubmitBtn.click();
-    }
-  });
+function togglePassword(inputId, event) {
+  event.preventDefault();
+  var passwordInput = document.getElementById(inputId);
+  if (passwordInput.type === "password") {
+      passwordInput.type = "text";
+  } else {
+      passwordInput.type = "password";
+  }
+}
 
-  decryptionContainer.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-      document.getElementById('decrypt-btn').click();
-    }
-  });
+signupContainer.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    signupSubmitBtn.click();
+  }
+});
+
+signinContainer.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    signinSubmitBtn.click();
+  }
+});
+
+decryptionContainer.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    document.getElementById('decrypt-btn').click();
+  }
+});
