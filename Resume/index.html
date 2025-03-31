@@ -52,8 +52,14 @@
     })();
   </script>
   <script>
-  document.addEventListener("DOMContentLoaded", function () {
-  const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+document.addEventListener("DOMContentLoaded", function () {
+  let isMobile = false;
+  if (navigator.userAgentData && typeof navigator.userAgentData.mobile === 'boolean') {
+    isMobile = navigator.userAgentData.mobile;
+  } else {
+    isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  }
+
   if (isMobile) {
     const showPasswordLink = document.querySelector('.show-password');
     if (showPasswordLink) {
@@ -61,7 +67,7 @@
     }
   }
 });
-  </script>
+</script>
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png">
@@ -75,7 +81,7 @@
     <div class="loader-text">Loading</div>
   </div>
 
-  <script>
+<script>
   window.addEventListener('load', function() {
   var spinner = document.querySelector('.loader');
   if (spinner) {
@@ -177,19 +183,25 @@
   
   <a href="help.html" class="help-icon" title="Need Help?">?</a>
 
-  <script>
+<script>
 function getTimeBasedGreeting() {
   const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
+  if (hour >= 0 && hour < 5) {
+    return "Good midnight";
+  } else if (hour < 12) {
+    return "Good morning";
+  } else if (hour < 18) {
+    return "Good afternoon";
+  } else {
+    return "Good evening";
+  }
 }
 
 document.addEventListener("DOMContentLoaded", function () {
   const greeting = getTimeBasedGreeting();
   document.getElementById("greeting").textContent = greeting;
 });
-  </script>
+</script>
 
   <noscript>
     <div style="position:fixed; bottom:0; left:0; width:100%; color:#fff; text-align:center; padding:10px; z-index:9999;">
