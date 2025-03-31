@@ -48,10 +48,16 @@ async function processCommand() {
   if (commandFn) {
     const result = commandFn(args);
     if (result instanceof Promise) {
-      result.then(res => {
-        outputDiv.innerHTML += `<div>${res}</div>`;
-        outputDiv.scrollTop = outputDiv.scrollHeight;
-      });
+      try {
+        const res = await result;
+        if (res.trim().startsWith('<') && res.trim().endsWith('>')) {
+          outputDiv.innerHTML += `<div class="html-content">${res}</div>`;
+        } else {
+          outputDiv.innerHTML += `<div>${res}</div>`;
+        }
+      } catch (error) {
+        outputDiv.innerHTML += `<div>Error: ${error.message}</div>`;
+      }
     } else {
       outputDiv.innerHTML += `<div>${result}</div>`;
     }
@@ -96,6 +102,7 @@ function loadNextCommand() {
 
 function clearTerminal() {
   outputDiv.innerHTML = "";
+  return "";
 }
 
 function closeTerminal() {
@@ -170,12 +177,38 @@ function explainCommand(command) {
   return explanations[command] || `No explanation found for command: ${command}`;
 }
 
-function readFileContent(fileName) {
+async function readFileContent(fileName) {
   const validFiles = ["about", "projects", "resume"];
   if (validFiles.includes(fileName)) {
-    return fetch(`https://pages.surya-ops.workers.dev/?section=${fileName}`)
-      .then(response => response.text())
-      .catch(err => `cat: ${fileName}: Error fetching content`);
+    try {
+      const response = await fetch(`https://pages.surya-ops.workers.dev/?section=${fileName}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch content (${response.status})`);
+      }
+      
+      const text = await response.text();
+      
+      let html = "";
+      
+      if (text.trim().startsWith('<') && text.trim().endsWith('>')) {
+        html = text;
+      } 
+      else if (text.includes("html = `")) {
+        const startIndex = text.indexOf("html = `") + 8;
+        const endIndex = text.indexOf("`;", startIndex);
+        if (startIndex !== -1 && endIndex !== -1) {
+          html = text.substring(startIndex, endIndex);
+        } else {
+          html = text;
+        }
+      } else {
+        html = text;
+      }
+      
+      return html;
+    } catch (error) {
+      return `cat: ${fileName}: Error fetching content: ${error.message}`;
+    }
   } else {
     return `cat: ${fileName}: No such file or directory`;
   }
@@ -194,33 +227,6 @@ function displayHelp() {
 - explain <command>: Provides an explanation of a specified command.
 - Ctrl + Shift + Q: Closes the terminal.
 - Ctrl + Shift + L: Clears the terminal screen.`;
-}
-
-async function streamEventsToText(stream) {
-  const reader = stream.getReader();
-  const decoder = new TextDecoder("utf-8");
-  let resultText = "";
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    const chunk = decoder.decode(value, { stream: true });
-    const lines = chunk.split("\n");
-    for (const line of lines) {
-      if (line.startsWith("data:")) {
-        const jsonStr = line.replace(/^data:\s*/, "").trim();
-        if (jsonStr === "[DONE]") continue;
-        try {
-          const parsed = JSON.parse(jsonStr);
-          if (parsed.response) {
-            resultText += parsed.response;
-          }
-        } catch (e) {
-          console.error("Error parsing line:", line, e);
-        }
-      }
-    }
-  }
-  return resultText;
 }
 
 function cleanHeadline(text) {
