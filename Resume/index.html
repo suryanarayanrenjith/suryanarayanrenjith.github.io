@@ -91,7 +91,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     try {
       const response = await fetch(remoteUrl, { cache: 'no-store' });
-      if (!response.ok) throw new Error(HTTP error! status: ${response.status});
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
