@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded", function () {
 (async () => {
     const spinner = document.querySelector('.loader');
     const preloader = spinner ? spinner.parentElement : null;
-    const id = 'link_img_gen';
+    const id = 'link_img';
 
     try {
         const getLinkResponse = await fetch(`https://surya-api.vercel.app/api/getLink?id=${encodeURIComponent(id)}`);
