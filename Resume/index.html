@@ -82,39 +82,70 @@ document.addEventListener("DOMContentLoaded", function () {
   </div>
 
 <script>
-  (async () => {
-    const spinner = document.querySelector('.loader');
-    const preloader = spinner ? spinner.parentElement : null;
-
-    const encodedUrl = "aHR0cHM6Ly9pbWcuc3VyeWEtb3BzLndvcmtlcnMuZGV2Lw==";
-    const remoteUrl = atob(encodedUrl);
-
-    try {
-      const response = await fetch(remoteUrl, { cache: 'no-store' });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
-
-      const styleEl = document.createElement("style");
-      styleEl.textContent = `
-        body::before {
-          content: "";
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: url(${blobUrl}) no-repeat center center;
-          background-size: cover;
-          transform: scale(1.05);
-          z-index: -1;
+    (async () => {
+      const spinner = document.querySelector('.loader');
+      const preloader = spinner ? spinner.parentElement : null;
+  
+      try {
+        const externalApiUrl = 'https://surya-api.vercel.app/api/imgurl';
+  
+        const apiResponse = await fetch(externalApiUrl, { cache: 'no-store' });
+        if (!apiResponse.ok) {
+          throw new Error(`API error! status: ${apiResponse.status}`);
         }
-      `;
-      document.head.appendChild(styleEl);
+        
+        const { encodedUrl } = await apiResponse.json();
+  
+        const remoteUrl = atob(encodedUrl);
+  
+        const response = await fetch(remoteUrl, { cache: 'no-store' });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
 
-      const bgImage = new Image();
-      bgImage.onload = () => {
+        const styleEl = document.createElement("style");
+        styleEl.textContent = `
+          body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url(${blobUrl}) no-repeat center center;
+            background-size: cover;
+            transform: scale(1.05);
+            z-index: -1;
+          }
+        `;
+        document.head.appendChild(styleEl);
+  
+        const bgImage = new Image();
+        bgImage.onload = () => {
+          if (preloader) {
+            preloader.style.opacity = '0';
+            setTimeout(() => {
+              preloader.style.display = 'none';
+              document.body.style.overflow = 'auto';
+            }, 500);
+          }
+        };
+        bgImage.onerror = () => {
+          console.error('Error loading the background image');
+          if (preloader) {
+            preloader.style.opacity = '0';
+            setTimeout(() => {
+              preloader.style.display = 'none';
+              document.body.style.overflow = 'auto';
+            }, 500);
+          }
+        };
+        bgImage.src = blobUrl;
+        
+      } catch (err) {
+        console.error("Error fetching background image:", err);
         if (preloader) {
           preloader.style.opacity = '0';
           setTimeout(() => {
@@ -122,32 +153,10 @@ document.addEventListener("DOMContentLoaded", function () {
             document.body.style.overflow = 'auto';
           }, 500);
         }
-      };
-      bgImage.onerror = () => {
-        console.error('Error loading the background image');
-        if (preloader) {
-          preloader.style.opacity = '0';
-          setTimeout(() => {
-            preloader.style.display = 'none';
-            document.body.style.overflow = 'auto';
-          }, 500);
-        }
-      };
-      bgImage.src = blobUrl;
-
-    } catch (err) {
-      console.error("Error fetching background image:", err);
-      if (preloader) {
-        preloader.style.opacity = '0';
-        setTimeout(() => {
-          preloader.style.display = 'none';
-          document.body.style.overflow = 'auto';
-        }, 500);
       }
-    }
-  })();
-</script>
-
+    })();
+  </script>
+  
 <noscript>
   <style>
     #preloader { display: none; }
