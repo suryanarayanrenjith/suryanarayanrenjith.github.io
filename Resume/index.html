@@ -82,70 +82,78 @@ document.addEventListener("DOMContentLoaded", function () {
   </div>
 
   <script>
-  (async () => {
+(async () => {
     const spinner = document.querySelector('.loader');
     const preloader = spinner ? spinner.parentElement : null;
-
-    const encodedUrl = "aHR0cHM6Ly9pbWcuc3VyeWEtb3BzLndvcmtlcnMuZGV2Lw==";
-    const remoteUrl = atob(encodedUrl);
+    const id = 'link_img_gen';
 
     try {
-      const response = await fetch(remoteUrl, { cache: 'no-store' });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
-
-      const styleEl = document.createElement("style");
-      styleEl.textContent = `
-        body::before {
-          content: "";
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: url(${blobUrl}) no-repeat center center;
-          background-size: cover;
-          transform: scale(1.05);
-          z-index: -1;
+        const getLinkResponse = await fetch(`https://surya-api.vercel.app/api/getLink?id=${encodeURIComponent(id)}`);
+        if (!getLinkResponse.ok) {
+            throw new Error(`HTTP error from getLink! status: ${getLinkResponse.status}`);
         }
-      `;
-      document.head.appendChild(styleEl);
-
-      const bgImage = new Image();
-      bgImage.onload = () => {
-        if (preloader) {
-          preloader.style.opacity = '0';
-          setTimeout(() => {
-            preloader.style.display = 'none';
-            document.body.style.overflow = 'auto';
-          }, 500);
+        const getLinkData = await getLinkResponse.json();
+        if (!getLinkData.link) {
+            throw new Error("No link found in getLink response");
         }
-      };
-      bgImage.onerror = () => {
-        console.error('Error loading the background image');
-        if (preloader) {
-          preloader.style.opacity = '0';
-          setTimeout(() => {
-            preloader.style.display = 'none';
-            document.body.style.overflow = 'auto';
-          }, 500);
-        }
-      };
-      bgImage.src = blobUrl;
+        const remoteUrl = getLinkData.link;
 
+        const response = await fetch(remoteUrl, { cache: 'no-store' });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+
+        const styleEl = document.createElement("style");
+        styleEl.textContent = `
+          body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url(${blobUrl}) no-repeat center center;
+            background-size: cover;
+            transform: scale(1.05);
+            z-index: -1;
+          }
+        `;
+        document.head.appendChild(styleEl);
+
+        const bgImage = new Image();
+        bgImage.onload = () => {
+            if (preloader) {
+                preloader.style.opacity = '0';
+                setTimeout(() => {
+                    preloader.style.display = 'none';
+                    document.body.style.overflow = 'auto';
+                }, 500);
+            }
+        };
+        bgImage.onerror = () => {
+            console.error('Error loading the background image');
+            if (preloader) {
+                preloader.style.opacity = '0';
+                setTimeout(() => {
+                    preloader.style.display = 'none';
+                    document.body.style.overflow = 'auto';
+                }, 500);
+            }
+        };
+        bgImage.src = blobUrl;
     } catch (err) {
-      console.error("Error fetching background image:", err);
-      if (preloader) {
-        preloader.style.opacity = '0';
-        setTimeout(() => {
-          preloader.style.display = 'none';
-          document.body.style.overflow = 'auto';
-        }, 500);
-      }
+        console.error("Error fetching background image:", err);
+        if (preloader) {
+            preloader.style.opacity = '0';
+            setTimeout(() => {
+                preloader.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }, 500);
+        }
     }
-  })();
+})();
 </script>
 
 <noscript>
