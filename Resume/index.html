@@ -95,7 +95,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         
         const { encodedUrl } = await apiResponse.json();
-  
+        
         const remoteUrl = atob(encodedUrl);
   
         const response = await fetch(remoteUrl, { cache: 'no-store' });
@@ -104,7 +104,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         const blob = await response.blob();
         const blobUrl = URL.createObjectURL(blob);
-
         const styleEl = document.createElement("style");
         styleEl.textContent = `
           body::before {
@@ -121,7 +120,6 @@ document.addEventListener("DOMContentLoaded", function () {
           }
         `;
         document.head.appendChild(styleEl);
-  
         const bgImage = new Image();
         bgImage.onload = () => {
           if (preloader) {
