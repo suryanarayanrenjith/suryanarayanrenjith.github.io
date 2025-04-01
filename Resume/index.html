@@ -97,7 +97,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const blobUrl = URL.createObjectURL(blob);
 
       const styleEl = document.createElement("style");
-      styleEl.textContent = 
+      styleEl.textContent = `
         body::before {
           content: "";
           position: fixed;
@@ -110,7 +110,7 @@ document.addEventListener("DOMContentLoaded", function () {
           transform: scale(1.05);
           z-index: -1;
         }
-      ;
+      `;
       document.head.appendChild(styleEl);
 
       const bgImage = new Image();
