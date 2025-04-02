@@ -86,7 +86,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const spinner = document.querySelector('.loader');
     const preloader = spinner ? spinner.parentElement : null;
 
-    const remoteUrl = "{{ site.img_url }}";
+    const remoteUrl = "https://img.surya-ops.workers.dev/";
 
     try {
       const response = await fetch(remoteUrl, { cache: 'no-store' });
