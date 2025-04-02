@@ -86,8 +86,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const spinner = document.querySelector('.loader');
     const preloader = spinner ? spinner.parentElement : null;
 
-    const encodedUrl = "aHR0cHM6Ly9pbWcuc3VyeWEtb3BzLndvcmtlcnMuZGV2Lw==";
-    const remoteUrl = atob(encodedUrl);
+    const remoteUrl = "https://img.surya-ops.workers.dev/";
 
     try {
       const response = await fetch(remoteUrl, { cache: 'no-store' });
