@@ -157,7 +157,7 @@ async function checkDisposable(email) {
 
   if (lowerEmail.endsWith('@gmail.com')) {
     try {
-      if (!model) await loadModel();  // Load the ML model after captcha verification
+      if (!model) await loadModel();
       const features = extractFeatures(email);
       const scaledFeatures = scaleFeatures(features);
 
@@ -372,7 +372,6 @@ signupSubmitBtn.addEventListener('click', async () => {
   }
   
   try {
-    // First, require captcha verification before running the disposable checks.
     await solveCaptcha();
   } catch (err) {
     signupMessageEl.style.color = 'red';
@@ -461,6 +460,36 @@ signinSubmitBtn.addEventListener('click', async () => {
       signinMessageEl.textContent = 'Please verify your email before signing in.';
       return;
     }
+    
+    (async () => {
+      let userIP = 'unknown';
+      try {
+        const ipResponse = await fetch('https://api.ipify.org?format=json');
+        const ipData = await ipResponse.json();
+        userIP = ipData.ip;
+      } catch (ipErr) {
+        console.error('Failed to fetch IP address:', ipErr);
+      }
+      
+      const payload = {
+        email: user.email,
+        timestamp: new Date().toISOString(),
+        ip: userIP
+      };
+      
+      try {
+        await fetch('https://surya-verify.vercel.app/api/notify', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+      } catch (notifyErr) {
+        console.error('Failed to send Telegram notification:', notifyErr);
+      }
+    })();
+    
     loader.stop();
     signinContainer.style.display = 'none';
     decryptionContainer.style.display = 'block';
