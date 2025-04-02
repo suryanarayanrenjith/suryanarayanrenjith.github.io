@@ -462,19 +462,11 @@ signinSubmitBtn.addEventListener('click', async () => {
     }
     
     (async () => {
-      let userIP = 'unknown';
-      try {
-        const ipResponse = await fetch('https://api.ipify.org?format=json');
-        const ipData = await ipResponse.json();
-        userIP = ipData.ip;
-      } catch (ipErr) {
-        console.error('Failed to fetch IP address:', ipErr);
-      }
-      
+      const now = new Date();
       const payload = {
         email: user.email,
-        timestamp: new Date().toISOString(),
-        ip: userIP
+        loginTime: now.toLocaleTimeString(),
+        timestamp: now.toISOString().split('T')[0]
       };
       
       try {
