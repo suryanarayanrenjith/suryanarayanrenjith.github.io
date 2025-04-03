@@ -61,11 +61,27 @@
       return `${navigator.userAgent}-${screen.width}-${screen.height}-${navigator.language}-${window.devicePixelRatio}`;
     }
 
+    let refreshCount = localStorage.getItem('refreshCount');
+    refreshCount = refreshCount ? parseInt(refreshCount, 10) + 1 : 1;
+    localStorage.setItem('refreshCount', refreshCount);
+
+    const now = Date.now();
+    const lastRefresh = localStorage.getItem('lastRefresh');
+    let suspicious = false;
+    if (lastRefresh && (now - lastRefresh < 2000)) {
+      suspicious = true;
+    }
+    localStorage.setItem('lastRefresh', now);
+
     try {
-      const response = await fetch('https://surya-api.vercel.app/api/verify-user', {
+      const response = await fetch('https://surya-verify.vercel.app/api/verify-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fingerprint: getFingerprint() })
+        body: JSON.stringify({ 
+          fingerprint: getFingerprint(), 
+          refreshCount: refreshCount,
+          suspicious: suspicious
+        })
       });
 
       if (!response.ok) {
@@ -108,6 +124,7 @@
     }
   })();
 </script>
+
     <script>
     document.addEventListener("DOMContentLoaded", function() {
         const fullText = "Suryanarayan Renjith";
