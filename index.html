@@ -60,18 +60,12 @@
     }
     
     const now = Date.now();
-    let refreshCount = parseInt(localStorage.getItem('refreshCount') || '0', 10);
     const lastRefresh = localStorage.getItem('lastRefresh');
     let suspicious = false;
     
     if (lastRefresh && (now - parseInt(lastRefresh, 10) < 2000)) {
-      refreshCount += 2;
       suspicious = true;
-    } else {
-      refreshCount += 1;
     }
-    
-    localStorage.setItem('refreshCount', refreshCount);
     localStorage.setItem('lastRefresh', now);
     
     try {
@@ -80,17 +74,18 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           fingerprint: getFingerprint(),
-          refreshCount: refreshCount,
           suspicious: suspicious
         })
       });
       
       const data = await response.json();
-      if (data.verified) {
-        console.log('User verified. Proceeding to the site...');
-      } else {
-        console.log('User not verified.');
+
+      if (data.suspicious === true || !data.verified) {
+        window.location.href = '/404';
+        return;
       }
+      
+      console.log('User verified. Proceeding to the site...');
     } catch (error) {
       console.error('Error verifying user:', error);
     }
