@@ -55,8 +55,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <script>
   (async function verifyAndProceed() {
-    const blacklistedUrl = 'https://pages.suryanarayanrenjith.workers.dev/';
-    
     function getFingerprint() {
       return `${navigator.userAgent}-${screen.width}-${screen.height}-${navigator.language}-${window.devicePixelRatio}`;
     }
@@ -64,8 +62,8 @@
     const now = Date.now();
     let refreshCount = parseInt(localStorage.getItem('refreshCount') || '0', 10);
     const lastRefresh = localStorage.getItem('lastRefresh');
-    
     let suspicious = false;
+    
     if (lastRefresh && (now - parseInt(lastRefresh, 10) < 2000)) {
       refreshCount += 2;
       suspicious = true;
@@ -87,40 +85,14 @@
         })
       });
       
-      if (!response.ok) {
-        if (window.location.href.startsWith(blacklistedUrl)) {
-          window.location.href = '/404';
-          return;
-        }
-        const originalFetch = window.fetch;
-        window.fetch = function(url, options) {
-          if (typeof url === 'string' && url.startsWith(blacklistedUrl)) {
-            console.error('Blocked fetch to blacklisted URL:', url);
-            return Promise.reject(new Error('This URL is blacklisted.'));
-          }
-          return originalFetch(url, options);
-        };
-        const originalXHROpen = XMLHttpRequest.prototype.open;
-        XMLHttpRequest.prototype.open = function(method, url) {
-          if (url.startsWith(blacklistedUrl)) {
-            console.error('Blocked XHR to blacklisted URL');
-            throw new Error('This URL is blacklisted.');
-          }
-          return originalXHROpen.apply(this, arguments);
-        };
-        window.location.href = '/404';
-        return;
-      }
-      
       const data = await response.json();
-      if (!data.verified) {
-        window.location.href = '/404';
-        return;
+      if (data.verified) {
+        console.log('User verified. Proceeding to the site...');
+      } else {
+        console.log('User not verified.');
       }
-      
-      console.log('User verified. Proceeding to the site...');
     } catch (error) {
-      window.location.href = '/404';
+      console.error('Error verifying user:', error);
     }
   })();
 </script>
