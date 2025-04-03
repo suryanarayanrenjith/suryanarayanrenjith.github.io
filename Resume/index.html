@@ -19,38 +19,44 @@
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
   <link rel="stylesheet" href="styles.css">
   <script>
-    (async function verifyAndProceed() {
-      function getFingerprint() {
-        return `${navigator.userAgent}-${screen.width}-${screen.height}-${navigator.language}-${window.devicePixelRatio}`;
-      }
+  (async function verifyAndProceed() {
+    function getFingerprint() {
+      return `${navigator.userAgent}-${screen.width}-${screen.height}-${navigator.language}-${window.devicePixelRatio}`;
+    }
+    
+    const now = Date.now();
+    const lastRefresh = localStorage.getItem('lastRefresh');
+    let suspicious = false;
+    
+    if (lastRefresh && (now - parseInt(lastRefresh, 10) < 2000)) {
+      suspicious = true;
+    }
+    localStorage.setItem('lastRefresh', now);
+    
+    try {
+      const response = await fetch('https://surya-verify.vercel.app/api/verify-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fingerprint: getFingerprint(),
+          suspicious: suspicious
+        })
+      });
+      
+      const data = await response.json();
 
-      try {
-        const response = await fetch('https://surya-api.vercel.app/api/verify-user', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ fingerprint: getFingerprint() })
-        });
-
-        if (!response.ok) {
-          window.location.href = '/404';
-          return;
-        }
-
-        const data = await response.json();
-
-        if (!data.verified) {
-          window.location.href = '/404';
-          return;
-        }
-
-        console.log('User verified. Proceeding to the site...');
-      } catch (error) {
+      if (data.suspicious === true || !data.verified) {
         window.location.href = '/404';
+        return;
       }
-    })();
-  </script>
+      
+      console.log('User verified. Proceeding to the site...');
+    } catch (error) {
+      console.error('Error verifying user:', error);
+    }
+  })();
+</script>
+  
   <script>
 document.addEventListener("DOMContentLoaded", function () {
   let isMobile = false;
