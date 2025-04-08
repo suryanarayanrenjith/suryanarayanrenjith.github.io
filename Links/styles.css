@@ -63,41 +63,45 @@ body, html {
 }
 
 .dot {
-    width: 20px;
-    height: 20px;
-    margin: 10px;
-    background: transparent;
-    border: 2px solid white;
-    border-radius: 50%;
-    animation: bounce 1.5s infinite ease-in-out, borderPulse 1.5s infinite ease-in-out;
+  width: 20px;
+  height: 20px;
+  margin: 10px;
+  background: transparent;
+  border: 2px solid white;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+  border-radius: 2px;
+  transform: rotate(45deg);
+  animation: bounce 1.5s infinite ease-in-out, borderPulse 1.5s infinite ease-in-out;
 }
 
 .dot:nth-child(2) {
-    animation-delay: 0.3s, 0.3s;
+  animation-delay: 0.3s, 0.3s;
 }
 
 .dot:nth-child(3) {
-    animation-delay: 0.6s, 0.6s;
+  animation-delay: 0.6s, 0.6s;
 }
 
 @keyframes bounce {
-    0%, 100% {
-        transform: translateY(0);
-        opacity: 1;
-    }
-    50% {
-        transform: translateY(-30px);
-        opacity: 0.5;
-    }
+  0%, 100% {
+    transform: rotate(45deg) translateY(0);
+    opacity: 1;
+  }
+  50% {
+    transform: rotate(45deg) translateY(-30px);
+    opacity: 0.5;
+  }
 }
 
 @keyframes borderPulse {
-    0%, 100% {
-        border-color: white;
-    }
-    50% {
-        border-color: rgba(255, 255, 255, 0.5);
-    }
+  0%, 100% {
+    border-color: white;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.7);
+  }
+  50% {
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+  }
 }
 
 @media (max-width: 1024px) {
