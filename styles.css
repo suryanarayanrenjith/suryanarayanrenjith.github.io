@@ -786,7 +786,7 @@ header {
     .help-button {
         width: 35px;
         height: 35px;
-        bottom: 6px;
+        bottom: 4px;
         right: 15px;
         font-size: 14px;
     }
@@ -798,6 +798,10 @@ header {
     .tab-button {
         padding: 10px 12px;
         font-size: 12px;
+    }
+
+    .close-modal {
+        top: 12px;
     }
     
     .about-section .year-range {
