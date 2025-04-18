@@ -423,7 +423,7 @@ header {
 .help-button {
     background-color: #000;
     color: #fff;
-    border: 1px solid #fff;
+    border: 2px solid #ccc;
     border-radius: 50%;
     width: 40px;
     height: 40px;
@@ -436,7 +436,6 @@ header {
     right: 20px;
     z-index: 3;
     outline: none;
-    box-shadow: 0 2px 10px rgba(255, 255, 255, 0.2);
     transition: all 0.3s ease;
     -webkit-tap-highlight-color: transparent;
 }
@@ -450,7 +449,9 @@ header {
 }
 
 .help-button:hover {
-    background-color: #333;
+    background-color: #fff;
+    color: #000;
+    border-color: #000;
     transform: scale(1.05);
 }
 
