@@ -786,7 +786,7 @@ header {
     .help-button {
         width: 35px;
         height: 35px;
-        bottom: 50px;
+        bottom: 10px;
         right: 15px;
         font-size: 14px;
     }
