@@ -432,7 +432,7 @@ function isDesktop() {
                   const m           = disposition.match(/filename="?([^";]+)"?/i);
                   const fileName    = m ? m[1] : 'SuryaWebsiteApp.exe';
                   const blob        = await response.blob();
-                  clientLogs.textContent += `\n${new Date().toLocaleTimeString()}: Downloading "${fileName}"...`;
+                  clientLogs.textContent += `\n${new Date().toLocaleTimeString()}: Fetching "${fileName}"...`;
             
                   const url = URL.createObjectURL(blob);
                   const a   = document.createElement('a');
@@ -444,7 +444,7 @@ function isDesktop() {
                   a.remove();
                   URL.revokeObjectURL(url);
             
-                  clientLogs.textContent += `\n${new Date().toLocaleTimeString()}: "${fileName}" downloaded successfully.`;
+                  clientLogs.textContent += `\n${new Date().toLocaleTimeString()}: "${fileName}" fetched successfully.`;
                 })
                 .catch(err => {
                   if (err.message === 'handled-json') return;
