@@ -235,38 +235,277 @@ function isDesktop() {
     <div class="progress-bar"><div></div></div>
 
     <div id="keyboard-popups">
-    <button class="help-button" id="helpButton">
-        <i style='font-size: smaller;'class="fa-regular fa-keyboard"></i>
-    </button>
-
-    <div class="modal-overlay" id="modalOverlay"></div>
-
-    <div class="shortcuts-modal" id="shortcutsModal">
-        <button class="close-modal" id="closeModal">&times;</button>
-        <h2 style="color: white;">Keyboard Shortcuts</h2>
-        <ul class="shortcuts-list">
-            <li><span class="shortcut-key">Ctrl + Shift + /</span> Open Keyboard Shortcuts</li>
-            <li><span class="shortcut-key">Ctrl + Shift + 5</span> Go to Home section</li>
-            <li><span class="shortcut-key">Ctrl + Shift + 6</span> Go to About section</li>
-            <li><span class="shortcut-key">Ctrl + Shift + 7</span> Go to Projects section</li>
-            <li><span class="shortcut-key">Ctrl + Shift + 8</span> Go to Resume section</li>
-            <li><span class="shortcut-key">Ctrl + Shift + K</span> Open Terminal in new tab</li>
-            <li><span class="shortcut-key">Ctrl + Shift + L</span> Open Links in new tab</li>
-            <li><span class="shortcut-key">Ctrl + Shift + V</span> Open Resume in new tab</li>
-        </ul>
-    </div>
-    </div>
-</div>
-
-<button class="terminal-button" id="terminalButton">
-    <i class="fa-solid fa-terminal"></i>
-</button>
-
-<script>
-    document.getElementById('terminalButton').addEventListener('click', function () {
-        window.open('/Cli', '_blank');
-    });
-</script>
+            <button class="help-button" id="helpButton">
+                <i class="fa-solid fa-info"></i>
+            </button>
+            <div class="modal-overlay" id="modalOverlay"></div>
+            <div class="shortcuts-modal" id="shortcutsModal">
+                <button class="close-modal" id="closeModal">&times;</button>
+                <div class="modal-container">
+                    <div class="modal-tabs">
+                        <button class="tab-button active" data-tab="about">About</button>
+                        <button class="tab-button" data-tab="keyboard">Keyboard</button>
+                        <button class="tab-button" data-tab="terminal">Terminal</button>
+                        <button class="tab-button" data-tab="client">Client</button>
+                    </div>
+                    <div class="tab-content">
+                        <div class="tab-pane active" id="about-tab">
+                            <div class="about-section">
+                                <div class="favicon-container">
+                                    <img src="/assets/favicon/android-chrome-512x512.png" alt="Favicon" class="favicon" />
+                                </div>
+                                <h3 class="website-title">Surya Portfolio</h3>
+                                <p id="yearRange">
+                                    <i class="fa-regular fa-calendar"></i>
+                                    Since 2023
+                                </p>                                  
+                                <p id="uptimeResponseTime" class="uptime-response-time">Loading…</p>
+                                <p class="made-with">Made with <span class="heart"> <i class="fa-solid fa-heart"></i> </span> by Suryanarayan Renjith.</p>
+                            </div>
+                        </div>
+                        <div class="tab-pane" id="keyboard-tab">
+                            <ul class="shortcuts-list">
+                                <li><span class="shortcut-key">Ctrl + Shift + /</span> Open Info Section</li>
+                                <li><span class="shortcut-key">Ctrl + Shift + 5</span> Go to Home section</li>
+                                <li><span class="shortcut-key">Ctrl + Shift + 6</span> Go to About section</li>
+                                <li><span class="shortcut-key">Ctrl + Shift + 7</span> Go to Projects section</li>
+                                <li><span class="shortcut-key">Ctrl + Shift + 8</span> Go to Resume section</li>
+                                <li><span class="shortcut-key">Ctrl + Shift + K</span> Open Terminal in new tab</li>
+                                <li><span class="shortcut-key">Ctrl + Shift + L</span> Open Links in new tab</li>
+                                <li><span class="shortcut-key">Ctrl + Shift + V</span> Open Resume in new tab</li>
+                            </ul>
+                        </div>
+                        <div class="tab-pane" id="terminal-tab">
+                            <div class="terminal-info">
+                                <p>Access the terminal to run commands and interact with this portfolio directly.</p>
+                                <button class="action-button" id="openTerminal">
+                                    <i class="fa-solid fa-terminal"></i> Open Terminal
+                                </button>
+                                <div class="terminal-logs">
+                                    <code></code>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane" id="client-tab">
+                            <div class="client-info">
+                                <p>Download my portfolio client to access my portfolio anytime with ease.</p>
+                                <button class="action-button" id="downloadClient">
+                                    <i class="fa-solid fa-download"></i> Download Client
+                                </button>
+                                <div class="client-logs">
+                                    <code></code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+              const keyValue     = 'uptimeResponseTime';
+              const keyTimestamp = 'uptimeResponseTimeTimestamp';
+              const now          = Date.now();
+              const dayMs        = 24 * 60 * 60 * 1000;
+          
+              const el = document.getElementById('uptimeResponseTime');
+              function setUI(val) {
+                if (el) el.textContent = `Last checked response time: ${val}`;
+              }
+          
+              const cachedVal = localStorage.getItem(keyValue);
+              const cachedTs  = parseInt(localStorage.getItem(keyTimestamp), 10);
+              if (cachedVal && cachedTs && (now - cachedTs < dayMs)) {
+                setUI(cachedVal);
+              } else {
+                fetch('https://uptime.surya-ops.workers.dev/')
+                  .then(res => res.json())
+                  .then(data => {
+                    const rt = data.responseTime;
+                    setUI(rt);
+                    localStorage.setItem(keyValue, rt);
+                    localStorage.setItem(keyTimestamp, now.toString());
+                  })
+                  .catch(() => {
+                    setUI('--');
+                  });
+              }
+          
+              const isElectron        = navigator.userAgent.toLowerCase().includes('electron');
+              const helpButton        = document.getElementById('helpButton');
+              const modalOverlay      = document.getElementById('modalOverlay');
+              const shortcutsModal    = document.getElementById('shortcutsModal');
+              const closeModal        = document.getElementById('closeModal');
+              const openTerminalBtn   = document.getElementById('openTerminal');
+              const downloadClientBtn = document.getElementById('downloadClient');
+              const tabButtons        = document.querySelectorAll('.tab-button');
+          
+              if (isElectron) {
+                document.querySelector('.tab-button[data-tab="client"]')?.remove();
+                document.getElementById('client-tab')?.remove();
+              }
+          
+              let shortcutsVisible = false;
+              const showShortcuts = () => {
+                modalOverlay.classList.add('active');
+                shortcutsModal.style.display = 'block';
+                shortcutsVisible = true;
+              };
+              const hideShortcuts = () => {
+                modalOverlay.classList.remove('active');
+                shortcutsModal.style.display = 'none';
+                shortcutsVisible = false;
+              };
+              const toggleShortcuts = () => {
+                shortcutsVisible ? hideShortcuts() : showShortcuts();
+              };
+          
+              helpButton.addEventListener('click', toggleShortcuts);
+              closeModal.addEventListener('click', hideShortcuts);
+              modalOverlay.addEventListener('click', e => {
+                if (e.target === modalOverlay && shortcutsVisible) hideShortcuts();
+              });
+          
+              const launchTerminal = () => {
+                const terminalLogs = document.querySelector('.terminal-logs code');
+                try {
+                  const now = new Date().toLocaleTimeString();
+                  terminalLogs.textContent = `${now}: Opening terminal...`;
+          
+                  const link = document.createElement('a');
+                  link.href   = '/Cli';
+                  link.target = '_blank';
+                  link.rel    = 'noopener noreferrer';
+                  link.style.display = 'none';
+                  document.body.appendChild(link);
+                  link.click();
+                  link.remove();
+          
+                  terminalLogs.textContent += `\n${new Date().toLocaleTimeString()}: Terminal session started. Type 'help' for available commands.`;
+                } catch (err) {
+                  const errorTime = new Date().toLocaleTimeString();
+                  terminalLogs.textContent += `\n${errorTime}: Failed to open terminal ("${err.message}").`;
+                }
+              };
+          
+              const downloadInstaller = (force = false) => {
+                const clientLogs = document.querySelector('.client-logs code');
+                clientLogs.textContent = `${new Date().toLocaleTimeString()}: Connecting to download server...`;
+          
+                const endpoint = `https://surya-verify.vercel.app/api/installer${force ? '?force=true' : ''}`;
+                fetch(endpoint)
+                  .then(async response => {
+                    const ct = response.headers.get('Content-Type') || '';
+          
+                    if (ct.includes('application/json')) {
+                      const json = await response.json();
+                      const t    = new Date().toLocaleTimeString();
+                      clientLogs.textContent += `\n${t}: ${json.message}`;
+                      clientLogs.innerHTML += `\n<a href="#" id="forceDownloadLink">Download anyway</a>`;
+                      document.getElementById('forceDownloadLink')?.addEventListener('click', e => {
+                        e.preventDefault();
+                        downloadInstaller(true);
+                      });
+                      throw new Error('unsupported');
+                    }
+          
+                    if (!response.ok) {
+                      throw new Error(`Server responded with ${response.status}`);
+                    }
+          
+                    const disposition = response.headers.get('Content-Disposition') || '';
+                    const m           = disposition.match(/filename="?([^";]+)"?/i);
+                    const fileName    = m ? m[1] : 'SuryaWebsiteApp.exe';
+                    const blob        = await response.blob();
+                    clientLogs.textContent += `\n${new Date().toLocaleTimeString()}: Downloading "${fileName}"...`;
+          
+                    const url = URL.createObjectURL(blob);
+                    const a   = document.createElement('a');
+                    a.href        = url;
+                    a.download    = fileName;
+                    a.style.display = 'none';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    URL.revokeObjectURL(url);
+          
+                    clientLogs.textContent += `\n${new Date().toLocaleTimeString()}: "${fileName}" downloaded successfully.`;
+                  })
+                  .catch(err => {
+                    const clientLogs = document.querySelector('.client-logs code');
+                    if (err.message !== 'unsupported') {
+                      const t = new Date().toLocaleTimeString();
+                      clientLogs.textContent += `\n${t}: Download failed ("${err.message}"). Please try again later.`;
+                    }
+                  });
+              };
+          
+              tabButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                  tabButtons.forEach(b => b.classList.remove('active'));
+                  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+                  btn.classList.add('active');
+                  document.getElementById(`${btn.dataset.tab}-tab`)?.classList.add('active');
+                });
+              });
+              openTerminalBtn?.addEventListener('click', launchTerminal);
+              downloadClientBtn?.addEventListener('click', () => downloadInstaller(false));
+          
+              document.querySelectorAll('.shortcuts-list li').forEach(li => {
+                const key = li.querySelector('.shortcut-key')?.textContent.trim();
+                if (!key) return;
+                li.style.cursor = 'pointer';
+                li.addEventListener('click', () => {
+                  switch (key) {
+                    case 'Ctrl + Shift + /':
+                      toggleShortcuts();
+                      break;
+                    case 'Ctrl + Shift + 5':
+                      showContent?.('home'); updateProgressBar?.('home');
+                      break;
+                    case 'Ctrl + Shift + 6':
+                      showContent?.('about'); updateProgressBar?.('about');
+                      break;
+                    case 'Ctrl + Shift + 7':
+                      showContent?.('projects'); updateProgressBar?.('projects');
+                      break;
+                    case 'Ctrl + Shift + 8':
+                      showContent?.('resume'); updateProgressBar?.('resume');
+                      break;
+                    case 'Ctrl + Shift + K':
+                      launchTerminal();
+                      break;
+                    case 'Ctrl + Shift + L':
+                      setTimeout(() => window.open('/Links','_blank'), 100);
+                      break;
+                    case 'Ctrl + Shift + V':
+                      setTimeout(() => window.open('/Resume','_blank'), 100);
+                      break;
+                  }
+                });
+              });
+          
+              document.addEventListener('keydown', event => {
+                if (event.ctrlKey && event.shiftKey) {
+                  if (['Slash','/','?'].includes(event.key) || event.code === 'Slash') {
+                    event.preventDefault();
+                    toggleShortcuts();
+                    return;
+                  }
+                  switch (event.code) {
+                    case 'Digit5': event.preventDefault(); showContent?.('home'); updateProgressBar?.('home'); break;
+                    case 'Digit6': event.preventDefault(); showContent?.('about'); updateProgressBar?.('about'); break;
+                    case 'Digit7': event.preventDefault(); showContent?.('projects'); updateProgressBar?.('projects'); break;
+                    case 'Digit8': event.preventDefault(); showContent?.('resume'); updateProgressBar?.('resume'); break;
+                    case 'KeyK':   event.preventDefault(); launchTerminal(); break;
+                    case 'KeyL':   event.preventDefault(); setTimeout(()=>window.open('/Links','_blank'),100); break;
+                    case 'KeyV':   event.preventDefault(); setTimeout(()=>window.open('/Resume','_blank'),100); break;
+                  }
+                }
+              });
+            });
+          </script>
     
     <noscript>
         <div class="offline-message" style="display: block;">
@@ -303,100 +542,8 @@ function isDesktop() {
         }
 </style>
 
-    <script>
-        const helpButton = document.getElementById('helpButton');
-        const modalOverlay = document.getElementById('modalOverlay');
-        const shortcutsModal = document.getElementById('shortcutsModal');
-        const closeModal = document.getElementById('closeModal');
-        
-        let shortcutsVisible = false;
-        
+    <script>   
         const CLOUD_FLARE_WORKER_URL = 'https://pages.surya-ops.workers.dev/';
-        
-        function toggleShortcuts() {
-            shortcutsVisible = !shortcutsVisible;
-            if (shortcutsVisible) {
-                showShortcuts();
-            } else {
-                hideShortcuts();
-            }
-        }
-        
-        function showShortcuts() {
-            modalOverlay.classList.add('active');
-            shortcutsModal.style.display = 'block';
-        }
-        
-        function hideShortcuts() {
-            shortcutsVisible = false;
-            modalOverlay.classList.remove('active');
-            shortcutsModal.style.display = 'none';
-        }
-        
-        helpButton.addEventListener('click', () => {
-            toggleShortcuts();
-        });
-        
-        closeModal.addEventListener('click', () => {
-            hideShortcuts();
-        });
-        
-        modalOverlay.addEventListener('click', (event) => {
-            if (event.target === modalOverlay && shortcutsVisible) {
-                toggleShortcuts();
-            }
-        });
-        
-        document.addEventListener('keydown', (event) => {
-            if (event.ctrlKey && event.shiftKey) {
-                switch (event.code) {
-                    case 'Slash':
-                        event.preventDefault();
-                        toggleShortcuts();
-                        break;
-                    case 'Digit5':
-                        event.preventDefault();
-                        showContent('home');
-                        updateProgressBar('home');
-                        break;
-                    case 'Digit6':
-                        event.preventDefault();
-                        showContent('about');
-                        updateProgressBar('about');
-                        break;
-                    case 'Digit7':
-                        event.preventDefault();
-                        showContent('projects');
-                        updateProgressBar('projects');
-                        break;
-                    case 'Digit8':
-                        event.preventDefault();
-                        showContent('resume');
-                        updateProgressBar('resume');
-                        break;
-                    case 'KeyK':
-                        event.preventDefault();
-                        setTimeout(() => {
-                            window.open('/Cli', '_blank');
-                        }, 100);
-                        break;
-                    case 'KeyL':
-                        event.preventDefault();
-                        setTimeout(() => {
-                            window.open('/Links', '_blank');
-                        }, 100);
-                        break;
-                    case 'KeyV':
-                        event.preventDefault();
-                        setTimeout(() => {
-                            window.open('/Resume', '_blank');
-                        }, 100);
-                        break;
-                    default:
-                        return;
-                }
-            }
-        });
         
         let isMobile = /Mobi|Android/i.test(navigator.userAgent);
         
@@ -614,7 +761,6 @@ function isDesktop() {
     var container = document.querySelector('.container');
     var header = document.querySelector('header');
     var helpButton = document.querySelector('.help-button');
-    var terminalButton = document.querySelector('.terminal-button');
     var uButton = document.getElementById('unmuteButton');
     var mButton = document.getElementById('muteButton');
     var buttonhide = document.getElementById('buttonhide');
@@ -660,7 +806,6 @@ function isDesktop() {
         container.classList.add('disabled-container');
         header.classList.add('no-display');
         helpButton.classList.add('hidden');
-        terminalButton.classList.add('hidden');
         modalOverlay.classList.add('hidden');
         document.addEventListener('keydown', keydownEventListener);
     }
@@ -683,7 +828,6 @@ function isDesktop() {
         container.classList.remove('disabled-container');
         header.classList.remove('no-display');
         helpButton.classList.remove('hidden');
-        terminalButton.classList.remove('hidden');
         modalOverlay.classList.remove('hidden');
         document.removeEventListener('keydown', keydownEventListener);
         uButton.classList.remove('hidden');
@@ -746,7 +890,6 @@ function isDesktop() {
         container.classList.remove('disabled-container');
         header.classList.remove('no-display');
         helpButton.classList.remove('hidden');
-        terminalButton.classList.remove('hidden');
         modalOverlay.classList.remove('hidden');
         uButton.classList.remove('hidden');
         if (!animationsTriggered) {
