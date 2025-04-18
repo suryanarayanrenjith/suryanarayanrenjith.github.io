@@ -346,6 +346,10 @@ function isDesktop() {
               const openTerminalBtn   = document.getElementById('openTerminal');
               const downloadClientBtn = document.getElementById('downloadClient');
               const tabButtons        = document.querySelectorAll('.tab-button');
+              const aboutBtn          = document.querySelector('.tab-button[data-tab="about"]');
+              const keyboardBtn       = document.querySelector('.tab-button[data-tab="keyboard"]');
+              const terminalTabBtn    = document.querySelector('.tab-button[data-tab="terminal"]');
+              const clientBtn         = document.querySelector('.tab-button[data-tab="client"]');
           
               if (isElectron) {
                 document.querySelector('.tab-button[data-tab="client"]')?.remove();
@@ -424,7 +428,7 @@ function isDesktop() {
                     const m           = disposition.match(/filename="?([^";]+)"?/i);
                     const fileName    = m ? m[1] : 'SuryaWebsiteApp.exe';
                     const blob        = await response.blob();
-                    clientLogs.textContent += `\n${new Date().toLocaleTimeString()}: Downloading "${fileName}"...`;
+                    clientLogs.textContent += `\n${new Date().toLocaleTimeString()}: Fetching "${fileName}"...`;
           
                     const url = URL.createObjectURL(blob);
                     const a   = document.createElement('a');
@@ -436,7 +440,7 @@ function isDesktop() {
                     a.remove();
                     URL.revokeObjectURL(url);
           
-                    clientLogs.textContent += `\n${new Date().toLocaleTimeString()}: "${fileName}" downloaded successfully.`;
+                    clientLogs.textContent += `\n${new Date().toLocaleTimeString()}: "${fileName}" fetched successfully.`;
                   })
                   .catch(err => {
                     const clientLogs = document.querySelector('.client-logs code');
@@ -493,6 +497,14 @@ function isDesktop() {
               });
           
               document.addEventListener('keydown', event => {
+                if (shortcutsVisible && !event.ctrlKey && !event.shiftKey) {
+                    switch (event.key.toLowerCase()) {
+                      case 'a': aboutBtn?.click();      break;
+                      case 'k': keyboardBtn?.click();   break;
+                      case 't': terminalTabBtn?.click();break;
+                      case 'c': if (clientBtn && !isElectron) clientBtn.click(); break;
+                    }
+                  }
                 if (event.ctrlKey && event.shiftKey) {
                   if (['Slash','/','?'].includes(event.key) || event.code === 'Slash') {
                     event.preventDefault();
