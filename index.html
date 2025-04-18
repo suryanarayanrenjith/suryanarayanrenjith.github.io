@@ -304,6 +304,12 @@ function isDesktop() {
         
         <script>
             document.addEventListener('DOMContentLoaded', () => {
+              const styleFix = document.createElement('style');
+              styleFix.textContent = `
+              *, *::before, *::after { -webkit-tap-highlight-color: transparent; }
+              button, a, .tab-button, .shortcut-key, .shortcuts-list li { outline: none; }`;
+              document.head.appendChild(styleFix);
+                
               const keyValue     = 'uptimeResponseTime';
               const keyTimestamp = 'uptimeResponseTimeTimestamp';
               const now          = Date.now();
