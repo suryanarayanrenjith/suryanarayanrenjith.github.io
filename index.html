@@ -400,56 +400,60 @@ function isDesktop() {
               };
           
               const downloadInstaller = (force = false) => {
-                const clientLogs = document.querySelector('.client-logs code');
-                clientLogs.textContent = `${new Date().toLocaleTimeString()}: Connecting to download server...`;
-          
-                const endpoint = `https://surya-verify.vercel.app/api/installer${force ? '?force=true' : ''}`;
-                fetch(endpoint)
-                  .then(async response => {
-                    const ct = response.headers.get('Content-Type') || '';
-          
-                    if (ct.includes('application/json')) {
-                      const json = await response.json();
-                      const t    = new Date().toLocaleTimeString();
-                      clientLogs.textContent += `\n${t}: ${json.message}`;
+              const clientLogs = document.querySelector('.client-logs code');
+              clientLogs.textContent = `${new Date().toLocaleTimeString()}: Connecting to download server...`;
+            
+              const endpoint = `https://surya-verify.vercel.app/api/installer${force ? '?force=true' : ''}`;
+              fetch(endpoint)
+                .then(async response => {
+                  const ct = response.headers.get('Content-Type') || '';
+            
+                  if (ct.includes('application/json')) {
+                    const json = await response.json();
+                    const t    = new Date().toLocaleTimeString();
+                    const msg  = json.message || json.error || 'Unknown response';
+                    clientLogs.textContent += `\n${t}: ${msg}`;
+            
+                    if (json.forceUrl) {
                       clientLogs.innerHTML += `\n<a href="#" id="forceDownloadLink">Download anyway</a>`;
                       document.getElementById('forceDownloadLink')?.addEventListener('click', e => {
                         e.preventDefault();
                         downloadInstaller(true);
                       });
-                      throw new Error('unsupported');
                     }
-          
-                    if (!response.ok) {
-                      throw new Error(`Server responded with ${response.status}`);
-                    }
-          
-                    const disposition = response.headers.get('Content-Disposition') || '';
-                    const m           = disposition.match(/filename="?([^";]+)"?/i);
-                    const fileName    = m ? m[1] : 'SuryaWebsiteApp.exe';
-                    const blob        = await response.blob();
-                    clientLogs.textContent += `\n${new Date().toLocaleTimeString()}: Fetching "${fileName}"...`;
-          
-                    const url = URL.createObjectURL(blob);
-                    const a   = document.createElement('a');
-                    a.href        = url;
-                    a.download    = fileName;
-                    a.style.display = 'none';
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
-                    URL.revokeObjectURL(url);
-          
-                    clientLogs.textContent += `\n${new Date().toLocaleTimeString()}: "${fileName}" fetched successfully.`;
-                  })
-                  .catch(err => {
-                    const clientLogs = document.querySelector('.client-logs code');
-                    if (err.message !== 'unsupported') {
-                      const t = new Date().toLocaleTimeString();
-                      clientLogs.textContent += `\n${t}: Download failed ("${err.message}"). Please try again later.`;
-                    }
-                  });
-              };
+                    throw new Error('handled-json');
+                  }
+            
+                  if (!response.ok) {
+                    throw new Error(`Server responded with ${response.status}`);
+                  }
+            
+                  const disposition = response.headers.get('Content-Disposition') || '';
+                  const m           = disposition.match(/filename="?([^";]+)"?/i);
+                  const fileName    = m ? m[1] : 'SuryaWebsiteApp.exe';
+                  const blob        = await response.blob();
+                  clientLogs.textContent += `\n${new Date().toLocaleTimeString()}: Downloading "${fileName}"...`;
+            
+                  const url = URL.createObjectURL(blob);
+                  const a   = document.createElement('a');
+                  a.href        = url;
+                  a.download    = fileName;
+                  a.style.display = 'none';
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+                  URL.revokeObjectURL(url);
+            
+                  clientLogs.textContent += `\n${new Date().toLocaleTimeString()}: "${fileName}" downloaded successfully.`;
+                })
+                .catch(err => {
+                  if (err.message === 'handled-json') return;
+            
+                  const clientLogs = document.querySelector('.client-logs code');
+                  const t = new Date().toLocaleTimeString();
+                  clientLogs.textContent += `\n${t}: Download failed ("${err.message}"). Please try again later.`;
+                });
+            };
           
               tabButtons.forEach(btn => {
                 btn.addEventListener('click', () => {
