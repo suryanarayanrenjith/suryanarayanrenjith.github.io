@@ -487,6 +487,7 @@ header {
     left: 50%;
     transform: translate(-50%, -50%);
     padding: 0;
+    backdrop-filter: brightness(0.5);
     box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
     border: 1px solid #333;
     border-radius: 12px;
