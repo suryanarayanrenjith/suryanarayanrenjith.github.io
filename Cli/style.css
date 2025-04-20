@@ -2,6 +2,7 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    text-decoration: none !important;
 }
 
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&display=swap');
@@ -122,6 +123,7 @@ input[type="text"] {
 
 .html-content .animated-text {
     animation: pulse 2s ease-in-out infinite alternate;
+    text-align-last: center;
     font-size: 24px;
     font-weight: 500;
     margin-bottom: 15px;
