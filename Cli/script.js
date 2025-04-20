@@ -102,6 +102,18 @@ function loadNextCommand() {
 
 function clearTerminal() {
   outputDiv.innerHTML = "";
+  for (const sheet of document.styleSheets) {
+      for (const rule of sheet.cssRules) {
+        if (rule.selectorText === '.header::before') {
+          rule.style.setProperty('content', 'none', 'important');
+          return;
+        }
+      }
+  }
+  document.styleSheets[0].insertRule(
+    '.header::before { content: none !important; }',
+    0
+  );
   return "";
 }
 
