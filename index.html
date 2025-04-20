@@ -339,6 +339,7 @@ function isDesktop() {
               }
           
               const isElectron        = navigator.userAgent.toLowerCase().includes('electron');
+              const header = document.querySelector('header');
               const helpButton        = document.getElementById('helpButton');
               const modalOverlay      = document.getElementById('modalOverlay');
               const shortcutsModal    = document.getElementById('shortcutsModal');
@@ -361,11 +362,13 @@ function isDesktop() {
                 modalOverlay.classList.add('active');
                 shortcutsModal.style.display = 'block';
                 shortcutsVisible = true;
+                header.style.setProperty('display', 'none', 'important');
               };
               const hideShortcuts = () => {
                 modalOverlay.classList.remove('active');
                 shortcutsModal.style.display = 'none';
                 shortcutsVisible = false;
+                header.style.removeProperty('display', 'important');
               };
               const toggleShortcuts = () => {
                 shortcutsVisible ? hideShortcuts() : showShortcuts();
