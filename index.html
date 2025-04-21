@@ -351,9 +351,12 @@ function isDesktop() {
               const terminalTabBtn    = document.querySelector('.tab-button[data-tab="terminal"]');
               const clientBtn         = document.querySelector('.tab-button[data-tab="client"]');
           
-              const ua = navigator.userAgent.toLowerCase();
-              const isElectron = ua.includes('electron');
-              const isAndroidWebView = /; wv\)/.test(navigator.userAgent);
+              const ua                = navigator.userAgent.toLowerCase();
+              const isWindowsClient   = /windows nt|win64|wow64/i.test(ua);
+              const isAndroidClient   = /android/i.test(ua);
+              const isMobileClient    = /mobile|tablet|iphone|ipad|ipod/i.test(ua);
+              const isElectron        = ua.includes('electron');
+              const isAndroidWebView  = /; wv\)/.test(navigator.userAgent);
 
               if (isElectron || isAndroidWebView) {
                 document.querySelector('.tab-button[data-tab="client"]')?.remove();
@@ -408,18 +411,21 @@ function isDesktop() {
               const downloadInstaller = (force = false) => {
               const clientLogs = document.querySelector('.client-logs code');
               clientLogs.textContent = `${new Date().toLocaleTimeString()}: Connecting to download server...`;
-            
-              const endpoint = `https://surya-verify.vercel.app/api/installer${force ? '?force=true' : ''}`;
+        
+              const wantApk = isAndroidClient || (isMobileClient && !isWindowsClient);
+              const params = [];
+              if (wantApk) params.push('apk=true');
+              if (force)    params.push('force=true');
+              const endpoint = `https://surya-verify.vercel.app/api/installer${params.length ? '?' + params.join('&') : ''}`;
+        
               fetch(endpoint)
                 .then(async response => {
                   const ct = response.headers.get('Content-Type') || '';
-            
                   if (ct.includes('application/json')) {
                     const json = await response.json();
                     const t    = new Date().toLocaleTimeString();
                     const msg  = json.message || json.error || 'Unknown response';
                     clientLogs.textContent += `\n${t}: ${msg}`;
-            
                     if (json.forceUrl) {
                       clientLogs.innerHTML += `\n<a href="#" id="forceDownloadLink">Download anyway</a>`;
                       document.getElementById('forceDownloadLink')?.addEventListener('click', e => {
@@ -429,33 +435,32 @@ function isDesktop() {
                     }
                     throw new Error('handled-json');
                   }
-            
                   if (!response.ok) {
                     throw new Error(`Server responded with ${response.status}`);
                   }
-            
+        
                   const disposition = response.headers.get('Content-Disposition') || '';
                   const m           = disposition.match(/filename="?([^";]+)"?/i);
-                  const fileName    = m ? m[1] : 'SuryaWebsiteApp.exe';
-                  const blob        = await response.blob();
+                  const fileName    = m
+                    ? m[1]
+                    : (wantApk ? 'SuryaWebsiteApp.apk' : 'SuryaWebsiteApp.exe');
+                  const blob = await response.blob();
                   clientLogs.textContent += `\n${new Date().toLocaleTimeString()}: Fetching "${fileName}"...`;
-            
+        
                   const url = URL.createObjectURL(blob);
                   const a   = document.createElement('a');
-                  a.href        = url;
-                  a.download    = fileName;
+                  a.href     = url;
+                  a.download = fileName;
                   a.style.display = 'none';
                   document.body.appendChild(a);
                   a.click();
                   a.remove();
                   URL.revokeObjectURL(url);
-            
+        
                   clientLogs.textContent += `\n${new Date().toLocaleTimeString()}: "${fileName}" fetched successfully.`;
                 })
                 .catch(err => {
                   if (err.message === 'handled-json') return;
-            
-                  const clientLogs = document.querySelector('.client-logs code');
                   const t = new Date().toLocaleTimeString();
                   clientLogs.textContent += `\n${t}: Download failed ("${err.message}"). Please try again later.`;
                 });
