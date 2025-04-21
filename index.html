@@ -338,7 +338,6 @@ function isDesktop() {
                   });
               }
           
-              const isElectron        = navigator.userAgent.toLowerCase().includes('electron');
               const header = document.querySelector('header');
               const helpButton        = document.getElementById('helpButton');
               const modalOverlay      = document.getElementById('modalOverlay');
@@ -352,10 +351,14 @@ function isDesktop() {
               const terminalTabBtn    = document.querySelector('.tab-button[data-tab="terminal"]');
               const clientBtn         = document.querySelector('.tab-button[data-tab="client"]');
           
-              if (isElectron) {
+              const ua = navigator.userAgent.toLowerCase();
+              const isElectron = ua.includes('electron');
+              const isAndroidWebView = /; wv\)/.test(navigator.userAgent);
+
+              if (isElectron || isAndroidWebView) {
                 document.querySelector('.tab-button[data-tab="client"]')?.remove();
                 document.getElementById('client-tab')?.remove();
-              }
+               }
           
               let shortcutsVisible = false;
               const showShortcuts = () => {
