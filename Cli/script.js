@@ -30,8 +30,9 @@ const fileLinks = {
     "startup": "/Goto/?id=vexylon",
     "vexylon": "/Goto/?id=vexylon",
     "game": "/Goto/?id=space_attack",
-    "links": "/Links",
-    "explore": "/Links"
+    "matrix": "/Matrix",
+    "links": "/?section=links",
+    "explore": "/?section=links"
 };
 
 async function processCommand() {
