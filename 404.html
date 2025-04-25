@@ -146,7 +146,7 @@ gtag('config', 'G-0QSEZ9VSPZ');
       
       document.getElementById('randomBtn').addEventListener('click', function(e) {
         e.preventDefault();
-        const randomPages = ['/', '/Cli', '/Links', '/Resume', '/Game'];
+        const randomPages = ['/', '/Cli', '/?section=links', '/Resume', '/Game'];
         const randomIndex = Math.floor(Math.random() * randomPages.length);
         window.location.href = randomPages[randomIndex];
       });
