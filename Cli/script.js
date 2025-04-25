@@ -16,7 +16,26 @@ const aiCommands = {
   "open": (args) => openFileLink(args[0]),
   "suggest": () => getAISuggestions(),
   "explain": (args) => explainCommand(args[0]),
-  "cat": (args) => readFileContent(args[0])
+  "cat": (args) => readFileContent(args[0]),
+  "theme": (args) => {
+    if (args[0] === "set" && args[1]) {
+      const theme = args[1];
+      document.body.classList.remove(
+        "theme-default",
+        "theme-light",
+        "theme-solarized",
+        "theme-matrix"
+      );
+      if (["default", "light", "solarized", "matrix"].includes(theme)) {
+        document.body.classList.add(`theme-${theme}`);
+        return `Theme set to ${theme}`;
+      } else {
+        return `Unknown theme: ${theme}`;
+      }
+    }
+    return "Usage: theme set <default|light|solarized|matrix>";
+  }
+};
 };
 
 const fileLinks = {
