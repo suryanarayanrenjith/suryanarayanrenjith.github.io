@@ -732,13 +732,33 @@ function isDesktop() {
             updateProgressBar(nextSection);
         }
         
-        window.addEventListener('wheel', (event) => {
-            if (event.deltaY > 0) {
-                switchToNextSection('down');
-            } else {
-                switchToNextSection('up');
-            }
-        });
+            let trackpadScrolling = false;
+            let trackpadTimeout;
+            
+            window.addEventListener('wheel', event => {
+              if (event.deltaMode === WheelEvent.DOM_DELTA_PIXEL) {
+                if (trackpadScrolling) return;
+                trackpadScrolling = true;
+            
+                if (event.deltaY > 0) {
+                  switchToNextSection('down');
+                } else if (event.deltaY < 0) {
+                  switchToNextSection('up');
+                }
+            
+                clearTimeout(trackpadTimeout);
+                trackpadTimeout = setTimeout(() => {
+                  trackpadScrolling = false;
+                }, 250);
+            
+              } else {
+                if (event.deltaY > 0) {
+                  switchToNextSection('down');
+                } else if (event.deltaY < 0) {
+                  switchToNextSection('up');
+                }
+              }
+            }, { passive: true });
         
         let touchStartX = 0;
         let touchStartY = 0;
