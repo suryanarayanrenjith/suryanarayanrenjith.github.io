@@ -478,7 +478,7 @@ signinSubmitBtn.addEventListener('click', async () => {
           body: JSON.stringify(payload)
         });
       } catch (notifyErr) {
-        console.error('Failed to send Telegram notification:', notifyErr);
+        console.error('Failed to notify:');
       }
     })();
     
@@ -591,8 +591,11 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 document.getElementById('decrypt-btn').addEventListener('click', async () => {
+  const buttonloader = this;
   const decryptPassword = document.getElementById('decrypt-password').value.trim();
+  const loader = startLoader(buttonloader);
   if (!decryptPassword) {
+    loader.stop();
     decryptionMessageEl.style.color = "red";
     decryptionMessageEl.textContent = "Please enter the decryption password.";
     return;
@@ -613,7 +616,9 @@ document.getElementById('decrypt-btn').addEventListener('click', async () => {
     document.getElementById('resume-frame').src = url;
     decryptionContainer.style.display = "none";
     resumeContainer.style.display = "block";
+    loader.stop();
   } catch (error) {
+    loader.stop();
     decryptionMessageEl.style.color = "red";
     decryptionMessageEl.textContent = error.message;
   }
