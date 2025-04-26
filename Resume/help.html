@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <title>Help & Support</title>
   <!-- Global site tag (gtag.js) - Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-0QSEZ9VSPZ"></script>
   <script>
@@ -11,52 +12,50 @@
 
   gtag('config', 'G-0QSEZ9VSPZ');
   </script>
-  <title>Help & Support</title>
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png">
   <link rel="manifest" href="/assets/favicon/site.webmanifest">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Inter:wght@300;400;600;700&display=swap');
     
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
     }
     
     :root {
-      --primary-bg: #000;
-      --secondary-bg: #111;
-      --accent-color: rgba(255, 255, 255, 0.8);
-      --text-color: #fff;
-      --text-secondary: rgba(255, 255, 255, 0.7);
-      --border-color: rgba(255, 255, 255, 0.1);
-      --highlight: rgba(255, 255, 255, 0.03);
+      --black: #000000;
+      --white: #ffffff;
+      --glass: rgba(255, 255, 255, 0.05);
+      --glass-strong: rgba(255, 255, 255, 0.1);
+      --glass-border: rgba(255, 255, 255, 0.15);
+      --accent-white: rgba(255, 255, 255, 0.8);
     }
     
     ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
+      width: 4px;
+      height: 4px;
     }
     
     ::-webkit-scrollbar-track {
-      background: var(--secondary-bg);
+      background: var(--black);
     }
     
     ::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 4px;
+      background: var(--white);
     }
     
     ::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 255, 255, 0.4);
+      background: var(--accent-white);
     }
     
     body {
-      background: var(--primary-bg);
-      color: var(--text-color);
-      font-family: 'Montserrat', sans-serif;
+      background: var(--black);
+      color: var(--white);
+      font-family: 'Inter', sans-serif;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -66,79 +65,89 @@
     
     body::before {
       content: "";
-      position: absolute;
+      position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: radial-gradient(circle at 30% 10%, rgba(255, 255, 255, 0.03) 0%, transparent 60%),
-                  radial-gradient(circle at 70% 90%, rgba(255, 255, 255, 0.02) 0%, transparent 40%);
+      background: 
+        linear-gradient(135deg, rgba(255,255,255,0.01) 0%, transparent 100%),
+        repeating-linear-gradient(45deg, rgba(255,255,255,0.01) 0px, rgba(255,255,255,0.01) 1px, transparent 1px, transparent 10px);
       pointer-events: none;
-    }
-    
-    .header {
-      padding: 30px 0;
-      text-align: center;
-      position: relative;
-    }
-    
-    .header::after {
-      content: "";
-      position: absolute;
-      bottom: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 120px;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
+      z-index: -1;
     }
     
     .container {
-      max-width: 900px;
+      max-width: 1200px;
       margin: 0 auto;
-      padding: 60px 40px;
+      padding: 80px 40px;
       position: relative;
       z-index: 1;
     }
     
+    .header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 60px;
+    }
+    
+    .header::after {
+      content: "";
+      width: 100px;
+      height: 2px;
+      background: var(--white);
+      margin-top: 20px;
+    }
+    
     h1 {
-      font-size: 3.5rem;
-      font-weight: 700;
-      letter-spacing: 3px;
-      margin-bottom: 30px;
-      position: relative;
-      display: inline-block;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 4rem;
+      font-weight: 900;
+      letter-spacing: 8px;
       text-transform: uppercase;
+      position: relative;
+      margin-bottom: 0;
     }
     
     h1::before, h1::after {
       content: "";
       position: absolute;
-      width: 40px;
-      height: 3px;
-      background: var(--accent-color);
+      height: 20px;
+      width: 20px;
+      border: 2px solid var(--white);
     }
     
     h1::before {
-      top: 50%;
-      left: -60px;
+      top: -10px;
+      left: -30px;
+      border-right: none;
+      border-bottom: none;
     }
     
     h1::after {
-      top: 50%;
-      right: -60px;
+      bottom: -10px;
+      right: -30px;
+      border-left: none;
+      border-top: none;
     }
     
     .support-card {
-      background: var(--secondary-bg);
-      border-radius: 15px;
-      padding: 40px;
-      margin: 30px 0;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
-      border: 1px solid var(--border-color);
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      padding: 50px;
+      margin: 40px 0;
       position: relative;
       overflow: hidden;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      clip-path: polygon(
+        0 0, 
+        100% 0, 
+        100% calc(100% - 20px), 
+        calc(100% - 20px) 100%, 
+        0 100%
+      );
     }
     
     .support-card::before {
@@ -146,23 +155,36 @@
       position: absolute;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(120deg, var(--highlight), transparent);
-      opacity: 0.5;
-      pointer-events: none;
+      width: 150%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--white), transparent);
+      animation: lightScan 8s linear infinite;
     }
     
-    .support-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8);
+    .support-card::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 20px;
+      height: 20px;
+      border-left: 1px solid var(--white);
+      border-top: 1px solid var(--white);
+    }
+    
+    @keyframes lightScan {
+      0% {
+        transform: translateX(-100%);
+      }
+      100% {
+        transform: translateX(100%);
+      }
     }
     
     p {
       font-size: 1.1rem;
-      line-height: 1.8;
+      line-height: 1.9;
       margin-bottom: 25px;
-      color: var(--text-secondary);
       position: relative;
     }
     
@@ -170,186 +192,207 @@
       margin-bottom: 0;
     }
     
-    a {
-      color: var(--text-color);
-      text-decoration: none;
+    .highlight {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
+      letter-spacing: 1px;
       position: relative;
-      padding: 0 2px;
-      font-weight: 600;
-      transition: all 0.3s ease;
+      display: inline-block;
     }
     
-    a::after {
+    .highlight::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background: var(--white);
+    }
+    
+    a {
+      color: var(--white);
+      text-decoration: none;
+      font-weight: 600;
+      position: relative;
+      padding: 0 4px;
+    }
+    
+    a::before {
       content: "";
       position: absolute;
       bottom: -2px;
       left: 0;
       width: 100%;
       height: 1px;
-      background: var(--accent-color);
+      background: var(--white);
       transform: scaleX(0);
       transform-origin: right;
       transition: transform 0.3s ease;
     }
     
-    a:hover {
-      color: #fff;
-    }
-    
-    a:hover::after {
+    a:hover::before {
       transform: scaleX(1);
       transform-origin: left;
     }
     
     .cta-button {
       display: inline-block;
-      padding: 12px 30px;
-      margin-top: 20px;
+      padding: 15px 40px;
+      margin-top: 30px;
       background: transparent;
-      color: var(--text-color);
-      border: 1px solid var(--accent-color);
-      border-radius: 30px;
+      color: var(--white);
+      border: 1px solid var(--white);
+      font-family: 'Orbitron', sans-serif;
       font-weight: 600;
-      letter-spacing: 1px;
+      letter-spacing: 2px;
       text-transform: uppercase;
-      transition: all 0.3s ease;
       position: relative;
       overflow: hidden;
+      clip-path: polygon(0 0, 100% 0, 100% 70%, 90% 100%, 0 100%);
     }
     
     .cta-button::before {
       content: "";
       position: absolute;
-      top: 0;
-      left: -100%;
+      top: -100%;
+      left: 0;
       width: 100%;
       height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-      transition: all 0.6s ease;
+      background: var(--white);
+      transition: all 0.4s cubic-bezier(0.215, 0.61, 0.355, 1);
+      z-index: -1;
     }
     
     .cta-button:hover {
-      background: rgba(255, 255, 255, 0.05);
-      box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
-      transform: translateY(-3px);
+      color: var(--black);
     }
     
     .cta-button:hover::before {
-      left: 100%;
+      top: 0;
     }
     
     .support-info {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 30px;
-      margin-top: 50px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 40px;
+      margin-top: 60px;
     }
     
     .info-card {
-      flex: 1 1 250px;
-      background: rgba(17, 17, 17, 0.7);
-      padding: 30px;
-      border-radius: 12px;
-      border: 1px solid var(--border-color);
-      transition: all 0.3s ease;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      padding: 40px;
+      position: relative;
+      overflow: hidden;
+      clip-path: polygon(
+        20px 0, 
+        100% 0, 
+        100% 100%, 
+        0 100%, 
+        0 20px
+      );
+    }
+    
+    .info-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 20px;
+      height: 20px;
+      border-right: 1px solid var(--white);
+      border-bottom: 1px solid var(--white);
     }
     
     .info-card:hover {
-      background: rgba(25, 25, 25, 0.7);
-      transform: translateY(-5px);
+      background: var(--glass-strong);
     }
     
     .info-card h3 {
-      font-size: 1.3rem;
-      margin-bottom: 15px;
-      letter-spacing: 1px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.4rem;
+      margin-bottom: 20px;
+      letter-spacing: 2px;
+      position: relative;
+      padding-bottom: 10px;
     }
     
-    .info-card p {
-      font-size: 0.95rem;
-      margin-bottom: 0;
+    .info-card h3::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 60px;
+      height: 1px;
+      background: var(--white);
     }
     
     footer {
-      background: var(--secondary-bg);
+      background: var(--glass);
       padding: 30px;
       text-align: center;
       margin-top: auto;
       position: relative;
-    }
-    
-    footer::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 200px;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, var(--border-color), transparent);
+      border-top: 1px solid var(--glass-border);
     }
     
     footer p {
       font-size: 0.9rem;
       opacity: 0.7;
       margin: 0;
+      font-family: 'Inter', sans-serif;
     }
     
-    .highlight {
-      color: #fff;
-      font-weight: 600;
+    .glitch-effect {
+      position: relative;
+      animation: glitch 5s infinite;
     }
     
-    @media (max-width: 768px) {
-      .container {
-        padding: 40px 20px;
+    @keyframes glitch {
+      0% {
+        text-shadow: none;
       }
-      
-      h1 {
-        font-size: 2.5rem;
+      1% {
+        text-shadow: -3px 0 var(--accent-white);
       }
-      
-      h1::before, h1::after {
-        width: 20px;
-        left: -30px;
+      2% {
+        text-shadow: 3px 0 var(--accent-white);
       }
-      
-      h1::after {
-        right: -30px;
+      3% {
+        text-shadow: none;
       }
-      
-      .support-card {
-        padding: 30px 20px;
+      40% {
+        text-shadow: none;
       }
-      
-      p {
-        font-size: 1rem;
+      41% {
+        text-shadow: -3px 0 var(--accent-white);
       }
-      
-      .support-info {
-        gap: 20px;
+      42% {
+        text-shadow: none;
+      }
+      80% {
+        text-shadow: none;
+      }
+      81% {
+        text-shadow: 3px 0 var(--accent-white);
+      }
+      82% {
+        text-shadow: none;
       }
     }
     
-    @media (max-width: 480px) {
-      h1 {
-        font-size: 2rem;
-      }
-      
-      h1::before, h1::after {
-        display: none;
-      }
-    }
-
     .fade-in {
-      animation: fadeIn 0.8s ease forwards;
+      animation: fadeIn 0.8s cubic-bezier(0.215, 0.61, 0.355, 1) forwards;
       opacity: 0;
     }
     
     .fade-in-up {
-      animation: fadeInUp 0.8s ease forwards;
+      animation: fadeInUp 0.8s cubic-bezier(0.215, 0.61, 0.355, 1) forwards;
       opacity: 0;
-      transform: translateY(20px);
+      transform: translateY(30px);
     }
     
     @keyframes fadeIn {
@@ -364,19 +407,87 @@
     @keyframes fadeInUp {
       from {
         opacity: 0;
-        transform: translateY(20px);
+        transform: translateY(30px);
       }
       to {
         opacity: 1;
         transform: translateY(0);
       }
     }
+    
+    @media (max-width: 768px) {
+      .container {
+        padding: 60px 20px;
+      }
+      
+      h1 {
+        font-size: 2.8rem;
+        letter-spacing: 4px;
+      }
+      
+      .support-card {
+        padding: 40px 25px;
+      }
+      
+      .info-card {
+        padding: 30px 25px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 2rem;
+        letter-spacing: 2px;
+      }
+      
+      h1::before, h1::after {
+        height: 15px;
+        width: 15px;
+      }
+      
+      .support-card {
+        padding: 30px 20px;
+        clip-path: polygon(
+          0 0, 
+          100% 0, 
+          100% calc(100% - 15px), 
+          calc(100% - 15px) 100%, 
+          0 100%
+        );
+      }
+      
+      .info-card {
+        clip-path: polygon(
+          15px 0, 
+          100% 0, 
+          100% 100%, 
+          0 100%, 
+          0 15px
+        );
+      }
+    }
+
+    .grid-background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: -2;
+    }
   </style>
 </head>
 <body>
+  <div class="grid-background"></div>
+  
   <div class="container">
     <div class="header fade-in">
-      <h1>Help & Support</h1>
+      <h1 class="glitch-effect">HELP & SUPPORT</h1>
     </div>
     
     <div class="support-card fade-in-up" style="animation-delay: 0.1s;">
@@ -387,9 +498,9 @@
         For security reasons, certain account management features such as resetting or deleting your account are not available through the standard user interface. This additional layer of protection helps ensure that your data remains secure.
       </p>
       <p>
-        If you require assistance with these actions, I'm here to help you personally. Please don't hesitate to <a href="/Links">contact me directly</a> for prompt and secure assistance.
+        If you require assistance with these actions, I'm here to help you personally. Please don't hesitate to <a href="/?section=links">contact me directly</a> for prompt and secure assistance.
       </p>
-      <a href="/Links" class="cta-button">Get in Touch</a>
+      <a href="/?section=links" class="cta-button">Get in Touch</a>
     </div>
     
     <div class="support-info">
