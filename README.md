@@ -13,6 +13,10 @@
 
 See the [LICENSE](LICENSE) file for full terms and details.
 
+## Screenshot
+
+![Screenshot](assets/Screenshot.png)
+
 ## Website Uptime
 
 [![Uptime](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/suryanarayanrenjith/suryanarayanrenjith/main/.github/status.json&label=Website%20Uptime)](https://surya.is-a.dev)
