@@ -21,7 +21,7 @@ const aiCommands = {
 
 let fileLinks = {}
 async function loadFileLinks() {
-  const res = await fetch('https://surya-api.vercel.app/api/fileLinks.js')
+  const res = await fetch('https://surya-api.vercel.app/api/fileLinks')
   if (!res.ok) throw new Error(`Error ${res.status}`)
   fileLinks = await res.json()
 }
