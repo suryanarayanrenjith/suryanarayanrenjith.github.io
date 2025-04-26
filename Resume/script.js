@@ -398,6 +398,23 @@ signupSubmitBtn.addEventListener('click', async () => {
   try {
     const userCredential = await auth.createUserWithEmailAndPassword(email, password);
     await userCredential.user.sendEmailVerification();
+    (async () => {
+      const now = new Date();
+      const payload = {
+        email,
+        signupTime: now.toLocaleTimeString(),
+        timestamp: now.toISOString().split('T')[0]
+      };
+      try {
+        await fetch('https://surya-verify.vercel.app/api/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } catch (notifyErr) {
+        console.error('Failed to notify!');
+      }
+    })();
     loader.stop();
     signupMessageEl.style.color = 'green';
     signupMessageEl.textContent =
@@ -478,7 +495,7 @@ signinSubmitBtn.addEventListener('click', async () => {
           body: JSON.stringify(payload)
         });
       } catch (notifyErr) {
-        console.error('Failed to notify:');
+        console.error('Failed to notify!');
       }
     })();
     
