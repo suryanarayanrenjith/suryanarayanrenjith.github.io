@@ -601,7 +601,7 @@ document.getElementById('decrypt-btn').addEventListener('click', async () => {
   decryptionMessageEl.textContent = "Fetching encryption keys, verifying password, and decrypting resume, please wait...";
   try {
     const { salt, iv } = await fetchEncryptionKeys();
-    const response = await fetch("/assets/CV.enc");
+    const response = await fetch("https://surya-api.vercel.app/api/cvEnc");
     if (!response.ok) {
       throw new Error("Failed to load the encrypted resume file.");
     }
