@@ -19,21 +19,13 @@ const aiCommands = {
   "cat": (args) => readFileContent(args[0]),
 };
 
-const fileLinks = {
-    "about": "/?section=about",
-    "projects": "/?section=projects",
-    "resume": "/?section=resume",
-    "view-resume": "/Resume",
-    "linkedin": "/Goto/?id=linkedin",
-    "github": "/Goto/?id=github",
-    "twitter": "/Goto/?id=twitter",
-    "startup": "/Goto/?id=vexylon",
-    "vexylon": "/Goto/?id=vexylon",
-    "game": "/Goto/?id=space_attack",
-    "matrix": "/Matrix",
-    "links": "/?section=links",
-    "explore": "/?section=links"
-};
+let fileLinks = {}
+async function loadFileLinks() {
+  const res = await fetch('https://surya-api.vercel.app/api/fileLinks.js')
+  if (!res.ok) throw new Error(`Error ${res.status}`)
+  fileLinks = await res.json()
+}
+loadFileLinks()
 
 async function processCommand() {
   const commandInput = document.getElementById("commandInput");
