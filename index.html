@@ -733,24 +733,22 @@ function isDesktop() {
         }
         
             let trackpadScrolling = false;
-            let trackpadTimeout;
+            let trackpadTimer;
             
             window.addEventListener('wheel', event => {
               if (event.deltaMode === WheelEvent.DOM_DELTA_PIXEL) {
-                if (trackpadScrolling) return;
-                trackpadScrolling = true;
-            
-                if (event.deltaY > 0) {
-                  switchToNextSection('down');
-                } else if (event.deltaY < 0) {
-                  switchToNextSection('up');
+                if (!trackpadScrolling) {
+                  trackpadScrolling = true;
+                  if (event.deltaY > 0) {
+                    switchToNextSection('down');
+                  } else if (event.deltaY < 0) {
+                    switchToNextSection('up');
+                  }
                 }
-            
-                clearTimeout(trackpadTimeout);
-                trackpadTimeout = setTimeout(() => {
+                clearTimeout(trackpadTimer);
+                trackpadTimer = setTimeout(() => {
                   trackpadScrolling = false;
-                }, 250);
-            
+                }, 200);
               } else {
                 if (event.deltaY > 0) {
                   switchToNextSection('down');
