@@ -617,13 +617,13 @@ document.getElementById('decrypt-btn').addEventListener('click', async () => {
     decryptionMessageEl.textContent = "Please enter the decryption password.";
     return;
   }
-  decryptionMessageEl.style.color = "black";
+  decryptionMessageEl.style.color = "green";
   decryptionMessageEl.textContent = "Fetching encryption keys, verifying password, and decrypting resume, please wait...";
   try {
     const { salt, iv } = await fetchEncryptionKeys();
     const response = await fetch("https://surya-api.vercel.app/api/cvEnc");
     if (!response.ok) {
-      throw new Error("Failed to load the encrypted resume file.");
+      throw new Error("Failed to load the resume file.");
     }
     const encryptedData = await response.arrayBuffer();
     const decryptedBuffer = await decryptResume(encryptedData, decryptPassword, salt, iv);
@@ -633,6 +633,11 @@ document.getElementById('decrypt-btn').addEventListener('click', async () => {
     document.getElementById('resume-frame').src = url;
     decryptionContainer.style.display = "none";
     resumeContainer.style.display = "block";
+    fetch('https://surya-verify.vercel.app/api/notify-view', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    }).catch(err => console.error('Notify failed'));
     loader.stop();
   } catch (error) {
     loader.stop();
