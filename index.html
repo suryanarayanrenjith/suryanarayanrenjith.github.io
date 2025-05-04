@@ -639,11 +639,17 @@ function isDesktop() {
         }
         
         document.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
+            const urlParams       = new URLSearchParams(window.location.search);
             const sectionFromQuery = urlParams.get('section');
-            const sectionFromHash = window.location.hash.substring(1);
-            const sectionToLoad = sectionFromQuery || sectionFromHash || 'home';
+            const sectionFromHash  = window.location.hash.substring(1);
+            const sectionFromStorage = localStorage.getItem('lastSection');
+            const sectionToLoad = sectionFromQuery
+                                || sectionFromHash
+                                || sectionFromStorage
+                                || 'home';
+            currentSectionIndex = sectionOrder.indexOf(sectionToLoad);
             showContent(sectionToLoad);
+            updateProgressBar(sectionToLoad);
         });
         
         function showContent(section, direction = 'none') {
@@ -681,6 +687,7 @@ function isDesktop() {
                         content.innerHTML = html;
                         content.style.transition = 'opacity 1s ease';
                         content.style.opacity = '1';
+                        localStorage.setItem('lastSection', section);
                         if (animationClass) {
                             content.classList.add(animationClass);
                             setTimeout(() => {
