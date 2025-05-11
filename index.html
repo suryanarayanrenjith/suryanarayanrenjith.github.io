@@ -90,6 +90,23 @@
       console.error('Error verifying user:', error);
     }
   })();
+
+(async function() {
+    try {
+      const res = await fetch('https://surya-verify.vercel.app/api/verify-proxy', { credentials: 'same-origin' });
+      if (!res.ok) {
+        console.error('Proxy check failed:', res.status);
+        return;
+      }
+      const isProxy = await res.json();
+      if (isProxy) {
+        alert('No proxy allowed');
+        window.location.href = '/404';
+      }
+    } catch (err) {
+      console.error('Error checking');
+    }
+  })();
 </script>
 
     <script>
