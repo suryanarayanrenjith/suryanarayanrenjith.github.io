@@ -93,7 +93,9 @@
         
 (async function() {
     function block() {
-      alert('No proxy allowed');
+      const container = document.getElementsByClassName('container');
+      container.style.setProperty('display', 'none', 'important');
+      alert('No proxy/VPN allowed');
       window.location.href = '/404';
     }
 
