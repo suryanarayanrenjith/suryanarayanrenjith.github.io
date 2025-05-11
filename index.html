@@ -87,14 +87,12 @@
       
       console.log('User verified. Proceeding to the site...');
     } catch (error) {
-      console.error('Error verifying user:', error);
+      console.error('Error verifying user');
     }
   })();
         
 (async function() {
     function block() {
-      const container = document.getElementsByClassName('container');
-      container.style.setProperty('display', 'none', 'important');
       alert('No proxy/VPN allowed');
       window.location.href = '/404';
     }
@@ -114,7 +112,7 @@
       if (data) return block();
 
     } catch (err) {
-      console.error('Proxy check error, blocking user:', err);
+      console.error('Proxy check error');
       block();
     }
   })(); 
