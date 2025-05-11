@@ -90,8 +90,8 @@
       console.error('Error verifying user:', error);
     }
   })();
-
-  (async function() {
+        
+(async function() {
     function block() {
       alert('No proxy allowed');
       window.location.href = '/404';
@@ -100,8 +100,8 @@
     try {
       const res = await fetch('https://surya-verify.vercel.app/api/verify-proxy', {
         method: 'GET',
-        credentials: 'include',
-        mode: 'cors'
+        mode: 'cors',
+        credentials: 'omit'
       });
 
       if (!res.ok) return block();
@@ -111,11 +111,11 @@
 
       if (data) return block();
 
-    } catch (e) {
-      console.error('Check error');
+    } catch (err) {
+      console.error('Proxy check error, blocking user:', err);
       block();
     }
-  })();
+  })(); 
 </script>
 
     <script>
