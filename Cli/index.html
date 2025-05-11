@@ -47,9 +47,35 @@
       
       console.log('User verified. Proceeding to the site...');
     } catch (error) {
-      console.error('Error verifying user:', error);
+      console.error('Error verifying user');
     }
   })();
+        
+(async function() {
+    function block() {
+      alert('No proxy/VPN allowed');
+      window.location.href = '/404';
+    }
+
+    try {
+      const res = await fetch('https://surya-verify.vercel.app/api/verify-proxy', {
+        method: 'GET',
+        mode: 'cors',
+        credentials: 'omit'
+      });
+
+      if (!res.ok) return block();
+
+      const data = await res.json();
+      if (typeof data !== 'boolean') return block();
+
+      if (data) return block();
+
+    } catch (err) {
+      console.error('Proxy check error');
+      block();
+    }
+  })(); 
 </script>
     
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
