@@ -569,7 +569,7 @@ function isDesktop() {
                     case 'Digit7': event.preventDefault(); showContent?.('projects'); updateProgressBar?.('projects'); break;
                     case 'Digit8': event.preventDefault(); showContent?.('resume'); updateProgressBar?.('resume'); break;
                     case 'KeyK':   event.preventDefault(); launchTerminal(); break;
-                    case 'KeyL':   event.preventDefault(); setTimeout(()=>window.open('/Links','_blank'),100); break;
+                    case 'KeyL':   event.preventDefault(); setTimeout(()=>window.open('/?section=links','_blank'),100); break;
                     case 'KeyV':   event.preventDefault(); setTimeout(()=>window.open('/Resume','_blank'),100); break;
                   }
                 }
