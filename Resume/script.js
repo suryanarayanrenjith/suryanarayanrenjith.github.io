@@ -183,6 +183,7 @@ const goSigninBtn = document.getElementById('go-signin-btn');
 const signupContainer = document.getElementById('signup-container');
 const signupEmailInput = document.getElementById('signup-email');
 const signupPasswordInput = document.getElementById('signup-password');
+const signupPasswordConfirmInput  = document.getElementById('signup-password-confirm');
 const signupSubmitBtn = document.getElementById('signup-submit-btn');
 const signupBackBtn = document.getElementById('signup-back-btn');
 const signupMessageEl = document.getElementById('signup-message');
@@ -353,10 +354,11 @@ function solveCaptcha() {
 signupSubmitBtn.addEventListener('click', async () => {
   const email = signupEmailInput.value.trim();
   const password = signupPasswordInput.value.trim();
+  const confirmPassword = signupPasswordConfirmInput.value.trim();
 
-  if (!email || !password) {
+  if (!email || !password || !confirmPassword) {
     signupMessageEl.style.color = 'red';
-    signupMessageEl.textContent = 'Email and password cannot be empty.';
+    signupMessageEl.textContent = 'Email and both password fields are required.';
     return;
   }
   if (!validateEmail(email)) {
@@ -368,6 +370,12 @@ signupSubmitBtn.addEventListener('click', async () => {
     signupMessageEl.style.color = 'red';
     signupMessageEl.textContent =
       'Password must be at least 8 characters long and include at least one letter, one number, and one special character.';
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    signupMessageEl.style.color = 'red';
+    signupMessageEl.textContent = 'Passwords do not match.';
     return;
   }
   
@@ -387,7 +395,7 @@ signupSubmitBtn.addEventListener('click', async () => {
       return;
     }
   } catch (err) {
-    console.error("Error during disposable check", err);
+    console.error("Error during disposable check");
     signupMessageEl.style.color = 'red';
     signupMessageEl.textContent = 'Unable to validate email. Please try again later.';
     return;
