@@ -225,7 +225,7 @@ function validateEmail(email) {
 }
 
 function validatePassword(password) {
-  const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=[\]{};:'",.<>/?\\|~]).{8,}$/;
+  const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=[\]{};:'",.<>\/?\\|~]).{8,20}$/;
   return passwordRegex.test(password);
 }
 
@@ -369,7 +369,7 @@ signupSubmitBtn.addEventListener('click', async () => {
   if (!validatePassword(password)) {
     signupMessageEl.style.color = 'red';
     signupMessageEl.textContent =
-      'Password must be at least 8 characters long and include at least one letter, one number, and one special character.';
+      'Password must be 8–20 chars long and include uppercase, lowercase, number & one special character.';
     return;
   }
 
