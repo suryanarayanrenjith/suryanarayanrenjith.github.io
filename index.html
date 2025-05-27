@@ -449,7 +449,7 @@ function isDesktop() {
               const canDownload    = wantApk || wantAppImage || wantExe;
             
               if (!canDownload && !force) {
-                clientLogs.textContent = `${new Date().toLocaleTimeString()}: This installer is built for Windows, Linux, and Android only. If you'd still like the .exe, click below.`;
+                clientLogs.textContent = `${new Date().toLocaleTimeString()}: This installer is built for Windows, Linux and Android only. If you'd still like to download the file, click below.`;
                 clientLogs.innerHTML += `\n<a href="#" id="forceDownloadLink">Download .exe anyway</a>`;
                 document.getElementById('forceDownloadLink')?.addEventListener('click', e => {
                   e.preventDefault();
