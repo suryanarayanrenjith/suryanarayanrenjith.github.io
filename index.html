@@ -434,27 +434,37 @@ function isDesktop() {
                 }
               };
           
-            const downloadInstaller = (force = false) => {
+              const downloadInstaller = (force = false) => {
               const clientLogs = document.querySelector('.client-logs code');
-              const wantApk    = isAndroidClient || (isMobileClient && !isWindowsClient);
-        
-              if (!wantApk && !isWindowsClient && !isMobileClient && !force) {
-                clientLogs.textContent = `${new Date().toLocaleTimeString()}: This installer is built for Windows only. If you still want to download the .exe, click below.`;
-                clientLogs.innerHTML += `\n<a href="#" id="forceDownloadLink">Download anyway</a>`;
+              const ua         = navigator.userAgent || '';
+            
+              const isWindowsClient = /windows nt|win64|wow64/i.test(ua);
+              const isAndroidClient = /android/i.test(ua);
+              const isMobileClient  = /mobile|tablet|iphone|ipad|ipod/i.test(ua);
+              const isLinuxClient   = /linux/i.test(ua) && !isAndroidClient && !isWindowsClient && !isMobileClient;
+            
+              const wantApk        = isAndroidClient || (isMobileClient && !isWindowsClient);
+              const wantAppImage   = isLinuxClient;
+              const wantExe        = isWindowsClient;
+              const canDownload    = wantApk || wantAppImage || wantExe;
+            
+              if (!canDownload && !force) {
+                clientLogs.textContent = `${new Date().toLocaleTimeString()}: This installer is built for Windows, Linux, and Android only. If you'd still like the .exe, click below.`;
+                clientLogs.innerHTML += `\n<a href="#" id="forceDownloadLink">Download .exe anyway</a>`;
                 document.getElementById('forceDownloadLink')?.addEventListener('click', e => {
                   e.preventDefault();
                   downloadInstaller(true);
                 });
                 return;
               }
-        
+            
               clientLogs.textContent = `${new Date().toLocaleTimeString()}: Connecting to download server...`;
-        
+            
               const params = [];
-              if (wantApk)    params.push('apk=true');
-              if (force)      params.push('force=true');
+              if (wantApk)  params.push('apk=true');
+              if (force)    params.push('force=true');
               const endpoint = `https://surya-verify.vercel.app/api/installer${params.length ? '?' + params.join('&') : ''}`;
-        
+            
               fetch(endpoint)
                 .then(async response => {
                   const ct = response.headers.get('Content-Type') || '';
@@ -475,44 +485,49 @@ function isDesktop() {
                   if (!response.ok) {
                     throw new Error(`Server responded with ${response.status}`);
                   }
-        
-                  const disposition = response.headers.get('Content-Disposition') || '';
-                  const m           = disposition.match(/filename="?([^";]+)"?/i);
-                  const fileName    = m
-                    ? m[1]
-                    : (wantApk ? 'SuryaWebsiteApp.apk' : 'SuryaWebsiteApp.exe');
-                  const blob = await response.blob();
-                  clientLogs.textContent += `\n${new Date().toLocaleTimeString()}: Fetching "${fileName}"...`;
-        
-                  const url = URL.createObjectURL(blob);
-                  const a   = document.createElement('a');
-                  a.href     = url;
-                  a.download = fileName;
-                  a.style.display = 'none';
-                  document.body.appendChild(a);
-                  a.click();
-                  a.remove();
-                  URL.revokeObjectURL(url);
-        
-                  clientLogs.textContent += `\n${new Date().toLocaleTimeString()}: "${fileName}" fetched successfully.`;
-                })
-                .catch(err => {
-                  if (err.message === 'handled-json') return;
-                  const t = new Date().toLocaleTimeString();
-                  clientLogs.textContent += `\n${t}: Download failed ("${err.message}"). Please try again later.`;
+            
+                      const disposition = response.headers.get('Content-Disposition') || '';
+                      const m           = disposition.match(/filename="?([^";]+)"?/i);
+                      const fileName    = m
+                        ? m[1]
+                        : wantApk
+                          ? 'SuryaWebsiteApp.apk'
+                          : wantAppImage
+                            ? 'SuryaWebsiteApp.AppImage'
+                            : 'SuryaWebsiteApp.exe';
+                
+                      const blob = await response.blob();
+                      clientLogs.textContent += `\n${new Date().toLocaleTimeString()}: Fetching "${fileName}"...`;
+                
+                      const url = URL.createObjectURL(blob);
+                      const a   = document.createElement('a');
+                      a.href     = url;
+                      a.download = fileName;
+                      document.body.appendChild(a);
+                      a.click();
+                      a.remove();
+                      URL.revokeObjectURL(url);
+                
+                      clientLogs.textContent += `\n${new Date().toLocaleTimeString()}: "${fileName}" fetched successfully.`;
+                    })
+                    .catch(err => {
+                      if (err.message === 'handled-json') return;
+                      const t = new Date().toLocaleTimeString();
+                      clientLogs.textContent += `\n${t}: Download failed ("${err.message}"). Please try again later.`;
+                    });
+                };
+                
+                tabButtons.forEach(btn => {
+                  btn.addEventListener('click', () => {
+                    tabButtons.forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.getElementById(`${btn.dataset.tab}-tab`)?.classList.add('active');
+                  });
                 });
-            };
-          
-              tabButtons.forEach(btn => {
-                btn.addEventListener('click', () => {
-                  tabButtons.forEach(b => b.classList.remove('active'));
-                  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-                  btn.classList.add('active');
-                  document.getElementById(`${btn.dataset.tab}-tab`)?.classList.add('active');
-                });
-              });
-              openTerminalBtn?.addEventListener('click', launchTerminal);
-              downloadClientBtn?.addEventListener('click', () => downloadInstaller(false));
+                openTerminalBtn?.addEventListener('click', launchTerminal);
+                downloadClientBtn?.addEventListener('click', () => downloadInstaller(false));
+
           
               document.querySelectorAll('.shortcuts-list li').forEach(li => {
                 const key = li.querySelector('.shortcut-key')?.textContent.trim();
