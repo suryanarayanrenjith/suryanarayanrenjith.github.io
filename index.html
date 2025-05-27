@@ -450,7 +450,7 @@ function isDesktop() {
             
               if (!canDownload && !force) {
                 clientLogs.textContent = `${new Date().toLocaleTimeString()}: This installer is built for Windows, Linux and Android only. If you'd still like to download the file, click below.`;
-                clientLogs.innerHTML += `\n<a href="#" id="forceDownloadLink">Download .exe anyway</a>`;
+                clientLogs.innerHTML += `\n<a href="#" id="forceDownloadLink" style="color:white;">Download .exe anyway...</a>`;
                 document.getElementById('forceDownloadLink')?.addEventListener('click', e => {
                   e.preventDefault();
                   downloadInstaller(true);
@@ -474,7 +474,7 @@ function isDesktop() {
                     const msg  = json.message || json.error || 'Unknown response';
                     clientLogs.textContent += `\n${t}: ${msg}`;
                     if (json.forceUrl) {
-                      clientLogs.innerHTML += `\n<a href="#" id="forceDownloadLink2">Download anyway</a>`;
+                      clientLogs.innerHTML += `\n<a href="#" id="forceDownloadLink2" style="color:white;">Download anyway...</a>`;
                       document.getElementById('forceDownloadLink2')?.addEventListener('click', e => {
                         e.preventDefault();
                         window.location.href = json.forceUrl;
