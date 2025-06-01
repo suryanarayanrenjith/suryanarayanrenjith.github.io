@@ -117,7 +117,7 @@
             e.preventDefault();
             e.stopImmediatePropagation();
         }
-        if (ctrlOrCmd && shift && (key === 73 || key === 74 || key === 67 || key === 75 || key === 77)) {
+        if (ctrlOrCmd && shift && (key === 73 || key === 74 || key === 67 || key === 77)) {
             e.preventDefault();
             e.stopImmediatePropagation();
         }
