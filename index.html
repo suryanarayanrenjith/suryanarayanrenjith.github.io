@@ -1179,7 +1179,77 @@ function isDesktop() {
           break;
       }
     });
-  })();
+})();
+
+document.addEventListener('DOMContentLoaded', function() {
+    const popup = document.querySelector('.matrix-popup');
+    const contentContainer = document.querySelector('.matrix-content');
+
+    if (contentContainer) {
+        contentContainer.style.perspective = '1500px';
+    }
+
+    let targetRotateX = 0, targetRotateY = 0, targetZ = 0;
+    let currentRotateX = 0, currentRotateY = 0, currentZ = 0;
+    let isHovering = false;
+    const maxAngle = 20;
+    const maxZ = 40;
+    const lerpFactor = 0.12;
+
+    function animate() {
+        currentRotateX += (targetRotateX - currentRotateX) * lerpFactor;
+        currentRotateY += (targetRotateY - currentRotateY) * lerpFactor;
+        currentZ += (targetZ - currentZ) * lerpFactor;
+
+        if (!isHovering && Math.abs(currentRotateX) < 0.5 && Math.abs(currentRotateY) < 0.5 && Math.abs(currentZ) < 0.5) {
+            currentRotateX = 0;
+            currentRotateY = 0;
+            currentZ = 0;
+            popup.style.transform = `translate(-50%, -50%) translateZ(0px) rotateX(0deg) rotateY(0deg)`;
+            return;
+        }
+
+        popup.style.transform = 
+            `translate(-50%, -50%) translateZ(${currentZ.toFixed(2)}px) ` +
+            `rotateX(${currentRotateX.toFixed(2)}deg) rotateY(${currentRotateY.toFixed(2)}deg)`;
+
+        requestAnimationFrame(animate);
+    }
+
+    function onMouseMove(e) {
+        const rect = popup.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const cx = rect.width / 2;
+        const cy = rect.height / 2;
+        const dx = (x - cx) / cx;
+        const dy = (y - cy) / cy;
+
+        targetRotateY = dx * maxAngle;
+        targetRotateX = -dy * maxAngle;
+
+        const normDist = Math.min(1, Math.sqrt(dx * dx + dy * dy) / Math.SQRT2);
+        targetZ = (1 - 2 * normDist) * maxZ;
+    }
+
+    popup.addEventListener('mouseenter', function() {
+        isHovering = true;
+        popup.classList.add('hovered');
+        if (Math.abs(currentRotateX) < 0.5 && Math.abs(currentRotateY) < 0.5 && Math.abs(currentZ) < 0.5) {
+            animate();
+        }
+    });
+
+    popup.addEventListener('mousemove', onMouseMove);
+
+    popup.addEventListener('mouseleave', function() {
+        isHovering = false;
+        targetRotateX = 0;
+        targetRotateY = 0;
+        targetZ = 0;
+        popup.classList.remove('hovered');
+    });
+});
 </script>
     
     <footer>
