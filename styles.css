@@ -823,6 +823,7 @@ header {
     width: 100vw;
     height: 100vh;
     background: rgba(0, 0, 0, 0.85);
+    color: #fff;
     z-index: 999;
     display: none;
     backdrop-filter: blur(8px);
@@ -842,8 +843,8 @@ header {
     transform: translate(-50%, -50%);
     width: 480px;
     height: 320px;
-    background: #000;
-    border: 1px solid #333;
+    background: transparent;
+    border: 2px solid #ccc;
     overflow: hidden;
     animation: popupSlideIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -860,8 +861,8 @@ header {
 }
 
 .matrix-header {
-    background: #000;
-    border-bottom: 1px solid #333;
+    background: transparent;
+    border-bottom: 2px solid #ccc;
     padding: 12px 20px;
     display: flex;
     align-items: center;
@@ -891,7 +892,7 @@ header {
 }
 
 .close-btn {
-    color: #666;
+    color: #ccc;
     cursor: pointer;
     font-size: 16px;
     width: 20px;
@@ -903,7 +904,7 @@ header {
 }
 
 .close-btn:hover {
-    color: #fff;
+    color: #ccc;
 }
 
 .matrix-content {
@@ -921,7 +922,7 @@ header {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    opacity: 0.08;
+    opacity: 0.2;
 }
 
 .rain-char {
@@ -1049,7 +1050,7 @@ header {
 
 .matrix-btn.secondary:hover {
     color: #fff;
-    border-color: #666;
+    border-color: #ccc;
 }
 
 .countdown {
@@ -1057,7 +1058,7 @@ header {
     bottom: 15px;
     right: 20px;
     font-size: 10px;
-    color: #666;
+    color: #fff;
     font-weight: 400;
 }
 
