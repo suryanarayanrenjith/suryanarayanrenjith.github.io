@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<!-- Global site tag (gtag.js) - Google Analytics -->
+    	<script async src="https://www.googletagmanager.com/gtag/js?id=G-0QSEZ9VSPZ"></script>
+    	<script>
+    	window.dataLayer = window.dataLayer || [];
+    	function gtag(){dataLayer.push(arguments);}
+    	gtag('js', new Date());
+
+    	gtag('config', 'G-0QSEZ9VSPZ');
+    	</script> 
+	<link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
+    	<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
+    	<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png">
+    	<link rel="manifest" href="/assets/favicon/site.webmanifest">
+	<title>Matrix</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<script>
+  (async function verifyAndProceed() {
+    function getFingerprint() {
+      return `${navigator.userAgent}-${screen.width}-${screen.height}-${navigator.language}-${window.devicePixelRatio}`;
+    }
+    
+    const now = Date.now();
+    const lastRefresh = localStorage.getItem('lastRefresh');
+    let suspicious = false;
+    
+    if (lastRefresh && (now - parseInt(lastRefresh, 10) < 2000)) {
+      suspicious = true;
+    }
+    localStorage.setItem('lastRefresh', now);
+    
+    try {
+      const response = await fetch('https://surya-verify.vercel.app/api/verify-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fingerprint: getFingerprint(),
+          suspicious: suspicious
+        })
+      });
+      
+      const data = await response.json();
+
+      if (data.suspicious === true || !data.verified) {
+        window.location.href = '/404';
+        return;
+      }
+      
+      console.log('User verified. Proceeding to the site...');
+    } catch (error) {
+      console.error('Error verifying user');
+    }
+  })();
+        
+(async function() {
+    function block() {
+      alert('No proxy/VPN allowed');
+      window.location.href = '/404';
+    }
+
+    try {
+      const res = await fetch('https://surya-verify.vercel.app/api/verify-proxy', {
+        method: 'GET',
+        mode: 'cors',
+        credentials: 'omit'
+      });
+
+      if (!res.ok) return block();
+
+      const data = await res.json();
+      if (typeof data !== 'boolean') return block();
+
+      if (data) return block();
+
+    } catch (err) {
+      console.error('Proxy check error');
+      block();
+    }
+  })(); 
+</script>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #000;
+      height: 100%;
+      font-family: 'Courier New', monospace;
+      color: #0f0;
+    }
+	  
+    canvas {
+      display: block;
+    }
+	  
+    #controls {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      color: #fff;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 40px 15px 15px 15px;
+      border-radius: 5px;
+      z-index: 10;
+      max-width: 300px;
+      backdrop-filter: blur(5px);
+      border: 1px solid rgba(0, 255, 70, 0.5);
+      box-shadow: 0 0 10px rgba(0, 255, 70, 0.3);
+    }
+	  
+    #controls h3 {
+      margin-top: 10px;
+      border-bottom: 1px solid rgba(0, 255, 70, 0.5);
+      padding-bottom: 5px;
+      text-align: center;
+    }
+
+    #controls button, #controls select {
+      background: rgba(20, 20, 20, 0.8);
+      border: 1px solid rgba(0, 255, 70, 0.5);
+      color: #0f0;
+      padding: 5px 10px;
+      margin: 5px 0;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+      border-radius: 3px;
+      box-shadow: 0 0 5px rgba(0, 255, 70, 0.2);
+      transition: all 0.2s ease;
+      width: 96%;
+    }
+	  
+    #controls button:hover, #controls select:hover {
+      background: rgba(40, 40, 40, 0.8);
+      box-shadow: 0 0 8px rgba(0, 255, 70, 0.4);
+    }
+	  
+    .control-group {
+      margin-bottom: 10px;
+    }
+	  
+    #keyboard-shortcuts {
+      font-size: 12px;
+      margin-top: 15px;
+      border-top: 1px solid rgba(0, 255, 70, 0.5);
+      padding-top: 10px;
+      max-height: 30vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+	  
+    .shortcut {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      margin: 3px 0;
+      word-wrap: break-word;
+    }
+	  
+    .key {
+      background: rgba(0, 255, 70, 0.2);
+      padding: 2px 5px;
+      border-radius: 3px;
+      border: 1px solid rgba(0, 255, 70, 0.5);
+    }
+	  
+    #toggleControls {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 20;
+      background: rgba(0, 0, 0, 0.7);
+      color: #0f0;
+      border: 1px solid rgba(0, 255, 70, 0.5);
+      padding: 5px 10px;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+      border-radius: 3px;
+    }
+	  
+    #closeButton {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: rgba(20, 20, 20, 0.8);
+      border: 1px solid rgba(0, 255, 70, 0.5);
+      color: #0f0;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+      border-radius: 3px;
+      box-shadow: 0 0 5px rgba(0, 255, 70, 0.2);
+      transition: all 0.2s ease;
+    }
+	  
+    #closeButton:hover {
+      background: rgba(40, 40, 40, 0.8);
+      box-shadow: 0 0 8px rgba(0, 255, 70, 0.4);
+    }
+	  
+    #preloader {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: #0f0;
+    }
+	  
+    #loading-bar {
+      width: 300px;
+      height: 5px;
+      background: #111;
+      margin-top: 20px;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+	  
+    #loading-progress {
+      height: 100%;
+      width: 0%;
+      background: #0f0;
+      box-shadow: 0 0 10px #0f0;
+      transition: width 0.3s;
+    }
+	  
+    .matrix-symbol {
+      font-size: 24px;
+      margin: 0 5px;
+      animation: pulse 1.5s infinite alternate;
+      text-shadow: 0 0 10px #0f0;
+    }
+	  
+    @keyframes pulse {
+      0% { opacity: 0.5; text-shadow: 0 0 5px #0f0; }
+      100% { opacity: 1; text-shadow: 0 0 15px #0f0, 0 0 20px #0f0; }
+    }
+	  
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+	  
+    @keyframes glitchText {
+      0% { transform: translate(0); }
+      20% { transform: translate(-2px, 2px); }
+      40% { transform: translate(-2px, -2px); }
+      60% { transform: translate(2px, 2px); }
+      80% { transform: translate(2px, -2px); }
+      100% { transform: translate(0); }
+    }
+  </style>
+</head>
+<body>
+  <div id="preloader">
+    <div style="display: flex;">
+      <span class="matrix-symbol">ミ</span>
+      <span class="matrix-symbol">ラ</span>
+      <span class="matrix-symbol">イ</span>
+      <span class="matrix-symbol">ク</span>
+      <span class="matrix-symbol">ス</span>
+    </div>
+    <p id="loading-text">INITIALIZING SYSTEM...</p>
+    <div id="loading-bar">
+      <div id="loading-progress"></div>
+    </div>
+  </div>
+
+  <button id="toggleControls">MENU</button>
+  
+  <div id="controls">
+    <button id="closeButton" onclick="toggleControlsVisibility()">CLOSE</button>
+    <h3>MATRIX CONTROLS</h3>
+    
+    <div class="control-group">
+      <button id="togglePause">PAUSE/RESUME</button>
+    </div>
+    
+    <div class="control-group">
+      <label for="colorScheme">COLOR SCHEME:</label>
+      <select id="colorScheme">
+        <option value="0">Classic Green</option>
+        <option value="1">Pink</option>
+        <option value="2">Blue</option>
+        <option value="3">Amber</option>
+        <option value="4">Rainbow</option>
+        <option value="5">White</option>
+      </select>
+    </div>
+    
+    <div class="control-group">
+      <label for="speed">SPEED:</label>
+      <select id="speed">
+        <option value="0">Very Slow</option>
+        <option value="1" selected>Normal</option>
+        <option value="2">Fast</option>
+        <option value="3">Very Fast</option>
+        <option value="4">Hyper</option>
+        <option value="5">Extreme</option>
+      </select>
+    </div>
+    
+    <div class="control-group">
+      <label for="density">DENSITY:</label>
+      <select id="density">
+        <option value="0">Sparse</option>
+        <option value="1" selected>Normal</option>
+        <option value="2">Dense</option>
+        <option value="3">Very Dense</option>
+      </select>
+    </div>
+    
+    <div class="control-group">
+      <button id="toggleGlitch">TOGGLE GLITCH EFFECT</button>
+      <button id="toggleDepth">TOGGLE 3D EFFECT</button>
+      <button id="toggleFade">TOGGLE FADE EFFECT</button>
+      <button id="toggleMouse">TOGGLE MOUSE INTERACTION</button>
+      <button id="resetStreams">RESET STREAMS</button>
+    </div>
+    
+    <div id="keyboard-shortcuts">
+      <p>KEYBOARD SHORTCUTS:</p>
+      <div class="shortcut"><span>Toggle Pause</span><span class="key">Space</span></div>
+      <div class="shortcut"><span>Change Color</span><span class="key">C</span></div>
+      <div class="shortcut"><span>Toggle Glitch</span><span class="key">G</span></div>
+      <div class="shortcut"><span>Toggle 3D</span><span class="key">D</span></div>
+      <div class="shortcut"><span>Toggle Fade</span><span class="key">F</span></div>
+      <div class="shortcut"><span>Toggle Mouse</span><span class="key">M</span></div>
+      <div class="shortcut"><span>Speed (1-6)</span><span class="key">1-6</span></div>
+      <div class="shortcut"><span>Toggle Controls</span><span class="key">H</span></div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
+  <script>
+
+    const controls = document.getElementById('controls');
+    const toggleControls = document.getElementById('toggleControls');
+  
+    if (window.getComputedStyle(controls).display === 'block') {
+      toggleControls.style.display = 'none';
+    }
+
+    const CONFIG = {
+      symbolSize: 24,
+      initialStreams: [],
+      state: "preloader",
+      startTime: null,
+      loadingTime: 5000,
+      preloaderAngle: 0,
+      isPaused: false,
+      glitchMode: false,
+      depthMode: true,
+      fadeMode: true,
+      mouseInteraction: true,
+      currentSchemeIndex: 0,
+      globalSpeedMultiplier: 1,
+      densityFactor: 1
+    };
+
+    const colorSchemes = [
+      {
+        head: [180, 255, 180],
+        body: [0, 255, 70],
+        shadow: "rgba(0,255,70,0.8)",
+        trail: [0, 155, 40],
+        near: [255, 255, 255]
+      },
+      {
+        head: [255, 182, 193],
+        body: [255, 105, 180],
+        shadow: "rgba(255,105,180,0.8)",
+        trail: [180, 70, 120],
+        near: [255, 255, 255]
+      },
+      {
+        head: [0, 255, 255],
+        body: [0, 191, 255],
+        shadow: "rgba(0,191,255,0.8)",
+        trail: [0, 120, 170],
+        near: [255, 255, 255]
+      },
+      {
+        head: [255, 222, 130],
+        body: [255, 165, 0],
+        shadow: "rgba(255,165,0,0.8)",
+        trail: [180, 100, 0],
+        near: [255, 255, 255]
+      },
+      {
+        head: [255, 255, 255],
+        body: [180, 180, 180],
+        shadow: "rgba(255,255,255,0.8)",
+        trail: [100, 100, 100],
+        near: [255, 255, 255],
+        isRainbow: true
+      },
+      {
+        head: [255, 255, 255],
+        body: [200, 200, 200],
+        shadow: "rgba(255,255,255,0.8)",
+        trail: [100, 100, 100],
+        near: [0, 255, 70]
+      }
+    ];
+
+    const speedOptions = [0.3, 1, 1.8, 2.5, 3.5, 5];
+    const densityOptions = [0.5, 1, 1.5, 2];
+
+    let canvas;
+    let streams = [];
+    let characterSet = [];
+    let preloaderSymbols = [];
+    let showingControls = false;
+
+    function setup() {
+      canvas = createCanvas(window.innerWidth, window.innerHeight);
+      textSize(CONFIG.symbolSize);
+      textFont('monospace');
+
+      generateCharacterSet();
+
+      for (let i = 0; i < 50; i++) {
+        preloaderSymbols.push({
+          value: getRandomMatrixSymbol(),
+          x: random(width),
+          y: random(height),
+          size: random(8, 24),
+          opacity: random(0.3, 0.9)
+        });
+      }
+
+      CONFIG.startTime = millis();
+      frameRate(60);
+
+      setupUIControls();
+    }
+
+    function generateCharacterSet() {
+      for (let i = 0; i < 96; i++) {
+        characterSet.push(String.fromCharCode(0x30A0 + i));
+      }
+
+      for (let i = 0; i < 10; i++) {
+        characterSet.push(i.toString());
+      }
+
+      for (let i = 65; i <= 90; i++) {
+        characterSet.push(String.fromCharCode(i));
+      }
+
+      const specialChars = ['=', '+', '-', '*', '/', '\\', '>', '<', '[', ']', ':', ';', '"', '\''];
+      characterSet = characterSet.concat(specialChars);
+    }
+
+    function resetStreams() {
+      streams = [];
+      initializeStreams();
+    }
+
+    function initializeStreams() {
+      let x = 0;
+      const columnSpacing = CONFIG.symbolSize * (1 / CONFIG.densityFactor);
+      
+      for (let i = 0; i < width / columnSpacing; i++) {
+        let stream = new Stream();
+        stream.generateSymbols(x, random(-2000, 0));
+        streams.push(stream);
+        x += columnSpacing;
+      }
+    }
+
+    function draw() {
+      if (CONFIG.state === "preloader") {
+        drawPreloader();
+        if (millis() - CONFIG.startTime > CONFIG.loadingTime) {
+          CONFIG.state = "main";
+          document.getElementById("controls").style.display = "block";
+          document.getElementById("preloader").style.display = "none";
+          initializeStreams();
+        }
+      } else if (CONFIG.state === "main") {
+        if (!CONFIG.isPaused) {
+          drawMatrixRain();
+        }
+      }
+    }
+
+    function drawPreloader() {
+      background(0);
+
+      for (let symbol of preloaderSymbols) {
+        fill(0, 255, 70, symbol.opacity * 255);
+        textSize(symbol.size);
+        text(symbol.value, symbol.x, symbol.y);
+
+        symbol.y += 0.5;
+        if (symbol.y > height) {
+          symbol.y = 0;
+          symbol.x = random(width);
+          symbol.value = getRandomMatrixSymbol();
+        }
+      }
+      
+      push();
+      translate(width / 2, height / 2);
+      rotate(CONFIG.preloaderAngle);
+      CONFIG.preloaderAngle += 0.05;
+      
+      const n = 20;
+      const radius = min(width, height) / 5;
+      
+      for (let i = 0; i < n; i++) {
+        let angle = map(i, 0, n, 0, TWO_PI);
+        let x = radius * cos(angle);
+        let y = radius * sin(angle);
+        
+        fill(0, 255, 70);
+        noStroke();
+        drawingContext.shadowBlur = 15;
+        drawingContext.shadowColor = "rgba(0,255,70,0.8)";
+        textAlign(CENTER, CENTER);
+        textSize(CONFIG.symbolSize);
+        
+        text(getRandomMatrixSymbol(), x, y);
+      }
+      pop();
+
+      let progress = constrain((millis() - CONFIG.startTime) / CONFIG.loadingTime, 0, 1);
+      let percent = floor(progress * 100);
+
+      document.getElementById('loading-progress').style.width = percent + '%';
+      document.getElementById('loading-text').innerText = "SYSTEM INITIALIZATION: " + percent + "%";
+    }
+
+    function drawMatrixRain() {
+      if (CONFIG.fadeMode) {
+        background(0, 100);
+      } else {
+        background(0);
+      }
+      
+      streams.forEach(stream => {
+        stream.render();
+      });
+    }
+
+    function getRandomMatrixSymbol() {
+      return random(characterSet);
+    }
+
+    class MatrixSymbol {
+      constructor(x, y, speed, first, streamOpacity) {
+        this.x = x;
+        this.y = y;
+        this.speed = speed;
+        this.first = first;
+        this.switchInterval = round(random(5, 20));
+        this.value = getRandomMatrixSymbol();
+        this.opacity = streamOpacity || 1;
+        this.depth = random(0.7, 1.3);
+        this.glitchTime = 0;
+        this.isGlitching = false;
+        this.lifetime = 0;
+      }
+      
+      setToRandomSymbol() {
+        if (frameCount % this.switchInterval === 0 || this.isGlitching) {
+          this.value = getRandomMatrixSymbol();
+        }
+      }
+      
+      rain() {
+        if (!CONFIG.isPaused) {
+          this.y = (this.y >= height) ? 0 : this.y + (this.speed * CONFIG.globalSpeedMultiplier * this.depth);
+          this.lifetime++;
+
+          if (CONFIG.glitchMode && random(1) < 0.002) {
+            this.isGlitching = true;
+            this.glitchTime = 5 + round(random(10));
+          }
+
+          if (this.isGlitching) {
+            this.glitchTime--;
+            if (this.glitchTime <= 0) {
+              this.isGlitching = false;
+            }
+          }
+        }
+      }
+    }
+
+    class Stream {
+      constructor() {
+        this.symbols = [];
+        this.totalSymbols = round(random(5, 30));
+        this.speed = random(1, 5);
+        this.opacity = random(0.7, 1);
+        this.hue = random(360);
+      }
+      
+      generateSymbols(x, y) {
+        let first = true;
+        for (let i = 0; i <= this.totalSymbols; i++) {
+          let symbol = new MatrixSymbol(x, y, this.speed, first, this.opacity);
+          symbol.setToRandomSymbol();
+          this.symbols.push(symbol);
+          y -= CONFIG.symbolSize;
+          first = false;
+        }
+      }
+      
+      render() {
+        let scheme = colorSchemes[CONFIG.currentSchemeIndex];
+
+        let gradientColors = [];
+        if (scheme.isRainbow) {
+          for (let i = 0; i < this.symbols.length; i++) {
+            let hue = (this.hue + i * 10) % 360;
+            gradientColors.push([hue, 100, 50]);
+          }
+        }
+        
+        for (let i = 0; i < this.symbols.length; i++) {
+          let symbol = this.symbols[i];
+          let d = 0;
+
+          if (CONFIG.mouseInteraction) {
+            d = dist(symbol.x, symbol.y, mouseX, mouseY);
+          }
+          
+          if (d < 100) {
+            fill(...scheme.near, this.opacity * 255);
+            drawingContext.shadowBlur = 15;
+            drawingContext.shadowColor = "rgba(255,255,255,0.8)";
+          } else if (symbol.first) {
+            if (scheme.isRainbow) {
+              colorMode(HSB);
+              fill(this.hue, 100, 100, this.opacity * 255);
+              colorMode(RGB);
+            } else {
+              fill(...scheme.head, this.opacity * 255);
+            }
+            drawingContext.shadowBlur = 15;
+            drawingContext.shadowColor = scheme.shadow;
+          } else {
+            if (scheme.isRainbow) {
+              let position = i / this.symbols.length;
+              colorMode(HSB);
+              let h = (this.hue + position * 100) % 360;
+              let s = 100 - position * 50;
+              let b = 100 - position * 70;
+              fill(h, s, b, this.opacity * (1 - position * 0.8) * 255);
+              colorMode(RGB);
+            } else {
+              let position = i / this.symbols.length;
+              let r = lerp(scheme.body[0], scheme.trail[0], position);
+              let g = lerp(scheme.body[1], scheme.trail[1], position);
+              let b = lerp(scheme.body[2], scheme.trail[2], position);
+              fill(r, g, b, this.opacity * (1 - position * 0.8) * 255);
+            }
+            drawingContext.shadowBlur = 0;
+          }
+
+          push();
+
+          if (CONFIG.depthMode) {
+            let size = CONFIG.symbolSize * symbol.depth;
+            textSize(size);
+          }
+
+          let offsetX = 0;
+          let offsetY = 0;
+          if (CONFIG.glitchMode && (symbol.isGlitching || random(1) < 0.03)) {
+            offsetX = random(-5, 5);
+            offsetY = random(-3, 3);
+            
+            if (random(1) < 0.2) {
+              drawingContext.shadowBlur = 20;
+              drawingContext.shadowColor = "rgba(255,255,255,0.9)";
+            }
+          }
+
+          text(symbol.value, symbol.x + offsetX, symbol.y + offsetY);
+          pop();
+
+          symbol.rain();
+          symbol.setToRandomSymbol();
+        }
+      }
+    }
+
+    function keyPressed() {
+      if (key >= '1' && key <= '6') {
+        let index = parseInt(key) - 1;
+        document.getElementById('speed').value = index;
+        CONFIG.globalSpeedMultiplier = speedOptions[index];
+      }
+      
+      if (key === 'h' || key === 'H') {
+        toggleControlsVisibility();
+      }
+
+      if (key === ' ') {
+        CONFIG.isPaused = !CONFIG.isPaused;
+      }
+
+      if (key === 'g' || key === 'G') {
+        CONFIG.glitchMode = !CONFIG.glitchMode;
+        document.getElementById('toggleGlitch').innerText = 
+          CONFIG.glitchMode ? "DISABLE GLITCH EFFECT" : "ENABLE GLITCH EFFECT";
+      }
+
+      if (key === 'd' || key === 'D') {
+        CONFIG.depthMode = !CONFIG.depthMode;
+        document.getElementById('toggleDepth').innerText = 
+          CONFIG.depthMode ? "DISABLE 3D EFFECT" : "ENABLE 3D EFFECT";
+      }
+
+      if (key === 'f' || key === 'F') {
+        CONFIG.fadeMode = !CONFIG.fadeMode;
+        document.getElementById('toggleFade').innerText = 
+          CONFIG.fadeMode ? "DISABLE FADE EFFECT" : "ENABLE FADE EFFECT";
+      }
+
+      if (key === 'm' || key === 'M') {
+        CONFIG.mouseInteraction = !CONFIG.mouseInteraction;
+        document.getElementById('toggleMouse').innerText = 
+          CONFIG.mouseInteraction ? "DISABLE MOUSE INTERACTION" : "ENABLE MOUSE INTERACTION";
+      }
+      
+      if (key === 'c' || key === 'C') {
+        CONFIG.currentSchemeIndex = (CONFIG.currentSchemeIndex + 1) % colorSchemes.length;
+        document.getElementById('colorScheme').value = CONFIG.currentSchemeIndex;
+      }
+    }
+
+    function toggleControlsVisibility() {
+      showingControls = !showingControls;
+      document.getElementById('controls').style.display = showingControls ? 'block' : 'none';
+      document.getElementById('toggleControls').style.display = showingControls ? 'none' : 'block';
+    }
+
+    function setupUIControls() {
+      document.getElementById('toggleControls').addEventListener('click', toggleControlsVisibility);
+
+      document.getElementById('togglePause').addEventListener('click', () => {
+        CONFIG.isPaused = !CONFIG.isPaused;
+      });
+
+      document.getElementById('colorScheme').addEventListener('change', (e) => {
+        CONFIG.currentSchemeIndex = parseInt(e.target.value);
+      });
+
+      document.getElementById('speed').addEventListener('change', (e) => {
+        CONFIG.globalSpeedMultiplier = speedOptions[parseInt(e.target.value)];
+      });
+
+      document.getElementById('density').addEventListener('change', (e) => {
+        CONFIG.densityFactor = densityOptions[parseInt(e.target.value)];
+        resetStreams();
+      });
+
+      document.getElementById('toggleGlitch').addEventListener('click', () => {
+        CONFIG.glitchMode = !CONFIG.glitchMode;
+        document.getElementById('toggleGlitch').innerText = 
+          CONFIG.glitchMode ? "DISABLE GLITCH EFFECT" : "ENABLE GLITCH EFFECT";
+      });
+
+      document.getElementById('toggleDepth').addEventListener('click', () => {
+        CONFIG.depthMode = !CONFIG.depthMode;
+        document.getElementById('toggleDepth').innerText = 
+          CONFIG.depthMode ? "DISABLE 3D EFFECT" : "ENABLE 3D EFFECT";
+      });
+
+      document.getElementById('toggleFade').addEventListener('click', () => {
+        CONFIG.fadeMode = !CONFIG.fadeMode;
+        document.getElementById('toggleFade').innerText = 
+          CONFIG.fadeMode ? "DISABLE FADE EFFECT" : "ENABLE FADE EFFECT";
+      });
+
+      document.getElementById('toggleMouse').addEventListener('click', () => {
+        CONFIG.mouseInteraction = !CONFIG.mouseInteraction;
+        document.getElementById('toggleMouse').innerText = 
+          CONFIG.mouseInteraction ? "DISABLE MOUSE INTERACTION" : "ENABLE MOUSE INTERACTION";
+      });
+      
+      document.getElementById('resetStreams').addEventListener('click', resetStreams);
+    }
+
+    function windowResized() {
+      resizeCanvas(window.innerWidth, window.innerHeight);
+      resetStreams();
+    }
+  </script>
+</body>
+</html>
