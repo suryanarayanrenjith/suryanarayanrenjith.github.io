@@ -1026,6 +1026,163 @@ function isDesktop() {
         <p class="tagline">Explore Boundless Creativity.</p>
         <button id="home-button" class="center-button"><a href="/Links" target="_blank" style="text-decoration:none; color:black;">Discover Now</a></button>
     </div>
+
+<div class="matrix-overlay" id="matrixOverlay">
+    <div class="matrix-popup">
+        <div class="matrix-header">
+            <div class="status-indicator"></div>
+            <span class="access-text">ACCESS_GRANTED</span>
+            <div class="close-btn" onclick="closePopup()">×</div>
+        </div>
+        
+        <div class="matrix-content">
+            <div class="matrix-rain" id="matrixRain"></div>
+            
+            <div class="content-wrapper">
+                <div class="matrix-logo">
+                    <span class="matrix-text">MATRIX</span>
+                    <div class="underline"></div>
+                </div>
+                
+                <div class="matrix-message">
+                    <p>Digital realm access authorized</p>
+                    <p class="sub-text">Ready to enter the simulation?</p>
+                </div>
+                
+                <div class="button-group">
+                    <button class="matrix-btn primary" onclick="enterMatrix()">
+                        <span>ENTER</span>
+                        <div class="btn-underline"></div>
+                    </button>
+                    <button class="matrix-btn secondary" onclick="closePopup()">
+                        <span>CANCEL</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="countdown" id="countdown">10</div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    const SECRET_SEQUENCE = ['KeyM','KeyA','KeyT','KeyR','KeyI','KeyX'];
+    let buffer = [];
+    let countdownTimer;
+    let countdownValue = 10;
+
+    function createMatrixRain() {
+        const rainContainer = document.getElementById('matrixRain');
+        if (!rainContainer) return;
+        
+        const chars = ['0', '1', '|', '-', '/', '\\', '.', '*'];
+        
+        for (let i = 0; i < 15; i++) {
+            setTimeout(() => {
+                const char = document.createElement('div');
+                char.className = 'rain-char';
+                char.textContent = chars[Math.floor(Math.random() * chars.length)];
+                char.style.left = Math.random() * 100 + '%';
+                char.style.animationDelay = Math.random() * 2 + 's';
+                char.style.animationDuration = (3 + Math.random() * 2) + 's';
+                rainContainer.appendChild(char);
+                
+                setTimeout(() => {
+                    if (char.parentNode) {
+                        char.parentNode.removeChild(char);
+                    }
+                }, 4000);
+            }, i * 150);
+        }
+    }
+
+    function startCountdown() {
+        const countdownEl = document.getElementById('countdown');
+        if (!countdownEl) return;
+        
+        countdownTimer = setInterval(() => {
+            countdownValue--;
+            countdownEl.textContent = countdownValue;
+            if (countdownValue <= 0) {
+                enterMatrix();
+            }
+        }, 1000);
+    }
+
+    function showMatrixPopup() {
+        const overlay = document.getElementById('matrixOverlay');
+        if (!overlay) return;
+        
+        overlay.style.display = 'block';
+        createMatrixRain();
+        startCountdown();
+
+        const rainInterval = setInterval(() => {
+            if (overlay.style.display === 'block') {
+                createMatrixRain();
+            } else {
+                clearInterval(rainInterval);
+            }
+        }, 2000);
+    }
+
+    window.closePopup = function() {
+        const overlay = document.getElementById('matrixOverlay');
+        if (overlay) overlay.style.display = 'none';
+        if (countdownTimer) {
+            clearInterval(countdownTimer);
+            countdownValue = 10;
+        }
+    }
+
+    window.enterMatrix = function() {
+        window.location.href = '/Matrix';
+        closePopup();
+        console.log('Entering Matrix...');
+    }
+
+    window.addEventListener('keydown', e => {
+        buffer.push(e.code);
+        
+        if (buffer.length > SECRET_SEQUENCE.length) {
+            buffer.shift();
+        }
+        
+        if (
+            buffer.length === SECRET_SEQUENCE.length &&
+            SECRET_SEQUENCE.every((code, idx) => buffer[idx] === code)
+        ) {
+            showMatrixPopup();
+            buffer = [];
+        }
+    });
+})();
+
+(function() {
+    document.addEventListener('keydown', function(e) {
+      const overlay = document.getElementById('matrixOverlay');
+      if (!overlay) return;
+
+      const style = window.getComputedStyle(overlay);
+      if (style.display === 'none' || style.visibility === 'hidden' || overlay.classList.contains('hidden')) {
+        return;
+      }
+
+      switch (e.key) {
+        case 'Enter':
+          e.preventDefault();
+          enterMatrix();
+          break;
+        case 'Backspace':
+          e.preventDefault();
+          closePopup();
+          break;
+      }
+    });
+  })();
+</script>
+    
     <footer>
         <p id="footer-text"></p>
     </footer>
