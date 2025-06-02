@@ -298,7 +298,7 @@ function isDesktop() {
                                 <li><span class="shortcut-key">Ctrl + Shift + 7</span> Go to Projects section</li>
                                 <li><span class="shortcut-key">Ctrl + Shift + 8</span> Go to Resume section</li>
                                 <li><span class="shortcut-key">Ctrl + Shift + K</span> Open Terminal in new tab</li>
-                                <li><span class="shortcut-key">Ctrl + Shift + L</span> Open Links in new tab</li>
+                                <li><span class="shortcut-key">Ctrl + Shift + L</span> Open Links in the same tab</li>
                                 <li><span class="shortcut-key">Ctrl + Shift + V</span> Open Resume in new tab</li>
                             </ul>
                         </div>
@@ -555,7 +555,7 @@ function isDesktop() {
                       launchTerminal();
                       break;
                     case 'Ctrl + Shift + L':
-                      setTimeout(() => window.open('/?section=links','_blank'), 100);
+                      setTimeout(() => window.open('/?section=links','_self'), 100);
                       break;
                     case 'Ctrl + Shift + V':
                       setTimeout(() => window.open('/Resume','_blank'), 100);
@@ -585,7 +585,7 @@ function isDesktop() {
                     case 'Digit7': event.preventDefault(); showContent?.('projects'); updateProgressBar?.('projects'); break;
                     case 'Digit8': event.preventDefault(); showContent?.('resume'); updateProgressBar?.('resume'); break;
                     case 'KeyK':   event.preventDefault(); launchTerminal(); break;
-                    case 'KeyL':   event.preventDefault(); setTimeout(()=>window.open('/?section=links','_blank'),100); break;
+                    case 'KeyL':   event.preventDefault(); setTimeout(()=>window.open('/?section=links','_self'),100); break;
                     case 'KeyV':   event.preventDefault(); setTimeout(()=>window.open('/Resume','_blank'),100); break;
                   }
                 }
