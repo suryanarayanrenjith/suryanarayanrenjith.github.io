@@ -863,7 +863,6 @@ function isDesktop() {
     </div>
     
     <script>
-        
     document.addEventListener('DOMContentLoaded', function() {
     var popup = document.getElementById('music-popup');
     var audio = new Audio('/assets/bg_music.mp3');
@@ -968,7 +967,7 @@ function isDesktop() {
 
     document.getElementById('disable-music').addEventListener('click', function() {
         audio.pause();
-        localStorage.setItem('musicPopupDisabled', 'true');
+        sessionStorage.setItem('musicPopupDisabled', 'true');
         hidePopup();
     });
 
@@ -994,7 +993,7 @@ function isDesktop() {
 
     preloadAudio();
     
-    if (!localStorage.getItem('musicPopupDisabled')) {
+    if (!sessionStorage.getItem('musicPopupDisabled')) {
         showPopup();
     } else {
         popup.style.display = 'none';
@@ -1019,12 +1018,6 @@ function isDesktop() {
             <div class="block"></div>
             <div class="block"></div>
         </div>
-    </div>
-
-    <div class="container" id="content">
-        <h1 class="animated-text">Fusing Imagination with Innovation</h1>
-        <p class="tagline">Explore Boundless Creativity.</p>
-        <button id="home-button" class="center-button"><a href="/Links" target="_blank" style="text-decoration:none; color:black;">Discover Now</a></button>
     </div>
 
 <div class="matrix-overlay" id="matrixOverlay">
