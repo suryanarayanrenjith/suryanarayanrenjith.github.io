@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
+    <link rel="manifest" href="assets/favicon/site.webmanifest">
+    <title>Access Restricted</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+            position: relative;
+        }
+
+        .grid-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 80px 80px;
+            animation: grid-move 20s linear infinite;
+        }
+
+        @keyframes grid-move {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(80px, 80px); }
+        }
+
+        .dots {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .dot {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            animation: float-dot 15s infinite linear;
+        }
+
+        @keyframes float-dot {
+            0% { 
+                transform: translateY(100vh) scale(0);
+                opacity: 0;
+            }
+            10% { 
+                opacity: 1;
+                transform: translateY(90vh) scale(1);
+            }
+            90% { 
+                opacity: 1;
+                transform: translateY(10vh) scale(1);
+            }
+            100% { 
+                transform: translateY(-10vh) scale(0);
+                opacity: 0;
+            }
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .warning-icon {
+            width: 80px;
+            height: 80px;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 48px;
+            position: relative;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            animation: gentle-pulse 3s infinite ease-in-out;
+        }
+
+        .warning-icon::before {
+            content: "!";
+            font-size: 36px;
+            font-weight: 600;
+            color: #fff;
+            font-family: system-ui;
+        }
+
+        @keyframes gentle-pulse {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.1);
+            }
+            50% { 
+                transform: scale(1.02);
+                box-shadow: 0 0 0 20px rgba(255, 255, 255, 0);
+            }
+        }
+
+        .title {
+            font-size: 3rem;
+            font-weight: 200;
+            margin-bottom: 16px;
+            letter-spacing: -0.02em;
+            color: #fff;
+            line-height: 1.1;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            font-weight: 400;
+            margin-bottom: 24px;
+            opacity: 0.7;
+            max-width: 500px;
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .btn {
+            padding: 16px 32px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            color: #fff;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            letter-spacing: 0.025em;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 32px rgba(255, 255, 255, 0.1);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 32px 24px;
+            }
+
+            .title {
+                font-size: 2.5rem;
+            }
+
+            .subtitle {
+                font-size: 1.125rem;
+            }
+
+            .warning-icon {
+                width: 70px;
+                height: 70px;
+                margin-bottom: 40px;
+            }
+
+            .warning-icon::before {
+                font-size: 32px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .title {
+                font-size: 2rem;
+            }
+
+            .container {
+                padding: 24px 20px;
+            }
+
+            .warning-icon {
+                width: 60px;
+                height: 60px;
+                margin-bottom: 32px;
+            }
+
+            .warning-icon::before {
+                font-size: 28px;
+            }
+        }
+
+        .container {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 1s ease-out 0.3s forwards;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .warning-icon {
+            box-shadow: 0 0 40px rgba(255, 255, 255, 0.05);
+        }
+
+        .btn {
+            box-shadow: 0 4px 20px rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="grid-background"></div>
+    <div class="dots" id="dots"></div>
+
+    <div class="container">
+        <div class="warning-icon"></div>
+        
+        <h1 class="title">Access Restricted</h1>
+        
+        <p class="subtitle">
+            Please disable your VPN or proxy service and refresh the page to continue. 
+            This helps to ensure a secure and spam-free environment for all visitors.
+        </p>
+        
+        <a href="https://surya.is-a.dev/" class="btn" onclick="location.reload()">Refresh Page</a>
+    </div>
+
+    <script>
+        function createDots() {
+            const dotsContainer = document.getElementById('dots');
+            const dotCount = 20;
+            
+            for (let i = 0; i < dotCount; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                dot.style.left = Math.random() * 100 + '%';
+                dot.style.animationDelay = Math.random() * 15 + 's';
+                dot.style.animationDuration = (Math.random() * 10 + 10) + 's';
+                dotsContainer.appendChild(dot);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            createDots();
+        });
+
+        document.addEventListener('mousemove', function(e) {
+            const mouseX = e.clientX / window.innerWidth - 0.5;
+            const mouseY = e.clientY / window.innerHeight - 0.5;
+            
+            const warningIcon = document.querySelector('.warning-icon');
+            warningIcon.style.transform = `translate(${mouseX * 10}px, ${mouseY * 10}px)`;
+        });
+    </script>
+</body>
+</html>
