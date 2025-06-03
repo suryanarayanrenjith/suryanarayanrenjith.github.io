@@ -683,7 +683,7 @@ function isDesktop() {
             const urlParams       = new URLSearchParams(window.location.search);
             const sectionFromQuery = urlParams.get('section');
             const sectionFromHash  = window.location.hash.substring(1);
-            const sectionFromStorage = localStorage.getItem('lastSection');
+            const sectionFromStorage = sessionStorage.getItem('lastSection');
             const sectionToLoad = sectionFromQuery
                                 || sectionFromHash
                                 || sectionFromStorage
@@ -728,7 +728,7 @@ function isDesktop() {
                         content.innerHTML = html;
                         content.style.transition = 'opacity 1s ease';
                         content.style.opacity = '1';
-                        localStorage.setItem('lastSection', section);
+                        sessionStorage.setItem('lastSection', section);
                         if (animationClass) {
                             content.classList.add(animationClass);
                             setTimeout(() => {
@@ -991,6 +991,23 @@ function isDesktop() {
     };
 
     preloadAudio();
+
+    const params = new URLSearchParams(window.location.search);
+    const currentSection = params.get('section') || '';
+
+    if (currentSection === 'links') {
+        popup.style.display = 'none';
+        container.classList.remove('disabled-container');
+        header.classList.remove('no-display');
+        helpButton.classList.remove('hidden');
+        modalOverlay.classList.remove('hidden');
+        uButton.classList.remove('hidden');
+        if (!animationsTriggered) {
+            startAnimations();
+            animationsTriggered = true;
+        }
+        return;
+    }
     
     if (!sessionStorage.getItem('musicPopupDisabled')) {
         showPopup();
@@ -1381,29 +1398,44 @@ document.addEventListener('DOMContentLoaded', function() {
     </style>
     
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const loader = document.getElementById('loader');
-            if (loader) {
-                loader.id = 'preloader';
-            }
-    
-            const preloader = document.getElementById('preloader');
-            const blocks = document.querySelectorAll('.block');
-    
-            preloader.style.display = 'flex';
-    
-            setTimeout(() => {
-                blocks.forEach(block => {
-                    block.style.willChange = 'transform, opacity';
-                });
-            }, 100);
-    
-            setTimeout(() => {
-                document.body.classList.add('loaded');
-                preloader.style.display = 'none';
-            }, 4000);
-        });
-    </script>
+  document.addEventListener("DOMContentLoaded", () => {
+      const params = new URLSearchParams(window.location.search);
+      const currentSection = params.get('section') || '';
+
+      if (currentSection === 'links') {
+          const existingPreloader = document.getElementById('preloader');
+          if (existingPreloader) {
+              existingPreloader.style.display = 'none';
+          }
+          return;
+      }
+
+      const loader = document.getElementById('loader');
+      if (loader) {
+          loader.id = 'preloader';
+      }
+
+      const preloader = document.getElementById('preloader');
+      const blocks = document.querySelectorAll('.block');
+
+      if (preloader) {
+          preloader.style.display = 'flex';
+      }
+
+      setTimeout(() => {
+          blocks.forEach(block => {
+              block.style.willChange = 'transform, opacity';
+          });
+      }, 100);
+
+      setTimeout(() => {
+          document.body.classList.add('loaded');
+          if (preloader) {
+              preloader.style.display = 'none';
+          }
+      }, 4000);
+  });
+</script>
 
     <script>
     function isWebGLAvailable() {
