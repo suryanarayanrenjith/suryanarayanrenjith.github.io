@@ -15,6 +15,33 @@
   document.addEventListener('contextmenu', function(e) {
     e.preventDefault();
   });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.keyCode === 123) {
+      e.preventDefault();
+      return false;
+    }
+    
+    if (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) {
+      e.preventDefault();
+      return false;
+    }
+    
+    if (e.ctrlKey && e.keyCode === 85) {
+      e.preventDefault();
+      return false;
+    }
+    
+    if (e.ctrlKey && e.shiftKey && e.keyCode === 80) {
+      e.preventDefault();
+      return false;
+    }
+
+    if ((e.ctrlKey && e.keyCode === 83) || (e.ctrlKey && e.keyCode === 80)) {
+      e.preventDefault();
+      return false;
+    }
+  });
   </script>
   <title>Secure Resume Access</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/11.1.0/firebase-app-compat.min.js"></script>
