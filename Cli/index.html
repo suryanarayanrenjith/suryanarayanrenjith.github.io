@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="/blocker.js"></script>
-    <!-- Global site tag (gtag.js) - Google Analytics -->
+	<!-- Global site tag (gtag.js) - Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-0QSEZ9VSPZ"></script>
     <script>
     window.dataLayer = window.dataLayer || [];
@@ -14,7 +14,8 @@
     gtag('config', 'G-0QSEZ9VSPZ');
     </script>
     <title>Terminal</title>
-    <script>
+	
+	<script>
   (async function verifyAndProceed() {
     function getFingerprint() {
       return `${navigator.userAgent}-${screen.width}-${screen.height}-${navigator.language}-${window.devicePixelRatio}`;
@@ -83,16 +84,96 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png">
     <link rel="manifest" href="/assets/favicon/site.webmanifest">
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
-    <div class="terminal">
-        <div class="header">Terminal - surya@portfolio</div>
-        <div id="output"></div>
-        <div class="input-line">
-            <span class="prompt">surya@portfolio:~$</span>
-            <input type="text" id="commandInput" autofocus autocomplete="off">
+    <canvas id="background-canvas"></canvas>
+    
+    
+    <div class="geometric-shapes" id="geometricShapes"></div>
+    
+    
+    <div class="elegant-dots" id="elegantDots"></div>
+    
+    
+    <div class="terminal-container">
+        <div class="terminal">
+            <div class="header">Terminal - surya@portfolio</div>
+            <div id="output"></div>
+            <div class="input-line">
+                <span class="prompt">surya@portfolio:~$</span>
+                <input type="text" id="commandInput" autofocus autocomplete="off">
+            </div>
         </div>
     </div>
+    
     <script src="script.js"></script>
+    <script src="animation.js"></script>
+    
+    <script>
+        function createGeometricShapes() {
+            const shapesContainer = document.getElementById('geometricShapes');
+            const shapes = ['square', 'diamond', 'triangle'];
+            
+            for (let i = 0; i < 8; i++) {
+                const shape = document.createElement('div');
+                shape.className = 'geometric-shape';
+                
+                const size = Math.random() * 30 + 10;
+                shape.style.width = size + 'px';
+                shape.style.height = size + 'px';
+                shape.style.left = Math.random() * 100 + '%';
+                shape.style.top = Math.random() * 100 + '%';
+                shape.style.animationDuration = (Math.random() * 20 + 15) + 's';
+                shape.style.animationDelay = Math.random() * 5 + 's';
+                
+                const shapeType = shapes[Math.floor(Math.random() * shapes.length)];
+                if (shapeType === 'diamond') {
+                    shape.style.transform = 'rotate(45deg)';
+                } else if (shapeType === 'triangle') {
+                    shape.style.clipPath = 'polygon(50% 0%, 0% 100%, 100% 100%)';
+                    shape.style.borderRadius = '0';
+                }
+                
+                shapesContainer.appendChild(shape);
+            }
+        }
+        
+        function createElegantDots() {
+            const dotsContainer = document.getElementById('elegantDots');
+            
+            for (let i = 0; i < 20; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'elegant-dot';
+                
+                const size = Math.random() * 6 + 2;
+                dot.style.width = size + 'px';
+                dot.style.height = size + 'px';
+                dot.style.left = Math.random() * 100 + '%';
+                dot.style.top = Math.random() * 100 + '%';
+                dot.style.animationDuration = (Math.random() * 8 + 6) + 's';
+                dot.style.animationDelay = Math.random() * 3 + 's';
+                
+                dotsContainer.appendChild(dot);
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            createGeometricShapes();
+            createElegantDots();
+            
+            setInterval(() => {
+                const shapes = document.querySelectorAll('.geometric-shape');
+                shapes.forEach(shape => {
+                    if (Math.random() > 0.8) {
+                        shape.style.boxShadow = '0 0 20px rgba(255, 255, 255, 0.3)';
+                        setTimeout(() => {
+                            shape.style.boxShadow = 'none';
+                        }, 1000);
+                    }
+                });
+            }, 2000);
+        });
+    </script>
 </body>
 </html>
