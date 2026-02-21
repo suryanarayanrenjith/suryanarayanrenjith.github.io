@@ -1451,6 +1451,16 @@ document.addEventListener('DOMContentLoaded', function() {
     function fallbackToCanvasAnimation() {
 
     document.body.style.cursor = 'crosshair';
+
+    /* Dynamic star color for light/dark theme */
+    let starR = 255, starG = 255, starB = 255;
+    window.addEventListener('themeChanged', (e) => {
+        if (e.detail && e.detail.light) {
+            starR = 30; starG = 30; starB = 30;
+        } else {
+            starR = 255; starG = 255; starB = 255;
+        }
+    });
     
     const canvas = document.getElementById('animationCanvas');
     const ctx = canvas.getContext('2d');
@@ -1601,7 +1611,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             ctx.beginPath();
             ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2, false);
-            ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`;
+            ctx.fillStyle = `rgba(${starR}, ${starG}, ${starB}, ${star.alpha})`;
             ctx.fill();
 
             for (let j = 0; j < star.trail.length; j++) {
@@ -1610,7 +1620,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const trailRadius = star.radius * (1 - j / star.trail.length);
                 ctx.beginPath();
                 ctx.arc(t.x, t.y, trailRadius, 0, Math.PI * 2, false);
-                ctx.fillStyle = `rgba(255, 255, 255, ${trailAlpha})`;
+                ctx.fillStyle = `rgba(${starR}, ${starG}, ${starB}, ${trailAlpha})`;
                 ctx.fill();
             }
         });
@@ -1649,6 +1659,60 @@ document.body.style.cursor = 'none';
     </script>
     
     <script type="module" src="script.js"></script>
+
+<!-- Sunrise flash overlay for light theme transition -->
+<div id="sunrise-overlay"></div>
+
+<!-- SURYA Easter Egg: type S-U-R-Y-A to toggle light theme -->
+<script>
+(function() {
+    const LIGHT_SEQUENCE = ['KeyS','KeyU','KeyR','KeyY','KeyA'];
+    let lightBuffer = [];
+
+    function toggleLightTheme() {
+        const isLight = document.body.classList.toggle('light-theme');
+        const overlay = document.getElementById('sunrise-overlay');
+
+        /* Add transition class for smooth color animation */
+        document.body.classList.add('theme-transitioning');
+
+        /* Fire sunrise flash */
+        if (overlay) {
+            overlay.classList.add('active');
+            setTimeout(() => overlay.classList.remove('active'), 800);
+        }
+
+        /* Remove transition class after animation completes */
+        setTimeout(() => {
+            document.body.classList.remove('theme-transitioning');
+        }, 600);
+
+        /* Dispatch custom event for canvas/Three.js listeners */
+        window.dispatchEvent(new CustomEvent('themeChanged', {
+            detail: { light: isLight }
+        }));
+    }
+
+    window.addEventListener('keydown', (e) => {
+        /* Don't capture when modifiers are held (avoid conflict with shortcuts) */
+        if (e.ctrlKey || e.shiftKey || e.altKey || e.metaKey) return;
+
+        lightBuffer.push(e.code);
+
+        if (lightBuffer.length > LIGHT_SEQUENCE.length) {
+            lightBuffer.shift();
+        }
+
+        if (
+            lightBuffer.length === LIGHT_SEQUENCE.length &&
+            LIGHT_SEQUENCE.every((code, idx) => lightBuffer[idx] === code)
+        ) {
+            toggleLightTheme();
+            lightBuffer = [];
+        }
+    });
+})();
+</script>
 
 </body>
 </html>

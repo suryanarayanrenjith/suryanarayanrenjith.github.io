@@ -1104,3 +1104,498 @@ header {
         width: 120px;
     }
 }
+
+/* ================================================
+   LIGHT THEME — Easter Egg: type "SURYA"
+   Surya (सूर्य) = Sun in Sanskrit → Light
+   ================================================ */
+
+/* Sunrise flash overlay */
+#sunrise-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 99999;
+    pointer-events: none;
+    opacity: 0;
+    background: radial-gradient(circle at center, rgba(255, 215, 0, 0.6), rgba(255, 255, 255, 0.8), transparent 70%);
+    transition: opacity 0.4s ease;
+}
+
+#sunrise-overlay.active {
+    opacity: 1;
+}
+
+/* Temporary transition class applied during theme swap */
+body.theme-transitioning,
+body.theme-transitioning *,
+body.theme-transitioning *::before,
+body.theme-transitioning *::after {
+    transition: background-color 0.5s ease,
+                color 0.5s ease,
+                border-color 0.5s ease,
+                box-shadow 0.5s ease !important;
+}
+
+/* Exclude animation-driven elements from transition override */
+body.theme-transitioning .block,
+body.theme-transitioning #animationCanvas,
+body.theme-transitioning .rain-char,
+body.theme-transitioning .cursor-dot,
+body.theme-transitioning .cursor-dot-outline {
+    transition: none !important;
+}
+
+/* ---------- Base ---------- */
+body.light-theme,
+body.light-theme html {
+    background-color: #f5f5f5;
+}
+
+body.light-theme .cursor-dot-outline {
+    border-color: #333;
+    box-shadow: 0 0 8px #333;
+}
+
+body.light-theme .cursor-dot {
+    background-color: #000;
+}
+
+body.light-theme .progress-bar {
+    background: #f5f5f5;
+}
+
+body.light-theme .progress-bar div {
+    background: #333;
+}
+
+body.light-theme .container {
+    color: #111;
+}
+
+body.light-theme .disabled-container::after {
+    background-color: rgba(245, 245, 245, 1);
+    box-shadow: 0 0 10px 5px rgba(245, 245, 245, 0.5);
+}
+
+body.light-theme .animated-text {
+    color: #111;
+}
+
+body.light-theme .tagline {
+    color: #333;
+}
+
+/* ---------- Center Button ---------- */
+body.light-theme .center-button {
+    color: #fff;
+    background-color: #111;
+    border-color: transparent;
+}
+
+body.light-theme .center-button::before {
+    background: rgba(245, 245, 245, 0.9);
+}
+
+body.light-theme .center-button:hover {
+    background-color: rgba(245, 245, 245, 0.9);
+    border-color: #333;
+    color: #111;
+}
+
+body.light-theme .center-button a {
+    color: #fff !important;
+}
+
+body.light-theme .center-button:hover a {
+    color: #111 !important;
+}
+
+/* ---------- Footer ---------- */
+body.light-theme footer {
+    color: #111;
+}
+
+/* ---------- Music Popup ---------- */
+body.light-theme #music-popup {
+    background-color: rgba(245, 245, 245, 0.9);
+    color: #111;
+}
+
+body.light-theme #popup-content {
+    background-color: #f5f5f5;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+}
+
+body.light-theme #popup-content button {
+    background-color: #111;
+    color: #fff;
+}
+
+body.light-theme #popup-content button:hover {
+    background-color: #555;
+}
+
+/* ---------- Header / Nav ---------- */
+body.light-theme header {
+    border-color: #bbb;
+    background-color: rgba(245, 245, 245, 0.85);
+}
+
+body.light-theme .menu-bar ul li a {
+    color: #111;
+}
+
+body.light-theme .menu-bar ul li a::after {
+    background-color: #111;
+}
+
+body.light-theme .menu-bar ul li a:hover {
+    color: #555;
+}
+
+body.light-theme .menu-bar ul li a:hover::after {
+    background-color: #555;
+}
+
+body.light-theme .music-button {
+    color: #111;
+}
+
+body.light-theme .music-button:hover {
+    color: #555;
+}
+
+@media (max-width: 768px) {
+    body.light-theme header {
+        border-color: #bbb;
+    }
+}
+
+/* ---------- Help Button ---------- */
+body.light-theme .help-button {
+    background-color: #f5f5f5;
+    color: #111;
+    border-color: #bbb;
+}
+
+body.light-theme .help-button:hover {
+    background-color: #111;
+    color: #fff;
+    border-color: #111;
+}
+
+/* ---------- Modal Overlay ---------- */
+body.light-theme .modal-overlay {
+    background: rgba(245, 245, 245, 0.92);
+}
+
+/* ---------- Shortcuts Modal ---------- */
+body.light-theme .shortcuts-modal {
+    backdrop-filter: brightness(1.2) blur(10px);
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+    border-color: #ccc;
+    background-color: #f5f5f5;
+}
+
+body.light-theme .close-modal {
+    color: #666;
+}
+
+body.light-theme .close-modal:hover {
+    color: #111;
+}
+
+body.light-theme .modal-tabs {
+    background-color: #eee;
+    border-bottom-color: #ccc;
+}
+
+body.light-theme .tab-button {
+    color: #666;
+}
+
+body.light-theme .tab-button:hover {
+    color: #111;
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+body.light-theme .tab-button.active {
+    color: #111;
+}
+
+body.light-theme .tab-button.active::after {
+    background-color: #111;
+}
+
+body.light-theme .tab-content {
+    background-color: #f5f5f5;
+}
+
+/* ---------- About Section in Modal ---------- */
+body.light-theme .favicon {
+    border-color: #111;
+}
+
+body.light-theme .website-title {
+    color: #111;
+}
+
+body.light-theme .made-with {
+    color: #555;
+}
+
+body.light-theme #yearRange {
+    color: #555;
+}
+
+body.light-theme #yearRange .fa-calendar {
+    color: #666;
+}
+
+body.light-theme .uptime-response-time {
+    background-color: #eee;
+    color: #111;
+}
+
+/* ---------- Keyboard Shortcuts List ---------- */
+body.light-theme .shortcuts-list li {
+    color: #222;
+}
+
+body.light-theme .shortcuts-list li:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+body.light-theme .shortcut-key {
+    background-color: #eee;
+    color: #111;
+    border-color: #bbb;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* ---------- Terminal / Client Tab ---------- */
+body.light-theme .terminal-info p,
+body.light-theme .client-info p {
+    color: #444;
+}
+
+body.light-theme .action-button {
+    background-color: #f5f5f5;
+    color: #111;
+    border-color: #bbb;
+}
+
+body.light-theme .action-button:hover {
+    background-color: #111;
+    color: #fff;
+    border-color: #111;
+}
+
+body.light-theme .terminal-logs,
+body.light-theme .client-logs {
+    background-color: #eee;
+    border-color: #ccc;
+    color: #444;
+}
+
+body.light-theme .about-section .year-range {
+    color: #444;
+}
+
+/* ---------- Matrix Overlay ---------- */
+body.light-theme .matrix-overlay {
+    background: rgba(245, 245, 245, 0.95);
+    color: #111;
+}
+
+body.light-theme .matrix-popup {
+    background: rgba(245, 245, 245, 0.80);
+    border-color: rgba(0, 0, 0, 0.30);
+    box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.06),
+                0 0 20px rgba(0, 0, 0, 0.10);
+}
+
+body.light-theme .matrix-popup.hovered {
+    box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.08),
+                0 0 40px rgba(0, 0, 0, 0.18);
+    border-color: rgba(0, 0, 0, 0.50);
+}
+
+body.light-theme .matrix-header {
+    border-bottom-color: rgba(0, 0, 0, 0.20);
+}
+
+body.light-theme .status-indicator {
+    background: #111;
+}
+
+body.light-theme .access-text {
+    color: #111;
+    text-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
+}
+
+body.light-theme .close-btn {
+    color: rgba(0, 0, 0, 0.50);
+}
+
+body.light-theme .close-btn:hover {
+    color: #111;
+    text-shadow: 0 0 8px rgba(0, 0, 0, 0.4);
+}
+
+body.light-theme .rain-char {
+    color: rgba(0, 0, 0, 0.6);
+}
+
+body.light-theme .matrix-text {
+    color: #111;
+    text-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
+}
+
+body.light-theme .underline {
+    background: #111;
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
+}
+
+body.light-theme .matrix-message {
+    color: #444;
+    text-shadow: none;
+}
+
+body.light-theme .sub-text {
+    color: #666 !important;
+}
+
+body.light-theme .matrix-btn {
+    border-color: rgba(0, 0, 0, 0.30);
+    color: #111;
+}
+
+body.light-theme .matrix-btn:hover {
+    background: rgba(0, 0, 0, 0.08);
+    border-color: rgba(0, 0, 0, 0.50);
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.15);
+}
+
+body.light-theme .matrix-btn.primary {
+    border-color: rgba(0, 0, 0, 0.50);
+}
+
+body.light-theme .matrix-btn.primary:hover {
+    background: #111;
+    color: #fff;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+}
+
+body.light-theme .btn-underline {
+    background: #111;
+}
+
+body.light-theme .matrix-btn.secondary {
+    color: rgba(0, 0, 0, 0.50);
+    border-color: rgba(0, 0, 0, 0.30);
+}
+
+body.light-theme .matrix-btn.secondary:hover {
+    color: #111;
+    border-color: rgba(0, 0, 0, 0.50);
+}
+
+body.light-theme .countdown {
+    color: #111;
+    background: rgba(245, 245, 245, 0.50);
+    border-color: rgba(0, 0, 0, 0.30);
+    text-shadow: none;
+}
+
+/* ---------- Preloader ---------- */
+body.light-theme #preloader {
+    background: #f5f5f5;
+}
+
+body.light-theme .block {
+    border-color: #111;
+}
+
+body.light-theme .block::before {
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+body.light-theme #blocks {
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+}
+
+/* ---------- Offline Message ---------- */
+body.light-theme .offline-message {
+    background-color: #f5f5f5 !important;
+    color: #111 !important;
+}
+
+/* ---------- CloudFlare Worker Content Overrides ---------- */
+body.light-theme #content a {
+    color: #111 !important;
+}
+
+body.light-theme #content .about-content p {
+    color: #333;
+}
+
+body.light-theme #content .about-content a {
+    color: #111 !important;
+}
+
+body.light-theme #content ul li {
+    border-color: #bbb !important;
+}
+
+body.light-theme #content ul li a {
+    color: #111 !important;
+}
+
+body.light-theme #content .fa-lightbulb {
+    color: #111;
+}
+
+/* ---------- Links Section Overrides ---------- */
+body.light-theme .links-wrapper {
+    color: #111;
+}
+
+body.light-theme .links-wrapper h1 {
+    color: #111;
+}
+
+body.light-theme .links-wrapper .subtitle {
+    color: #333;
+}
+
+body.light-theme .divider {
+    background: linear-gradient(90deg, transparent, #111, transparent) !important;
+}
+
+body.light-theme .link-card {
+    background: rgba(0, 0, 0, 0.05) !important;
+    border-color: rgba(0, 0, 0, 0.20) !important;
+    color: #111 !important;
+}
+
+body.light-theme .link-card:hover {
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15), 0 0 14px rgba(0, 0, 0, 0.2) !important;
+}
+
+body.light-theme .link-card::after {
+    background: rgba(0, 0, 0, 0.08) !important;
+    color: #111 !important;
+}
+
+body.light-theme .link-icon {
+    color: #111 !important;
+}
+
+/* Force-download links injected by JS */
+body.light-theme a[id^="forceDownload"] {
+    color: #111 !important;
+}

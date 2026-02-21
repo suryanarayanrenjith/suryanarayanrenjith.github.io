@@ -92,6 +92,20 @@ document.addEventListener("DOMContentLoaded", () => {
     scene.add(starFieldWhite);
     
     camera.position.z = 1000;
+
+    /* Light theme support – listen for the "SURYA" easter egg toggle */
+    window.addEventListener('themeChanged', (e) => {
+        if (e.detail && e.detail.light) {
+            starMaterialWhite.color.setHex(0x222222);
+            starMaterialWhite.blending = THREE.NormalBlending;
+            pointLight.color.setHex(0x222222);
+        } else {
+            starMaterialWhite.color.setHex(0xffffff);
+            starMaterialWhite.blending = THREE.AdditiveBlending;
+            pointLight.color.setHex(0xffffff);
+        }
+        starMaterialWhite.needsUpdate = true;
+    });
     
     window.addEventListener('resize', () => {
         renderer.setSize(window.innerWidth, window.innerHeight);
