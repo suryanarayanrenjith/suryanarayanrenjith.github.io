@@ -157,6 +157,15 @@
 </head>
 <body>
 
+<script>
+(function() {
+    if (sessionStorage.getItem('suryaLightTheme') === 'true') {
+        document.body.classList.add('light-theme');
+        window.__lightThemeOnLoad = true;
+    }
+})();
+</script>
+
 <style>
 #fa-test {
     position: absolute;
@@ -635,46 +644,151 @@ function isDesktop() {
         function addAnimationStyles() {
             const style = document.createElement('style');
             style.innerHTML = `
-                @keyframes slideUp {
-                    0% { transform: translateY(100%) scale(0.8); opacity: 0; }
-                    100% { transform: translateY(0) scale(1); opacity: 1; }
+                /* ─── Transition base ─── */
+                #content.transitioning {
+                    will-change: transform, opacity, filter;
+                    pointer-events: none;
                 }
-                @keyframes slideDown {
-                    0% { transform: translateY(-100%) scale(0.8); opacity: 0; }
-                    100% { transform: translateY(0) scale(1); opacity: 1; }
+
+                /* ═══════════════════════════════════════
+                   DESKTOP EXIT  (ease-in)
+                   ═══════════════════════════════════════ */
+                .slide-out-up {
+                    animation: slideOutUp 0.42s cubic-bezier(0.55, 0, 0.7, 0.2) forwards;
                 }
-                @keyframes mobileRotateX90 {
-                    0% { transform: perspective(1000px) rotateX(0) scale(1); opacity: 1; }
-                    100% { transform: perspective(1000px) rotateX(90deg) scale(0.5); opacity: 0; }
+                .slide-out-down {
+                    animation: slideOutDown 0.42s cubic-bezier(0.55, 0, 0.7, 0.2) forwards;
                 }
-                @keyframes mobileRotateXNeg90 {
-                    0% { transform: perspective(1000px) rotateX(0) scale(1); opacity: 1; }
-                    100% { transform: perspective(1000px) rotateX(-90deg) scale(0.5); opacity: 0; }
+                .slide-out-left {
+                    animation: slideOutLeft 0.42s cubic-bezier(0.55, 0, 0.7, 0.2) forwards;
                 }
-                @keyframes mobileRotateY180 {
-                    0% { transform: perspective(1000px) rotateY(0) scale(1); opacity: 1; }
-                    100% { transform: perspective(1000px) rotateY(180deg) scale(0.5); opacity: 0; }
+                .slide-out-right {
+                    animation: slideOutRight 0.42s cubic-bezier(0.55, 0, 0.7, 0.2) forwards;
                 }
-                @keyframes mobileRotateYNeg180 {
-                    0% { transform: perspective(1000px) rotateY(0) scale(1); opacity: 1; }
-                    100% { transform: perspective(1000px) rotateY(-180deg) scale(0.5); opacity: 0; }
+
+                /* ═══════════════════════════════════════
+                   DESKTOP ENTER (spring ease-out)
+                   ═══════════════════════════════════════ */
+                .slide-in-from-bottom {
+                    animation: slideInFromBottom 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
                 }
-                @keyframes desktopRotateY90 {
-                    0% { transform: perspective(1000px) rotateY(0) scale(1); opacity: 1; }
-                    100% { transform: perspective(1000px) rotateY(90deg) scale(0.8); opacity: 0; }
+                .slide-in-from-top {
+                    animation: slideInFromTop 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
                 }
-                @keyframes desktopRotateYNeg90 {
-                    0% { transform: perspective(1000px) rotateY(0) scale(1); opacity: 1; }
-                    100% { transform: perspective(1000px) rotateY(-90deg) scale(0.8); opacity: 0; }
+                .slide-in-from-left {
+                    animation: slideInFromLeft 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
                 }
-                .slide-up { animation: slideUp 1s ease-in-out forwards; }
-                .slide-down { animation: slideDown 1s ease-in-out forwards; }
-                .mobile-rotate-x-90 { animation: mobileRotateX90 1s ease-in-out forwards; }
-                .mobile-rotate-x-neg-90 { animation: mobileRotateXNeg90 1s ease-in-out forwards; }
-                .mobile-rotate-y-180 { animation: mobileRotateY180 1s ease-in-out forwards; }
-                .mobile-rotate-y-neg-180 { animation: mobileRotateYNeg180 1s ease-in-out forwards; }
-                .desktop-rotate-y-90 { animation: desktopRotateY90 1s ease-in-out forwards; }
-                .desktop-rotate-y-neg-90 { animation: desktopRotateYNeg90 1s ease-in-out forwards; }
+                .slide-in-from-right {
+                    animation: slideInFromRight 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+                }
+
+                /* ═══════════════════════════════════════
+                   MOBILE EXIT  (ease-in)
+                   ═══════════════════════════════════════ */
+                .m-slide-out-up {
+                    animation: mSlideOutUp 0.38s cubic-bezier(0.55, 0, 0.7, 0.2) forwards;
+                }
+                .m-slide-out-down {
+                    animation: mSlideOutDown 0.38s cubic-bezier(0.55, 0, 0.7, 0.2) forwards;
+                }
+                .m-slide-out-left {
+                    animation: mSlideOutLeft 0.38s cubic-bezier(0.55, 0, 0.7, 0.2) forwards;
+                }
+                .m-slide-out-right {
+                    animation: mSlideOutRight 0.38s cubic-bezier(0.55, 0, 0.7, 0.2) forwards;
+                }
+
+                /* ═══════════════════════════════════════
+                   MOBILE ENTER (spring ease-out)
+                   ═══════════════════════════════════════ */
+                .m-slide-in-from-bottom {
+                    animation: mSlideInFromBottom 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+                }
+                .m-slide-in-from-top {
+                    animation: mSlideInFromTop 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+                }
+                .m-slide-in-from-left {
+                    animation: mSlideInFromLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+                }
+                .m-slide-in-from-right {
+                    animation: mSlideInFromRight 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+                }
+
+                @keyframes slideOutUp {
+                    0%   { transform: translateY(0) scale(1); opacity: 1; filter: blur(0px); }
+                    100% { transform: translateY(-50px) scale(0.95); opacity: 0; filter: blur(6px); }
+                }
+                @keyframes slideOutDown {
+                    0%   { transform: translateY(0) scale(1); opacity: 1; filter: blur(0px); }
+                    100% { transform: translateY(50px) scale(0.95); opacity: 0; filter: blur(6px); }
+                }
+                @keyframes slideOutLeft {
+                    0%   { transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1); opacity: 1; filter: blur(0px); }
+                    100% { transform: perspective(1200px) translateX(-80px) rotateY(4deg) scale(0.96); opacity: 0; filter: blur(4px); }
+                }
+                @keyframes slideOutRight {
+                    0%   { transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1); opacity: 1; filter: blur(0px); }
+                    100% { transform: perspective(1200px) translateX(80px) rotateY(-4deg) scale(0.96); opacity: 0; filter: blur(4px); }
+                }
+
+                @keyframes slideInFromBottom {
+                    0%   { transform: translateY(70px) scale(0.93); opacity: 0; filter: blur(8px); }
+                    50%  { opacity: 0.7; filter: blur(2px); }
+                    100% { transform: translateY(0) scale(1); opacity: 1; filter: blur(0px); }
+                }
+                @keyframes slideInFromTop {
+                    0%   { transform: translateY(-70px) scale(0.93); opacity: 0; filter: blur(8px); }
+                    50%  { opacity: 0.7; filter: blur(2px); }
+                    100% { transform: translateY(0) scale(1); opacity: 1; filter: blur(0px); }
+                }
+                @keyframes slideInFromLeft {
+                    0%   { transform: perspective(1200px) translateX(-90px) rotateY(5deg) scale(0.95); opacity: 0; filter: blur(6px); }
+                    50%  { opacity: 0.7; filter: blur(1.5px); }
+                    100% { transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1); opacity: 1; filter: blur(0px); }
+                }
+                @keyframes slideInFromRight {
+                    0%   { transform: perspective(1200px) translateX(90px) rotateY(-5deg) scale(0.95); opacity: 0; filter: blur(6px); }
+                    50%  { opacity: 0.7; filter: blur(1.5px); }
+                    100% { transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1); opacity: 1; filter: blur(0px); }
+                }
+
+                @keyframes mSlideOutUp {
+                    0%   { transform: perspective(1200px) translateY(0) rotateX(0deg) scale(1); opacity: 1; filter: blur(0px); }
+                    100% { transform: perspective(1200px) translateY(-35px) rotateX(12deg) scale(0.92); opacity: 0; filter: blur(4px); }
+                }
+                @keyframes mSlideOutDown {
+                    0%   { transform: perspective(1200px) translateY(0) rotateX(0deg) scale(1); opacity: 1; filter: blur(0px); }
+                    100% { transform: perspective(1200px) translateY(35px) rotateX(-12deg) scale(0.92); opacity: 0; filter: blur(4px); }
+                }
+                @keyframes mSlideOutLeft {
+                    0%   { transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1); opacity: 1; filter: blur(0px); }
+                    100% { transform: perspective(1200px) translateX(-50px) rotateY(15deg) scale(0.92); opacity: 0; filter: blur(3px); }
+                }
+                @keyframes mSlideOutRight {
+                    0%   { transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1); opacity: 1; filter: blur(0px); }
+                    100% { transform: perspective(1200px) translateX(50px) rotateY(-15deg) scale(0.92); opacity: 0; filter: blur(3px); }
+                }
+
+                @keyframes mSlideInFromBottom {
+                    0%   { transform: perspective(1200px) translateY(50px) rotateX(-8deg) scale(0.9); opacity: 0; filter: blur(6px); }
+                    60%  { filter: blur(1px); }
+                    100% { transform: perspective(1200px) translateY(0) rotateX(0deg) scale(1); opacity: 1; filter: blur(0px); }
+                }
+                @keyframes mSlideInFromTop {
+                    0%   { transform: perspective(1200px) translateY(-50px) rotateX(8deg) scale(0.9); opacity: 0; filter: blur(6px); }
+                    60%  { filter: blur(1px); }
+                    100% { transform: perspective(1200px) translateY(0) rotateX(0deg) scale(1); opacity: 1; filter: blur(0px); }
+                }
+                @keyframes mSlideInFromLeft {
+                    0%   { transform: perspective(1200px) translateX(-60px) rotateY(12deg) scale(0.9); opacity: 0; filter: blur(5px); }
+                    60%  { filter: blur(1px); }
+                    100% { transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1); opacity: 1; filter: blur(0px); }
+                }
+                @keyframes mSlideInFromRight {
+                    0%   { transform: perspective(1200px) translateX(60px) rotateY(-12deg) scale(0.9); opacity: 0; filter: blur(5px); }
+                    60%  { filter: blur(1px); }
+                    100% { transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1); opacity: 1; filter: blur(0px); }
+                }
             `;
             document.head.appendChild(style);
         }
@@ -695,53 +809,65 @@ function isDesktop() {
         
         function showContent(section, direction = 'none') {
             const content = document.getElementById('content');
-            let animationClass = '';
-            
-            if (isMobile) {
-                if (direction === 'down') {
-                    animationClass = 'mobile-rotate-x-90';
-                } else if (direction === 'up') {
-                    animationClass = 'mobile-rotate-x-neg-90';
-                } else if (direction === 'left') {
-                    animationClass = 'mobile-rotate-y-neg-180';
-                } else if (direction === 'right') {
-                    animationClass = 'mobile-rotate-y-180';
-                }
-            } else {
-                if (direction === 'down') {
-                    animationClass = 'slide-down';
-                } else if (direction === 'up') {
-                    animationClass = 'slide-up';
-                } else if (direction === 'left') {
-                    animationClass = 'desktop-rotate-y-neg-90';
-                } else if (direction === 'right') {
-                    animationClass = 'desktop-rotate-y-90';
-                }
-            }
-            
-            content.style.opacity = '0';
-            
-            setTimeout(() => {
+
+            content.className = content.className
+                .replace(/\b(slide-out|slide-in|m-slide-out|m-slide-in)[^\s]*/g, '')
+                .replace(/\btransitioning\b/, '')
+                .trim();
+            content.style.transition = '';
+            content.style.opacity = '';
+
+            if (direction === 'none') {
+                content.style.opacity = '0';
                 fetch(`${CLOUD_FLARE_WORKER_URL}?section=${section}`)
                     .then(response => response.text())
                     .then(html => {
                         content.innerHTML = html;
-                        content.style.transition = 'opacity 1s ease';
+                        content.style.transition = 'opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
                         content.style.opacity = '1';
                         sessionStorage.setItem('lastSection', section);
-                        if (animationClass) {
-                            content.classList.add(animationClass);
-                            setTimeout(() => {
-                                content.classList.remove(animationClass);
-                            }, 1000);
-                        }
                     })
                     .catch(error => {
-                        console.error("Error fetching content:", error);
-                        content.innerHTML = `<p>Error loading content.</p>`;
+                        console.error('Error fetching content:', error);
+                        content.innerHTML = '<p>Error loading content.</p>';
                         content.style.opacity = '1';
                     });
-            }, 500);
+                return;
+            }
+
+            const prefix = isMobile ? 'm-' : '';
+            const exitMap  = { down: 'slide-out-up', up: 'slide-out-down', left: 'slide-out-right', right: 'slide-out-left' };
+            const enterMap = { down: 'slide-in-from-bottom', up: 'slide-in-from-top', left: 'slide-in-from-left', right: 'slide-in-from-right' };
+            const exitClass  = prefix + exitMap[direction];
+            const enterClass = prefix + enterMap[direction];
+            const exitDuration  = isMobile ? 380 : 420;
+            const enterDuration = isMobile ? 600 : 650;
+
+            content.classList.add('transitioning', exitClass);
+
+            const fetchPromise = fetch(`${CLOUD_FLARE_WORKER_URL}?section=${section}`)
+                .then(response => response.text());
+            const exitPromise = new Promise(resolve => setTimeout(resolve, exitDuration));
+
+            Promise.all([fetchPromise, exitPromise])
+                .then(([html]) => {
+                    content.classList.remove(exitClass);
+                    content.innerHTML = html;
+                    sessionStorage.setItem('lastSection', section);
+
+                    void content.offsetWidth;
+
+                    content.classList.add(enterClass);
+                    setTimeout(() => {
+                        content.classList.remove(enterClass, 'transitioning');
+                    }, enterDuration + 50);
+                })
+                .catch(error => {
+                    console.error('Error fetching content:', error);
+                    content.classList.remove(exitClass, 'transitioning');
+                    content.innerHTML = '<p>Error loading content.</p>';
+                    content.style.opacity = '1';
+                });
         }
         
         document.querySelectorAll('.menu-bar a').forEach(link => {
@@ -767,7 +893,7 @@ function isDesktop() {
         function switchToNextSection(direction) {
             if (isThrottled) return;
             isThrottled = true;
-            setTimeout(() => { isThrottled = false; }, 1000);
+            setTimeout(() => { isThrottled = false; }, 1200);
         
             if (direction === 'down' || direction === 'right') {
                 currentSectionIndex = (currentSectionIndex + 1) % sectionOrder.length;
@@ -1660,10 +1786,8 @@ document.body.style.cursor = 'none';
     
     <script type="module" src="script.js"></script>
 
-<!-- Sunrise flash overlay for light theme transition -->
 <div id="sunrise-overlay"></div>
 
-<!-- SURYA Easter Egg: type S-U-R-Y-A to toggle light theme -->
 <script>
 (function() {
     const LIGHT_SEQUENCE = ['KeyS','KeyU','KeyR','KeyY','KeyA'];
@@ -1673,28 +1797,44 @@ document.body.style.cursor = 'none';
         const isLight = document.body.classList.toggle('light-theme');
         const overlay = document.getElementById('sunrise-overlay');
 
-        /* Add transition class for smooth color animation */
-        document.body.classList.add('theme-transitioning');
-
-        /* Fire sunrise flash */
-        if (overlay) {
-            overlay.classList.add('active');
-            setTimeout(() => overlay.classList.remove('active'), 800);
+        if (isLight) {
+            sessionStorage.setItem('suryaLightTheme', 'true');
+        } else {
+            sessionStorage.removeItem('suryaLightTheme');
         }
 
-        /* Remove transition class after animation completes */
+        document.body.classList.add('theme-transitioning');
+
+        if (overlay) {
+            overlay.classList.remove('active', 'reverse');
+            void overlay.offsetWidth;
+            if (!isLight) overlay.classList.add('reverse');
+            overlay.classList.add('active');
+            setTimeout(() => {
+                overlay.classList.remove('active', 'reverse');
+            }, 1100);
+        }
+
         setTimeout(() => {
             document.body.classList.remove('theme-transitioning');
-        }, 600);
+        }, 700);
 
-        /* Dispatch custom event for canvas/Three.js listeners */
         window.dispatchEvent(new CustomEvent('themeChanged', {
             detail: { light: isLight }
         }));
     }
 
+    if (window.__lightThemeOnLoad) {
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                window.dispatchEvent(new CustomEvent('themeChanged', {
+                    detail: { light: true }
+                }));
+            }, 100);
+        });
+    }
+
     window.addEventListener('keydown', (e) => {
-        /* Don't capture when modifiers are held (avoid conflict with shortcuts) */
         if (e.ctrlKey || e.shiftKey || e.altKey || e.metaKey) return;
 
         lightBuffer.push(e.code);

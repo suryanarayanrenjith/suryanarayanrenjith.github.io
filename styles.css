@@ -1105,12 +1105,6 @@ header {
     }
 }
 
-/* ================================================
-   LIGHT THEME — Easter Egg: type "SURYA"
-   Surya (सूर्य) = Sun in Sanskrit → Light
-   ================================================ */
-
-/* Sunrise flash overlay */
 #sunrise-overlay {
     position: fixed;
     top: 0;
@@ -1120,26 +1114,75 @@ header {
     z-index: 99999;
     pointer-events: none;
     opacity: 0;
-    background: radial-gradient(circle at center, rgba(255, 215, 0, 0.6), rgba(255, 255, 255, 0.8), transparent 70%);
-    transition: opacity 0.4s ease;
+    visibility: hidden;
 }
 
 #sunrise-overlay.active {
-    opacity: 1;
+    visibility: visible;
+    animation: sunriseFlash 1s ease-out forwards;
 }
 
-/* Temporary transition class applied during theme swap */
+#sunrise-overlay.active.reverse {
+    animation: moonriseFlash 1s ease-out forwards;
+}
+
+@keyframes sunriseFlash {
+    0% {
+        opacity: 0;
+        background: radial-gradient(circle at center, rgba(255, 200, 50, 0) 0%, transparent 60%);
+    }
+    15% {
+        opacity: 1;
+        background: radial-gradient(circle at center, rgba(255, 200, 50, 0.8) 0%, rgba(255, 230, 100, 0.4) 30%, transparent 60%);
+    }
+    35% {
+        opacity: 1;
+        background: radial-gradient(circle at center, rgba(255, 255, 255, 0.95) 0%, rgba(255, 235, 150, 0.6) 40%, rgba(255, 255, 255, 0.2) 70%, transparent 90%);
+    }
+    60% {
+        opacity: 0.7;
+        background: radial-gradient(circle at center, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.1) 60%, transparent 80%);
+    }
+    100% {
+        opacity: 0;
+        background: radial-gradient(circle at center, transparent 0%, transparent 100%);
+    }
+}
+
+@keyframes moonriseFlash {
+    0% {
+        opacity: 0;
+        background: radial-gradient(circle at center, rgba(80, 80, 120, 0) 0%, transparent 60%);
+    }
+    15% {
+        opacity: 1;
+        background: radial-gradient(circle at center, rgba(60, 60, 100, 0.7) 0%, rgba(30, 30, 60, 0.4) 30%, transparent 60%);
+    }
+    35% {
+        opacity: 1;
+        background: radial-gradient(circle at center, rgba(0, 0, 0, 0.8) 0%, rgba(20, 20, 40, 0.5) 40%, rgba(0, 0, 0, 0.15) 70%, transparent 90%);
+    }
+    60% {
+        opacity: 0.6;
+        background: radial-gradient(circle at center, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.05) 60%, transparent 80%);
+    }
+    100% {
+        opacity: 0;
+        background: radial-gradient(circle at center, transparent 0%, transparent 100%);
+    }
+}
+
 body.theme-transitioning,
 body.theme-transitioning *,
 body.theme-transitioning *::before,
 body.theme-transitioning *::after {
-    transition: background-color 0.5s ease,
-                color 0.5s ease,
-                border-color 0.5s ease,
-                box-shadow 0.5s ease !important;
+    transition: background-color 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                color 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                background 0.6s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-/* Exclude animation-driven elements from transition override */
 body.theme-transitioning .block,
 body.theme-transitioning #animationCanvas,
 body.theme-transitioning .rain-char,
@@ -1148,7 +1191,6 @@ body.theme-transitioning .cursor-dot-outline {
     transition: none !important;
 }
 
-/* ---------- Base ---------- */
 body.light-theme,
 body.light-theme html {
     background-color: #f5f5f5;
@@ -1188,7 +1230,6 @@ body.light-theme .tagline {
     color: #333;
 }
 
-/* ---------- Center Button ---------- */
 body.light-theme .center-button {
     color: #fff;
     background-color: #111;
@@ -1205,20 +1246,20 @@ body.light-theme .center-button:hover {
     color: #111;
 }
 
-body.light-theme .center-button a {
+body.light-theme .center-button a,
+body.light-theme #content .center-button a {
     color: #fff !important;
 }
 
-body.light-theme .center-button:hover a {
+body.light-theme .center-button:hover a,
+body.light-theme #content .center-button:hover a {
     color: #111 !important;
 }
 
-/* ---------- Footer ---------- */
 body.light-theme footer {
     color: #111;
 }
 
-/* ---------- Music Popup ---------- */
 body.light-theme #music-popup {
     background-color: rgba(245, 245, 245, 0.9);
     color: #111;
@@ -1238,7 +1279,6 @@ body.light-theme #popup-content button:hover {
     background-color: #555;
 }
 
-/* ---------- Header / Nav ---------- */
 body.light-theme header {
     border-color: #bbb;
     background-color: rgba(245, 245, 245, 0.85);
@@ -1274,7 +1314,6 @@ body.light-theme .music-button:hover {
     }
 }
 
-/* ---------- Help Button ---------- */
 body.light-theme .help-button {
     background-color: #f5f5f5;
     color: #111;
@@ -1287,12 +1326,10 @@ body.light-theme .help-button:hover {
     border-color: #111;
 }
 
-/* ---------- Modal Overlay ---------- */
 body.light-theme .modal-overlay {
     background: rgba(245, 245, 245, 0.92);
 }
 
-/* ---------- Shortcuts Modal ---------- */
 body.light-theme .shortcuts-modal {
     backdrop-filter: brightness(1.2) blur(10px);
     box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
@@ -1334,7 +1371,6 @@ body.light-theme .tab-content {
     background-color: #f5f5f5;
 }
 
-/* ---------- About Section in Modal ---------- */
 body.light-theme .favicon {
     border-color: #111;
 }
@@ -1360,7 +1396,6 @@ body.light-theme .uptime-response-time {
     color: #111;
 }
 
-/* ---------- Keyboard Shortcuts List ---------- */
 body.light-theme .shortcuts-list li {
     color: #222;
 }
@@ -1376,7 +1411,6 @@ body.light-theme .shortcut-key {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* ---------- Terminal / Client Tab ---------- */
 body.light-theme .terminal-info p,
 body.light-theme .client-info p {
     color: #444;
@@ -1405,7 +1439,6 @@ body.light-theme .about-section .year-range {
     color: #444;
 }
 
-/* ---------- Matrix Overlay ---------- */
 body.light-theme .matrix-overlay {
     background: rgba(245, 245, 245, 0.95);
     color: #111;
@@ -1511,7 +1544,6 @@ body.light-theme .countdown {
     text-shadow: none;
 }
 
-/* ---------- Preloader ---------- */
 body.light-theme #preloader {
     background: #f5f5f5;
 }
@@ -1528,13 +1560,11 @@ body.light-theme #blocks {
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
 }
 
-/* ---------- Offline Message ---------- */
 body.light-theme .offline-message {
     background-color: #f5f5f5 !important;
     color: #111 !important;
 }
 
-/* ---------- CloudFlare Worker Content Overrides ---------- */
 body.light-theme #content a {
     color: #111 !important;
 }
@@ -1559,7 +1589,6 @@ body.light-theme #content .fa-lightbulb {
     color: #111;
 }
 
-/* ---------- Links Section Overrides ---------- */
 body.light-theme .links-wrapper {
     color: #111;
 }
@@ -1595,7 +1624,6 @@ body.light-theme .link-icon {
     color: #111 !important;
 }
 
-/* Force-download links injected by JS */
 body.light-theme a[id^="forceDownload"] {
     color: #111 !important;
 }
