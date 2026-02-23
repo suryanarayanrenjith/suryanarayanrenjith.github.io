@@ -92,30 +92,30 @@
     }
   })();
         
-(async function() {
-    function block() {
-      window.location.href = '/policy.html';
-    }
+// (async function() {
+//     function block() {
+//       window.location.href = '/policy.html';
+//     }
 
-    try {
-      const res = await fetch('https://surya-verify.vercel.app/api/verify-proxy', {
-        method: 'GET',
-        mode: 'cors',
-        credentials: 'omit'
-      });
+//     try {
+//       const res = await fetch('https://surya-verify.vercel.app/api/verify-proxy', {
+//         method: 'GET',
+//         mode: 'cors',
+//         credentials: 'omit'
+//       });
 
-      if (!res.ok) return block();
+//       if (!res.ok) return block();
 
-      const data = await res.json();
-      if (typeof data !== 'boolean') return block();
+//       const data = await res.json();
+//       if (typeof data !== 'boolean') return block();
 
-      if (data) return block();
+//       if (data) return block();
 
-    } catch (err) {
-      console.error('Proxy check error');
-      block();
-    }
-  })(); 
+//     } catch (err) {
+//       console.error('Proxy check error');
+//       block();
+//     }
+//   })(); 
 </script>
 
     <script>
@@ -1009,11 +1009,14 @@ function isDesktop() {
     function autoCollapse() {
         buttonhide.style.display = 'none';
         menubar.style.marginRight = '-20px';
+        buttonhide.style.opacity = '0';
+        buttonhide.style.pointerEvents = 'none';
     }
 
     function expandHeader() {
         buttonhide.style.display = 'block';
-        menubar.style.marginRight = '0px';
+        menubar.style.marginRight = '5px';
+        buttonhide.style.pointerEvents = 'auto';
     }
 
     function isMobileDevice() {
@@ -1159,12 +1162,7 @@ function isDesktop() {
     </div>
     
     <div id="preloader">
-        <div id="blocks">
-            <div class="block"></div>
-            <div class="block"></div>
-            <div class="block"></div>
-            <div class="block"></div>
-        </div>
+        <canvas id="preloaderCanvas"></canvas>
     </div>
 
 <div class="matrix-overlay" id="matrixOverlay">
@@ -1398,128 +1396,18 @@ document.addEventListener('DOMContentLoaded', function() {
     <canvas id="animationCanvas"></canvas>
     
     <style>
-#loader {
-    position: fixed;
-    top: 30%;
-    left: 50%;
-    text-align: center;
-    z-index: 1000;
-}
-
 #preloader {
-    display: none;
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
     background: #000;
-    z-index: 1000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    z-index: 10000;
     overflow: hidden;
-    perspective: 1000px;
 }
-
-#blocks {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: repeat(2, 1fr);
-    width: 100%;
-    height: 100%;
-    transform-style: preserve-3d;
-    will-change: transform, opacity;
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
-}
-
-.block {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    background: transparent;
-    border: 2px solid #fff;
-    transform: translateZ(50px) scale(1);
-    opacity: 1;
-    animation: cosmicShift 4s ease-in-out infinite forwards;
-}
-
-.block::before {
-    content: "";
-    position: absolute;
-    top: -5%;
-    left: -5%;
-    width: 110%;
-    height: 110%;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    filter: blur(8px);
-    z-index: -1;
-    opacity: 0.7;
-}
-
-.block:nth-child(1) {
-    animation-delay: 0s;
-}
-
-.block:nth-child(2) {
-    animation-delay: 0.3s;
-}
-
-.block:nth-child(3) {
-    animation-delay: 0.6s;
-}
-
-.block:nth-child(4) {
-    animation-delay: 0.9s;
-}
-
-@keyframes cosmicShift {
-    0% {
-        transform: rotate3d(0, 1, 0, 0deg) scale(1) translateZ(50px);
-        opacity: 1;
-    }
-    20% {
-        transform: rotate3d(1, 1, 0, 90deg) scale(1.1) translateZ(60px);
-        opacity: 0.9;
-    }
-    40% {
-        transform: rotate3d(1, 0, 1, 180deg) scale(0.9) translateZ(40px);
-        opacity: 0.8;
-    }
-    60% {
-        transform: rotate3d(0, 1, 1, 270deg) scale(1.2) translateZ(20px);
-        opacity: 0.7;
-    }
-    80% {
-        transform: rotate3d(1, 1, 1, 360deg) scale(0.8) translateZ(30px);
-        opacity: 0.5;
-    }
-    100% {
-        transform: rotate3d(0, 1, 0, 450deg) scale(0) translateZ(50px);
-        opacity: 0;
-    }
-}
-
-@media screen and (max-width: 768px) {
-    #blocks {
-        grid-template-columns: 1fr 1fr;
-        grid-template-rows: 1fr 1fr;
-    }
-    .block {
-        border-width: 1px;
-    }
-}
-
-@media screen and (max-width: 480px) {
-    #blocks {
-        grid-template-columns: 1fr;
-        grid-template-rows: 1fr;
-    }
-    .block {
-        width: 100vw;
-        height: 100vh;
-        border-width: 1px;
-    }
+body.light-theme #preloader { background: #f5f5f5; }
+#preloaderCanvas {
+    display: block;
+    width: 100%; height: 100%;
 }
     </style>
     
@@ -1527,39 +1415,334 @@ document.addEventListener('DOMContentLoaded', function() {
   document.addEventListener("DOMContentLoaded", () => {
       const params = new URLSearchParams(window.location.search);
       const currentSection = params.get('section') || '';
+      const preloader = document.getElementById('preloader');
 
       if (currentSection === 'links') {
-          const existingPreloader = document.getElementById('preloader');
-          if (existingPreloader) {
-              existingPreloader.style.display = 'none';
-          }
+          if (preloader) preloader.style.display = 'none';
           return;
       }
+      if (!preloader) return;
 
-      const loader = document.getElementById('loader');
-      if (loader) {
-          loader.id = 'preloader';
+      const canvas = document.getElementById('preloaderCanvas');
+      const ctx = canvas.getContext('2d');
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      let W, H, cx, cy;
+
+      function resize() {
+          W = window.innerWidth; H = window.innerHeight;
+          canvas.width = W * dpr; canvas.height = H * dpr;
+          canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          cx = W / 2; cy = H / 2;
       }
+      resize();
+      window.addEventListener('resize', resize);
 
-      const preloader = document.getElementById('preloader');
-      const blocks = document.querySelectorAll('.block');
+      const isLight = document.body.classList.contains('light-theme');
+      const fg = isLight ? [15, 15, 15] : [255, 255, 255];
+      const bg = isLight ? '#f5f5f5' : '#000';
+      const accent = isLight ? [80, 80, 80] : [150, 180, 255];
 
-      if (preloader) {
-          preloader.style.display = 'flex';
-      }
+      const TOTAL = 4000;
+      const t0 = performance.now();
+      let phase = 'vortex';
+      let running = true;
 
-      setTimeout(() => {
-          blocks.forEach(block => {
-              block.style.willChange = 'transform, opacity';
+      const mobile = W < 768;
+      const N = mobile ? 180 : 450;
+      const ps = [];
+      for (let i = 0; i < N; i++) {
+          const a = Math.random() * Math.PI * 2;
+          const r = 80 + Math.random() * Math.max(W, H) * 0.6;
+          ps.push({
+              x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r,
+              ox: 0, oy: 0,
+              r: Math.random() * 1.8 + 0.3,
+              a: a, orbitR: r,
+              speed: 0.0008 + Math.random() * 0.002,
+              drift: 0.998 - Math.random() * 0.004,
+              alpha: Math.random() * 0.4 + 0.1,
+              trail: []
           });
-      }, 100);
+      }
 
-      setTimeout(() => {
-          document.body.classList.add('loaded');
-          if (preloader) {
-              preloader.style.display = 'none';
+      const phi = (1 + Math.sqrt(5)) / 2;
+      const icoVerts = [
+        [-1, phi, 0],[1, phi, 0],[-1,-phi, 0],[1,-phi, 0],
+        [0,-1, phi],[0, 1, phi],[0,-1,-phi],[0, 1,-phi],
+        [phi, 0,-1],[phi, 0, 1],[-phi, 0,-1],[-phi, 0, 1]
+      ];
+      const icoEdges = [
+        [0,1],[0,5],[0,7],[0,10],[0,11],[1,5],[1,7],[1,8],[1,9],
+        [2,3],[2,4],[2,6],[2,10],[2,11],[3,4],[3,6],[3,8],[3,9],
+        [4,5],[4,9],[4,11],[5,9],[5,11],[6,7],[6,8],[6,10],
+        [7,8],[7,10],[8,9],[10,11]
+      ];
+      const icoScale = mobile ? 45 : 70;
+      let icoRotX = 0, icoRotY = 0, icoRotZ = 0;
+
+      function project3D(v, rX, rY, rZ) {
+          let [x, y, z] = v;
+          let c = Math.cos(rY), s = Math.sin(rY);
+          let x1 = x * c + z * s, z1 = -x * s + z * c;
+          c = Math.cos(rX); s = Math.sin(rX);
+          let y1 = y * c - z1 * s, z2 = y * s + z1 * c;
+          c = Math.cos(rZ); s = Math.sin(rZ);
+          let x2 = x1 * c - y1 * s, y2 = x1 * s + y1 * c;
+          const perspective = 400 / (400 + z2 * 20);
+          return { x: x2 * icoScale * perspective, y: y2 * icoScale * perspective, z: z2 };
+      }
+
+      /* ═══ TEXT ═══ */
+      const letters = ['S', 'R'];
+      let textRevealT = 0;
+
+      /* ═══ GLOW / RING / SHOCKWAVE ═══ */
+      let ringRadius = 0, ringAlpha = 0, ringPulse = 0;
+      let shockR = 0, shockAlpha = 0;
+
+      /* ═══ MAIN LOOP ═══ */
+      function frame(now) {
+          if (!running) return;
+          const elapsed = now - t0;
+          const t = Math.min(elapsed / TOTAL, 1);
+
+          ctx.globalAlpha = 1;
+          ctx.fillStyle = bg;
+          ctx.fillRect(0, 0, W, H);
+
+          if (t < 0.55) phase = 'vortex';
+          else if (t < 0.75) phase = 'converge';
+          else if (t < 0.92) phase = 'reveal';
+          else phase = 'exit';
+
+          const vortexT = Math.min(t / 0.55, 1);
+          const convergeT = phase === 'converge' || phase === 'reveal' || phase === 'exit'
+              ? Math.min((t - 0.55) / 0.2, 1) : 0;
+          const revealT = phase === 'reveal' || phase === 'exit'
+              ? Math.min((t - 0.75) / 0.17, 1) : 0;
+          const exitT = phase === 'exit' ? Math.min((t - 0.92) / 0.08, 1) : 0;
+
+          /* ── 1) PARTICLES ── */
+          const vortexSpeed = 0.015 + vortexT * 0.025;
+          const pullStrength = convergeT * 0.06;
+          for (const p of ps) {
+              p.a += p.speed + vortexSpeed;
+              p.orbitR *= p.drift;
+              if (convergeT > 0) p.orbitR = p.orbitR * (1 - pullStrength) + 2 * pullStrength;
+              if (exitT > 0) {
+                  const dx = p.x - cx, dy = p.y - cy;
+                  const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                  p.x += (dx / dist) * exitT * 15;
+                  p.y += (dy / dist) * exitT * 15;
+                  p.alpha *= 0.94;
+              } else {
+                  p.x = cx + Math.cos(p.a) * p.orbitR;
+                  p.y = cy + Math.sin(p.a) * p.orbitR;
+              }
+              p.trail.push({ x: p.x, y: p.y });
+              if (p.trail.length > 6) p.trail.shift();
+              for (let ti = 0; ti < p.trail.length - 1; ti++) {
+                  const ta = p.alpha * (ti / p.trail.length) * 0.3;
+                  ctx.beginPath();
+                  ctx.moveTo(p.trail[ti].x, p.trail[ti].y);
+                  ctx.lineTo(p.trail[ti + 1].x, p.trail[ti + 1].y);
+                  ctx.strokeStyle = `rgba(${fg[0]},${fg[1]},${fg[2]},${ta})`;
+                  ctx.lineWidth = p.r * 0.5;
+                  ctx.stroke();
+              }
+              ctx.beginPath();
+              ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+              ctx.fillStyle = `rgba(${fg[0]},${fg[1]},${fg[2]},${p.alpha})`;
+              ctx.fill();
           }
-      }, 4000);
+
+          /* ── 2) WIREFRAME ICOSAHEDRON ── */
+          const icoAlpha = vortexT * 0.6 * (1 - exitT);
+          if (icoAlpha > 0.01) {
+              icoRotX += 0.008; icoRotY += 0.012; icoRotZ += 0.004;
+              const breathe = 1 + Math.sin(elapsed * 0.002) * 0.08;
+              const projected = icoVerts.map(v =>
+                  project3D([v[0] * breathe, v[1] * breathe, v[2] * breathe], icoRotX, icoRotY, icoRotZ)
+              );
+              ctx.save();
+              ctx.translate(cx, cy);
+              ctx.globalAlpha = icoAlpha;
+              for (const [a, b] of icoEdges) {
+                  const pa = projected[a], pb = projected[b];
+                  const depth = Math.min(pa.z, pb.z);
+                  const edgeA = 0.15 + (depth + 2) * 0.15;
+                  ctx.beginPath();
+                  ctx.moveTo(pa.x, pa.y);
+                  ctx.lineTo(pb.x, pb.y);
+                  ctx.strokeStyle = `rgba(${accent[0]},${accent[1]},${accent[2]},${edgeA})`;
+                  ctx.lineWidth = 0.8;
+                  ctx.stroke();
+              }
+              for (const p of projected) {
+                  const dotA = 0.3 + (p.z + 2) * 0.2;
+                  ctx.beginPath();
+                  ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+                  ctx.fillStyle = `rgba(${accent[0]},${accent[1]},${accent[2]},${dotA})`;
+                  ctx.fill();
+              }
+              ctx.restore();
+          }
+
+          /* ── 3) GLOW RING ── */
+          ringRadius = 40 + vortexT * 50 - convergeT * 30;
+          ringPulse += 0.05;
+          ringAlpha = (0.15 + Math.sin(ringPulse) * 0.1) * (1 - exitT);
+          if (ringAlpha > 0.01) {
+              const grad = ctx.createRadialGradient(cx, cy, ringRadius * 0.3, cx, cy, ringRadius * 1.5);
+              grad.addColorStop(0, `rgba(${fg[0]},${fg[1]},${fg[2]},${ringAlpha * 0.6})`);
+              grad.addColorStop(0.5, `rgba(${accent[0]},${accent[1]},${accent[2]},${ringAlpha * 0.3})`);
+              grad.addColorStop(1, 'transparent');
+              ctx.beginPath();
+              ctx.arc(cx, cy, ringRadius * 1.5, 0, Math.PI * 2);
+              ctx.fillStyle = grad;
+              ctx.fill();
+              ctx.beginPath();
+              ctx.arc(cx, cy, ringRadius, 0, Math.PI * 2);
+              ctx.strokeStyle = `rgba(${fg[0]},${fg[1]},${fg[2]},${ringAlpha * 0.5})`;
+              ctx.lineWidth = 0.5;
+              ctx.stroke();
+          }
+
+          /* ── 4) PROGRESS ARC ── */
+          const arcAlpha = 0.4 * (1 - exitT);
+          const arcR = mobile ? 55 : 80;
+          if (arcAlpha > 0.01) {
+              const eased = 1 - Math.pow(1 - Math.min(t / 0.92, 1), 3);
+              ctx.beginPath();
+              ctx.arc(cx, cy, arcR, -Math.PI / 2, -Math.PI / 2 + eased * Math.PI * 2);
+              ctx.strokeStyle = `rgba(${fg[0]},${fg[1]},${fg[2]},${arcAlpha})`;
+              ctx.lineWidth = 1.5;
+              ctx.lineCap = 'round';
+              ctx.stroke();
+              ctx.beginPath();
+              ctx.arc(cx, cy, arcR, 0, Math.PI * 2);
+              ctx.strokeStyle = `rgba(${fg[0]},${fg[1]},${fg[2]},0.06)`;
+              ctx.lineWidth = 1;
+              ctx.stroke();
+              const tipA = -Math.PI / 2 + eased * Math.PI * 2;
+              ctx.beginPath();
+              ctx.arc(cx + Math.cos(tipA) * arcR, cy + Math.sin(tipA) * arcR, 3, 0, Math.PI * 2);
+              ctx.fillStyle = `rgba(${fg[0]},${fg[1]},${fg[2]},${arcAlpha * 1.5})`;
+              ctx.fill();
+          }
+
+          /* ── 5) TEXT REVEAL — "SR" ── */
+          if (revealT > 0) {
+              textRevealT = revealT;
+              const fontSize = mobile ? 52 : 80;
+              ctx.save();
+              ctx.font = `100 ${fontSize}px 'Segoe UI', 'Helvetica Neue', Arial, sans-serif`;
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+
+              /* Measure each letter for precise kerning */
+              const gap = mobile ? 8 : 14;
+              const widths = letters.map(ch => ctx.measureText(ch).width);
+              const totalW = widths[0] + gap + widths[1];
+              const positions = [
+                  cx - totalW / 2 + widths[0] / 2,
+                  cx + totalW / 2 - widths[1] / 2
+              ];
+
+              letters.forEach((ch, i) => {
+                  const charT = Math.max(0, Math.min(1, (textRevealT - i * 0.25) / 0.6));
+                  const eased = 1 - Math.pow(1 - charT, 4);
+                  if (eased < 0.01) return;
+
+                  /* Glitch jitter that calms down */
+                  const jitter = charT < 0.5 ? (Math.random() - 0.5) * (1 - charT) * 8 : 0;
+                  const charX = positions[i] + jitter;
+                  const charY = cy + jitter * 0.3;
+                  const a = eased * (1 - exitT);
+
+                  /* Bloom glow layer */
+                  ctx.globalAlpha = a * 0.2;
+                  ctx.fillStyle = `rgba(${accent[0]},${accent[1]},${accent[2]},1)`;
+                  ctx.filter = 'blur(16px)';
+                  ctx.fillText(ch, charX, charY);
+                  ctx.filter = 'none';
+
+                  /* Mid glow */
+                  ctx.globalAlpha = a * 0.35;
+                  ctx.filter = 'blur(4px)';
+                  ctx.fillStyle = `rgba(${fg[0]},${fg[1]},${fg[2]},1)`;
+                  ctx.fillText(ch, charX, charY);
+                  ctx.filter = 'none';
+
+                  /* Crisp layer */
+                  ctx.globalAlpha = a;
+                  ctx.fillStyle = `rgba(${fg[0]},${fg[1]},${fg[2]},1)`;
+                  ctx.fillText(ch, charX, charY);
+              });
+
+              /* Thin separator line between S and R */
+              const lineA = Math.min(1, textRevealT / 0.7) * (1 - exitT);
+              if (lineA > 0.01) {
+                  ctx.globalAlpha = lineA * 0.25;
+                  ctx.beginPath();
+                  ctx.moveTo(cx, cy - fontSize * 0.35);
+                  ctx.lineTo(cx, cy + fontSize * 0.35);
+                  ctx.strokeStyle = `rgba(${fg[0]},${fg[1]},${fg[2]},1)`;
+                  ctx.lineWidth = 0.8;
+                  ctx.stroke();
+              }
+              ctx.restore();
+
+              /* Sub-text */
+              const subA = Math.max(0, (textRevealT - 0.4) / 0.6) * (1 - exitT);
+              if (subA > 0.01) {
+                  ctx.save();
+                  ctx.globalAlpha = subA * 0.3;
+                  ctx.font = `300 ${mobile ? 9 : 11}px 'Segoe UI', 'Helvetica Neue', Arial, sans-serif`;
+                  ctx.textAlign = 'center';
+                  ctx.textBaseline = 'middle';
+                  ctx.fillStyle = `rgba(${fg[0]},${fg[1]},${fg[2]},1)`;
+                  const subText = 'S U R Y A N A R A Y A N   R E N J I T H';
+                  ctx.fillText(subText, cx, cy + (mobile ? 38 : 56));
+                  ctx.restore();
+              }
+          }
+
+          /* ── 6) SHOCKWAVE EXIT ── */
+          if (exitT > 0) {
+              shockR = exitT * Math.max(W, H) * 0.9;
+              shockAlpha = (1 - exitT) * 0.5;
+              ctx.beginPath();
+              ctx.arc(cx, cy, shockR, 0, Math.PI * 2);
+              ctx.strokeStyle = `rgba(${fg[0]},${fg[1]},${fg[2]},${shockAlpha})`;
+              ctx.lineWidth = 2 + exitT * 6;
+              ctx.stroke();
+              if (exitT > 0.6) {
+                  ctx.globalAlpha = (exitT - 0.6) / 0.4;
+                  ctx.fillStyle = bg;
+                  ctx.fillRect(0, 0, W, H);
+              }
+          }
+
+          /* ── SCANLINES ── */
+          if (exitT < 0.5) {
+              ctx.globalAlpha = 0.025;
+              for (let sy = 0; sy < H; sy += 3) {
+                  ctx.fillStyle = `rgba(${fg[0]},${fg[1]},${fg[2]},0.025)`;
+                  ctx.fillRect(0, sy, W, 1);
+              }
+          }
+
+          if (t >= 1) {
+              running = false;
+              preloader.style.display = 'none';
+              document.body.classList.add('loaded');
+              return;
+          }
+          requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
   });
 </script>
 
@@ -1579,7 +1762,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.body.style.cursor = 'crosshair';
 
     /* Dynamic star color for light/dark theme */
-    let starR = 255, starG = 255, starB = 255;
+    const isLightInit = document.body.classList.contains('light-theme');
+    let starR = isLightInit ? 30 : 255;
+    let starG = isLightInit ? 30 : 255;
+    let starB = isLightInit ? 30 : 255;
     window.addEventListener('themeChanged', (e) => {
         if (e.detail && e.detail.light) {
             starR = 30; starG = 30; starB = 30;
