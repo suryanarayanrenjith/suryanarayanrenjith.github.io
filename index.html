@@ -32,7 +32,25 @@
     <meta property="og:image" content="https://surya.is-a.dev/assets/bg.png" />
     <meta property="og:url" content="https://surya.is-a.dev/" />
     <meta property="og:type" content="website" />
-    <script src="/blocker.js"></script>
+
+    <!-- Resource hints for faster external resource loading -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
+    <link rel="preconnect" href="https://pages.surya-ops.workers.dev" crossorigin>
+    <link rel="preconnect" href="https://surya-verify.vercel.app" crossorigin>
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="dns-prefetch" href="https://www.googletagmanager.com">
+    <link rel="dns-prefetch" href="https://pages.surya-ops.workers.dev">
+    <link rel="dns-prefetch" href="https://surya-verify.vercel.app">
+    <link rel="dns-prefetch" href="https://uptime.surya-ops.workers.dev">
+
+    <!-- Preload critical resources -->
+    <link rel="preload" href="styles.css" as="style">
+    <link rel="preload" href="/blocker.js" as="script">
+
+    <script defer src="/blocker.js"></script>
     <script type="application/ld+json">
         {
           "@context": "https://schema.org",
@@ -53,7 +71,8 @@
     gtag('config', 'G-0QSEZ9VSPZ');
     </script> 
     <title>Suryanarayan Renjith</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"></noscript>
     <script>
   (async function verifyAndProceed() {
     function getFingerprint() {
@@ -92,30 +111,30 @@
     }
   })();
         
-// (async function() {
-//     function block() {
-//       window.location.href = '/policy.html';
-//     }
+(async function() {
+    function block() {
+      window.location.href = '/policy.html';
+    }
 
-//     try {
-//       const res = await fetch('https://surya-verify.vercel.app/api/verify-proxy', {
-//         method: 'GET',
-//         mode: 'cors',
-//         credentials: 'omit'
-//       });
+    try {
+      const res = await fetch('https://surya-verify.vercel.app/api/verify-proxy', {
+        method: 'GET',
+        mode: 'cors',
+        credentials: 'omit'
+      });
 
-//       if (!res.ok) return block();
+      if (!res.ok) return block();
 
-//       const data = await res.json();
-//       if (typeof data !== 'boolean') return block();
+      const data = await res.json();
+      if (typeof data !== 'boolean') return block();
 
-//       if (data) return block();
+      if (data) return block();
 
-//     } catch (err) {
-//       console.error('Proxy check error');
-//       block();
-//     }
-//   })(); 
+    } catch (err) {
+      console.error('Proxy check error');
+      block();
+    }
+  })(); 
 </script>
 
     <script>
@@ -150,7 +169,7 @@
 });
     </script>
     <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png" fetchpriority="high">
     <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
     <link rel="manifest" href="assets/favicon/site.webmanifest">
     <link rel="stylesheet" href="styles.css">
@@ -170,7 +189,138 @@
 #fa-test {
     position: absolute;
     visibility: hidden;
-        }
+}
+
+#content.transitioning {
+    will-change: transform, opacity, filter;
+    pointer-events: none;
+}
+.slide-out-up { animation: slideOutUp 0.42s cubic-bezier(0.55, 0, 0.7, 0.2) forwards; }
+.slide-out-down { animation: slideOutDown 0.42s cubic-bezier(0.55, 0, 0.7, 0.2) forwards; }
+.slide-out-left { animation: slideOutLeft 0.42s cubic-bezier(0.55, 0, 0.7, 0.2) forwards; }
+.slide-out-right { animation: slideOutRight 0.42s cubic-bezier(0.55, 0, 0.7, 0.2) forwards; }
+.slide-in-from-bottom { animation: slideInFromBottom 0.65s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.slide-in-from-top { animation: slideInFromTop 0.65s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.slide-in-from-left { animation: slideInFromLeft 0.65s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.slide-in-from-right { animation: slideInFromRight 0.65s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.m-slide-out-up { animation: mSlideOutUp 0.38s cubic-bezier(0.55, 0, 0.7, 0.2) forwards; }
+.m-slide-out-down { animation: mSlideOutDown 0.38s cubic-bezier(0.55, 0, 0.7, 0.2) forwards; }
+.m-slide-out-left { animation: mSlideOutLeft 0.38s cubic-bezier(0.55, 0, 0.7, 0.2) forwards; }
+.m-slide-out-right { animation: mSlideOutRight 0.38s cubic-bezier(0.55, 0, 0.7, 0.2) forwards; }
+.m-slide-in-from-bottom { animation: mSlideInFromBottom 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.m-slide-in-from-top { animation: mSlideInFromTop 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.m-slide-in-from-left { animation: mSlideInFromLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.m-slide-in-from-right { animation: mSlideInFromRight 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@keyframes slideOutUp {
+    0%   { transform: translateY(0) scale(1); opacity: 1; filter: blur(0px); }
+    100% { transform: translateY(-50px) scale(0.95); opacity: 0; filter: blur(6px); }
+}
+@keyframes slideOutDown {
+    0%   { transform: translateY(0) scale(1); opacity: 1; filter: blur(0px); }
+    100% { transform: translateY(50px) scale(0.95); opacity: 0; filter: blur(6px); }
+}
+@keyframes slideOutLeft {
+    0%   { transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1); opacity: 1; filter: blur(0px); }
+    100% { transform: perspective(1200px) translateX(-80px) rotateY(4deg) scale(0.96); opacity: 0; filter: blur(4px); }
+}
+@keyframes slideOutRight {
+    0%   { transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1); opacity: 1; filter: blur(0px); }
+    100% { transform: perspective(1200px) translateX(80px) rotateY(-4deg) scale(0.96); opacity: 0; filter: blur(4px); }
+}
+@keyframes slideInFromBottom {
+    0%   { transform: translateY(70px) scale(0.93); opacity: 0; filter: blur(8px); }
+    50%  { opacity: 0.7; filter: blur(2px); }
+    100% { transform: translateY(0) scale(1); opacity: 1; filter: blur(0px); }
+}
+@keyframes slideInFromTop {
+    0%   { transform: translateY(-70px) scale(0.93); opacity: 0; filter: blur(8px); }
+    50%  { opacity: 0.7; filter: blur(2px); }
+    100% { transform: translateY(0) scale(1); opacity: 1; filter: blur(0px); }
+}
+@keyframes slideInFromLeft {
+    0%   { transform: perspective(1200px) translateX(-90px) rotateY(5deg) scale(0.95); opacity: 0; filter: blur(6px); }
+    50%  { opacity: 0.7; filter: blur(1.5px); }
+    100% { transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1); opacity: 1; filter: blur(0px); }
+}
+@keyframes slideInFromRight {
+    0%   { transform: perspective(1200px) translateX(90px) rotateY(-5deg) scale(0.95); opacity: 0; filter: blur(6px); }
+    50%  { opacity: 0.7; filter: blur(1.5px); }
+    100% { transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1); opacity: 1; filter: blur(0px); }
+}
+@keyframes mSlideOutUp {
+    0%   { transform: perspective(1200px) translateY(0) rotateX(0deg) scale(1); opacity: 1; filter: blur(0px); }
+    100% { transform: perspective(1200px) translateY(-35px) rotateX(12deg) scale(0.92); opacity: 0; filter: blur(4px); }
+}
+@keyframes mSlideOutDown {
+    0%   { transform: perspective(1200px) translateY(0) rotateX(0deg) scale(1); opacity: 1; filter: blur(0px); }
+    100% { transform: perspective(1200px) translateY(35px) rotateX(-12deg) scale(0.92); opacity: 0; filter: blur(4px); }
+}
+@keyframes mSlideOutLeft {
+    0%   { transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1); opacity: 1; filter: blur(0px); }
+    100% { transform: perspective(1200px) translateX(-50px) rotateY(15deg) scale(0.92); opacity: 0; filter: blur(3px); }
+}
+@keyframes mSlideOutRight {
+    0%   { transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1); opacity: 1; filter: blur(0px); }
+    100% { transform: perspective(1200px) translateX(50px) rotateY(-15deg) scale(0.92); opacity: 0; filter: blur(3px); }
+}
+@keyframes mSlideInFromBottom {
+    0%   { transform: perspective(1200px) translateY(50px) rotateX(-8deg) scale(0.9); opacity: 0; filter: blur(6px); }
+    60%  { filter: blur(1px); }
+    100% { transform: perspective(1200px) translateY(0) rotateX(0deg) scale(1); opacity: 1; filter: blur(0px); }
+}
+@keyframes mSlideInFromTop {
+    0%   { transform: perspective(1200px) translateY(-50px) rotateX(8deg) scale(0.9); opacity: 0; filter: blur(6px); }
+    60%  { filter: blur(1px); }
+    100% { transform: perspective(1200px) translateY(0) rotateX(0deg) scale(1); opacity: 1; filter: blur(0px); }
+}
+@keyframes mSlideInFromLeft {
+    0%   { transform: perspective(1200px) translateX(-60px) rotateY(12deg) scale(0.9); opacity: 0; filter: blur(5px); }
+    60%  { filter: blur(1px); }
+    100% { transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1); opacity: 1; filter: blur(0px); }
+}
+@keyframes mSlideInFromRight {
+    0%   { transform: perspective(1200px) translateX(60px) rotateY(-12deg) scale(0.9); opacity: 0; filter: blur(5px); }
+    60%  { filter: blur(1px); }
+    100% { transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1); opacity: 1; filter: blur(0px); }
+}
+
+.offline-message {
+    display: none;
+    position: fixed;
+    top: 20%;
+    left: 0;
+    width: 100%;
+    background-color: black;
+    color: white;
+    padding: 15px;
+    text-align: center;
+    font-size: 18px;
+    z-index: 1000;
+}
+@media only screen and (max-width: 600px) {
+    .offline-message { font-size: 14px; padding: 10px; }
+}
+@media only screen and (min-width: 601px) and (max-width: 1024px) {
+    .offline-message { font-size: 16px; }
+}
+
+#preloader {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: #000;
+    z-index: 10000;
+    overflow: hidden;
+}
+body.light-theme #preloader { background: #f5f5f5; }
+#preloaderCanvas {
+    display: block;
+    width: 100%; height: 100%;
+}
+
+*, *::before, *::after { -webkit-tap-highlight-color: transparent; }
+button, a, .tab-button, .shortcut-key, .shortcuts-list li { outline: none; }
 </style>
 
 <i id="fa-test" class="fa-solid fa-circle-exclamation"></i>
@@ -287,7 +437,7 @@ function isDesktop() {
                         <div class="tab-pane active" id="about-tab">
                             <div class="about-section">
                                 <div class="favicon-container">
-                                    <img src="/assets/favicon/android-chrome-512x512.png" alt="Favicon" class="favicon" />
+                                    <img src="/assets/favicon/android-chrome-512x512.png" alt="Favicon" class="favicon" loading="lazy" decoding="async" width="80" height="80" />
                                 </div>
                                 <h3 class="website-title">Surya Website</h3>
                                 <p id="yearRange">
@@ -339,12 +489,8 @@ function isDesktop() {
         
         <script>
             document.addEventListener('DOMContentLoaded', () => {
-              const styleFix = document.createElement('style');
-              styleFix.textContent = `
-              *, *::before, *::after { -webkit-tap-highlight-color: transparent; }
-              button, a, .tab-button, .shortcut-key, .shortcuts-list li { outline: none; }`;
-              document.head.appendChild(styleFix);
-                
+              /* styleFix CSS moved to static style block for faster parsing */
+
               const keyValue     = 'uptimeResponseTime';
               const keyTimestamp = 'uptimeResponseTimeTimestamp';
               const now          = Date.now();
@@ -607,191 +753,14 @@ function isDesktop() {
         </div>
     </noscript>
 
-    <style>
-    .offline-message {
-            display: none;
-            position: fixed;
-            top: 20%;
-            left: 0;
-            width: 100%;
-            background-color: black;
-            color: white;
-            padding: 15px;
-            text-align: center;
-            font-size: 18px;
-            z-index: 1000;
-        }
-
-        @media only screen and (max-width: 600px) {
-            .offline-message {
-                font-size: 14px;
-                padding: 10px;
-            }
-        }
-
-        @media only screen and (min-width: 601px) and (max-width: 1024px) {
-            .offline-message {
-                font-size: 16px;
-            }
-        }
-</style>
+    <!-- offline-message styles consolidated into main style block above -->
 
     <script>   
         const CLOUD_FLARE_WORKER_URL = 'https://pages.surya-ops.workers.dev/';
         
         let isMobile = /Mobi|Android/i.test(navigator.userAgent);
         
-        function addAnimationStyles() {
-            const style = document.createElement('style');
-            style.innerHTML = `
-                /* ─── Transition base ─── */
-                #content.transitioning {
-                    will-change: transform, opacity, filter;
-                    pointer-events: none;
-                }
-
-                /* ═══════════════════════════════════════
-                   DESKTOP EXIT  (ease-in)
-                   ═══════════════════════════════════════ */
-                .slide-out-up {
-                    animation: slideOutUp 0.42s cubic-bezier(0.55, 0, 0.7, 0.2) forwards;
-                }
-                .slide-out-down {
-                    animation: slideOutDown 0.42s cubic-bezier(0.55, 0, 0.7, 0.2) forwards;
-                }
-                .slide-out-left {
-                    animation: slideOutLeft 0.42s cubic-bezier(0.55, 0, 0.7, 0.2) forwards;
-                }
-                .slide-out-right {
-                    animation: slideOutRight 0.42s cubic-bezier(0.55, 0, 0.7, 0.2) forwards;
-                }
-
-                /* ═══════════════════════════════════════
-                   DESKTOP ENTER (spring ease-out)
-                   ═══════════════════════════════════════ */
-                .slide-in-from-bottom {
-                    animation: slideInFromBottom 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
-                }
-                .slide-in-from-top {
-                    animation: slideInFromTop 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
-                }
-                .slide-in-from-left {
-                    animation: slideInFromLeft 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
-                }
-                .slide-in-from-right {
-                    animation: slideInFromRight 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
-                }
-
-                /* ═══════════════════════════════════════
-                   MOBILE EXIT  (ease-in)
-                   ═══════════════════════════════════════ */
-                .m-slide-out-up {
-                    animation: mSlideOutUp 0.38s cubic-bezier(0.55, 0, 0.7, 0.2) forwards;
-                }
-                .m-slide-out-down {
-                    animation: mSlideOutDown 0.38s cubic-bezier(0.55, 0, 0.7, 0.2) forwards;
-                }
-                .m-slide-out-left {
-                    animation: mSlideOutLeft 0.38s cubic-bezier(0.55, 0, 0.7, 0.2) forwards;
-                }
-                .m-slide-out-right {
-                    animation: mSlideOutRight 0.38s cubic-bezier(0.55, 0, 0.7, 0.2) forwards;
-                }
-
-                /* ═══════════════════════════════════════
-                   MOBILE ENTER (spring ease-out)
-                   ═══════════════════════════════════════ */
-                .m-slide-in-from-bottom {
-                    animation: mSlideInFromBottom 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
-                }
-                .m-slide-in-from-top {
-                    animation: mSlideInFromTop 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
-                }
-                .m-slide-in-from-left {
-                    animation: mSlideInFromLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
-                }
-                .m-slide-in-from-right {
-                    animation: mSlideInFromRight 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
-                }
-
-                @keyframes slideOutUp {
-                    0%   { transform: translateY(0) scale(1); opacity: 1; filter: blur(0px); }
-                    100% { transform: translateY(-50px) scale(0.95); opacity: 0; filter: blur(6px); }
-                }
-                @keyframes slideOutDown {
-                    0%   { transform: translateY(0) scale(1); opacity: 1; filter: blur(0px); }
-                    100% { transform: translateY(50px) scale(0.95); opacity: 0; filter: blur(6px); }
-                }
-                @keyframes slideOutLeft {
-                    0%   { transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1); opacity: 1; filter: blur(0px); }
-                    100% { transform: perspective(1200px) translateX(-80px) rotateY(4deg) scale(0.96); opacity: 0; filter: blur(4px); }
-                }
-                @keyframes slideOutRight {
-                    0%   { transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1); opacity: 1; filter: blur(0px); }
-                    100% { transform: perspective(1200px) translateX(80px) rotateY(-4deg) scale(0.96); opacity: 0; filter: blur(4px); }
-                }
-
-                @keyframes slideInFromBottom {
-                    0%   { transform: translateY(70px) scale(0.93); opacity: 0; filter: blur(8px); }
-                    50%  { opacity: 0.7; filter: blur(2px); }
-                    100% { transform: translateY(0) scale(1); opacity: 1; filter: blur(0px); }
-                }
-                @keyframes slideInFromTop {
-                    0%   { transform: translateY(-70px) scale(0.93); opacity: 0; filter: blur(8px); }
-                    50%  { opacity: 0.7; filter: blur(2px); }
-                    100% { transform: translateY(0) scale(1); opacity: 1; filter: blur(0px); }
-                }
-                @keyframes slideInFromLeft {
-                    0%   { transform: perspective(1200px) translateX(-90px) rotateY(5deg) scale(0.95); opacity: 0; filter: blur(6px); }
-                    50%  { opacity: 0.7; filter: blur(1.5px); }
-                    100% { transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1); opacity: 1; filter: blur(0px); }
-                }
-                @keyframes slideInFromRight {
-                    0%   { transform: perspective(1200px) translateX(90px) rotateY(-5deg) scale(0.95); opacity: 0; filter: blur(6px); }
-                    50%  { opacity: 0.7; filter: blur(1.5px); }
-                    100% { transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1); opacity: 1; filter: blur(0px); }
-                }
-
-                @keyframes mSlideOutUp {
-                    0%   { transform: perspective(1200px) translateY(0) rotateX(0deg) scale(1); opacity: 1; filter: blur(0px); }
-                    100% { transform: perspective(1200px) translateY(-35px) rotateX(12deg) scale(0.92); opacity: 0; filter: blur(4px); }
-                }
-                @keyframes mSlideOutDown {
-                    0%   { transform: perspective(1200px) translateY(0) rotateX(0deg) scale(1); opacity: 1; filter: blur(0px); }
-                    100% { transform: perspective(1200px) translateY(35px) rotateX(-12deg) scale(0.92); opacity: 0; filter: blur(4px); }
-                }
-                @keyframes mSlideOutLeft {
-                    0%   { transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1); opacity: 1; filter: blur(0px); }
-                    100% { transform: perspective(1200px) translateX(-50px) rotateY(15deg) scale(0.92); opacity: 0; filter: blur(3px); }
-                }
-                @keyframes mSlideOutRight {
-                    0%   { transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1); opacity: 1; filter: blur(0px); }
-                    100% { transform: perspective(1200px) translateX(50px) rotateY(-15deg) scale(0.92); opacity: 0; filter: blur(3px); }
-                }
-
-                @keyframes mSlideInFromBottom {
-                    0%   { transform: perspective(1200px) translateY(50px) rotateX(-8deg) scale(0.9); opacity: 0; filter: blur(6px); }
-                    60%  { filter: blur(1px); }
-                    100% { transform: perspective(1200px) translateY(0) rotateX(0deg) scale(1); opacity: 1; filter: blur(0px); }
-                }
-                @keyframes mSlideInFromTop {
-                    0%   { transform: perspective(1200px) translateY(-50px) rotateX(8deg) scale(0.9); opacity: 0; filter: blur(6px); }
-                    60%  { filter: blur(1px); }
-                    100% { transform: perspective(1200px) translateY(0) rotateX(0deg) scale(1); opacity: 1; filter: blur(0px); }
-                }
-                @keyframes mSlideInFromLeft {
-                    0%   { transform: perspective(1200px) translateX(-60px) rotateY(12deg) scale(0.9); opacity: 0; filter: blur(5px); }
-                    60%  { filter: blur(1px); }
-                    100% { transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1); opacity: 1; filter: blur(0px); }
-                }
-                @keyframes mSlideInFromRight {
-                    0%   { transform: perspective(1200px) translateX(60px) rotateY(-12deg) scale(0.9); opacity: 0; filter: blur(5px); }
-                    60%  { filter: blur(1px); }
-                    100% { transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1); opacity: 1; filter: blur(0px); }
-                }
-            `;
-            document.head.appendChild(style);
-        }
+        /* addAnimationStyles moved to static <style> block above for faster parsing */
         
         document.addEventListener('DOMContentLoaded', () => {
             const urlParams       = new URLSearchParams(window.location.search);
@@ -974,7 +943,6 @@ function isDesktop() {
             }
         }
         
-        addAnimationStyles();
         showContent('home', 'none');
         updateProgressBar('home');
     </script>
@@ -1009,7 +977,6 @@ function isDesktop() {
     function autoCollapse() {
         buttonhide.style.display = 'none';
         menubar.style.marginRight = '-20px';
-        buttonhide.style.opacity = '0';
         buttonhide.style.pointerEvents = 'none';
     }
 
@@ -1395,21 +1362,7 @@ document.addEventListener('DOMContentLoaded', function() {
     </footer>
     <canvas id="animationCanvas"></canvas>
     
-    <style>
-#preloader {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: #000;
-    z-index: 10000;
-    overflow: hidden;
-}
-body.light-theme #preloader { background: #f5f5f5; }
-#preloaderCanvas {
-    display: block;
-    width: 100%; height: 100%;
-}
-    </style>
+    <!-- preloader styles consolidated into main style block above -->
     
     <script>
   document.addEventListener("DOMContentLoaded", () => {
