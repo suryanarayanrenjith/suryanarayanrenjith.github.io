@@ -17,6 +17,9 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png" />
   <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png" />
   <link rel="manifest" href="assets/favicon/site.webmanifest" />
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
   <style>
@@ -984,7 +987,7 @@
               
               ctx.beginPath();
               ctx.fillStyle = `rgba(176, 183, 214, ${0.2 + wave * 0.3})`;
-              ctx.arc(posX, posY, radius, 0, Math.PI * 2);
+              ctx.arc(posX, posY, radius, 0, 6.2832);
               ctx.fill();
             }
           }
@@ -1050,9 +1053,10 @@
           // Mouse interaction
           const dx = this.x - mouseX;
           const dy = this.y - mouseY;
-          const distance = Math.sqrt(dx * dx + dy * dy);
+          const distSq = dx * dx + dy * dy;
           
-          if (distance < 100) {
+          if (distSq < 10000) {
+            const distance = Math.sqrt(distSq);
             const force = (100 - distance) / 100;
             this.speedX += dx * force * 0.01;
             this.speedY += dy * force * 0.01;
@@ -1076,15 +1080,10 @@
         }
         
         draw() {
-          ctx.save();
           ctx.globalAlpha = this.opacity * this.life;
-          ctx.fillStyle = '#b0b7d6';
-          ctx.shadowBlur = 10;
-          ctx.shadowColor = 'rgba(176, 183, 214, 0.5)';
           ctx.beginPath();
-          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.arc(this.x, this.y, this.size, 0, 6.2832);
           ctx.fill();
-          ctx.restore();
         }
       }
       
@@ -1115,29 +1114,36 @@
       function animate() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        // Update and draw particles
-        particles.forEach(particle => {
-          particle.update();
-          particle.draw();
-        });
+        // Update and draw particles with batched state
+        ctx.fillStyle = '#b0b7d6';
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = 'rgba(176, 183, 214, 0.5)';
+        const len = particles.length;
+        for (let i = 0; i < len; i++) {
+          particles[i].update();
+          particles[i].draw();
+        }
         
-        // Draw connections
-        particles.forEach((p1, i) => {
-          particles.slice(i + 1).forEach(p2 => {
-            const distance = Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
-            if (distance < 80) {
-              ctx.save();
-              ctx.globalAlpha = (1 - distance / 80) * 0.2;
-              ctx.strokeStyle = '#b0b7d6';
-              ctx.lineWidth = 0.5;
+        // Draw connections with squared distance check
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = '#b0b7d6';
+        ctx.lineWidth = 0.5;
+        for (let i = 0; i < len; i++) {
+          const p1 = particles[i];
+          for (let j = i + 1; j < len; j++) {
+            const p2 = particles[j];
+            const dx = p1.x - p2.x;
+            const dy = p1.y - p2.y;
+            const distSq = dx * dx + dy * dy;
+            if (distSq < 6400) {
+              ctx.globalAlpha = (1 - Math.sqrt(distSq) / 80) * 0.2;
               ctx.beginPath();
               ctx.moveTo(p1.x, p1.y);
               ctx.lineTo(p2.x, p2.y);
               ctx.stroke();
-              ctx.restore();
             }
-          });
-        });
+          }
+        }
         
         requestAnimationFrame(animate);
       }

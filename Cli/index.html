@@ -83,6 +83,9 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png">
     <link rel="manifest" href="/assets/favicon/site.webmanifest">
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&display=swap">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
@@ -162,9 +165,9 @@
             createGeometricShapes();
             createElegantDots();
             
+            const cachedShapes = document.querySelectorAll('.geometric-shape');
             setInterval(() => {
-                const shapes = document.querySelectorAll('.geometric-shape');
-                shapes.forEach(shape => {
+                cachedShapes.forEach(shape => {
                     if (Math.random() > 0.8) {
                         shape.style.boxShadow = '0 0 20px rgba(255, 255, 255, 0.3)';
                         setTimeout(() => {

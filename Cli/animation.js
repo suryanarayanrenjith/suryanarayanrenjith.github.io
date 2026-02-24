@@ -208,7 +208,9 @@ function animate() {
 }
 
 function updateGeometricElements() {
-    elements.forEach((element, index) => {
+    const len = elements.length;
+    for (let index = 0; index < len; index++) {
+        const element = elements[index];
         const original = element.userData.originalPosition;
         const originalRotation = element.userData.originalRotation;
         const phase = element.userData.phase + time * element.userData.speed;
@@ -228,13 +230,15 @@ function updateGeometricElements() {
         element.scale.setScalar(scale);
         
         element.material.opacity = 0.2 + Math.sin(phase * 0.6) * 0.2;
-    });
+    }
     
     if (connections) {
         const positions = connections.geometry.attributes.position.array;
         let posIndex = 0;
+        const connLen = elementConnections.length;
         
-        elementConnections.forEach(connection => {
+        for (let i = 0; i < connLen; i++) {
+            const connection = elementConnections[i];
             const fromElement = elements[connection.from];
             const toElement = elements[connection.to];
             
@@ -245,7 +249,7 @@ function updateGeometricElements() {
             positions[posIndex++] = toElement.position.x;
             positions[posIndex++] = toElement.position.y;
             positions[posIndex++] = toElement.position.z;
-        });
+        }
         
         connections.geometry.attributes.position.needsUpdate = true;
         

@@ -152,17 +152,17 @@ document.addEventListener("DOMContentLoaded", () => {
     
     function applyDynamicStarScaling() {
         const positions = stars.attributes.position.array;
-        for (let i = 0; i < positions.length; i += 3) {
-            const z = positions[i + 2];
-            starMaterialWhite.size = Math.max(1, 10 / (z / 100 + 1));
-        }
+        const lastZ = positions[positions.length - 1];
+        starMaterialWhite.size = Math.max(1, 10 / (lastZ / 100 + 1));
     }
     
     function applyShockwaveEffect() {
         if (shockwaveTime > 0) {
             for (let i = 0; i < starVertices.length; i += 3) {
-                const dist = Math.sqrt(starVertices[i] ** 2 + starVertices[i + 1] ** 2);
-                if (dist < 500) {
+                const x = starVertices[i], y = starVertices[i + 1];
+                const distSq = x * x + y * y;
+                if (distSq < 250000) {
+                    const dist = Math.sqrt(distSq);
                     const wave = Math.sin(shockwaveTime * 10 + dist * 0.05) * 5;
                     starVertices[i] += wave;
                     starVertices[i + 1] += wave;
@@ -176,11 +176,13 @@ document.addEventListener("DOMContentLoaded", () => {
     function applyBlackHoleEffect() {
         if (blackHoleEffect) {
             for (let i = 0; i < starVertices.length; i += 3) {
-                const distance = Math.sqrt(starVertices[i] ** 2 + starVertices[i + 1] ** 2 + starVertices[i + 2] ** 2);
-                if (distance < 300) {
+                const x = starVertices[i], y = starVertices[i + 1], z = starVertices[i + 2];
+                const distSq = x * x + y * y + z * z;
+                if (distSq < 90000) {
+                    const distance = Math.sqrt(distSq);
                     const pull = (300 - distance) * 0.01;
-                    starVertices[i] -= starVertices[i] * pull;
-                    starVertices[i + 1] -= starVertices[i + 1] * pull;
+                    starVertices[i] -= x * pull;
+                    starVertices[i + 1] -= y * pull;
                 }
             }
             stars.attributes.position.needsUpdate = true;
@@ -188,29 +190,26 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 function applyTwinkleEffect() {
-    const time = Date.now() * 0.001;
+    const time = performance.now() * 0.001;
 
-    for (let i = 0; i < starTwinkles.length; i++) {
-        const baseSineWave = Math.sin(time * 5 + starTwinkles[i] * 20);
-        const baseCosineWave = Math.cos(time * 2.5 + starTwinkles[i] * 10);
-        const flicker = Math.sin(time * 8 + starTwinkles[i] * 40) * 0.3;
-        const noise = (Math.random() - 0.5) * 0.15;
-        const pulse = Math.sin(time * 0.6 + starTwinkles[i] * 15) * 0.5 + 0.5;
-        const slowBreath = Math.sin(time * 0.3 + starTwinkles[i] * 5) * 0.2 + 0.8;
-        const layeredEffect = Math.sin(time * 1.2 + Math.sin(time * 0.7) * 2 + starTwinkles[i] * 25) * 0.4 + 0.6;
-        const depthEffect = Math.sin(time * 0.2 + starTwinkles[i] * 50) * 0.3 + 0.7;
+    const baseSineWave = Math.sin(time * 5 + 0.75 * 20);
+    const baseCosineWave = Math.cos(time * 2.5 + 0.75 * 10);
+    const flicker = Math.sin(time * 8 + 0.75 * 40) * 0.3;
+    const noise = (Math.random() - 0.5) * 0.15;
+    const slowBreath = Math.sin(time * 0.3 + 0.75 * 5) * 0.2 + 0.8;
+    const layeredEffect = Math.sin(time * 1.2 + Math.sin(time * 0.7) * 2 + 0.75 * 25) * 0.4 + 0.6;
+    const depthEffect = Math.sin(time * 0.2 + 0.75 * 50) * 0.3 + 0.7;
 
-        const twinkleIntensity = 
-            (baseSineWave * 0.3 + baseCosineWave * 0.3 + flicker * 0.2 + noise * 0.1) 
-            * slowBreath * layeredEffect * depthEffect;
+    const twinkleIntensity = 
+        (baseSineWave * 0.3 + baseCosineWave * 0.3 + flicker * 0.2 + noise * 0.1) 
+        * slowBreath * layeredEffect * depthEffect;
 
-        starMaterialWhite.opacity = 3.0 + twinkleIntensity * 0.8; 
-        starMaterialWhite.size = 2.0 + twinkleIntensity * 4.0;
-    }
+    starMaterialWhite.opacity = 3.0 + twinkleIntensity * 0.8; 
+    starMaterialWhite.size = 2.0 + twinkleIntensity * 4.0;
 }
     
     function animateStars() {
-        const time = Date.now() * 0.001;
+        const time = performance.now() * 0.001;
     
         const driftX = Math.sin(time * 0.3) * 0.001;
         const driftY = Math.cos(time * 0.25) * 0.001;
@@ -219,15 +218,6 @@ function applyTwinkleEffect() {
         starFieldWhite.rotation.y += 0.0007 + driftY;
     
         starFieldWhite.position.z += Math.sin(time * 0.5) * 0.05;
-    
-        for (let i = 0; i < starFieldWhite.children.length; i++) {
-            const star = starFieldWhite.children[i];
-            const distanceFromCenter = star.position.length();
-    
-            const parallaxFactor = 1 / (distanceFromCenter + 1);
-            star.rotation.x += parallaxFactor * 0.001;
-            star.rotation.y += parallaxFactor * 0.001;
-        }
     }
     
     function applyMouseAcceleration() {

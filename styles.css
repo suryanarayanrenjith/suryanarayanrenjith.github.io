@@ -24,6 +24,7 @@ body, html {
     position: absolute;
     border-radius: 50%;
     pointer-events: none;
+    will-change: transform;
   }
 
   .cursor-dot-outline {
@@ -953,6 +954,8 @@ header {
     font-size: 12px;
     font-weight: 300;
     animation: rainFall 4s linear infinite;
+    will-change: transform, opacity;
+    contain: layout style;
 }
 
 @keyframes rainFall {

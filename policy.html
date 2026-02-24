@@ -331,8 +331,15 @@
             const mouseY = e.clientY / window.innerHeight - 0.5;
             
             const warningIcon = document.querySelector('.warning-icon');
-            warningIcon.style.transform = `translate(${mouseX * 10}px, ${mouseY * 10}px)`;
+            if (!policy_rafPending) {
+                policy_rafPending = true;
+                requestAnimationFrame(function() {
+                    warningIcon.style.transform = `translate(${mouseX * 10}px, ${mouseY * 10}px)`;
+                    policy_rafPending = false;
+                });
+            }
         });
+        var policy_rafPending = false;
     </script>
 </body>
 </html>

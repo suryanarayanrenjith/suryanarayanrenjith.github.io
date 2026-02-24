@@ -93,20 +93,14 @@ function loadNextCommand() {
   }
 }
 
+let _clearStyleEl = null;
 function clearTerminal() {
   outputDiv.innerHTML = "";
-  for (const sheet of document.styleSheets) {
-      for (const rule of sheet.cssRules) {
-        if (rule.selectorText === '.header::before') {
-          rule.style.setProperty('content', 'none', 'important');
-          return;
-        }
-      }
+  if (!_clearStyleEl) {
+    _clearStyleEl = document.createElement('style');
+    _clearStyleEl.textContent = '.header::before { content: none !important; }';
+    document.head.appendChild(_clearStyleEl);
   }
-  document.styleSheets[0].insertRule(
-    '.header::before { content: none !important; }',
-    0
-  );
   return "";
 }
 
@@ -147,20 +141,23 @@ function getClosestCommand(command) {
 }
 
 function levenshteinDistance(a, b) {
-  const matrix = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
-  for (let i = 0; i <= a.length; i++) matrix[i][0] = i;
-  for (let j = 0; j <= b.length; j++) matrix[0][j] = j;
-  for (let i = 1; i <= a.length; i++) {
-    for (let j = 1; j <= b.length; j++) {
+  const m = a.length, n = b.length;
+  let prev = new Array(n + 1);
+  let curr = new Array(n + 1);
+  for (let j = 0; j <= n; j++) prev[j] = j;
+  for (let i = 1; i <= m; i++) {
+    curr[0] = i;
+    for (let j = 1; j <= n; j++) {
       const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      matrix[i][j] = Math.min(
-        matrix[i - 1][j] + 1,
-        matrix[i][j - 1] + 1,
-        matrix[i - 1][j - 1] + cost
+      curr[j] = Math.min(
+        prev[j] + 1,
+        curr[j - 1] + 1,
+        prev[j - 1] + cost
       );
     }
+    [prev, curr] = [curr, prev];
   }
-  return matrix[a.length][b.length];
+  return prev[n];
 }
 
 function getAISuggestions() {

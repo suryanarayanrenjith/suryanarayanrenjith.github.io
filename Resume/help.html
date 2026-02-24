@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Help & Support</title>
   <script src="/blocker.js"></script>
   <!-- Global site tag (gtag.js) - Google Analytics -->
@@ -81,482 +82,237 @@
   <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png">
   <link rel="manifest" href="/assets/favicon/site.webmanifest">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Inter:wght@300;400;600;700&display=swap');
-    
-    * {
+    *, *::before, *::after {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
     }
-    
-    :root {
-      --black: #000000;
-      --white: #ffffff;
-      --glass: rgba(255, 255, 255, 0.05);
-      --glass-strong: rgba(255, 255, 255, 0.1);
-      --glass-border: rgba(255, 255, 255, 0.15);
-      --accent-white: rgba(255, 255, 255, 0.8);
-    }
-    
-    ::-webkit-scrollbar {
-      width: 4px;
-      height: 4px;
-    }
-    
-    ::-webkit-scrollbar-track {
-      background: var(--black);
-    }
-    
-    ::-webkit-scrollbar-thumb {
-      background: var(--white);
-    }
-    
-    ::-webkit-scrollbar-thumb:hover {
-      background: var(--accent-white);
-    }
-    
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: #000; }
+    ::-webkit-scrollbar-thumb { background: #ccc; }
+    ::-webkit-scrollbar-thumb:hover { background: #fff; }
+    html { scrollbar-width: thin; scrollbar-color: #ccc #000; }
+
     body {
-      background: var(--black);
-      color: var(--white);
-      font-family: 'Inter', sans-serif;
+      background-color: #000;
+      color: #fff;
+      font-family: 'Arial', sans-serif;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      position: relative;
       overflow-x: hidden;
+      line-height: 1.7;
     }
-    
-    body::before {
-      content: "";
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: 
-        linear-gradient(135deg, rgba(255,255,255,0.01) 0%, transparent 100%),
-        repeating-linear-gradient(45deg, rgba(255,255,255,0.01) 0px, rgba(255,255,255,0.01) 1px, transparent 1px, transparent 10px);
-      pointer-events: none;
-      z-index: -1;
-    }
-    
+
     .container {
-      max-width: 1200px;
+      max-width: 800px;
+      width: 90%;
       margin: 0 auto;
-      padding: 80px 40px;
-      position: relative;
-      z-index: 1;
+      padding: 80px 0;
+      flex: 1;
     }
-    
+
+    /* ── Header ── */
     .header {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      text-align: center;
       margin-bottom: 60px;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeInUp 0.8s ease forwards;
     }
-    
-    .header::after {
-      content: "";
-      width: 100px;
-      height: 2px;
-      background: var(--white);
-      margin-top: 20px;
-    }
-    
+
     h1 {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 4rem;
-      font-weight: 900;
-      letter-spacing: 8px;
-      text-transform: uppercase;
-      position: relative;
+      font-size: 2.4em;
+      font-weight: bold;
+      color: #fff;
+      letter-spacing: 2px;
+      margin-bottom: 16px;
+    }
+
+    .header-line {
+      width: 60px;
+      height: 2px;
+      background: #ccc;
+      margin: 0 auto;
+    }
+
+    /* ── Cards ── */
+    .card {
+      border: 2px solid #ccc;
+      padding: 40px;
+      margin-bottom: 40px;
+      background: rgba(0, 0, 0, 0.85);
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeInUp 0.8s ease forwards;
+    }
+
+    .card:hover {
+      border-color: #fff;
+      box-shadow: 0 4px 15px rgba(255, 255, 255, 0.05);
+    }
+
+    .card p {
+      font-size: 1em;
+      color: #ccc;
+      margin-bottom: 20px;
+      line-height: 1.8;
+    }
+
+    .card p:last-child {
       margin-bottom: 0;
     }
-    
-    h1::before, h1::after {
-      content: "";
-      position: absolute;
-      height: 20px;
-      width: 20px;
-      border: 2px solid var(--white);
-    }
-    
-    h1::before {
-      top: -10px;
-      left: -30px;
-      border-right: none;
-      border-bottom: none;
-    }
-    
-    h1::after {
-      bottom: -10px;
-      right: -30px;
-      border-left: none;
-      border-top: none;
-    }
-    
-    .support-card {
-      background: var(--glass);
-      border: 1px solid var(--glass-border);
-      backdrop-filter: blur(5px);
-      -webkit-backdrop-filter: blur(5px);
-      padding: 50px;
-      margin: 40px 0;
-      position: relative;
-      overflow: hidden;
-      clip-path: polygon(
-        0 0, 
-        100% 0, 
-        100% calc(100% - 20px), 
-        calc(100% - 20px) 100%, 
-        0 100%
-      );
-    }
-    
-    .support-card::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 150%;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, var(--white), transparent);
-      animation: lightScan 8s linear infinite;
-    }
-    
-    .support-card::after {
-      content: "";
-      position: absolute;
-      bottom: 0;
-      right: 0;
-      width: 20px;
-      height: 20px;
-      border-left: 1px solid var(--white);
-      border-top: 1px solid var(--white);
-    }
-    
-    @keyframes lightScan {
-      0% {
-        transform: translateX(-100%);
-      }
-      100% {
-        transform: translateX(100%);
-      }
-    }
-    
-    p {
-      font-size: 1.1rem;
-      line-height: 1.9;
-      margin-bottom: 25px;
-      position: relative;
-    }
-    
-    p:last-child {
-      margin-bottom: 0;
-    }
-    
+
     .highlight {
-      font-family: 'Orbitron', sans-serif;
-      font-weight: 700;
-      letter-spacing: 1px;
-      position: relative;
-      display: inline-block;
-    }
-    
-    .highlight::after {
-      content: "";
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 1px;
-      background: var(--white);
-    }
-    
-    a {
-      color: var(--white);
-      text-decoration: none;
+      color: #fff;
       font-weight: 600;
-      position: relative;
-      padding: 0 4px;
     }
-    
-    a::before {
-      content: "";
+
+    /* ── Links ── */
+    a {
+      color: #fff;
+      text-decoration: none;
+      position: relative;
+      transition: color 0.3s ease;
+    }
+
+    a::after {
+      content: '';
       position: absolute;
       bottom: -2px;
       left: 0;
       width: 100%;
       height: 1px;
-      background: var(--white);
+      background: #fff;
       transform: scaleX(0);
       transform-origin: right;
       transition: transform 0.3s ease;
     }
-    
-    a:hover::before {
+
+    a:hover {
+      color: #ccc;
+    }
+
+    a:hover::after {
       transform: scaleX(1);
       transform-origin: left;
     }
-    
+
+    /* ── CTA button ── */
     .cta-button {
       display: inline-block;
-      padding: 15px 40px;
-      margin-top: 30px;
-      background: transparent;
-      color: var(--white);
-      border: 1px solid var(--white);
-      font-family: 'Orbitron', sans-serif;
-      font-weight: 600;
-      letter-spacing: 2px;
-      text-transform: uppercase;
+      margin-top: 24px;
+      padding: 12px 30px;
+      font-size: 1em;
+      font-weight: bold;
+      color: #000;
+      background-color: #fff;
+      border: 2px solid transparent;
+      cursor: pointer;
+      text-decoration: none;
       position: relative;
       overflow: hidden;
-      clip-path: polygon(0 0, 100% 0, 100% 70%, 90% 100%, 0 100%);
+      transition: transform 0.3s, background-color 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s;
     }
-    
-    .cta-button::before {
-      content: "";
-      position: absolute;
-      top: -100%;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: var(--white);
-      transition: all 0.4s cubic-bezier(0.215, 0.61, 0.355, 1);
-      z-index: -1;
-    }
-    
+
+    .cta-button::after { display: none; }
+
     .cta-button:hover {
-      color: var(--black);
+      background-color: #000;
+      color: #fff;
+      border-color: #ccc;
+      transform: scale(1.03);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     }
-    
-    .cta-button:hover::before {
-      top: 0;
-    }
-    
-    .support-info {
+
+    /* ── Info grid ── */
+    .info-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 40px;
-      margin-top: 60px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 24px;
+      margin-top: 0;
     }
-    
+
     .info-card {
-      background: var(--glass);
-      border: 1px solid var(--glass-border);
-      backdrop-filter: blur(5px);
-      -webkit-backdrop-filter: blur(5px);
-      padding: 40px;
-      position: relative;
-      overflow: hidden;
-      clip-path: polygon(
-        20px 0, 
-        100% 0, 
-        100% 100%, 
-        0 100%, 
-        0 20px
-      );
-    }
-    
-    .info-card::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 20px;
-      height: 20px;
-      border-right: 1px solid var(--white);
-      border-bottom: 1px solid var(--white);
-    }
-    
-    .info-card:hover {
-      background: var(--glass-strong);
-    }
-    
-    .info-card h3 {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 1.4rem;
-      margin-bottom: 20px;
-      letter-spacing: 2px;
-      position: relative;
-      padding-bottom: 10px;
-    }
-    
-    .info-card h3::after {
-      content: "";
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 60px;
-      height: 1px;
-      background: var(--white);
-    }
-    
-    footer {
-      background: var(--glass);
+      border: 1px solid #333;
       padding: 30px;
-      text-align: center;
-      margin-top: auto;
-      position: relative;
-      border-top: 1px solid var(--glass-border);
+      background: transparent;
+      transition: border-color 0.3s ease;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeInUp 0.8s ease forwards;
     }
-    
-    footer p {
-      font-size: 0.9rem;
-      opacity: 0.7;
+
+    .info-card:hover {
+      border-color: #ccc;
+    }
+
+    .info-card h3 {
+      font-size: 1.1em;
+      color: #fff;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #333;
+    }
+
+    .info-card p {
+      font-size: 0.95em;
+      color: #999;
+      line-height: 1.7;
       margin: 0;
-      font-family: 'Inter', sans-serif;
     }
-    
-    .glitch-effect {
-      position: relative;
-      animation: glitch 5s infinite;
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid #222;
+      padding: 24px;
+      text-align: center;
     }
-    
-    @keyframes glitch {
-      0% {
-        text-shadow: none;
-      }
-      1% {
-        text-shadow: -3px 0 var(--accent-white);
-      }
-      2% {
-        text-shadow: 3px 0 var(--accent-white);
-      }
-      3% {
-        text-shadow: none;
-      }
-      40% {
-        text-shadow: none;
-      }
-      41% {
-        text-shadow: -3px 0 var(--accent-white);
-      }
-      42% {
-        text-shadow: none;
-      }
-      80% {
-        text-shadow: none;
-      }
-      81% {
-        text-shadow: 3px 0 var(--accent-white);
-      }
-      82% {
-        text-shadow: none;
-      }
+
+    footer p {
+      font-size: 0.85em;
+      color: #666;
+      margin: 0;
     }
-    
-    .fade-in {
-      animation: fadeIn 0.8s cubic-bezier(0.215, 0.61, 0.355, 1) forwards;
-      opacity: 0;
-    }
-    
-    .fade-in-up {
-      animation: fadeInUp 0.8s cubic-bezier(0.215, 0.61, 0.355, 1) forwards;
-      opacity: 0;
-      transform: translateY(30px);
-    }
-    
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-      }
-      to {
-        opacity: 1;
-      }
-    }
-    
+
+    /* ── Animations ── */
     @keyframes fadeInUp {
       from {
         opacity: 0;
-        transform: translateY(30px);
+        transform: translateY(20px);
       }
       to {
         opacity: 1;
         transform: translateY(0);
       }
     }
-    
+
+    /* ── Responsive ── */
     @media (max-width: 768px) {
-      .container {
-        padding: 60px 20px;
-      }
-      
-      h1 {
-        font-size: 2.8rem;
-        letter-spacing: 4px;
-      }
-      
-      .support-card {
-        padding: 40px 25px;
-      }
-      
-      .info-card {
-        padding: 30px 25px;
-      }
-    }
-    
-    @media (max-width: 480px) {
-      h1 {
-        font-size: 2rem;
-        letter-spacing: 2px;
-      }
-      
-      h1::before, h1::after {
-        height: 15px;
-        width: 15px;
-      }
-      
-      .support-card {
-        padding: 30px 20px;
-        clip-path: polygon(
-          0 0, 
-          100% 0, 
-          100% calc(100% - 15px), 
-          calc(100% - 15px) 100%, 
-          0 100%
-        );
-      }
-      
-      .info-card {
-        clip-path: polygon(
-          15px 0, 
-          100% 0, 
-          100% 100%, 
-          0 100%, 
-          0 15px
-        );
-      }
+      .container { padding: 50px 0; }
+      h1 { font-size: 1.8em; letter-spacing: 1px; }
+      .card { padding: 28px 20px; }
+      .info-card { padding: 22px 18px; }
     }
 
-    .grid-background {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-image: 
-        linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
-      background-size: 40px 40px;
-      pointer-events: none;
-      z-index: -2;
+    @media (max-width: 480px) {
+      h1 { font-size: 1.5em; }
+      .card { padding: 22px 16px; }
     }
   </style>
 </head>
 <body>
-  <div class="grid-background"></div>
-  
   <div class="container">
-    <div class="header fade-in">
-      <h1 class="glitch-effect">HELP & SUPPORT</h1>
+    <div class="header">
+      <h1>Help & Support</h1>
+      <div class="header-line"></div>
     </div>
-    
-    <div class="support-card fade-in-up" style="animation-delay: 0.1s;">
+
+    <div class="card" style="animation-delay: 0.1s;">
       <p>
-        Welcome to my <span class="highlight">Help & Support Center</span>. I'm committed to providing you with the best possible assistance for managing your account and solving any issues you might encounter.
+        Welcome to the <span class="highlight">Help & Support Center</span>. I'm committed to providing you with the best possible assistance for managing your account and solving any issues you might encounter.
       </p>
       <p>
         For security reasons, certain account management features such as resetting or deleting your account are not available through the standard user interface. This additional layer of protection helps ensure that your data remains secure.
@@ -566,23 +322,23 @@
       </p>
       <a href="/?section=links" class="cta-button">Get in Touch</a>
     </div>
-    
-    <div class="support-info">
-      <div class="info-card fade-in-up" style="animation-delay: 0.2s;">
+
+    <div class="info-grid">
+      <div class="info-card" style="animation-delay: 0.2s;">
         <h3>Account Security</h3>
         <p>
-          I reserve the right to disable accounts that show signs of malicious activity or violate my terms of service. This helps me maintain a safe environment for all visitors.
+          I reserve the right to disable accounts that show signs of malicious activity or violate my terms of service. This helps maintain a safe environment for all visitors.
         </p>
       </div>
-      
-      <div class="info-card fade-in-up" style="animation-delay: 0.3s;">
+
+      <div class="info-card" style="animation-delay: 0.3s;">
         <h3>Verification</h3>
         <p>
           Email verification links are valid for one use only. If you need a new verification link, please reach out through my <a href="/Links">contact page</a>.
         </p>
       </div>
-      
-      <div class="info-card fade-in-up" style="animation-delay: 0.4s;">
+
+      <div class="info-card" style="animation-delay: 0.4s;">
         <h3>Additional Help</h3>
         <p>
           Thank you for your understanding and trust. I'm personally committed to providing you with the best possible support experience.
@@ -590,27 +346,27 @@
       </div>
     </div>
   </div>
-  
+
   <footer>
-    <p>© <span id="year"></span> Suryanarayan Renjith. All rights reserved.</p>
+    <p>&copy; <span id="year"></span> Suryanarayan Renjith. All rights reserved.</p>
   </footer>
-  
+
   <script>
-    document.getElementById("year").textContent = new Date().getFullYear();
-    document.addEventListener('DOMContentLoaded', () => {
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.style.animationPlayState = 'running';
-            observer.unobserve(entry.target);
-          }
-        });
-      }, { threshold: 0.1 });
-      
-      document.querySelectorAll('.fade-in, .fade-in-up').forEach(el => {
-        el.style.animationPlayState = 'paused';
-        observer.observe(el);
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Trigger animations on scroll
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.animationPlayState = 'running';
+          observer.unobserve(entry.target);
+        }
       });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.card, .info-card').forEach(el => {
+      el.style.animationPlayState = 'paused';
+      observer.observe(el);
     });
   </script>
 </body>

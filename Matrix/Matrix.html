@@ -1,696 +1,394 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-	<title>Matrix</title>
-	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Matrix</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      background: #000;
-      height: 100%;
-      font-family: 'Courier New', monospace;
-      color: #0f0;
-    }
-	  
-    canvas {
-      display: block;
-    }
-	  
-    #controls {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      color: #fff;
-      background: rgba(0, 0, 0, 0.8);
-      padding: 40px 15px 15px 15px;
-      border-radius: 5px;
-      z-index: 10;
-      max-width: 300px;
-      backdrop-filter: blur(5px);
-      border: 1px solid rgba(0, 255, 70, 0.5);
-      box-shadow: 0 0 10px rgba(0, 255, 70, 0.3);
-    }
-	  
-    #controls h3 {
-      margin-top: 10px;
-      border-bottom: 1px solid rgba(0, 255, 70, 0.5);
-      padding-bottom: 5px;
-      text-align: center;
-    }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    html,body{overflow:hidden;height:100%;background:#000;font-family:Arial,sans-serif;color:#fff}
+    canvas{display:block;position:fixed;inset:0}
 
-    #controls button, #controls select {
-      background: rgba(20, 20, 20, 0.8);
-      border: 1px solid rgba(0, 255, 70, 0.5);
-      color: #0f0;
-      padding: 5px 10px;
-      margin: 5px 0;
-      cursor: pointer;
-      font-family: 'Courier New', monospace;
-      border-radius: 3px;
-      box-shadow: 0 0 5px rgba(0, 255, 70, 0.2);
-      transition: all 0.2s ease;
-      width: 96%;
+    /* ── Preloader ── */
+    #preloader{
+      position:fixed;inset:0;background:#000;z-index:100;
+      display:flex;flex-direction:column;justify-content:center;align-items:center;
+      opacity:1;transition:opacity .5s ease
     }
-	  
-    #controls button:hover, #controls select:hover {
-      background: rgba(40, 40, 40, 0.8);
-      box-shadow: 0 0 8px rgba(0, 255, 70, 0.4);
+    #preloader.done{opacity:0;pointer-events:none}
+    .spinner{width:40px;height:40px;border:2px solid #222;border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .loader-label{margin-top:20px;font:600 10px/1 Arial,sans-serif;letter-spacing:5px;text-transform:uppercase;color:#444}
+    .bar-track{width:160px;height:1px;background:#1a1a1a;margin-top:14px;overflow:hidden}
+    .bar-fill{height:100%;width:0%;background:#fff;transition:width .2s linear}
+
+    #menu-btn{
+      position:fixed;top:14px;right:14px;z-index:30;
+      background:rgba(0,0,0,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+      border:1px solid #2a2a2a;color:#555;
+      font:600 10px/1 Arial,sans-serif;letter-spacing:3px;text-transform:uppercase;
+      padding:7px 14px;cursor:pointer;
+      transition:border-color .25s,color .25s,transform .25s
     }
-	  
-    .control-group {
-      margin-bottom: 10px;
+    #menu-btn:hover{border-color:#888;color:#fff;transform:scale(1.04)}
+
+    #panel{
+      position:fixed;top:14px;right:14px;z-index:25;
+      width:220px;
+      background:rgba(5,5,5,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+      border:1px solid #222;
+      padding:44px 16px 16px;
+      color:#888;font:11px/1.5 Arial,sans-serif;
+      transform:translateX(240px);opacity:0;
+      transition:transform .3s cubic-bezier(.4,0,.2,1),opacity .3s ease;
+      pointer-events:none
     }
-	  
-    .key {
-      background: rgba(0, 255, 70, 0.2);
-      padding: 2px 5px;
-      border-radius: 3px;
-      border: 1px solid rgba(0, 255, 70, 0.5);
+    #panel.open{transform:translateX(0);opacity:1;pointer-events:auto}
+
+    #panel h3{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#ccc;border-bottom:1px solid #222;padding-bottom:6px;margin-bottom:10px}
+    #panel .x{position:absolute;top:10px;right:0;background:0;border:0;color:#444;font-size:16px;cursor:pointer;line-height:1;transition:color .2s}
+    #panel .x:hover{color:#fff}
+    #panel label{display:block;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#555;margin:10px 0 3px}
+    #panel select,#panel button{
+      width:100%;background:#0a0a0a;border:1px solid #222;color:#777;
+      font:11px/1 Arial,sans-serif;padding:5px 7px;margin-bottom:3px;cursor:pointer;
+      transition:border-color .2s,color .2s
     }
-	  
-    #toggleControls {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      z-index: 20;
-      background: rgba(0, 0, 0, 0.7);
-      color: #0f0;
-      border: 1px solid rgba(0, 255, 70, 0.5);
-      padding: 5px 10px;
-      cursor: pointer;
-      font-family: 'Courier New', monospace;
-      border-radius: 3px;
+    #panel select:hover,#panel button:hover{border-color:#666;color:#fff}
+    #panel .sep{border:0;border-top:1px solid #181818;margin:10px 0}
+
+    #hints{
+      position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:20;
+      font:9px/1 'Courier New',monospace;letter-spacing:2px;color:#2a2a2a;
+      text-transform:uppercase;pointer-events:none;
+      opacity:1;transition:opacity 1s ease
     }
-	  
-    #closeButton {
-      position: absolute;
-      top: 5px;
-      right: 5px;
-      background: rgba(20, 20, 20, 0.8);
-      border: 1px solid rgba(0, 255, 70, 0.5);
-      color: #0f0;
-      padding: 5px 10px;
-      cursor: pointer;
-      font-family: 'Courier New', monospace;
-      border-radius: 3px;
-      box-shadow: 0 0 5px rgba(0, 255, 70, 0.2);
-      transition: all 0.2s ease;
-    }
-	  
-    #closeButton:hover {
-      background: rgba(40, 40, 40, 0.8);
-      box-shadow: 0 0 8px rgba(0, 255, 70, 0.4);
-    }
-	  
-    #preloader {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: #000;
-      z-index: 100;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      color: #0f0;
-    }
-	  
-    #loading-bar {
-      width: 300px;
-      height: 5px;
-      background: #111;
-      margin-top: 20px;
-      border-radius: 3px;
-      overflow: hidden;
-    }
-	  
-    #loading-progress {
-      height: 100%;
-      width: 0%;
-      background: #0f0;
-      box-shadow: 0 0 10px #0f0;
-      transition: width 0.3s;
-    }
-	  
-    .matrix-symbol {
-      font-size: 24px;
-      margin: 0 5px;
-      animation: pulse 1.5s infinite alternate;
-      text-shadow: 0 0 10px #0f0;
-    }
-	  
-    @keyframes pulse {
-      0% { opacity: 0.5; text-shadow: 0 0 5px #0f0; }
-      100% { opacity: 1; text-shadow: 0 0 15px #0f0, 0 0 20px #0f0; }
-    }
-	  
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-	  
-    @keyframes glitchText {
-      0% { transform: translate(0); }
-      20% { transform: translate(-2px, 2px); }
-      40% { transform: translate(-2px, -2px); }
-      60% { transform: translate(2px, 2px); }
-      80% { transform: translate(2px, -2px); }
-      100% { transform: translate(0); }
-    }
+    #hints.hide{opacity:0}
   </style>
 </head>
 <body>
-  <div id="preloader">
-    <div style="display: flex;">
-      <span class="matrix-symbol">ミ</span>
-      <span class="matrix-symbol">ラ</span>
-      <span class="matrix-symbol">イ</span>
-      <span class="matrix-symbol">ク</span>
-      <span class="matrix-symbol">ス</span>
-    </div>
-    <p id="loading-text">INITIALIZING SYSTEM...</p>
-    <div id="loading-bar">
-      <div id="loading-progress"></div>
-    </div>
-  </div>
 
-  <button id="toggleControls">MENU</button>
-  
-  <div id="controls">
-    <button id="closeButton" onclick="toggleControlsVisibility()">CLOSE</button>
-    <h3>MATRIX CONTROLS</h3>
-    
-    <div class="control-group">
-      <button id="togglePause">PAUSE/RESUME</button>
-    </div>
-    
-    <div class="control-group">
-      <label for="colorScheme">COLOR SCHEME:</label>
-      <select id="colorScheme">
-        <option value="0">Classic Green</option>
-        <option value="1">Pink</option>
-        <option value="2">Blue</option>
-        <option value="3">Amber</option>
-        <option value="4">Rainbow</option>
-        <option value="5">White</option>
-      </select>
-    </div>
-    
-    <div class="control-group">
-      <label for="speed">SPEED:</label>
-      <select id="speed">
-        <option value="0">Very Slow</option>
-        <option value="1" selected>Normal</option>
-        <option value="2">Fast</option>
-        <option value="3">Very Fast</option>
-        <option value="4">Hyper</option>
-        <option value="5">Extreme</option>
-      </select>
-    </div>
-    
-    <div class="control-group">
-      <label for="density">DENSITY:</label>
-      <select id="density">
-        <option value="0">Sparse</option>
-        <option value="1" selected>Normal</option>
-        <option value="2">Dense</option>
-        <option value="3">Very Dense</option>
-      </select>
-    </div>
-    
-    <div class="control-group">
-      <button id="toggleGlitch">TOGGLE GLITCH EFFECT</button>
-      <button id="toggleDepth">TOGGLE 3D EFFECT</button>
-      <button id="toggleFade">TOGGLE FADE EFFECT</button>
-      <button id="toggleMouse">TOGGLE MOUSE INTERACTION</button>
-      <button id="resetStreams">RESET STREAMS</button>
-    </div>
+<div id="preloader">
+  <div class="spinner"></div>
+  <p class="loader-label">Loading</p>
+  <div class="bar-track"><div class="bar-fill" id="barFill"></div></div>
+</div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
-  <script>
+<canvas id="c"></canvas>
+<button id="menu-btn">Menu</button>
 
-    const controls = document.getElementById('controls');
-    const toggleControls = document.getElementById('toggleControls');
-  
-    if (window.getComputedStyle(controls).display === 'block') {
-      toggleControls.style.display = 'none';
+<div id="panel">
+  <button class="x" id="xBtn">&times;</button>
+  <h3>Controls</h3>
+
+  <label>Speed</label>
+  <select id="sSpeed">
+    <option value="0.35">Slow</option>
+    <option value="1" selected>Normal</option>
+    <option value="2.2">Fast</option>
+    <option value="4">Hyper</option>
+  </select>
+
+  <label>Density</label>
+  <select id="sDensity">
+    <option value="0.55">Sparse</option>
+    <option value="1" selected>Normal</option>
+    <option value="1.7">Dense</option>
+  </select>
+
+  <label>Trail</label>
+  <select id="sTrail">
+    <option value="0.06">Long</option>
+    <option value="0.1" selected>Normal</option>
+    <option value="0.22">Short</option>
+  </select>
+
+  <hr class="sep">
+  <button id="bPause">Pause</button>
+  <button id="bGlitch">Glitch: Off</button>
+  <button id="bDepth">Depth: On</button>
+  <button id="bMouse">Cursor Glow: On</button>
+  <button id="bReset">Reset</button>
+</div>
+
+<div id="hints">Space pause · H menu · G glitch · D depth · M cursor</div>
+
+<script>
+(() => {
+'use strict';
+
+/* ── Glyph pool ── */
+const glyphs = [];
+for (let i = 0; i < 96; i++) glyphs.push(String.fromCharCode(0x30A0 + i));
+for (let i = 48; i <= 57; i++) glyphs.push(String.fromCharCode(i));
+for (let i = 65; i <= 90; i++) glyphs.push(String.fromCharCode(i));
+'=+-*/<>[]:.'.split('').forEach(c => glyphs.push(c));
+const GL = glyphs.length;
+const ri = () => (Math.random() * GL) | 0;
+
+const C = {
+  fs: 15,         
+  speed: 1,
+  density: 1,
+  trail: 0.1,      
+  paused: false,
+  glitch: false,
+  depth: true,
+  mouse: true,
+};
+
+const BRIGHT_STEPS = 16;
+const CELL = C.fs + 2;    
+let atlas, atlasReady = false;
+
+function buildAtlas() {
+  const cols = GL;
+  const rows = BRIGHT_STEPS;
+  const w = cols * CELL;
+  const h = rows * CELL;
+  const oc = document.createElement('canvas');
+  oc.width = w; oc.height = h;
+  const ox = oc.getContext('2d', { alpha: true });
+  ox.textBaseline = 'top';
+  ox.font = `${C.fs}px 'Courier New',monospace`;
+
+  for (let b = 0; b < BRIGHT_STEPS; b++) {
+    const v = Math.round((b / (BRIGHT_STEPS - 1)) * 255);
+    ox.fillStyle = `rgb(${v},${v},${v})`;
+    for (let g = 0; g < GL; g++) {
+      ox.fillText(glyphs[g], g * CELL, b * CELL);
     }
+  }
+  atlas = oc;
+  atlasReady = true;
+}
 
-    const CONFIG = {
-      symbolSize: 24,
-      initialStreams: [],
-      state: "preloader",
-      startTime: null,
-      loadingTime: 5000,
-      preloaderAngle: 0,
-      isPaused: false,
-      glitchMode: false,
-      depthMode: true,
-      fadeMode: true,
-      mouseInteraction: true,
-      currentSchemeIndex: 0,
-      globalSpeedMultiplier: 1,
-      densityFactor: 1
-    };
+const cvs = document.getElementById('c');
+const ctx = cvs.getContext('2d', { alpha: false });
+let W, H;
 
-    const colorSchemes = [
-      {
-        head: [180, 255, 180],
-        body: [0, 255, 70],
-        shadow: "rgba(0,255,70,0.8)",
-        trail: [0, 155, 40],
-        near: [255, 255, 255]
-      },
-      {
-        head: [255, 182, 193],
-        body: [255, 105, 180],
-        shadow: "rgba(255,105,180,0.8)",
-        trail: [180, 70, 120],
-        near: [255, 255, 255]
-      },
-      {
-        head: [0, 255, 255],
-        body: [0, 191, 255],
-        shadow: "rgba(0,191,255,0.8)",
-        trail: [0, 120, 170],
-        near: [255, 255, 255]
-      },
-      {
-        head: [255, 222, 130],
-        body: [255, 165, 0],
-        shadow: "rgba(255,165,0,0.8)",
-        trail: [180, 100, 0],
-        near: [255, 255, 255]
-      },
-      {
-        head: [255, 255, 255],
-        body: [180, 180, 180],
-        shadow: "rgba(255,255,255,0.8)",
-        trail: [100, 100, 100],
-        near: [255, 255, 255],
-        isRainbow: true
-      },
-      {
-        head: [255, 255, 255],
-        body: [200, 200, 200],
-        shadow: "rgba(255,255,255,0.8)",
-        trail: [100, 100, 100],
-        near: [0, 255, 70]
-      }
-    ];
+let numCols = 0;
+let colX     = null;   
+let colY     = null;   
+let colSpd   = null;   
+let colLen   = null;   
+let colDepth = null;   
+let colOpa   = null;   
+const MAX_LEN = 34;
+let symIdx   = null;   
+let symTick  = null;   
+let symIntv  = null;   
 
-    const speedOptions = [0.3, 1, 1.8, 2.5, 3.5, 5];
-    const densityOptions = [0.5, 1, 1.5, 2];
+let mx = -9999, my = -9999;
 
-    let canvas;
-    let streams = [];
-    let characterSet = [];
-    let preloaderSymbols = [];
-    let showingControls = false;
+function initColumns() {
+  const spacing = Math.max(8, Math.round(C.fs / C.density));
+  numCols = Math.ceil(W / spacing) + 1;
 
-    function setup() {
-      canvas = createCanvas(window.innerWidth, window.innerHeight);
-      textSize(CONFIG.symbolSize);
-      textFont('monospace');
+  colX     = new Float32Array(numCols);
+  colY     = new Float32Array(numCols);
+  colSpd   = new Float32Array(numCols);
+  colLen   = new Uint8Array(numCols);
+  colDepth = new Float32Array(numCols);
+  colOpa   = new Float32Array(numCols);
 
-      generateCharacterSet();
+  const totalSym = numCols * MAX_LEN;
+  symIdx  = new Uint8Array(totalSym);
+  symTick = new Uint8Array(totalSym);
+  symIntv = new Uint8Array(totalSym);
 
-      for (let i = 0; i < 50; i++) {
-        preloaderSymbols.push({
-          value: getRandomMatrixSymbol(),
-          x: random(width),
-          y: random(height),
-          size: random(8, 24),
-          opacity: random(0.3, 0.9)
-        });
-      }
+  for (let c = 0; c < numCols; c++) {
+    colX[c] = c * spacing;
+    resetColumn(c, true);
+  }
+}
 
-      CONFIG.startTime = millis();
-      frameRate(60);
+function resetColumn(c, initial) {
+  const len = 5 + (Math.random() * 28) | 0;
+  colLen[c]   = len;
+  colSpd[c]   = 0.4 + Math.random() * 1.6;
+  colDepth[c] = C.depth ? (0.5 + Math.random() * 1.0) : 1;
+  colOpa[c]   = 0.45 + Math.random() * 0.55;
+  colY[c]     = initial ? -Math.random() * H * 2.5 : -len * C.fs * 1.3;
 
-      setupUIControls();
-    }
+  const base = c * MAX_LEN;
+  for (let r = 0; r < len; r++) {
+    symIdx[base + r]  = ri();
+    symTick[base + r] = (Math.random() * 40) | 0;
+    symIntv[base + r] = 3 + (Math.random() * 20) | 0;
+  }
+}
 
-    function generateCharacterSet() {
-      for (let i = 0; i < 96; i++) {
-        characterSet.push(String.fromCharCode(0x30A0 + i));
-      }
+function resize() {
+  W = cvs.width  = window.innerWidth;
+  H = cvs.height = window.innerHeight;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, W, H);
+  initColumns();
+}
 
-      for (let i = 0; i < 10; i++) {
-        characterSet.push(i.toString());
-      }
+function drawFrame(dt) {
+  ctx.globalAlpha = C.trail;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, W, H);
+  ctx.globalAlpha = 1;
 
-      for (let i = 65; i <= 90; i++) {
-        characterSet.push(String.fromCharCode(i));
+  const fs = C.fs;
+  const spd = C.speed;
+  const doGlitch = C.glitch;
+  const doMouse = C.mouse && mx > -999;
+  const mxr = doMouse ? mx : 0;
+  const myr = doMouse ? my : 0;
+
+  for (let c = 0; c < numCols; c++) {
+    const len   = colLen[c];
+    const depth = colDepth[c];
+    const opa   = colOpa[c];
+    const x     = colX[c];
+
+    colY[c] += colSpd[c] * depth * spd * dt * 0.06;
+    const headY = colY[c];
+
+    if (headY - len * fs > H) { resetColumn(c, false); continue; }
+
+    const base = c * MAX_LEN;
+    const sz = C.depth ? (fs * depth) : fs;
+
+    for (let r = 0; r < len; r++) {
+      const sy = headY - r * fs;
+      if (sy < -fs || sy > H + fs) continue;
+
+      symTick[base + r]++;
+      if (symTick[base + r] >= symIntv[base + r]) {
+        symIdx[base + r] = ri();
+        symTick[base + r] = 0;
       }
 
-      const specialChars = ['=', '+', '-', '*', '/', '\\', '>', '<', '[', ']', ':', ';', '"', '\''];
-      characterSet = characterSet.concat(specialChars);
-    }
+      const t = r / len;  
+      let bright, alpha;
 
-    function resetStreams() {
-      streams = [];
-      initializeStreams();
-    }
-
-    function initializeStreams() {
-      let x = 0;
-      const columnSpacing = CONFIG.symbolSize * (1 / CONFIG.densityFactor);
-      
-      for (let i = 0; i < width / columnSpacing; i++) {
-        let stream = new Stream();
-        stream.generateSymbols(x, random(-2000, 0));
-        streams.push(stream);
-        x += columnSpacing;
-      }
-    }
-
-    function draw() {
-      if (CONFIG.state === "preloader") {
-        drawPreloader();
-        if (millis() - CONFIG.startTime > CONFIG.loadingTime) {
-          CONFIG.state = "main";
-          document.getElementById("controls").style.display = "block";
-          document.getElementById("preloader").style.display = "none";
-          initializeStreams();
-        }
-      } else if (CONFIG.state === "main") {
-        if (!CONFIG.isPaused) {
-          drawMatrixRain();
-        }
-      }
-    }
-
-    function drawPreloader() {
-      background(0);
-
-      for (let symbol of preloaderSymbols) {
-        fill(0, 255, 70, symbol.opacity * 255);
-        textSize(symbol.size);
-        text(symbol.value, symbol.x, symbol.y);
-
-        symbol.y += 0.5;
-        if (symbol.y > height) {
-          symbol.y = 0;
-          symbol.x = random(width);
-          symbol.value = getRandomMatrixSymbol();
-        }
-      }
-      
-      push();
-      translate(width / 2, height / 2);
-      rotate(CONFIG.preloaderAngle);
-      CONFIG.preloaderAngle += 0.05;
-      
-      const n = 20;
-      const radius = min(width, height) / 5;
-      
-      for (let i = 0; i < n; i++) {
-        let angle = map(i, 0, n, 0, TWO_PI);
-        let x = radius * cos(angle);
-        let y = radius * sin(angle);
-        
-        fill(0, 255, 70);
-        noStroke();
-        drawingContext.shadowBlur = 15;
-        drawingContext.shadowColor = "rgba(0,255,70,0.8)";
-        textAlign(CENTER, CENTER);
-        textSize(CONFIG.symbolSize);
-        
-        text(getRandomMatrixSymbol(), x, y);
-      }
-      pop();
-
-      let progress = constrain((millis() - CONFIG.startTime) / CONFIG.loadingTime, 0, 1);
-      let percent = floor(progress * 100);
-
-      document.getElementById('loading-progress').style.width = percent + '%';
-      document.getElementById('loading-text').innerText = "SYSTEM INITIALIZATION: " + percent + "%";
-    }
-
-    function drawMatrixRain() {
-      if (CONFIG.fadeMode) {
-        background(0, 100);
+      if (r === 0) {
+        bright = BRIGHT_STEPS - 1;
+        alpha = opa;
       } else {
-        background(0);
+        bright = Math.round((1 - t * 0.85) * (BRIGHT_STEPS - 1));
+        alpha = opa * (1 - t * 0.9);
       }
-      
-      streams.forEach(stream => {
-        stream.render();
-      });
-    }
 
-    function getRandomMatrixSymbol() {
-      return random(characterSet);
-    }
-
-    class MatrixSymbol {
-      constructor(x, y, speed, first, streamOpacity) {
-        this.x = x;
-        this.y = y;
-        this.speed = speed;
-        this.first = first;
-        this.switchInterval = round(random(5, 20));
-        this.value = getRandomMatrixSymbol();
-        this.opacity = streamOpacity || 1;
-        this.depth = random(0.7, 1.3);
-        this.glitchTime = 0;
-        this.isGlitching = false;
-        this.lifetime = 0;
-      }
-      
-      setToRandomSymbol() {
-        if (frameCount % this.switchInterval === 0 || this.isGlitching) {
-          this.value = getRandomMatrixSymbol();
+      if (doMouse) {
+        const dx = x - mxr;
+        const dy = sy - myr;
+        const d2 = dx * dx + dy * dy;
+        if (d2 < 14400) { 
+          const boost = 1 - Math.sqrt(d2) / 120;
+          bright = Math.min(BRIGHT_STEPS - 1, bright + Math.round(boost * 6));
+          alpha = Math.min(1, alpha + boost * 0.4);
         }
       }
-      
-      rain() {
-        if (!CONFIG.isPaused) {
-          this.y = (this.y >= height) ? 0 : this.y + (this.speed * CONFIG.globalSpeedMultiplier * this.depth);
-          this.lifetime++;
 
-          if (CONFIG.glitchMode && random(1) < 0.002) {
-            this.isGlitching = true;
-            this.glitchTime = 5 + round(random(10));
-          }
+      let ox = 0, oy = 0;
+      if (doGlitch && Math.random() < 0.04) {
+        ox = ((Math.random() - 0.5) * 8) | 0;
+        oy = ((Math.random() - 0.5) * 4) | 0;
+      }
 
-          if (this.isGlitching) {
-            this.glitchTime--;
-            if (this.glitchTime <= 0) {
-              this.isGlitching = false;
-            }
-          }
-        }
+      ctx.globalAlpha = alpha;
+      const gi = symIdx[base + r];
+      ctx.drawImage(atlas,
+        gi * CELL, bright * CELL, CELL, CELL,
+        x + ox, sy + oy, CELL, CELL
+      );
+
+      if (r === 0) {
+        ctx.globalAlpha = opa * 0.25;
+        ctx.drawImage(atlas,
+          gi * CELL, bright * CELL, CELL, CELL,
+          x - 2, sy - 2, CELL + 4, CELL + 4
+        );
       }
     }
+  }
 
-    class Stream {
-      constructor() {
-        this.symbols = [];
-        this.totalSymbols = round(random(5, 30));
-        this.speed = random(1, 5);
-        this.opacity = random(0.7, 1);
-        this.hue = random(360);
-      }
-      
-      generateSymbols(x, y) {
-        let first = true;
-        for (let i = 0; i <= this.totalSymbols; i++) {
-          let symbol = new MatrixSymbol(x, y, this.speed, first, this.opacity);
-          symbol.setToRandomSymbol();
-          this.symbols.push(symbol);
-          y -= CONFIG.symbolSize;
-          first = false;
-        }
-      }
-      
-      render() {
-        let scheme = colorSchemes[CONFIG.currentSchemeIndex];
+  ctx.globalAlpha = 1;
+}
 
-        let gradientColors = [];
-        if (scheme.isRainbow) {
-          for (let i = 0; i < this.symbols.length; i++) {
-            let hue = (this.hue + i * 10) % 360;
-            gradientColors.push([hue, 100, 50]);
-          }
-        }
-        
-        for (let i = 0; i < this.symbols.length; i++) {
-          let symbol = this.symbols[i];
-          let d = 0;
+let prev = 0;
+function loop(ts) {
+  requestAnimationFrame(loop);
+  if (C.paused) { prev = ts; return; }
+  const dt = Math.min(ts - prev, 50);   
+  prev = ts;
+  drawFrame(dt);
+}
 
-          if (CONFIG.mouseInteraction) {
-            d = dist(symbol.x, symbol.y, mouseX, mouseY);
-          }
-          
-          if (d < 100) {
-            fill(...scheme.near, this.opacity * 255);
-            drawingContext.shadowBlur = 15;
-            drawingContext.shadowColor = "rgba(255,255,255,0.8)";
-          } else if (symbol.first) {
-            if (scheme.isRainbow) {
-              colorMode(HSB);
-              fill(this.hue, 100, 100, this.opacity * 255);
-              colorMode(RGB);
-            } else {
-              fill(...scheme.head, this.opacity * 255);
-            }
-            drawingContext.shadowBlur = 15;
-            drawingContext.shadowColor = scheme.shadow;
-          } else {
-            if (scheme.isRainbow) {
-              let position = i / this.symbols.length;
-              colorMode(HSB);
-              let h = (this.hue + position * 100) % 360;
-              let s = 100 - position * 50;
-              let b = 100 - position * 70;
-              fill(h, s, b, this.opacity * (1 - position * 0.8) * 255);
-              colorMode(RGB);
-            } else {
-              let position = i / this.symbols.length;
-              let r = lerp(scheme.body[0], scheme.trail[0], position);
-              let g = lerp(scheme.body[1], scheme.trail[1], position);
-              let b = lerp(scheme.body[2], scheme.trail[2], position);
-              fill(r, g, b, this.opacity * (1 - position * 0.8) * 255);
-            }
-            drawingContext.shadowBlur = 0;
-          }
+const preEl  = document.getElementById('preloader');
+const barEl  = document.getElementById('barFill');
+const LOAD   = 1800;
+let loadT;
 
-          push();
+function preloaderTick(ts) {
+  const p = Math.min((ts - loadT) / LOAD, 1);
+  barEl.style.width = `${(p * 100)|0}%`;
+  if (p < 1) { requestAnimationFrame(preloaderTick); return; }
+  preEl.classList.add('done');
+  setTimeout(() => preEl.remove(), 500);
+  resize();
+  buildAtlas();
+  requestAnimationFrame(loop);
+}
 
-          if (CONFIG.depthMode) {
-            let size = CONFIG.symbolSize * symbol.depth;
-            textSize(size);
-          }
+window.addEventListener('resize', () => { if (atlasReady) resize(); });
+window.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; }, { passive: true });
+window.addEventListener('mouseleave', () => { mx = my = -9999; }, { passive: true });
 
-          let offsetX = 0;
-          let offsetY = 0;
-          if (CONFIG.glitchMode && (symbol.isGlitching || random(1) < 0.03)) {
-            offsetX = random(-5, 5);
-            offsetY = random(-3, 3);
-            
-            if (random(1) < 0.2) {
-              drawingContext.shadowBlur = 20;
-              drawingContext.shadowColor = "rgba(255,255,255,0.9)";
-            }
-          }
+window.addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  if (k === ' ') { e.preventDefault(); togglePause(); }
+  if (k === 'h') togglePanel();
+  if (k === 'g') { C.glitch = !C.glitch; sync(); }
+  if (k === 'd') { C.depth = !C.depth; initColumns(); sync(); }
+  if (k === 'm') { C.mouse = !C.mouse; sync(); }
+});
 
-          text(symbol.value, symbol.x + offsetX, symbol.y + offsetY);
-          pop();
+const menuBtn = document.getElementById('menu-btn');
+const panel   = document.getElementById('panel');
+let panelOpen = false;
 
-          symbol.rain();
-          symbol.setToRandomSymbol();
-        }
-      }
-    }
+function togglePanel() {
+  panelOpen = !panelOpen;
+  panel.classList.toggle('open', panelOpen);
+  menuBtn.style.display = panelOpen ? 'none' : '';
+}
 
-    function keyPressed() {
-      if (key >= '1' && key <= '6') {
-        let index = parseInt(key) - 1;
-        document.getElementById('speed').value = index;
-        CONFIG.globalSpeedMultiplier = speedOptions[index];
-      }
-      
-      if (key === 'h' || key === 'H') {
-        toggleControlsVisibility();
-      }
+function togglePause() {
+  C.paused = !C.paused;
+  document.getElementById('bPause').textContent = C.paused ? 'Resume' : 'Pause';
+}
 
-      if (key === ' ') {
-        CONFIG.isPaused = !CONFIG.isPaused;
-      }
+function sync() {
+  document.getElementById('bGlitch').textContent = `Glitch: ${C.glitch ? 'On' : 'Off'}`;
+  document.getElementById('bDepth').textContent  = `Depth: ${C.depth  ? 'On' : 'Off'}`;
+  document.getElementById('bMouse').textContent  = `Cursor Glow: ${C.mouse ? 'On' : 'Off'}`;
+}
 
-      if (key === 'g' || key === 'G') {
-        CONFIG.glitchMode = !CONFIG.glitchMode;
-        document.getElementById('toggleGlitch').innerText = 
-          CONFIG.glitchMode ? "DISABLE GLITCH EFFECT" : "ENABLE GLITCH EFFECT";
-      }
+menuBtn.addEventListener('click', togglePanel);
+document.getElementById('xBtn').addEventListener('click', togglePanel);
 
-      if (key === 'd' || key === 'D') {
-        CONFIG.depthMode = !CONFIG.depthMode;
-        document.getElementById('toggleDepth').innerText = 
-          CONFIG.depthMode ? "DISABLE 3D EFFECT" : "ENABLE 3D EFFECT";
-      }
+document.getElementById('sSpeed').addEventListener('change', e => { C.speed = +e.target.value; });
+document.getElementById('sDensity').addEventListener('change', e => { C.density = +e.target.value; initColumns(); });
+document.getElementById('sTrail').addEventListener('change', e => { C.trail = +e.target.value; });
+document.getElementById('bPause').addEventListener('click', togglePause);
+document.getElementById('bGlitch').addEventListener('click', () => { C.glitch = !C.glitch; sync(); });
+document.getElementById('bDepth').addEventListener('click', () => { C.depth = !C.depth; initColumns(); sync(); });
+document.getElementById('bMouse').addEventListener('click', () => { C.mouse = !C.mouse; sync(); });
+document.getElementById('bReset').addEventListener('click', initColumns);
 
-      if (key === 'f' || key === 'F') {
-        CONFIG.fadeMode = !CONFIG.fadeMode;
-        document.getElementById('toggleFade').innerText = 
-          CONFIG.fadeMode ? "DISABLE FADE EFFECT" : "ENABLE FADE EFFECT";
-      }
+setTimeout(() => { const h = document.getElementById('hints'); if (h) h.classList.add('hide'); }, 5000);
 
-      if (key === 'm' || key === 'M') {
-        CONFIG.mouseInteraction = !CONFIG.mouseInteraction;
-        document.getElementById('toggleMouse').innerText = 
-          CONFIG.mouseInteraction ? "DISABLE MOUSE INTERACTION" : "ENABLE MOUSE INTERACTION";
-      }
-      
-      if (key === 'c' || key === 'C') {
-        CONFIG.currentSchemeIndex = (CONFIG.currentSchemeIndex + 1) % colorSchemes.length;
-        document.getElementById('colorScheme').value = CONFIG.currentSchemeIndex;
-      }
-    }
+loadT = performance.now();
+requestAnimationFrame(preloaderTick);
 
-    function toggleControlsVisibility() {
-      showingControls = !showingControls;
-      document.getElementById('controls').style.display = showingControls ? 'block' : 'none';
-      document.getElementById('toggleControls').style.display = showingControls ? 'none' : 'block';
-    }
-
-    function setupUIControls() {
-      document.getElementById('toggleControls').addEventListener('click', toggleControlsVisibility);
-
-      document.getElementById('togglePause').addEventListener('click', () => {
-        CONFIG.isPaused = !CONFIG.isPaused;
-      });
-
-      document.getElementById('colorScheme').addEventListener('change', (e) => {
-        CONFIG.currentSchemeIndex = parseInt(e.target.value);
-      });
-
-      document.getElementById('speed').addEventListener('change', (e) => {
-        CONFIG.globalSpeedMultiplier = speedOptions[parseInt(e.target.value)];
-      });
-
-      document.getElementById('density').addEventListener('change', (e) => {
-        CONFIG.densityFactor = densityOptions[parseInt(e.target.value)];
-        resetStreams();
-      });
-
-      document.getElementById('toggleGlitch').addEventListener('click', () => {
-        CONFIG.glitchMode = !CONFIG.glitchMode;
-        document.getElementById('toggleGlitch').innerText = 
-          CONFIG.glitchMode ? "DISABLE GLITCH EFFECT" : "ENABLE GLITCH EFFECT";
-      });
-
-      document.getElementById('toggleDepth').addEventListener('click', () => {
-        CONFIG.depthMode = !CONFIG.depthMode;
-        document.getElementById('toggleDepth').innerText = 
-          CONFIG.depthMode ? "DISABLE 3D EFFECT" : "ENABLE 3D EFFECT";
-      });
-
-      document.getElementById('toggleFade').addEventListener('click', () => {
-        CONFIG.fadeMode = !CONFIG.fadeMode;
-        document.getElementById('toggleFade').innerText = 
-          CONFIG.fadeMode ? "DISABLE FADE EFFECT" : "ENABLE FADE EFFECT";
-      });
-
-      document.getElementById('toggleMouse').addEventListener('click', () => {
-        CONFIG.mouseInteraction = !CONFIG.mouseInteraction;
-        document.getElementById('toggleMouse').innerText = 
-          CONFIG.mouseInteraction ? "DISABLE MOUSE INTERACTION" : "ENABLE MOUSE INTERACTION";
-      });
-      
-      document.getElementById('resetStreams').addEventListener('click', resetStreams);
-    }
-
-    function windowResized() {
-      resizeCanvas(window.innerWidth, window.innerHeight);
-      resetStreams();
-    }
-  </script>
+})();
+</script>
 </body>
 </html>
