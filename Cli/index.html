@@ -90,6 +90,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
+
+<script>
+(function() {
+    if (sessionStorage.getItem('suryaLightTheme') === 'true') {
+        document.body.classList.add('light-theme');
+    }
+})();
+</script>
+
     <canvas id="background-canvas"></canvas>
     
     
@@ -169,7 +178,10 @@
             setInterval(() => {
                 cachedShapes.forEach(shape => {
                     if (Math.random() > 0.8) {
-                        shape.style.boxShadow = '0 0 20px rgba(255, 255, 255, 0.3)';
+                        const isLight = document.body.classList.contains('light-theme');
+                        shape.style.boxShadow = isLight
+                            ? '0 0 20px rgba(0, 0, 0, 0.2)'
+                            : '0 0 20px rgba(255, 255, 255, 0.3)';
                         setTimeout(() => {
                             shape.style.boxShadow = 'none';
                         }, 1000);

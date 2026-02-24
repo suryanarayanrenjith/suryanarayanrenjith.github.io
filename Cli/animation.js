@@ -19,6 +19,9 @@ function checkWebGLSupport() {
     }
 }
 
+const isLightTheme = document.body.classList.contains('light-theme');
+const themeColor = isLightTheme ? 0x222222 : 0xffffff;
+
 function initThreeJS() {
     const canvas = document.getElementById('background-canvas');
     
@@ -32,7 +35,7 @@ function initThreeJS() {
         powerPreference: "high-performance"
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setClearColor(0x000000, 0.0);
+    renderer.setClearColor(isLightTheme ? 0xf5f5f5 : 0x000000, 0.0);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     
     createGeometricElements();
@@ -61,9 +64,9 @@ function createGeometricElements() {
     
     elements = [];
     const elementMaterial = new THREE.MeshBasicMaterial({
-        color: 0xffffff,
+        color: themeColor,
         transparent: true,
-        opacity: 0.4,
+        opacity: isLightTheme ? 0.5 : 0.4,
         wireframe: true
     });
     
@@ -109,10 +112,10 @@ function createGeometricElements() {
         connectionGeometry.setAttribute('position', new THREE.Float32BufferAttribute(connectionPositions, 3));
         
         const connectionMaterial = new THREE.LineBasicMaterial({
-            color: 0xffffff,
+            color: themeColor,
             transparent: true,
-            opacity: 0.1,
-            blending: THREE.AdditiveBlending
+            opacity: isLightTheme ? 0.15 : 0.1,
+            blending: isLightTheme ? THREE.NormalBlending : THREE.AdditiveBlending
         });
         
         connections = new THREE.LineSegments(connectionGeometry, connectionMaterial);
@@ -123,12 +126,12 @@ function createGeometricElements() {
 function createWaveGeometry() {
     const geometry = new THREE.PlaneGeometry(400, 250, 60, 40);
     const material = new THREE.MeshBasicMaterial({
-        color: 0xffffff,
+        color: themeColor,
         transparent: true,
-        opacity: 0.03,
+        opacity: isLightTheme ? 0.06 : 0.03,
         wireframe: true,
         side: THREE.DoubleSide,
-        blending: THREE.AdditiveBlending
+        blending: isLightTheme ? THREE.NormalBlending : THREE.AdditiveBlending
     });
     
     waveGeometry = new THREE.Mesh(geometry, material);
@@ -168,10 +171,10 @@ function createAmbientOrbs() {
     
     const material = new THREE.PointsMaterial({
         size: 2,
-        color: 0xffffff,
+        color: themeColor,
         transparent: true,
-        opacity: 0.6,
-        blending: THREE.AdditiveBlending
+        opacity: isLightTheme ? 0.7 : 0.6,
+        blending: isLightTheme ? THREE.NormalBlending : THREE.AdditiveBlending
     });
     
     geometricElements = new THREE.Points(geometry, material);
@@ -326,6 +329,7 @@ function initCSSFallback() {
     
     const container = document.createElement('div');
     container.id = 'css-geometric-animation';
+    const isLight = document.body.classList.contains('light-theme');
     container.style.cssText = `
         position: fixed;
         top: 0;
@@ -344,12 +348,14 @@ function initCSSFallback() {
     for (let i = 0; i < elementCount; i++) {
         const element = document.createElement('div');
         const size = 6 + Math.random() * 8;
+        const elBg = isLight ? 'rgba(0, 0, 0, 0.15)' : 'rgba(255, 255, 255, 0.3)';
+        const elBorder = isLight ? 'rgba(0, 0, 0, 0.25)' : 'rgba(255, 255, 255, 0.5)';
         element.style.cssText = `
             position: absolute;
             width: ${size}px;
             height: ${size}px;
-            background: rgba(255, 255, 255, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.5);
+            background: ${elBg};
+            border: 1px solid ${elBorder};
             left: ${20 + Math.random() * 60}%;
             top: ${20 + Math.random() * 60}%;
             animation: geometricFloat ${4 + Math.random() * 6}s ease-in-out infinite;
@@ -368,6 +374,7 @@ function initCSSFallback() {
     }
     
     const style = document.createElement('style');
+    const gradColor = isLight ? 'rgba(0,0,0,0.015)' : 'rgba(255,255,255,0.015)';
     style.textContent = `
         @keyframes geometricFloat {
             0%, 100% {
@@ -392,8 +399,8 @@ function initCSSFallback() {
             width: 100%;
             height: 100%;
             background: 
-                radial-gradient(circle at 25% 25%, rgba(255,255,255,0.015) 0%, transparent 60%),
-                radial-gradient(circle at 75% 75%, rgba(255,255,255,0.015) 0%, transparent 60%);
+                radial-gradient(circle at 25% 25%, ${gradColor} 0%, transparent 60%),
+                radial-gradient(circle at 75% 75%, ${gradColor} 0%, transparent 60%);
             animation: geometricFlow 12s ease-in-out infinite;
         }
         

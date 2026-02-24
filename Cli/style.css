@@ -493,3 +493,189 @@ body::before {
 .input-line:hover {
     border-top-color: rgba(255, 255, 255, 0.15);
 }
+
+body.light-theme {
+    background-color: #f5f5f5;
+    color: #333;
+}
+
+body.light-theme::before {
+    background:
+        radial-gradient(ellipse at top left, rgba(0, 80, 120, 0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at bottom right, rgba(80, 0, 120, 0.06) 0%, transparent 50%);
+}
+
+body.light-theme .terminal-container {
+    box-shadow: 0 0 60px rgba(0, 0, 0, 0.1);
+}
+
+body.light-theme .terminal {
+    background: rgba(255, 255, 255, 0.35);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    color: #222;
+    box-shadow:
+        inset 0 0 80px rgba(255, 255, 255, 0.3),
+        0 0 120px rgba(0, 0, 0, 0.05),
+        0 25px 80px rgba(0, 0, 0, 0.1);
+}
+
+body.light-theme .terminal:hover {
+    transform: translateY(-5px);
+    box-shadow:
+        inset 0 0 80px rgba(255, 255, 255, 0.3),
+        0 0 150px rgba(0, 0, 0, 0.08),
+        0 35px 100px rgba(0, 0, 0, 0.15);
+    border-color: rgba(0, 0, 0, 0.25);
+}
+
+body.light-theme .terminal::before {
+    background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.08), transparent);
+}
+
+body.light-theme .terminal::after {
+    background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.04), transparent);
+}
+
+body.light-theme .header {
+    color: #111;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+    text-shadow: none;
+}
+
+body.light-theme .header::before {
+    color: rgba(0, 0, 0, 0.4);
+}
+
+body.light-theme .prompt {
+    color: #111;
+    text-shadow: none;
+}
+
+body.light-theme input[type="text"] {
+    color: #222;
+    caret-color: #111;
+}
+
+body.light-theme #output {
+    color: #333;
+}
+
+body.light-theme .html-content {
+    border-left: 2px solid rgba(0, 0, 0, 0.1);
+    background: rgba(0, 0, 0, 0.02);
+}
+
+body.light-theme .html-content h1,
+body.light-theme .html-content h2,
+body.light-theme .html-content h3 {
+    color: #111;
+}
+
+body.light-theme .html-content .animated-text {
+    color: #111;
+}
+
+body.light-theme .html-content .tagline {
+    color: rgba(0, 0, 0, 0.6);
+}
+
+body.light-theme .html-content p {
+    color: rgba(0, 0, 0, 0.75);
+}
+
+body.light-theme .html-content li {
+    color: rgba(0, 0, 0, 0.7);
+}
+
+body.light-theme .html-content li::before {
+    color: rgba(0, 0, 0, 0.3);
+}
+
+body.light-theme .html-content .center-button {
+    background-color: rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+body.light-theme .html-content .center-button:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0 25px rgba(0, 0, 0, 0.1);
+    border-color: rgba(0, 0, 0, 0.25);
+}
+
+body.light-theme .html-content .center-button a {
+    color: #222;
+}
+
+body.light-theme .html-content .logo {
+    border: 1px solid #bbb;
+    background: rgba(0, 0, 0, 0.02);
+}
+
+body.light-theme a {
+    color: #111;
+    border-bottom: 1px dotted rgba(0, 0, 0, 0.3);
+}
+
+body.light-theme a:hover {
+    color: #000;
+    text-shadow: none;
+    border-bottom-color: rgba(0, 0, 0, 0.6);
+}
+
+body.light-theme .input-line {
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+body.light-theme .input-line:hover {
+    border-top-color: rgba(0, 0, 0, 0.15);
+}
+
+body.light-theme .terminal::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+body.light-theme .terminal::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.15);
+}
+
+body.light-theme .terminal::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.25);
+}
+
+body.light-theme .terminal-container::before {
+    background:
+        repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 2px,
+            rgba(0, 0, 0, 0.02) 2px,
+            rgba(0, 0, 0, 0.02) 4px
+        );
+}
+
+body.light-theme .geometric-shape {
+    background: rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+body.light-theme .elegant-dot {
+    background: rgba(0, 0, 0, 0.25);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes pulse-light {
+    from {
+        text-shadow: 0 0 5px rgba(0, 0, 0, 0.2), 0 0 10px rgba(0, 0, 0, 0.1);
+        opacity: 0.8;
+    }
+    to {
+        text-shadow: 0 0 8px rgba(0, 0, 0, 0.3), 0 0 15px rgba(0, 0, 0, 0.15);
+        opacity: 1;
+    }
+}
+
+body.light-theme .html-content .animated-text {
+    animation: pulse-light 2s ease-in-out infinite alternate;
+}
