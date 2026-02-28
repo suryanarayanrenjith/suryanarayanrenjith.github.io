@@ -19,7 +19,6 @@ body, html {
     overflow: hidden;
 }
 
-/* Hide native cursor when custom cursor is active */
   body.custom-cursor-active,
   body.custom-cursor-active * {
     cursor: none !important;
@@ -53,7 +52,6 @@ body, html {
     animation: orbit 2s linear infinite;
   }
 
-  /* Hover state: expand outline, brighten dot */
   body.cursor-hover .cursor-dot-outline {
     width: 48px;
     height: 48px;
@@ -68,8 +66,6 @@ body, html {
     animation: orbit-hover 2s linear infinite;
   }
 
-  /* Default orbit: 8px dot, orbit R=12px, center offset -4px
-     Dot edge touches 32px outline outer boundary exactly */
   @keyframes orbit {
     0%   { transform: translate(8px, -4px);   }
     25%  { transform: translate(-4px, 8px);   }
@@ -78,8 +74,6 @@ body, html {
     100% { transform: translate(8px, -4px);   }
   }
 
-  /* Hover orbit: 6px dot, orbit R=21px, center offset -3px
-     Dot edge touches 48px outline outer boundary exactly */
   @keyframes orbit-hover {
     0%   { transform: translate(18px, -3px);  }
     25%  { transform: translate(-3px, 18px);  }

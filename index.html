@@ -2012,8 +2012,6 @@ function isOldBrowser() {
     return oldBrowserRegex.test(userAgent) || oldSafariRegex.test(userAgent);
 }
 
-document.body.style.cursor = 'none';
-
     if (!isWebGLAvailable() || isOldBrowser()) {
         console.log("WebGL is not supported or the browser is outdated. Switching to fallback animation.");
         document.querySelectorAll(".cursor-dot, .cursor-dot-outline").forEach(element => {

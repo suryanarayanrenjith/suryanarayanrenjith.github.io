@@ -3,7 +3,7 @@ import { gsap } from 'https://cdn.jsdelivr.net/npm/gsap@3.10.4/index.js';
 
 document.addEventListener("DOMContentLoaded", () => {
     const text = document.querySelector('.animated-text');
-    text.classList.add('animate');
+    if (text) text.classList.add('animate');
 
     const footerText = document.getElementById('footer-text');
     const currentYear = new Date().getFullYear();
@@ -93,7 +93,6 @@ document.addEventListener("DOMContentLoaded", () => {
     
     camera.position.z = 1000;
 
-    /* Light theme support – listen for the "SURYA" easter egg toggle */
     window.addEventListener('themeChanged', (e) => {
         if (e.detail && e.detail.light) {
             starMaterialWhite.color.setHex(0x222222);
