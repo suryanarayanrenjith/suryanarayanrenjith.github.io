@@ -346,6 +346,8 @@ function isDesktop() {
   }
 
   function initializeCursor() {
+    document.body.classList.add("custom-cursor-active");
+
     const cursorDot = document.createElement("div");
     cursorDot.classList.add("cursor-dot");
     document.body.appendChild(cursorDot);
@@ -383,6 +385,8 @@ function isDesktop() {
 
     animateCursor();
 
+    const hoverSelector = 'a, button, [role="button"], input[type="submit"], .hover-target, .tab-button, .shortcut-key, .shortcuts-list li, .action-button, .music-button, .help-button, .close-modal, [onclick], [data-section]';
+
     const addCursorHoverEffect = () => {
       document.body.classList.add("cursor-hover");
     };
@@ -391,10 +395,26 @@ function isDesktop() {
       document.body.classList.remove("cursor-hover");
     };
 
-    document.querySelectorAll("a, button, .hover-target").forEach((el) => {
-      el.addEventListener("mouseenter", addCursorHoverEffect);
-      el.addEventListener("mouseleave", removeCursorHoverEffect);
+    function bindHoverListeners(root) {
+      root.querySelectorAll(hoverSelector).forEach((el) => {
+        if (el.dataset.cursorBound) return;
+        el.dataset.cursorBound = '1';
+        el.addEventListener("mouseenter", addCursorHoverEffect);
+        el.addEventListener("mouseleave", removeCursorHoverEffect);
+      });
+    }
+
+    bindHoverListeners(document);
+
+    // Re-bind hover listeners when dynamic content is loaded
+    const observer = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        for (const node of m.addedNodes) {
+          if (node.nodeType === 1) bindHoverListeners(node.parentElement || document);
+        }
+      }
     });
+    observer.observe(document.body, { childList: true, subtree: true });
   }
 
   if (isDesktop()) {
@@ -454,14 +474,14 @@ function isDesktop() {
                         </div>
                         <div class="tab-pane" id="keyboard-tab">
                             <ul class="shortcuts-list">
-                                <li><span class="shortcut-key">Ctrl + Shift + /</span> Open Info Section</li>
-                                <li><span class="shortcut-key">Ctrl + Shift + 5</span> Go to Home section</li>
-                                <li><span class="shortcut-key">Ctrl + Shift + 6</span> Go to About section</li>
-                                <li><span class="shortcut-key">Ctrl + Shift + 7</span> Go to Projects section</li>
-                                <li><span class="shortcut-key">Ctrl + Shift + 8</span> Go to Resume section</li>
-                                <li><span class="shortcut-key">Ctrl + Shift + K</span> Open Terminal in new tab</li>
-                                <li><span class="shortcut-key">Ctrl + Shift + L</span> Open Links in the same tab</li>
-                                <li><span class="shortcut-key">Ctrl + Shift + V</span> Open Resume in new tab</li>
+                                <li data-action="toggle-info"><span class="shortcut-key">Ctrl + Shift + /</span> Open Info Section</li>
+                                <li data-action="go-home"><span class="shortcut-key">Ctrl + Shift + 5</span> Go to Home section</li>
+                                <li data-action="go-about"><span class="shortcut-key">Ctrl + Shift + 6</span> Go to About section</li>
+                                <li data-action="go-projects"><span class="shortcut-key">Ctrl + Shift + 7</span> Go to Projects section</li>
+                                <li data-action="go-resume"><span class="shortcut-key">Ctrl + Shift + 8</span> Go to Resume section</li>
+                                <li data-action="open-terminal"><span class="shortcut-key">Ctrl + Shift + K</span> Open Terminal in new tab</li>
+                                <li data-action="open-links"><span class="shortcut-key">Ctrl + Shift + L</span> Open Links in the same tab</li>
+                                <li data-action="open-resume"><span class="shortcut-key">Ctrl + Shift + V</span> Open Resume in new tab</li>
                             </ul>
                         </div>
                         <div class="tab-pane" id="terminal-tab">
@@ -493,7 +513,6 @@ function isDesktop() {
         
         <script>
             document.addEventListener('DOMContentLoaded', () => {
-              /* styleFix CSS moved to static style block for faster parsing */
 
               const keyValue     = 'uptimeResponseTime';
               const keyTimestamp = 'uptimeResponseTimeTimestamp';
@@ -537,11 +556,17 @@ function isDesktop() {
               const clientBtn         = document.querySelector('.tab-button[data-tab="client"]');
           
               const ua                = navigator.userAgent.toLowerCase();
+              const isMac             = /macintosh|mac os x/i.test(ua) || (navigator.platform && /Mac/i.test(navigator.platform));
+              const modKey            = isMac ? '⌘' : 'Ctrl';
               const isWindowsClient   = /windows nt|win64|wow64/i.test(ua);
               const isAndroidClient   = /android/i.test(ua);
               const isMobileClient    = /mobile|tablet|iphone|ipad|ipod/i.test(ua);
               const isElectron        = ua.includes('electron');
               const isAndroidWebView  = /; wv\)/.test(navigator.userAgent);
+
+              document.querySelectorAll('.shortcuts-list .shortcut-key').forEach(span => {
+                span.textContent = span.textContent.replace(/Ctrl/g, modKey);
+              });
 
               if (isElectron || isAndroidWebView) {
                 document.querySelector('.tab-button[data-tab="client"]')?.remove();
@@ -689,41 +714,25 @@ function isDesktop() {
 
           
               document.querySelectorAll('.shortcuts-list li').forEach(li => {
-                const key = li.querySelector('.shortcut-key')?.textContent.trim();
-                if (!key) return;
+                const action = li.dataset.action;
+                if (!action) return;
                 li.style.cursor = 'pointer';
                 li.addEventListener('click', () => {
-                  switch (key) {
-                    case 'Ctrl + Shift + /':
-                      toggleShortcuts();
-                      break;
-                    case 'Ctrl + Shift + 5':
-                      showContent?.('home'); updateProgressBar?.('home');
-                      break;
-                    case 'Ctrl + Shift + 6':
-                      showContent?.('about'); updateProgressBar?.('about');
-                      break;
-                    case 'Ctrl + Shift + 7':
-                      showContent?.('projects'); updateProgressBar?.('projects');
-                      break;
-                    case 'Ctrl + Shift + 8':
-                      showContent?.('resume'); updateProgressBar?.('resume');
-                      break;
-                    case 'Ctrl + Shift + K':
-                      launchTerminal();
-                      break;
-                    case 'Ctrl + Shift + L':
-                      setTimeout(() => window.open('/?section=links','_self'), 100);
-                      break;
-                    case 'Ctrl + Shift + V':
-                      setTimeout(() => window.open('/Resume','_blank'), 100);
-                      break;
+                  switch (action) {
+                    case 'toggle-info':   toggleShortcuts(); break;
+                    case 'go-home':       navigateToSection?.('home', 'none'); break;
+                    case 'go-about':      navigateToSection?.('about', 'none'); break;
+                    case 'go-projects':   navigateToSection?.('projects', 'none'); break;
+                    case 'go-resume':     navigateToSection?.('resume', 'none'); break;
+                    case 'open-terminal': launchTerminal(); break;
+                    case 'open-links':    setTimeout(() => window.open('/?section=links','_self'), 100); break;
+                    case 'open-resume':   setTimeout(() => window.open('/Resume','_blank'), 100); break;
                   }
                 });
               });
           
               document.addEventListener('keydown', event => {
-                if (shortcutsVisible && !event.ctrlKey && !event.shiftKey) {
+                if (shortcutsVisible && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
                     switch (event.key.toLowerCase()) {
                       case 'a': aboutBtn?.click();      break;
                       case 'k': keyboardBtn?.click();   break;
@@ -731,17 +740,18 @@ function isDesktop() {
                       case 'c': if (clientBtn && !isElectron) clientBtn.click(); break;
                     }
                   }
-                if (event.ctrlKey && event.shiftKey) {
+                const modPressed = isMac ? event.metaKey : event.ctrlKey;
+                if (modPressed && event.shiftKey) {
                   if (['Slash','/','?'].includes(event.key) || event.code === 'Slash') {
                     event.preventDefault();
                     toggleShortcuts();
                     return;
                   }
                   switch (event.code) {
-                    case 'Digit5': event.preventDefault(); showContent?.('home'); updateProgressBar?.('home'); break;
-                    case 'Digit6': event.preventDefault(); showContent?.('about'); updateProgressBar?.('about'); break;
-                    case 'Digit7': event.preventDefault(); showContent?.('projects'); updateProgressBar?.('projects'); break;
-                    case 'Digit8': event.preventDefault(); showContent?.('resume'); updateProgressBar?.('resume'); break;
+                    case 'Digit5': event.preventDefault(); navigateToSection?.('home', 'none'); break;
+                    case 'Digit6': event.preventDefault(); navigateToSection?.('about', 'none'); break;
+                    case 'Digit7': event.preventDefault(); navigateToSection?.('projects', 'none'); break;
+                    case 'Digit8': event.preventDefault(); navigateToSection?.('resume', 'none'); break;
                     case 'KeyK':   event.preventDefault(); launchTerminal(); break;
                     case 'KeyL':   event.preventDefault(); setTimeout(()=>window.open('/?section=links','_self'),100); break;
                     case 'KeyV':   event.preventDefault(); setTimeout(()=>window.open('/Resume','_blank'),100); break;
@@ -757,14 +767,10 @@ function isDesktop() {
         </div>
     </noscript>
 
-    <!-- offline-message styles consolidated into main style block above -->
-
     <script>   
         const CLOUD_FLARE_WORKER_URL = 'https://pages.surya-ops.workers.dev/';
         
         let isMobile = /Mobi|Android/i.test(navigator.userAgent);
-        
-        /* addAnimationStyles moved to static <style> block above for faster parsing */
         
         document.addEventListener('DOMContentLoaded', () => {
             const urlParams       = new URLSearchParams(window.location.search);
@@ -843,15 +849,6 @@ function isDesktop() {
                 });
         }
         
-        document.querySelectorAll('.menu-bar a').forEach(link => {
-            link.addEventListener('click', (event) => {
-                event.preventDefault();
-                const section = event.target.getAttribute('data-section');
-                showContent(section, 'none');
-                updateProgressBar(section);
-            });
-        });
-        
         const sectionOrder = ['home', 'about', 'projects', 'resume'];
         let currentSectionIndex = 0;
         let isThrottled = false;
@@ -862,6 +859,22 @@ function isDesktop() {
             const progress = index / (sectionOrder.length - 1) * 100;
             progressBar.style.width = `${progress}%`;
         }
+
+        function navigateToSection(section, direction) {
+            const idx = sectionOrder.indexOf(section);
+            if (idx !== -1) currentSectionIndex = idx;
+            showContent(section, direction);
+            updateProgressBar(section);
+            window.dispatchEvent(new CustomEvent('sectionChanged'));
+        }
+
+        document.querySelectorAll('.menu-bar a').forEach(link => {
+            link.addEventListener('click', (event) => {
+                event.preventDefault();
+                const section = event.target.getAttribute('data-section');
+                navigateToSection(section, 'none');
+            });
+        });
         
         function switchToNextSection(direction) {
             if (isThrottled) return;
@@ -877,31 +890,28 @@ function isDesktop() {
             const nextSection = sectionOrder[currentSectionIndex];
             showContent(nextSection, direction);
             updateProgressBar(nextSection);
+            window.dispatchEvent(new CustomEvent('sectionChanged'));
         }
         
-            let trackpadScrolling = false;
-            let trackpadTimer;
+            let wheelAccumulator = 0;
+            let wheelTimer;
+            const WHEEL_THRESHOLD = 60;
             
             window.addEventListener('wheel', event => {
-              if (event.deltaMode === WheelEvent.DOM_DELTA_PIXEL) {
-                if (!trackpadScrolling) {
-                  trackpadScrolling = true;
-                  if (event.deltaY > 0) {
-                    switchToNextSection('down');
-                  } else if (event.deltaY < 0) {
-                    switchToNextSection('up');
-                  }
-                }
-                clearTimeout(trackpadTimer);
-                trackpadTimer = setTimeout(() => {
-                  trackpadScrolling = false;
-                }, 200);
-              } else {
-                if (event.deltaY > 0) {
+              wheelAccumulator += event.deltaY;
+              
+              clearTimeout(wheelTimer);
+              wheelTimer = setTimeout(() => {
+                wheelAccumulator = 0;
+              }, 250);
+              
+              if (Math.abs(wheelAccumulator) >= WHEEL_THRESHOLD) {
+                if (wheelAccumulator > 0) {
                   switchToNextSection('down');
-                } else if (event.deltaY < 0) {
+                } else {
                   switchToNextSection('up');
                 }
+                wheelAccumulator = 0;
               }
             }, { passive: true });
         
@@ -1139,11 +1149,7 @@ function isDesktop() {
 });   
 </script>
 
-    <div class="container" id="content">
-        <h1 class="animated-text">Fusing Imagination with Innovation</h1>
-        <p class="tagline">Explore Boundless Creativity.</p>
-        <button id="home-button" class="center-button"><a href="/Links" target="_blank" style="text-decoration:none; color:black;">Discover Now</a></button>
-    </div>
+    <div class="container" id="content"></div>
     
     <div id="preloader">
         <canvas id="preloaderCanvas"></canvas>
@@ -1177,7 +1183,7 @@ function isDesktop() {
                         <div class="btn-underline"></div>
                     </button>
                     <button class="matrix-btn secondary" onclick="closePopup()">
-                        <span>CANCEL</span>
+                        <span>BACK</span>
                     </button>
                 </div>
             </div>
@@ -1379,8 +1385,6 @@ document.addEventListener('DOMContentLoaded', function() {
     </footer>
     <canvas id="animationCanvas"></canvas>
     
-    <!-- preloader styles consolidated into main style block above -->
-    
     <script>
   document.addEventListener("DOMContentLoaded", () => {
       const params = new URLSearchParams(window.location.search);
@@ -1409,33 +1413,37 @@ document.addEventListener('DOMContentLoaded', function() {
       window.addEventListener('resize', resize);
 
       const isLight = document.body.classList.contains('light-theme');
-      const fg = isLight ? [15, 15, 15] : [255, 255, 255];
+      const fg = isLight ? [20, 20, 20] : [255, 255, 255];
       const bg = isLight ? '#f5f5f5' : '#000';
-      const accent = isLight ? [80, 80, 80] : [150, 180, 255];
+      const dim = isLight ? [100, 100, 100] : [90, 90, 90];
+      const accent = isLight ? [80, 80, 80] : [130, 130, 130];
 
-      const TOTAL = 4000;
+      const TOTAL = 3800;
       const t0 = performance.now();
-      let phase = 'vortex';
       let running = true;
 
       const mobile = W < 768;
-      const N = mobile ? 180 : 450;
+      const N = mobile ? 220 : 550;
       const ps = [];
       for (let i = 0; i < N; i++) {
           const a = Math.random() * Math.PI * 2;
-          const r = 80 + Math.random() * Math.max(W, H) * 0.6;
+          const r = 60 + Math.random() * Math.max(W, H) * 0.55;
           ps.push({
               x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r,
-              ox: 0, oy: 0,
-              r: Math.random() * 1.8 + 0.3,
+              r: Math.random() * 1.2 + 0.2,
               a: a, orbitR: r,
-              speed: 0.0008 + Math.random() * 0.002,
-              drift: 0.998 - Math.random() * 0.004,
-              alpha: Math.random() * 0.4 + 0.1,
+              speed: 0.001 + Math.random() * 0.003,
+              drift: 0.997 - Math.random() * 0.003,
+              alpha: Math.random() * 0.3 + 0.05,
               trail: []
           });
       }
 
+      /* ═══ CONSTELLATION CONNECTIONS ═══ */
+      const CONNECTION_DIST = mobile ? 55 : 80;
+      const CONN_CHECK = Math.min(N, mobile ? 100 : 180);
+
+      /* ═══ GEOMETRY — ICOSAHEDRON (silver wireframe) ═══ */
       const phi = (1 + Math.sqrt(5)) / 2;
       const icoVerts = [
         [-1, phi, 0],[1, phi, 0],[-1,-phi, 0],[1,-phi, 0],
@@ -1448,7 +1456,7 @@ document.addEventListener('DOMContentLoaded', function() {
         [4,5],[4,9],[4,11],[5,9],[5,11],[6,7],[6,8],[6,10],
         [7,8],[7,10],[8,9],[10,11]
       ];
-      const icoScale = mobile ? 45 : 70;
+      const icoScale = mobile ? 40 : 60;
       let icoRotX = 0, icoRotY = 0, icoRotZ = 0;
 
       function project3D(v, rX, rY, rZ) {
@@ -1463,15 +1471,18 @@ document.addEventListener('DOMContentLoaded', function() {
           return { x: x2 * icoScale * perspective, y: y2 * icoScale * perspective, z: z2 };
       }
 
-      /* ═══ TEXT ═══ */
+      const ORBIT_DOTS = mobile ? 6 : 10;
+      const orbitDots = [];
+      for (let i = 0; i < ORBIT_DOTS; i++) {
+          orbitDots.push({
+              angle: (Math.PI * 2 / ORBIT_DOTS) * i,
+              speed: 0.006 + Math.random() * 0.004,
+              size: 1 + Math.random() * 1.2
+          });
+      }
+
       const letters = ['S', 'R'];
-      let textRevealT = 0;
 
-      /* ═══ GLOW / RING / SHOCKWAVE ═══ */
-      let ringRadius = 0, ringAlpha = 0, ringPulse = 0;
-      let shockR = 0, shockAlpha = 0;
-
-      /* ═══ MAIN LOOP ═══ */
       function frame(now) {
           if (!running) return;
           const elapsed = now - t0;
@@ -1481,44 +1492,36 @@ document.addEventListener('DOMContentLoaded', function() {
           ctx.fillStyle = bg;
           ctx.fillRect(0, 0, W, H);
 
-          if (t < 0.55) phase = 'vortex';
-          else if (t < 0.75) phase = 'converge';
-          else if (t < 0.92) phase = 'reveal';
-          else phase = 'exit';
+          const spiralT = Math.min(t / 0.45, 1);
+          const convergeT = t > 0.45 ? Math.min((t - 0.45) / 0.2, 1) : 0;
+          const revealT = t > 0.65 ? Math.min((t - 0.65) / 0.23, 1) : 0;
+          const exitT = t > 0.88 ? Math.min((t - 0.88) / 0.12, 1) : 0;
 
-          const vortexT = Math.min(t / 0.55, 1);
-          const convergeT = phase === 'converge' || phase === 'reveal' || phase === 'exit'
-              ? Math.min((t - 0.55) / 0.2, 1) : 0;
-          const revealT = phase === 'reveal' || phase === 'exit'
-              ? Math.min((t - 0.75) / 0.17, 1) : 0;
-          const exitT = phase === 'exit' ? Math.min((t - 0.92) / 0.08, 1) : 0;
-
-          /* ── 1) PARTICLES ── */
-          const vortexSpeed = 0.015 + vortexT * 0.025;
-          const pullStrength = convergeT * 0.06;
+          const vortexSpeed = 0.012 + spiralT * 0.022;
+          const pullStrength = convergeT * 0.07;
           for (const p of ps) {
               p.a += p.speed + vortexSpeed;
               p.orbitR *= p.drift;
-              if (convergeT > 0) p.orbitR = p.orbitR * (1 - pullStrength) + 2 * pullStrength;
+              if (convergeT > 0) p.orbitR = p.orbitR * (1 - pullStrength) + 1.5 * pullStrength;
               if (exitT > 0) {
                   const dx = p.x - cx, dy = p.y - cy;
                   const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-                  p.x += (dx / dist) * exitT * 15;
-                  p.y += (dy / dist) * exitT * 15;
-                  p.alpha *= 0.94;
+                  p.x += (dx / dist) * exitT * 18;
+                  p.y += (dy / dist) * exitT * 18;
+                  p.alpha *= 0.92;
               } else {
                   p.x = cx + Math.cos(p.a) * p.orbitR;
                   p.y = cy + Math.sin(p.a) * p.orbitR;
               }
               p.trail.push({ x: p.x, y: p.y });
-              if (p.trail.length > 6) p.trail.shift();
+              if (p.trail.length > 4) p.trail.shift();
               for (let ti = 0; ti < p.trail.length - 1; ti++) {
-                  const ta = p.alpha * (ti / p.trail.length) * 0.3;
+                  const ta = p.alpha * (ti / p.trail.length) * 0.2;
                   ctx.beginPath();
                   ctx.moveTo(p.trail[ti].x, p.trail[ti].y);
                   ctx.lineTo(p.trail[ti + 1].x, p.trail[ti + 1].y);
                   ctx.strokeStyle = `rgba(${fg[0]},${fg[1]},${fg[2]},${ta})`;
-                  ctx.lineWidth = p.r * 0.5;
+                  ctx.lineWidth = p.r * 0.4;
                   ctx.stroke();
               }
               ctx.beginPath();
@@ -1527,11 +1530,29 @@ document.addEventListener('DOMContentLoaded', function() {
               ctx.fill();
           }
 
-          /* ── 2) WIREFRAME ICOSAHEDRON ── */
-          const icoAlpha = vortexT * 0.6 * (1 - exitT);
+          if (exitT < 0.5) {
+              const connAlpha = 0.05 * (1 - exitT * 2) * spiralT;
+              const maxDist2 = CONNECTION_DIST * CONNECTION_DIST;
+              ctx.strokeStyle = `rgba(${fg[0]},${fg[1]},${fg[2]},${connAlpha})`;
+              ctx.lineWidth = 0.3;
+              ctx.beginPath();
+              for (let i = 0; i < CONN_CHECK; i++) {
+                  for (let j = i + 1; j < CONN_CHECK; j++) {
+                      const dx = ps[i].x - ps[j].x;
+                      const dy = ps[i].y - ps[j].y;
+                      if (dx * dx + dy * dy < maxDist2) {
+                          ctx.moveTo(ps[i].x, ps[i].y);
+                          ctx.lineTo(ps[j].x, ps[j].y);
+                      }
+                  }
+              }
+              ctx.stroke();
+          }
+
+          const icoAlpha = spiralT * 0.35 * (1 - exitT);
           if (icoAlpha > 0.01) {
-              icoRotX += 0.008; icoRotY += 0.012; icoRotZ += 0.004;
-              const breathe = 1 + Math.sin(elapsed * 0.002) * 0.08;
+              icoRotX += 0.006; icoRotY += 0.01; icoRotZ += 0.003;
+              const breathe = 1 + Math.sin(elapsed * 0.0015) * 0.06;
               const projected = icoVerts.map(v =>
                   project3D([v[0] * breathe, v[1] * breathe, v[2] * breathe], icoRotX, icoRotY, icoRotZ)
               );
@@ -1541,78 +1562,117 @@ document.addEventListener('DOMContentLoaded', function() {
               for (const [a, b] of icoEdges) {
                   const pa = projected[a], pb = projected[b];
                   const depth = Math.min(pa.z, pb.z);
-                  const edgeA = 0.15 + (depth + 2) * 0.15;
+                  const edgeA = 0.1 + (depth + 2) * 0.12;
                   ctx.beginPath();
                   ctx.moveTo(pa.x, pa.y);
                   ctx.lineTo(pb.x, pb.y);
                   ctx.strokeStyle = `rgba(${accent[0]},${accent[1]},${accent[2]},${edgeA})`;
-                  ctx.lineWidth = 0.8;
+                  ctx.lineWidth = 0.5;
                   ctx.stroke();
               }
               for (const p of projected) {
-                  const dotA = 0.3 + (p.z + 2) * 0.2;
+                  const dotA = 0.2 + (p.z + 2) * 0.15;
                   ctx.beginPath();
-                  ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+                  ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2);
                   ctx.fillStyle = `rgba(${accent[0]},${accent[1]},${accent[2]},${dotA})`;
                   ctx.fill();
               }
               ctx.restore();
           }
 
-          /* ── 3) GLOW RING ── */
-          ringRadius = 40 + vortexT * 50 - convergeT * 30;
-          ringPulse += 0.05;
-          ringAlpha = (0.15 + Math.sin(ringPulse) * 0.1) * (1 - exitT);
-          if (ringAlpha > 0.01) {
-              const grad = ctx.createRadialGradient(cx, cy, ringRadius * 0.3, cx, cy, ringRadius * 1.5);
-              grad.addColorStop(0, `rgba(${fg[0]},${fg[1]},${fg[2]},${ringAlpha * 0.6})`);
-              grad.addColorStop(0.5, `rgba(${accent[0]},${accent[1]},${accent[2]},${ringAlpha * 0.3})`);
+          const orbitAlpha = spiralT * 0.4 * (1 - exitT);
+          if (orbitAlpha > 0.01) {
+              const baseR = mobile ? 48 : 72;
+              const breathe = 1 + Math.sin(elapsed * 0.0018) * 0.08;
+              ctx.save();
+              ctx.globalAlpha = orbitAlpha;
+
+              ctx.beginPath();
+              ctx.arc(cx, cy, baseR * breathe, 0, Math.PI * 2);
+              ctx.strokeStyle = `rgba(${dim[0]},${dim[1]},${dim[2]},0.12)`;
+              ctx.lineWidth = 0.4;
+              ctx.stroke();
+
+              ctx.beginPath();
+              ctx.arc(cx, cy, baseR * breathe * 1.45, 0, Math.PI * 2);
+              ctx.strokeStyle = `rgba(${dim[0]},${dim[1]},${dim[2]},0.06)`;
+              ctx.lineWidth = 0.3;
+              ctx.stroke();
+
+              for (const d of orbitDots) {
+                  d.angle += d.speed;
+                  const r = baseR * breathe;
+                  const x = cx + Math.cos(d.angle) * r;
+                  const y = cy + Math.sin(d.angle) * r;
+                  ctx.beginPath();
+                  ctx.arc(x, y, d.size, 0, Math.PI * 2);
+                  ctx.fillStyle = `rgba(${fg[0]},${fg[1]},${fg[2]},0.3)`;
+                  ctx.fill();
+              }
+              ctx.restore();
+          }
+
+          const glowAlpha = (0.06 + Math.sin(elapsed * 0.003) * 0.03) * (1 - exitT);
+          if (glowAlpha > 0.005) {
+              const glowR = 35 + spiralT * 25 - convergeT * 15;
+              const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowR * 2);
+              grad.addColorStop(0, `rgba(${fg[0]},${fg[1]},${fg[2]},${glowAlpha})`);
+              grad.addColorStop(0.5, `rgba(${fg[0]},${fg[1]},${fg[2]},${glowAlpha * 0.2})`);
               grad.addColorStop(1, 'transparent');
               ctx.beginPath();
-              ctx.arc(cx, cy, ringRadius * 1.5, 0, Math.PI * 2);
+              ctx.arc(cx, cy, glowR * 2, 0, Math.PI * 2);
               ctx.fillStyle = grad;
               ctx.fill();
-              ctx.beginPath();
-              ctx.arc(cx, cy, ringRadius, 0, Math.PI * 2);
-              ctx.strokeStyle = `rgba(${fg[0]},${fg[1]},${fg[2]},${ringAlpha * 0.5})`;
-              ctx.lineWidth = 0.5;
-              ctx.stroke();
           }
 
-          /* ── 4) PROGRESS ARC ── */
-          const arcAlpha = 0.4 * (1 - exitT);
-          const arcR = mobile ? 55 : 80;
+          const arcAlpha = 0.3 * (1 - exitT);
+          const arcR = mobile ? 55 : 85;
           if (arcAlpha > 0.01) {
-              const eased = 1 - Math.pow(1 - Math.min(t / 0.92, 1), 3);
-              ctx.beginPath();
-              ctx.arc(cx, cy, arcR, -Math.PI / 2, -Math.PI / 2 + eased * Math.PI * 2);
-              ctx.strokeStyle = `rgba(${fg[0]},${fg[1]},${fg[2]},${arcAlpha})`;
-              ctx.lineWidth = 1.5;
-              ctx.lineCap = 'round';
-              ctx.stroke();
+              const progress = 1 - Math.pow(1 - Math.min(t / 0.88, 1), 3);
+
               ctx.beginPath();
               ctx.arc(cx, cy, arcR, 0, Math.PI * 2);
-              ctx.strokeStyle = `rgba(${fg[0]},${fg[1]},${fg[2]},0.06)`;
-              ctx.lineWidth = 1;
+              ctx.strokeStyle = `rgba(${fg[0]},${fg[1]},${fg[2]},0.03)`;
+              ctx.lineWidth = 0.8;
               ctx.stroke();
-              const tipA = -Math.PI / 2 + eased * Math.PI * 2;
+
               ctx.beginPath();
-              ctx.arc(cx + Math.cos(tipA) * arcR, cy + Math.sin(tipA) * arcR, 3, 0, Math.PI * 2);
-              ctx.fillStyle = `rgba(${fg[0]},${fg[1]},${fg[2]},${arcAlpha * 1.5})`;
+              ctx.arc(cx, cy, arcR, -Math.PI / 2, -Math.PI / 2 + progress * Math.PI * 2);
+              ctx.strokeStyle = `rgba(${fg[0]},${fg[1]},${fg[2]},${arcAlpha})`;
+              ctx.lineWidth = 1;
+              ctx.lineCap = 'round';
+              ctx.stroke();
+
+              const tipAngle = -Math.PI / 2 + progress * Math.PI * 2;
+              const tipX = cx + Math.cos(tipAngle) * arcR;
+              const tipY = cy + Math.sin(tipAngle) * arcR;
+              const tipGrad = ctx.createRadialGradient(tipX, tipY, 0, tipX, tipY, 5);
+              tipGrad.addColorStop(0, `rgba(${fg[0]},${fg[1]},${fg[2]},${arcAlpha * 0.8})`);
+              tipGrad.addColorStop(1, 'transparent');
+              ctx.beginPath();
+              ctx.arc(tipX, tipY, 5, 0, Math.PI * 2);
+              ctx.fillStyle = tipGrad;
               ctx.fill();
+
+              const pct = Math.round(progress * 100);
+              ctx.save();
+              ctx.globalAlpha = arcAlpha * 0.5;
+              ctx.font = `200 ${mobile ? 9 : 10}px 'Segoe UI', 'Helvetica Neue', Arial, sans-serif`;
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillStyle = `rgba(${dim[0]},${dim[1]},${dim[2]},1)`;
+              ctx.fillText(`${pct}%`, cx, cy + arcR + (mobile ? 15 : 20));
+              ctx.restore();
           }
 
-          /* ── 5) TEXT REVEAL — "SR" ── */
           if (revealT > 0) {
-              textRevealT = revealT;
-              const fontSize = mobile ? 52 : 80;
+              const fontSize = mobile ? 56 : 86;
               ctx.save();
-              ctx.font = `100 ${fontSize}px 'Segoe UI', 'Helvetica Neue', Arial, sans-serif`;
+              ctx.font = `200 ${fontSize}px 'Segoe UI', 'Helvetica Neue', Arial, sans-serif`;
               ctx.textAlign = 'center';
               ctx.textBaseline = 'middle';
 
-              /* Measure each letter for precise kerning */
-              const gap = mobile ? 8 : 14;
+              const gap = mobile ? 22 : 36;
               const widths = letters.map(ch => ctx.measureText(ch).width);
               const totalW = widths[0] + gap + widths[1];
               const positions = [
@@ -1621,86 +1681,106 @@ document.addEventListener('DOMContentLoaded', function() {
               ];
 
               letters.forEach((ch, i) => {
-                  const charT = Math.max(0, Math.min(1, (textRevealT - i * 0.25) / 0.6));
-                  const eased = 1 - Math.pow(1 - charT, 4);
+                  const charT = Math.max(0, Math.min(1, (revealT - i * 0.18) / 0.5));
+                  const eased = 1 - Math.pow(1 - charT, 5);
                   if (eased < 0.01) return;
 
-                  /* Glitch jitter that calms down */
-                  const jitter = charT < 0.5 ? (Math.random() - 0.5) * (1 - charT) * 8 : 0;
-                  const charX = positions[i] + jitter;
-                  const charY = cy + jitter * 0.3;
+                  const charX = positions[i];
+                  const charY = cy;
                   const a = eased * (1 - exitT);
 
-                  /* Bloom glow layer */
-                  ctx.globalAlpha = a * 0.2;
-                  ctx.fillStyle = `rgba(${accent[0]},${accent[1]},${accent[2]},1)`;
-                  ctx.filter = 'blur(16px)';
-                  ctx.fillText(ch, charX, charY);
-                  ctx.filter = 'none';
-
-                  /* Mid glow */
-                  ctx.globalAlpha = a * 0.35;
-                  ctx.filter = 'blur(4px)';
+                  ctx.globalAlpha = a * 0.1;
+                  ctx.filter = 'blur(20px)';
                   ctx.fillStyle = `rgba(${fg[0]},${fg[1]},${fg[2]},1)`;
                   ctx.fillText(ch, charX, charY);
                   ctx.filter = 'none';
 
-                  /* Crisp layer */
-                  ctx.globalAlpha = a;
+                  ctx.globalAlpha = a * 0.2;
+                  ctx.filter = 'blur(6px)';
+                  ctx.fillText(ch, charX, charY);
+                  ctx.filter = 'none';
+
+                  ctx.globalAlpha = a * 0.85;
                   ctx.fillStyle = `rgba(${fg[0]},${fg[1]},${fg[2]},1)`;
                   ctx.fillText(ch, charX, charY);
               });
 
-              /* Thin separator line between S and R */
-              const lineA = Math.min(1, textRevealT / 0.7) * (1 - exitT);
-              if (lineA > 0.01) {
-                  ctx.globalAlpha = lineA * 0.25;
+              const lineProgress = Math.min(1, revealT / 0.5);
+              const lineEased = 1 - Math.pow(1 - lineProgress, 3);
+              const lineA = lineEased * 0.18 * (1 - exitT);
+              if (lineA > 0.005) {
+                  const lineH = fontSize * 0.38 * lineEased;
+                  ctx.globalAlpha = lineA;
                   ctx.beginPath();
-                  ctx.moveTo(cx, cy - fontSize * 0.35);
-                  ctx.lineTo(cx, cy + fontSize * 0.35);
+                  ctx.moveTo(cx, cy - lineH);
+                  ctx.lineTo(cx, cy + lineH);
                   ctx.strokeStyle = `rgba(${fg[0]},${fg[1]},${fg[2]},1)`;
-                  ctx.lineWidth = 0.8;
+                  ctx.lineWidth = 0.5;
                   ctx.stroke();
               }
               ctx.restore();
 
-              /* Sub-text */
-              const subA = Math.max(0, (textRevealT - 0.4) / 0.6) * (1 - exitT);
+              const ruleT = Math.max(0, (revealT - 0.25) / 0.5);
+              const ruleEased = 1 - Math.pow(1 - Math.min(ruleT, 1), 3);
+              const ruleA = ruleEased * 0.12 * (1 - exitT);
+              if (ruleA > 0.005) {
+                  const ruleW = (mobile ? 70 : 120) * ruleEased;
+                  ctx.save();
+                  ctx.globalAlpha = ruleA;
+                  const ruleGrad = ctx.createLinearGradient(cx - ruleW, 0, cx + ruleW, 0);
+                  ruleGrad.addColorStop(0, 'transparent');
+                  ruleGrad.addColorStop(0.2, `rgba(${dim[0]},${dim[1]},${dim[2]},1)`);
+                  ruleGrad.addColorStop(0.8, `rgba(${dim[0]},${dim[1]},${dim[2]},1)`);
+                  ruleGrad.addColorStop(1, 'transparent');
+                  ctx.beginPath();
+                  ctx.moveTo(cx - ruleW, cy + fontSize * 0.48);
+                  ctx.lineTo(cx + ruleW, cy + fontSize * 0.48);
+                  ctx.strokeStyle = ruleGrad;
+                  ctx.lineWidth = 0.5;
+                  ctx.stroke();
+                  ctx.restore();
+              }
+
+              const subT = Math.max(0, (revealT - 0.4) / 0.6);
+              const subEased = 1 - Math.pow(1 - Math.min(subT, 1), 4);
+              const subA = subEased * 0.2 * (1 - exitT);
               if (subA > 0.01) {
                   ctx.save();
-                  ctx.globalAlpha = subA * 0.3;
-                  ctx.font = `300 ${mobile ? 9 : 11}px 'Segoe UI', 'Helvetica Neue', Arial, sans-serif`;
+                  ctx.globalAlpha = subA;
+                  ctx.font = `300 ${mobile ? 8 : 10}px 'Segoe UI', 'Helvetica Neue', Arial, sans-serif`;
                   ctx.textAlign = 'center';
                   ctx.textBaseline = 'middle';
-                  ctx.fillStyle = `rgba(${fg[0]},${fg[1]},${fg[2]},1)`;
-                  const subText = 'S U R Y A N A R A Y A N   R E N J I T H';
-                  ctx.fillText(subText, cx, cy + (mobile ? 38 : 56));
+                  ctx.fillStyle = `rgba(${dim[0]},${dim[1]},${dim[2]},1)`;
+                  ctx.fillText('S U R Y A N A R A Y A N   R E N J I T H', cx, cy + fontSize * 0.48 + (mobile ? 14 : 20));
                   ctx.restore();
               }
           }
 
-          /* ── 6) SHOCKWAVE EXIT ── */
           if (exitT > 0) {
-              shockR = exitT * Math.max(W, H) * 0.9;
-              shockAlpha = (1 - exitT) * 0.5;
-              ctx.beginPath();
-              ctx.arc(cx, cy, shockR, 0, Math.PI * 2);
-              ctx.strokeStyle = `rgba(${fg[0]},${fg[1]},${fg[2]},${shockAlpha})`;
-              ctx.lineWidth = 2 + exitT * 6;
-              ctx.stroke();
-              if (exitT > 0.6) {
-                  ctx.globalAlpha = (exitT - 0.6) / 0.4;
+              const ringR = exitT * Math.max(W, H) * 0.5;
+              const ringA = (1 - exitT) * 0.2;
+              if (ringA > 0.01) {
+                  ctx.beginPath();
+                  ctx.arc(cx, cy, ringR, 0, Math.PI * 2);
+                  ctx.strokeStyle = `rgba(${fg[0]},${fg[1]},${fg[2]},${ringA})`;
+                  ctx.lineWidth = 0.8 + exitT * 2;
+                  ctx.stroke();
+              }
+              if (exitT > 0.35) {
+                  const fadeA = Math.pow((exitT - 0.35) / 0.65, 1.5);
+                  ctx.globalAlpha = fadeA;
                   ctx.fillStyle = bg;
                   ctx.fillRect(0, 0, W, H);
               }
           }
 
-          /* ── SCANLINES ── */
-          if (exitT < 0.5) {
-              ctx.globalAlpha = 0.025;
-              for (let sy = 0; sy < H; sy += 3) {
-                  ctx.fillStyle = `rgba(${fg[0]},${fg[1]},${fg[2]},0.025)`;
-                  ctx.fillRect(0, sy, W, 1);
+          if (exitT < 0.3 && !mobile) {
+              ctx.globalAlpha = 0.012;
+              for (let sy = 0; sy < H; sy += 4) {
+                  if (Math.random() > 0.75) {
+                      ctx.fillStyle = `rgba(${fg[0]},${fg[1]},${fg[2]},${Math.random() * 0.02})`;
+                      ctx.fillRect(0, sy, W, 1);
+                  }
               }
           }
 
@@ -1731,7 +1811,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.body.style.cursor = 'crosshair';
 
-    /* Dynamic star color for light/dark theme */
     const isLightInit = document.body.classList.contains('light-theme');
     let starR = isLightInit ? 30 : 255;
     let starG = isLightInit ? 30 : 255;

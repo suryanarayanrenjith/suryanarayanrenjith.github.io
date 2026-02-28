@@ -301,23 +301,9 @@ function switchCameraPosition() {
     }, "-=0.8");
 }
     
-    document.querySelectorAll('.menu-bar ul li a').forEach(link => {
-        link.addEventListener('click', (event) => {
-            event.preventDefault();
-            switchCameraPosition();
-        });
+    window.addEventListener('sectionChanged', () => {
+        switchCameraPosition();
     });
-    
-
-window.addEventListener('wheel', (event) => {
-    if (event.deltaY > 0) {
-        switchToNextSection('down');
-        switchCameraPosition();
-    } else {
-        switchToNextSection('up');
-        switchCameraPosition();
-    }
-});
 
 document.addEventListener('keydown', (event) => {
     if (event.ctrlKey && event.shiftKey) {
@@ -347,45 +333,6 @@ document.addEventListener('keydown', (event) => {
         }
     }
 });
-
-let touchStartX = 0;
-let touchStartY = 0;
-let touchEndX = 0;
-let touchEndY = 0;
-
-window.addEventListener('touchstart', (event) => {
-    touchStartX = event.changedTouches[0].screenX;
-    touchStartY = event.changedTouches[0].screenY;
-});
-
-window.addEventListener('touchend', (event) => {
-    touchEndX = event.changedTouches[0].screenX;
-    touchEndY = event.changedTouches[0].screenY;
-    handleGesture();
-});
-
-function handleGesture() {
-    const deltaX = touchStartX - touchEndX;
-    const deltaY = touchStartY - touchEndY;
-
-    if (Math.abs(deltaX) > Math.abs(deltaY)) {
-        if (deltaX > 50) {
-            switchToNextSection('left');
-            switchCameraPosition();
-        } else if (deltaX < -50) {
-            switchToNextSection('right');
-            switchCameraPosition();
-        }
-    } else {
-        if (deltaY > 50) {
-            switchToNextSection('down');
-            switchCameraPosition();
-        } else if (deltaY < -50) {
-            switchToNextSection('up');
-            switchCameraPosition();
-        }
-    }
-}
 
     function render() {
         applyWarpSpeed();

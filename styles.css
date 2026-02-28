@@ -19,12 +19,20 @@ body, html {
     overflow: hidden;
 }
 
-.cursor-dot-outline,
+/* Hide native cursor when custom cursor is active */
+  body.custom-cursor-active,
+  body.custom-cursor-active * {
+    cursor: none !important;
+  }
+
+  .cursor-dot-outline,
   .cursor-dot {
     position: absolute;
     border-radius: 50%;
     pointer-events: none;
     will-change: transform;
+    transition: width 0.25s ease, height 0.25s ease, border-color 0.25s ease,
+                box-shadow 0.25s ease, background-color 0.25s ease, opacity 0.25s ease;
   }
 
   .cursor-dot-outline {
@@ -45,22 +53,39 @@ body, html {
     animation: orbit 2s linear infinite;
   }
 
+  /* Hover state: expand outline, brighten dot */
+  body.cursor-hover .cursor-dot-outline {
+    width: 48px;
+    height: 48px;
+    border-color: #fff;
+    box-shadow: 0 0 14px rgba(255, 255, 255, 0.5);
+  }
+
+  body.cursor-hover .cursor-dot {
+    width: 6px;
+    height: 6px;
+    opacity: 0.7;
+    animation: orbit-hover 2s linear infinite;
+  }
+
+  /* Default orbit: 8px dot, orbit R=12px, center offset -4px
+     Dot edge touches 32px outline outer boundary exactly */
   @keyframes orbit {
-    0% {
-      transform: translate(8px, 0);
-    }
-    25% {
-      transform: translate(0, 8px);
-    }
-    50% {
-      transform: translate(-16px, 0);
-    }
-    75% {
-      transform: translate(0, -16px);
-    }
-    100% {
-      transform: translate(8px, 0);
-    }
+    0%   { transform: translate(8px, -4px);   }
+    25%  { transform: translate(-4px, 8px);   }
+    50%  { transform: translate(-16px, -4px); }
+    75%  { transform: translate(-4px, -16px); }
+    100% { transform: translate(8px, -4px);   }
+  }
+
+  /* Hover orbit: 6px dot, orbit R=21px, center offset -3px
+     Dot edge touches 48px outline outer boundary exactly */
+  @keyframes orbit-hover {
+    0%   { transform: translate(18px, -3px);  }
+    25%  { transform: translate(-3px, 18px);  }
+    50%  { transform: translate(-24px, -3px); }
+    75%  { transform: translate(-3px, -24px); }
+    100% { transform: translate(18px, -3px);  }
   }
 
 .progress-bar {
@@ -1216,6 +1241,20 @@ body.light-theme .cursor-dot-outline {
 
 body.light-theme .cursor-dot {
     background-color: #000;
+}
+
+/* Light theme hover state */
+body.light-theme.cursor-hover .cursor-dot-outline {
+    width: 48px;
+    height: 48px;
+    border-color: #000;
+    box-shadow: 0 0 14px rgba(0, 0, 0, 0.4);
+}
+
+body.light-theme.cursor-hover .cursor-dot {
+    width: 6px;
+    height: 6px;
+    opacity: 0.7;
 }
 
 body.light-theme .progress-bar {
