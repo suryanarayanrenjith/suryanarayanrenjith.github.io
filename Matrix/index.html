@@ -10,34 +10,123 @@
 
     gtag('config', 'G-0QSEZ9VSPZ');
   </script> 
-	<link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png">
   <link rel="manifest" href="/assets/favicon/site.webmanifest">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Matrix</title>
   <script src="/blocker.js"></script>
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      height: 100%;
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    html,body{overflow:hidden;height:100%;background:#000;font-family:Arial,sans-serif;color:#fff}
+    canvas{display:block;position:fixed;inset:0}
+
+    #preloader{
+      position:fixed;inset:0;background:#000;z-index:100;
+      display:flex;flex-direction:column;justify-content:center;align-items:center;
+      opacity:1;transition:opacity .5s ease
     }
-    iframe {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      border: none;
+    #preloader.done{opacity:0;pointer-events:none}
+    .spinner{width:40px;height:40px;border:2px solid #222;border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .loader-label{margin-top:20px;font:600 10px/1 Arial,sans-serif;letter-spacing:5px;text-transform:uppercase;color:#444}
+    .bar-track{width:160px;height:1px;background:#1a1a1a;margin-top:14px;overflow:hidden}
+    .bar-fill{height:100%;width:0%;background:#fff;transition:width .2s linear}
+
+    #menu-btn{
+      position:fixed;top:14px;right:14px;z-index:30;
+      background:rgba(0,0,0,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+      border:1px solid #2a2a2a;color:#555;
+      font:600 10px/1 Arial,sans-serif;letter-spacing:3px;text-transform:uppercase;
+      padding:7px 14px;cursor:pointer;
+      transition:border-color .25s,color .25s,transform .25s
     }
+    #menu-btn:hover{border-color:#888;color:#fff;transform:scale(1.04)}
+
+    #panel{
+      position:fixed;top:14px;right:14px;z-index:25;
+      width:220px;
+      background:rgba(5,5,5,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+      border:1px solid #222;
+      padding:44px 16px 16px;
+      color:#888;font:11px/1.5 Arial,sans-serif;
+      transform:translateX(240px);opacity:0;
+      transition:transform .3s cubic-bezier(.4,0,.2,1),opacity .3s ease;
+      pointer-events:none
+    }
+    #panel.open{transform:translateX(0);opacity:1;pointer-events:auto}
+
+    #panel h3{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#ccc;border-bottom:1px solid #222;padding-bottom:6px;margin-bottom:10px}
+    #panel .x{position:absolute;top:10px;right:0;background:0;border:0;color:#444;font-size:16px;cursor:pointer;line-height:1;transition:color .2s}
+    #panel .x:hover{color:#fff}
+    #panel label{display:block;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#555;margin:10px 0 3px}
+    #panel select,#panel button{
+      width:100%;background:#0a0a0a;border:1px solid #222;color:#777;
+      font:11px/1 Arial,sans-serif;padding:5px 7px;margin-bottom:3px;cursor:pointer;
+      transition:border-color .2s,color .2s
+    }
+    #panel select:hover,#panel button:hover{border-color:#666;color:#fff}
+    #panel .sep{border:0;border-top:1px solid #181818;margin:10px 0}
+
+    #hints{
+      position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:20;
+      font:9px/1 'Courier New',monospace;letter-spacing:2px;color:#2a2a2a;
+      text-transform:uppercase;pointer-events:none;
+      opacity:1;transition:opacity 1s ease
+    }
+    #hints.hide{opacity:0}
   </style>
 </head>
 <body>
 
-  <iframe src="Matrix.html" sandbox="allow-scripts"></iframe>
+<div id="preloader">
+  <div class="spinner"></div>
+  <p class="loader-label">Loading</p>
+  <div class="bar-track"><div class="bar-fill" id="barFill"></div></div>
+</div>
 
-  <script>
+<canvas id="c"></canvas>
+<button id="menu-btn">Menu</button>
+
+<div id="panel">
+  <button class="x" id="xBtn">&times;</button>
+  <h3>Controls</h3>
+
+  <label>Speed</label>
+  <select id="sSpeed">
+    <option value="0.35">Slow</option>
+    <option value="1" selected>Normal</option>
+    <option value="2.2">Fast</option>
+    <option value="4">Hyper</option>
+  </select>
+
+  <label>Density</label>
+  <select id="sDensity">
+    <option value="0.55">Sparse</option>
+    <option value="1" selected>Normal</option>
+    <option value="1.7">Dense</option>
+  </select>
+
+  <label>Trail</label>
+  <select id="sTrail">
+    <option value="0.06">Long</option>
+    <option value="0.1" selected>Normal</option>
+    <option value="0.22">Short</option>
+  </select>
+
+  <hr class="sep">
+  <button id="bPause">Pause</button>
+  <button id="bGlitch">Glitch: Off</button>
+  <button id="bDepth">Depth: On</button>
+  <button id="bMouse">Cursor Glow: On</button>
+  <button id="bReset">Reset</button>
+</div>
+
+<div id="hints">Space pause · H menu · G glitch · D depth · M cursor</div>
+
+    <script>
   (async function verifyAndProceed() {
     function getFingerprint() {
       return `${navigator.userAgent}-${screen.width}-${screen.height}-${navigator.language}-${window.devicePixelRatio}`;
@@ -99,6 +188,283 @@
       block();
     }
   })(); 
+</script>
+
+<script>
+(() => {
+'use strict';
+
+const glyphs = [];
+for (let i = 0; i < 96; i++) glyphs.push(String.fromCharCode(0x30A0 + i));
+for (let i = 48; i <= 57; i++) glyphs.push(String.fromCharCode(i));
+for (let i = 65; i <= 90; i++) glyphs.push(String.fromCharCode(i));
+'=+-*/<>[]:.'.split('').forEach(c => glyphs.push(c));
+const GL = glyphs.length;
+const ri = () => (Math.random() * GL) | 0;
+
+const C = {
+  fs: 15,         
+  speed: 1,
+  density: 1,
+  trail: 0.1,      
+  paused: false,
+  glitch: false,
+  depth: true,
+  mouse: true,
+};
+
+const BRIGHT_STEPS = 16;
+const CELL = C.fs + 2;    
+let atlas, atlasReady = false;
+
+function buildAtlas() {
+  const cols = GL;
+  const rows = BRIGHT_STEPS;
+  const w = cols * CELL;
+  const h = rows * CELL;
+  const oc = document.createElement('canvas');
+  oc.width = w; oc.height = h;
+  const ox = oc.getContext('2d', { alpha: true });
+  ox.textBaseline = 'top';
+  ox.font = `${C.fs}px 'Courier New',monospace`;
+
+  for (let b = 0; b < BRIGHT_STEPS; b++) {
+    const v = Math.round((b / (BRIGHT_STEPS - 1)) * 255);
+    ox.fillStyle = `rgb(${v},${v},${v})`;
+    for (let g = 0; g < GL; g++) {
+      ox.fillText(glyphs[g], g * CELL, b * CELL);
+    }
+  }
+  atlas = oc;
+  atlasReady = true;
+}
+
+const cvs = document.getElementById('c');
+const ctx = cvs.getContext('2d', { alpha: false });
+let W, H;
+
+let numCols = 0;
+let colX     = null;   
+let colY     = null;   
+let colSpd   = null;   
+let colLen   = null;   
+let colDepth = null;   
+let colOpa   = null;   
+const MAX_LEN = 34;
+let symIdx   = null;   
+let symTick  = null;   
+let symIntv  = null;   
+
+let mx = -9999, my = -9999;
+
+function initColumns() {
+  const spacing = Math.max(8, Math.round(C.fs / C.density));
+  numCols = Math.ceil(W / spacing) + 1;
+
+  colX     = new Float32Array(numCols);
+  colY     = new Float32Array(numCols);
+  colSpd   = new Float32Array(numCols);
+  colLen   = new Uint8Array(numCols);
+  colDepth = new Float32Array(numCols);
+  colOpa   = new Float32Array(numCols);
+
+  const totalSym = numCols * MAX_LEN;
+  symIdx  = new Uint8Array(totalSym);
+  symTick = new Uint8Array(totalSym);
+  symIntv = new Uint8Array(totalSym);
+
+  for (let c = 0; c < numCols; c++) {
+    colX[c] = c * spacing;
+    resetColumn(c, true);
+  }
+}
+
+function resetColumn(c, initial) {
+  const len = 5 + (Math.random() * 28) | 0;
+  colLen[c]   = len;
+  colSpd[c]   = 0.4 + Math.random() * 1.6;
+  colDepth[c] = C.depth ? (0.5 + Math.random() * 1.0) : 1;
+  colOpa[c]   = 0.45 + Math.random() * 0.55;
+  colY[c]     = initial ? -Math.random() * H * 2.5 : -len * C.fs * 1.3;
+
+  const base = c * MAX_LEN;
+  for (let r = 0; r < len; r++) {
+    symIdx[base + r]  = ri();
+    symTick[base + r] = (Math.random() * 40) | 0;
+    symIntv[base + r] = 3 + (Math.random() * 20) | 0;
+  }
+}
+
+function resize() {
+  W = cvs.width  = window.innerWidth;
+  H = cvs.height = window.innerHeight;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, W, H);
+  initColumns();
+}
+
+function drawFrame(dt) {
+  ctx.globalAlpha = C.trail;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, W, H);
+  ctx.globalAlpha = 1;
+
+  const fs = C.fs;
+  const spd = C.speed;
+  const doGlitch = C.glitch;
+  const doMouse = C.mouse && mx > -999;
+  const mxr = doMouse ? mx : 0;
+  const myr = doMouse ? my : 0;
+
+  for (let c = 0; c < numCols; c++) {
+    const len   = colLen[c];
+    const depth = colDepth[c];
+    const opa   = colOpa[c];
+    const x     = colX[c];
+
+    colY[c] += colSpd[c] * depth * spd * dt * 0.06;
+    const headY = colY[c];
+
+    if (headY - len * fs > H) { resetColumn(c, false); continue; }
+
+    const base = c * MAX_LEN;
+    const sz = C.depth ? (fs * depth) : fs;
+
+    for (let r = 0; r < len; r++) {
+      const sy = headY - r * fs;
+      if (sy < -fs || sy > H + fs) continue;
+
+      symTick[base + r]++;
+      if (symTick[base + r] >= symIntv[base + r]) {
+        symIdx[base + r] = ri();
+        symTick[base + r] = 0;
+      }
+
+      const t = r / len;  
+      let bright, alpha;
+
+      if (r === 0) {
+        bright = BRIGHT_STEPS - 1;
+        alpha = opa;
+      } else {
+        bright = Math.round((1 - t * 0.85) * (BRIGHT_STEPS - 1));
+        alpha = opa * (1 - t * 0.9);
+      }
+
+      if (doMouse) {
+        const dx = x - mxr;
+        const dy = sy - myr;
+        const d2 = dx * dx + dy * dy;
+        if (d2 < 14400) { 
+          const boost = 1 - Math.sqrt(d2) / 120;
+          bright = Math.min(BRIGHT_STEPS - 1, bright + Math.round(boost * 6));
+          alpha = Math.min(1, alpha + boost * 0.4);
+        }
+      }
+
+      let ox = 0, oy = 0;
+      if (doGlitch && Math.random() < 0.04) {
+        ox = ((Math.random() - 0.5) * 8) | 0;
+        oy = ((Math.random() - 0.5) * 4) | 0;
+      }
+
+      ctx.globalAlpha = alpha;
+      const gi = symIdx[base + r];
+      ctx.drawImage(atlas,
+        gi * CELL, bright * CELL, CELL, CELL,
+        x + ox, sy + oy, CELL, CELL
+      );
+
+      if (r === 0) {
+        ctx.globalAlpha = opa * 0.25;
+        ctx.drawImage(atlas,
+          gi * CELL, bright * CELL, CELL, CELL,
+          x - 2, sy - 2, CELL + 4, CELL + 4
+        );
+      }
+    }
+  }
+
+  ctx.globalAlpha = 1;
+}
+
+let prev = 0;
+function loop(ts) {
+  requestAnimationFrame(loop);
+  if (C.paused) { prev = ts; return; }
+  const dt = Math.min(ts - prev, 50);   
+  prev = ts;
+  drawFrame(dt);
+}
+
+const preEl  = document.getElementById('preloader');
+const barEl  = document.getElementById('barFill');
+const LOAD   = 1800;
+let loadT;
+
+function preloaderTick(ts) {
+  const p = Math.min((ts - loadT) / LOAD, 1);
+  barEl.style.width = `${(p * 100)|0}%`;
+  if (p < 1) { requestAnimationFrame(preloaderTick); return; }
+  preEl.classList.add('done');
+  setTimeout(() => preEl.remove(), 500);
+  resize();
+  buildAtlas();
+  requestAnimationFrame(loop);
+}
+
+window.addEventListener('resize', () => { if (atlasReady) resize(); });
+window.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; }, { passive: true });
+window.addEventListener('mouseleave', () => { mx = my = -9999; }, { passive: true });
+
+window.addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  if (k === ' ') { e.preventDefault(); togglePause(); }
+  if (k === 'h') togglePanel();
+  if (k === 'g') { C.glitch = !C.glitch; sync(); }
+  if (k === 'd') { C.depth = !C.depth; initColumns(); sync(); }
+  if (k === 'm') { C.mouse = !C.mouse; sync(); }
+});
+
+const menuBtn = document.getElementById('menu-btn');
+const panel   = document.getElementById('panel');
+let panelOpen = false;
+
+function togglePanel() {
+  panelOpen = !panelOpen;
+  panel.classList.toggle('open', panelOpen);
+  menuBtn.style.display = panelOpen ? 'none' : '';
+}
+
+function togglePause() {
+  C.paused = !C.paused;
+  document.getElementById('bPause').textContent = C.paused ? 'Resume' : 'Pause';
+}
+
+function sync() {
+  document.getElementById('bGlitch').textContent = `Glitch: ${C.glitch ? 'On' : 'Off'}`;
+  document.getElementById('bDepth').textContent  = `Depth: ${C.depth  ? 'On' : 'Off'}`;
+  document.getElementById('bMouse').textContent  = `Cursor Glow: ${C.mouse ? 'On' : 'Off'}`;
+}
+
+menuBtn.addEventListener('click', togglePanel);
+document.getElementById('xBtn').addEventListener('click', togglePanel);
+
+document.getElementById('sSpeed').addEventListener('change', e => { C.speed = +e.target.value; });
+document.getElementById('sDensity').addEventListener('change', e => { C.density = +e.target.value; initColumns(); });
+document.getElementById('sTrail').addEventListener('change', e => { C.trail = +e.target.value; });
+document.getElementById('bPause').addEventListener('click', togglePause);
+document.getElementById('bGlitch').addEventListener('click', () => { C.glitch = !C.glitch; sync(); });
+document.getElementById('bDepth').addEventListener('click', () => { C.depth = !C.depth; initColumns(); sync(); });
+document.getElementById('bMouse').addEventListener('click', () => { C.mouse = !C.mouse; sync(); });
+document.getElementById('bReset').addEventListener('click', initColumns);
+
+setTimeout(() => { const h = document.getElementById('hints'); if (h) h.classList.add('hide'); }, 5000);
+
+loadT = performance.now();
+requestAnimationFrame(preloaderTick);
+
+})();
 </script>
 </body>
 </html>

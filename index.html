@@ -1439,11 +1439,9 @@ document.addEventListener('DOMContentLoaded', function() {
           });
       }
 
-      /* ═══ CONSTELLATION CONNECTIONS ═══ */
       const CONNECTION_DIST = mobile ? 55 : 80;
       const CONN_CHECK = Math.min(N, mobile ? 100 : 180);
 
-      /* ═══ GEOMETRY — ICOSAHEDRON (silver wireframe) ═══ */
       const phi = (1 + Math.sqrt(5)) / 2;
       const icoVerts = [
         [-1, phi, 0],[1, phi, 0],[-1,-phi, 0],[1,-phi, 0],
