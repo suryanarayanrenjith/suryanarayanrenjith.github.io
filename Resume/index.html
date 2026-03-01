@@ -127,7 +127,7 @@
       console.error('Proxy check error');
       block();
     }
-  })(); 
+  })();
   </script>
 
   <script>
@@ -265,7 +265,51 @@
     <iframe id="resume-frame" title="Resume"></iframe>
   </div>
 
-  <a href="help.html" class="help-icon" title="Need Help?">?</a>
+  <button type="button" class="help-icon" id="help-toggle" title="Need Help?">?</button>
+
+  <!-- Help Modal -->
+  <div id="help-modal" class="help-modal">
+    <div class="help-modal-content">
+      <button type="button" class="help-close" id="help-close">&times;</button>
+      <h2 class="help-title">Help &amp; Support</h2>
+      <div class="help-divider"></div>
+
+      <div class="help-section">
+        <p>Welcome to the <strong>Help &amp; Support Center</strong>. I'm committed to providing you with the best possible assistance for managing your account and solving any issues you might encounter.</p>
+        <p>For security reasons, certain account management features such as resetting or deleting your account are not available through the standard user interface. This additional layer of protection helps ensure that your data remains secure.</p>
+        <p>If you require assistance with these actions, I'm here to help you personally. Please don't hesitate to <a href="/?section=links" target="_blank" rel="noopener">contact me directly</a> for prompt and secure assistance.</p>
+      </div>
+
+      <div class="help-grid">
+        <div class="help-card">
+          <h3>Account Security</h3>
+          <p>I reserve the right to disable accounts that show signs of malicious activity or violate my terms of service. This helps maintain a safe environment for all visitors.</p>
+        </div>
+        <div class="help-card">
+          <h3>Verification</h3>
+          <p>Email verification links are valid for one use only. If you need a new verification link, please reach out through my <a href="/?section=links" target="_blank" rel="noopener">contact page</a>.</p>
+        </div>
+        <div class="help-card">
+          <h3>Additional Help</h3>
+          <p>Thank you for your understanding and trust. I'm personally committed to providing you with the best possible support experience.</p>
+        </div>
+      </div>
+
+      <a href="/?section=links" target="_blank" rel="noopener" class="help-cta">Get in Touch</a>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    var toggle = document.getElementById('help-toggle');
+    var modal = document.getElementById('help-modal');
+    var closeBtn = document.getElementById('help-close');
+    toggle.addEventListener('click', function() { modal.classList.add('open'); });
+    closeBtn.addEventListener('click', function() { modal.classList.remove('open'); });
+    modal.addEventListener('click', function(e) { if (e.target === modal) modal.classList.remove('open'); });
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && modal.classList.contains('open')) modal.classList.remove('open'); });
+  })();
+  </script>
 
   <!-- Greeting -->
   <script>
