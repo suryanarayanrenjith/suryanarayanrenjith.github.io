@@ -51,6 +51,11 @@ body {
   border-color: #555;
 }
 
+/* ── Forms (password field wrappers) ── */
+.container form {
+  display: contents;
+}
+
 h1, h2 {
   text-align: center;
   color: #fff;

@@ -49,7 +49,20 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/11.1.0/firebase-auth-compat.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/11.1.0/firebase-firestore-compat.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"
+    onerror="/* TF.js load failed — disposable email ML check will fall back to API */"></script>
+  <!-- Guard against Brave SES lockdown conflicting with TF.js -->
+  <script>
+  (function(){
+    var origDP = Object.defineProperty;
+    Object.defineProperty = function(obj, prop, desc) {
+      try { return origDP.call(Object, obj, prop, desc); } catch(e) {
+        if (e instanceof TypeError && /read only|not extensible|Cannot redefine/i.test(e.message)) return obj;
+        throw e;
+      }
+    };
+  })();
+  </script>
 
   <link rel="stylesheet" href="styles.css">
 
@@ -114,7 +127,7 @@
       console.error('Proxy check error');
       block();
     }
-  })();
+  })(); 
   </script>
 
   <script>
@@ -201,6 +214,7 @@
   <!-- Sign Up -->
   <div class="container" id="signup-container" style="display:none;">
     <h1>Sign Up</h1>
+    <form autocomplete="on" onsubmit="return false">
     <input type="email" id="signup-email" placeholder="Enter your email" autocomplete="email" spellcheck="false" maxlength="254">
     <div class="input-group">
       <input type="password" id="signup-password" placeholder="Enter your password" autocomplete="new-password" maxlength="20">
@@ -210,21 +224,24 @@
       <input type="password" id="signup-password-confirm" placeholder="Confirm your password" autocomplete="new-password" maxlength="20">
       <a href="#" class="show-password" data-toggle="signup-password-confirm">Show</a>
     </div>
-    <button id="signup-submit-btn">Sign Up</button>
-    <button id="signup-back-btn" class="btn-secondary">Back</button>
+    <button type="button" id="signup-submit-btn">Sign Up</button>
+    <button type="button" id="signup-back-btn" class="btn-secondary">Back</button>
+    </form>
     <p id="signup-message"></p>
   </div>
 
   <!-- Sign In -->
   <div class="container" id="signin-container" style="display:none;">
     <h1>Sign In</h1>
+    <form autocomplete="on" onsubmit="return false">
     <input type="email" id="signin-email" placeholder="Enter your email" autocomplete="email" spellcheck="false" maxlength="254">
     <div class="input-group">
       <input type="password" id="signin-password" placeholder="Enter your password" autocomplete="current-password" maxlength="20">
       <a href="#" class="show-password" data-toggle="signin-password">Show</a>
     </div>
-    <button id="signin-submit-btn">Sign In</button>
-    <button id="signin-back-btn" class="btn-secondary">Back</button>
+    <button type="button" id="signin-submit-btn">Sign In</button>
+    <button type="button" id="signin-back-btn" class="btn-secondary">Back</button>
+    </form>
     <p id="signin-message"></p>
   </div>
 
@@ -245,7 +262,7 @@
   <div class="container" id="resume-container" style="display:none;">
     <button id="signout">Sign Out</button>
     <h2>Resume</h2>
-    <iframe id="resume-frame" title="Resume" sandbox="allow-same-origin allow-scripts allow-popups"></iframe>
+    <iframe id="resume-frame" title="Resume"></iframe>
   </div>
 
   <a href="help.html" class="help-icon" title="Need Help?">?</a>
