@@ -280,6 +280,7 @@ iframe {
   right: 20px;
   width: 44px;
   height: 44px;
+  padding: 0;
   background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
@@ -287,14 +288,16 @@ iframe {
   border: 1px solid #333;
   font-size: 20px;
   font-weight: bold;
-  text-align: center;
-  line-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 50%;
   text-decoration: none;
   transition: all 0.3s ease;
   z-index: 100;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
 }
 
 .help-icon:hover {
@@ -822,7 +825,6 @@ iframe {
     width: 40px;
     height: 40px;
     font-size: 18px;
-    line-height: 40px;
     bottom: 14px;
     right: 14px;
   }

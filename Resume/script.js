@@ -432,12 +432,18 @@ signupSubmitBtn.addEventListener('click', async () => {
       } catch (notifyErr) {}
     })();
     loader.stop();
-    showMessage(signupMessageEl, 'Sign-up successful! Please check your email for a verification link. The page will refresh shortly. Once verified, please log in again.', 'green');
-    setTimeout(() => { location.reload(); }, 5000);
+    showMessage(signupMessageEl, 'Sign-up successful! Please check your email for a verification link. Once verified, please log in.', 'green');
+    setTimeout(() => {
+      signupEmailInput.value = '';
+      signupPasswordInput.value = '';
+      signupPasswordConfirmInput.value = '';
+      signupSubmitBtn.disabled = false;
+      switchView(signupContainer, signinContainer);
+    }, 5000);
   } catch (error) {
     loader.stop();
-    signupSubmitBtn.disabled = false;
     showMessage(signupMessageEl, 'Sign-up failed. Please try again later.', 'red');
+    setTimeout(() => { location.reload(); }, 3000);
   }
 });
 
