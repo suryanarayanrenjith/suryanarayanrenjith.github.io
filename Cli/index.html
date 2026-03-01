@@ -76,7 +76,7 @@
       console.error('Proxy check error');
       block();
     }
-  })(); 
+  })();
 </script>
     
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
@@ -93,7 +93,7 @@
 
 <script>
 (function() {
-    if (sessionStorage.getItem('suryaLightTheme') === 'true') {
+    if (localStorage.getItem('suryaLightTheme') === 'true') {
         document.body.classList.add('light-theme');
     }
 })();

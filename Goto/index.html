@@ -95,13 +95,11 @@
 <script>
 document.addEventListener("DOMContentLoaded", () => {
     if (!window.localStorage) {
-        console.warn("localStorage is not available. Redirecting to /404.");
         window.location.href = '/404';
         return;
     }
 
     if (!window.fetch) {
-        console.warn("fetch is not available. Redirecting to /404.");
         window.location.href = '/404';
         return;
     }
@@ -163,7 +161,6 @@ document.addEventListener("DOMContentLoaded", () => {
                         window.location.href = '/404';
                     }
                 } catch (error) {
-                    console.error('Fetch error:', error);
                     window.location.href = '/404';
                 }
             } else {
@@ -173,7 +170,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (localStorage.getItem(vK)) {
-        console.log("Verified user detected. Unblocking if blocked.");
         clearBlocked();
     } else {
 
@@ -182,7 +178,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         if (isBotUA(userAgent)) {
-            console.warn("Bot detected. Blocking user.");
             setBlocked();
         }
     }
@@ -195,6 +190,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 <style>
+
 body, html {
     margin: 0;
     padding: 0;
@@ -206,6 +202,21 @@ body, html {
     background-color: #000;
     color: #fff;
     font-family: 'Arial', sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.light-theme, body.light-theme html {
+    background-color: #f5f5f5;
+    color: #111;
+}
+
+body.light-theme .web {
+    border-color: #222;
+    box-shadow: 0 0 10px #222;
+}
+
+body.light-theme .noscript-message {
+    color: #111;
 }
 
 .container {
@@ -325,6 +336,15 @@ h1 {
 </style>
 </head>
 <body>
+
+<script>
+(function() {
+    if (localStorage.getItem('suryaLightTheme') === 'true') {
+        document.body.classList.add('light-theme');
+    }
+})();
+</script>
+
 <div class="container">
 <div class="animation-wrapper">
 <div class="web"></div>

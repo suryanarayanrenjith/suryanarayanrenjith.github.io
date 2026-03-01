@@ -2,56 +2,57 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta name="referrer" content="no-referrer">
+
+  <!-- Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-0QSEZ9VSPZ"></script>
   <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'G-0QSEZ9VSPZ');
   </script>
-  <script>
-  document.addEventListener('contextmenu', function(e) {
-    e.preventDefault();
-  });
 
-  document.addEventListener('keydown', function(e) {
-    if (e.keyCode === 123) {
-      e.preventDefault();
-      return false;
-    }
-    
-    if (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) {
-      e.preventDefault();
-      return false;
-    }
-    
-    if (e.ctrlKey && e.keyCode === 85) {
-      e.preventDefault();
-      return false;
-    }
-    
-    if (e.ctrlKey && e.shiftKey && e.keyCode === 80) {
-      e.preventDefault();
-      return false;
-    }
-
-    if ((e.ctrlKey && e.keyCode === 83) || (e.ctrlKey && e.keyCode === 80)) {
-      e.preventDefault();
-      return false;
-    }
-  });
-  </script>
   <title>Secure Resume Access</title>
+
+  <!-- Preconnect -->
   <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://surya-api.vercel.app" crossorigin>
+  <link rel="preconnect" href="https://surya-verify.vercel.app" crossorigin>
+  <link rel="preconnect" href="https://img.surya-ops.workers.dev" crossorigin>
+
+  <!-- Pre-blocker: preserve form input interactions before blocker.js locks down -->
+  <script>
+  (function(){
+    var s='input,textarea,select,[contenteditable]';
+    function f(e){return e.target&&e.target.matches&&e.target.matches(s)}
+    ['selectstart','dragstart','copy','cut'].forEach(function(t){
+      document.addEventListener(t,function(e){if(f(e))e.stopImmediatePropagation()},{capture:true});
+    });
+    document.addEventListener('mousedown',function(e){if(f(e))e.stopImmediatePropagation()},{capture:true});
+    ['keydown','keyup'].forEach(function(t){
+      document.addEventListener(t,function(e){
+        if(!f(e))return;
+        var k=e.keyCode||e.which;
+        if((e.ctrlKey||e.metaKey)&&[65,67,86,88].indexOf(k)!==-1)e.stopImmediatePropagation();
+      },{capture:true});
+    });
+  })();
+  </script>
+  <script src="/blocker.js"></script>
+
+  <!-- Dependencies -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/11.1.0/firebase-app-compat.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/11.1.0/firebase-auth-compat.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/11.1.0/firebase-firestore-compat.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+
   <link rel="stylesheet" href="styles.css">
+
   <script>
   (async function verifyAndProceed() {
     function getFingerprint() {
@@ -113,111 +114,66 @@
       console.error('Proxy check error');
       block();
     }
-  })(); 
-</script>
-  
-  <script>
-document.addEventListener("DOMContentLoaded", function () {
-  let isMobile = false;
-  if (navigator.userAgentData && typeof navigator.userAgentData.mobile === 'boolean') {
-    isMobile = navigator.userAgentData.mobile;
-  } else {
-    isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  }
+  })();
+  </script>
 
-  if (isMobile) {
-    const showPasswordLink = document.querySelector('.show-password');
-    if (showPasswordLink) {
-      showPasswordLink.style.display = 'none';
-    }
-  }
-});
-</script>
-<link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png">
-<link rel="manifest" href="/assets/favicon/site.webmanifest">
+  <script>
+  document.addEventListener("DOMContentLoaded", function(){
+    var m=false;
+    if(navigator.userAgentData&&typeof navigator.userAgentData.mobile==='boolean') m=navigator.userAgentData.mobile;
+    else m=/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if(m) document.querySelectorAll('.show-password').forEach(function(el){el.style.display='none'});
+  });
+  </script>
+
+  <!-- Favicon -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png">
+  <link rel="manifest" href="/assets/favicon/site.webmanifest">
 </head>
 <body>
 
   <div id="preloader">
-    <div class="loader">
-    </div>
+    <div class="loader"></div>
     <div class="loader-text">Loading</div>
   </div>
 
-<script>
+  <script>
   (async () => {
-    const spinner = document.querySelector('.loader');
-    const preloader = spinner ? spinner.parentElement : null;
-
+    const preloader = document.getElementById('preloader');
     const remoteUrl = "https://img.surya-ops.workers.dev/";
+
+    function hidePreloader() {
+      if (!preloader) return;
+      preloader.style.opacity = '0';
+      setTimeout(() => { preloader.style.display = 'none'; document.body.style.overflow = 'auto'; }, 500);
+    }
 
     try {
       const response = await fetch(remoteUrl, { cache: 'no-store' });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      if (!response.ok) throw new Error('HTTP error');
 
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
 
       const styleEl = document.createElement("style");
-      styleEl.textContent = `
-        body::before {
-          content: "";
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: url(${blobUrl}) no-repeat center center;
-          background-size: cover;
-          transform: scale(1.05);
-          z-index: -1;
-        }
-      `;
+      styleEl.textContent = 'body::before{content:"";position:fixed;inset:0;background:url(' + blobUrl + ') no-repeat center center;background-size:cover;transform:scale(1.05);z-index:-1}';
       document.head.appendChild(styleEl);
 
       const bgImage = new Image();
-      bgImage.onload = () => {
-        if (preloader) {
-          preloader.style.opacity = '0';
-          setTimeout(() => {
-            preloader.style.display = 'none';
-            document.body.style.overflow = 'auto';
-          }, 500);
-        }
-      };
-      bgImage.onerror = () => {
-        console.error('Error loading the background image');
-        if (preloader) {
-          preloader.style.opacity = '0';
-          setTimeout(() => {
-            preloader.style.display = 'none';
-            document.body.style.overflow = 'auto';
-          }, 500);
-        }
-      };
+      bgImage.onload = hidePreloader;
+      bgImage.onerror = hidePreloader;
       bgImage.src = blobUrl;
-
-    } catch (err) {
-      console.error("Error fetching background image:", err);
-      if (preloader) {
-        preloader.style.opacity = '0';
-        setTimeout(() => {
-          preloader.style.display = 'none';
-          document.body.style.overflow = 'auto';
-        }, 500);
-      }
+    } catch (_) {
+      hidePreloader();
     }
   })();
-</script>
-  
-<noscript>
-  <style>
-    #preloader { display: none; }
-  </style>
-</noscript>
+  </script>
 
+  <noscript><style>#preloader{display:none}</style></noscript>
+
+  <!-- Auth Choice -->
   <div class="container" id="auth-choice">
     <h1>Welcome to Secure Resume Access</h1>
     <button id="go-signup-btn">Sign Up</button>
@@ -225,14 +181,15 @@ document.addEventListener("DOMContentLoaded", function () {
     <p class="powered-by">Powered by surya.is-a.dev</p>
   </div>
 
+  <!-- Captcha Modal -->
   <div id="captcha-modal" class="captcha-modal" style="display:none;">
     <div class="captcha-modal-content">
       <span id="captcha-close-btn" class="captcha-close-btn">&times;</span>
       <h3>CAPTCHA Verification</h3>
       <div id="captcha-image-container">
-        <img id="captcha-image" src="" alt="Captcha Image" />
+        <img id="captcha-image" src="" alt="Captcha Image">
       </div>
-      <input type="text" id="captcha-input" placeholder="Enter Captcha" />
+      <input type="text" id="captcha-input" placeholder="Enter Captcha" autocomplete="off" maxlength="6" spellcheck="false">
       <div class="captcha-buttons">
         <button id="captcha-verify-btn">Verify</button>
         <button id="captcha-refresh-btn">Refresh</button>
@@ -241,88 +198,73 @@ document.addEventListener("DOMContentLoaded", function () {
     </div>
   </div>
 
+  <!-- Sign Up -->
   <div class="container" id="signup-container" style="display:none;">
     <h1>Sign Up</h1>
-    <input type="email" id="signup-email" placeholder="Enter your email">
-    <input type="password" id="signup-password" placeholder="Enter your password">
-    <a href="#" class="show-password" onclick="togglePassword('signup-password', event)">Show</a>
-    <input type="password" id="signup-password-confirm" placeholder="Confirm your password">
-    <a href="#" class="show-password" onclick="togglePassword('signup-password-confirm', event)">Show</a>
+    <input type="email" id="signup-email" placeholder="Enter your email" autocomplete="email" spellcheck="false" maxlength="254">
+    <div class="input-group">
+      <input type="password" id="signup-password" placeholder="Enter your password" autocomplete="new-password" maxlength="20">
+      <a href="#" class="show-password" data-toggle="signup-password">Show</a>
+    </div>
+    <div class="input-group">
+      <input type="password" id="signup-password-confirm" placeholder="Confirm your password" autocomplete="new-password" maxlength="20">
+      <a href="#" class="show-password" data-toggle="signup-password-confirm">Show</a>
+    </div>
     <button id="signup-submit-btn">Sign Up</button>
-    <button id="signup-back-btn">Back</button>
+    <button id="signup-back-btn" class="btn-secondary">Back</button>
     <p id="signup-message"></p>
   </div>
 
+  <!-- Sign In -->
   <div class="container" id="signin-container" style="display:none;">
     <h1>Sign In</h1>
-    <input type="email" id="signin-email" placeholder="Enter your email">
-    <input type="password" id="signin-password" placeholder="Enter your password">
-    <a href="#" class="show-password" onclick="togglePassword('signin-password', event)">Show</a>
+    <input type="email" id="signin-email" placeholder="Enter your email" autocomplete="email" spellcheck="false" maxlength="254">
+    <div class="input-group">
+      <input type="password" id="signin-password" placeholder="Enter your password" autocomplete="current-password" maxlength="20">
+      <a href="#" class="show-password" data-toggle="signin-password">Show</a>
+    </div>
     <button id="signin-submit-btn">Sign In</button>
-    <button id="signin-back-btn">Back</button>
+    <button id="signin-back-btn" class="btn-secondary">Back</button>
     <p id="signin-message"></p>
   </div>
 
+  <!-- Decryption -->
   <div class="container" id="decryption-container" style="display:none;">
-  <h2><span id="greeting"></span>, <span id="user-email"></span>!</h2>
-  <p>Your email is verified. Check the verification email for the decryption code to view the resume.</p>
-  <div class="timer-wrapper" style="position: relative; margin: 10px 0;">
-    <input
-      type="text"
-      id="decrypt-password"
-      placeholder="Enter decryption code"
-      style="padding-right: 70px; width: 100%; box-sizing: border-box;"
-    >
-    <div
-      id="countdown-timer"
-      style="
-        position: absolute;
-        top: 50%;
-        right: 10px;
-        transform: translateY(-50%);
-        font-weight: bold;
-      "
-    ></div>
+    <h2><span id="greeting"></span>, <span id="user-email"></span>!</h2>
+    <p>Your email is verified. Check the verification email for the decryption code to view the resume.</p>
+    <div class="timer-wrapper">
+      <input type="text" id="decrypt-password" placeholder="Enter decryption code" autocomplete="off" spellcheck="false">
+      <div id="countdown-timer"></div>
+    </div>
+    <button id="decrypt-btn">Decrypt and View Resume</button>
+    <p id="decryption-message"></p>
+    <button id="signout-btn" class="btn-secondary">Sign Out</button>
   </div>
-  <button id="decrypt-btn">Decrypt and View Resume</button>
-  <p id="decryption-message"></p>
-  <button id="signout-btn">Sign Out</button>
-</div> 
 
+  <!-- Resume Viewer -->
   <div class="container" id="resume-container" style="display:none;">
     <button id="signout">Sign Out</button>
     <h2>Resume</h2>
-    <iframe id="resume-frame"></iframe>
+    <iframe id="resume-frame" title="Resume" sandbox="allow-same-origin allow-scripts allow-popups"></iframe>
   </div>
-  
+
   <a href="help.html" class="help-icon" title="Need Help?">?</a>
 
-<script>
-function getTimeBasedGreeting() {
-  const hour = new Date().getHours();
-  if (hour >= 0 && hour < 5) {
-    return "Good midnight";
-  } else if (hour < 12) {
-    return "Good morning";
-  } else if (hour < 18) {
-    return "Good afternoon";
-  } else {
-    return "Good evening";
-  }
-}
-
-document.addEventListener("DOMContentLoaded", function () {
-  const greeting = getTimeBasedGreeting();
-  document.getElementById("greeting").textContent = greeting;
-});
-</script>
+  <!-- Greeting -->
+  <script>
+  document.addEventListener("DOMContentLoaded", function(){
+    var h = new Date().getHours();
+    var g = h < 5 ? "Good midnight" : h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+    document.getElementById("greeting").textContent = g;
+  });
+  </script>
 
   <noscript>
-    <div style="position:fixed; bottom:0; left:0; width:100%; color:#fff; text-align:center; padding:10px; z-index:9999;">
+    <div style="position:fixed;bottom:0;left:0;width:100%;color:#fff;text-align:center;padding:10px;z-index:9999;">
       JavaScript is not enabled in your browser. Please enable JavaScript for full functionality.
     </div>
   </noscript>
-  
+
   <script src="script.js"></script>
 </body>
 </html>

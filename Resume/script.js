@@ -20,7 +20,7 @@ async function initializeFirebase() {
     auth = firebase.auth();
     firestore = firebase.firestore();
   } catch (error) {
-    console.error("Error initializing Config:", error);
+    // Config initialization failed silently
   }
 }
 
@@ -46,8 +46,6 @@ function decryptAES(encryptedText, key, iv) {
 const hostname = window.location.hostname;
 if (hostname === "is-a.dev" || hostname.endsWith(".is-a.dev")) {
   initializeFirebase();
-} else {
-  console.error("Unauthorized domain");
 }
 
 
@@ -59,7 +57,6 @@ async function loadModel() {
   if (!model) {
     const modelPath = 'https://model.surya-ops.workers.dev/model.json';
     model = await tf.loadLayersModel(modelPath);
-    console.log("Model loaded successfully.");
   }
 }
 
@@ -151,7 +148,6 @@ async function checkDisposable(email) {
       return true;
     }
   } catch (error) {
-    console.error("Error checking email with API", error);
     return true;
   }
 
@@ -169,7 +165,6 @@ async function checkDisposable(email) {
         return true;
       }
     } catch (error) {
-      console.error("Error in Model check:", error);
       return true;
     }
   }
@@ -202,22 +197,26 @@ const userEmailSpan = document.getElementById('user-email');
 const signoutBtn = document.getElementById('signout-btn');
 const signout = document.getElementById('signout');
 
-goSignupBtn.addEventListener('click', () => {
-  authChoiceContainer.style.display = 'none';
-  signupContainer.style.display = 'block';
-});
-goSigninBtn.addEventListener('click', () => {
-  authChoiceContainer.style.display = 'none';
-  signinContainer.style.display = 'block';
-});
-signupBackBtn.addEventListener('click', () => {
-  signupContainer.style.display = 'none';
-  authChoiceContainer.style.display = 'block';
-});
-signinBackBtn.addEventListener('click', () => {
-  signinContainer.style.display = 'none';
-  authChoiceContainer.style.display = 'block';
-});
+function switchView(hideEl, showEl) {
+  hideEl.classList.add('view-exit');
+  setTimeout(() => {
+    hideEl.style.display = 'none';
+    hideEl.classList.remove('view-exit');
+    showEl.style.display = 'block';
+    showEl.classList.add('view-enter');
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => { showEl.classList.add('view-enter-active'); });
+    });
+    setTimeout(() => {
+      showEl.classList.remove('view-enter', 'view-enter-active');
+    }, 400);
+  }, 250);
+}
+
+goSignupBtn.addEventListener('click', () => switchView(authChoiceContainer, signupContainer));
+goSigninBtn.addEventListener('click', () => switchView(authChoiceContainer, signinContainer));
+signupBackBtn.addEventListener('click', () => switchView(signupContainer, authChoiceContainer));
+signinBackBtn.addEventListener('click', () => switchView(signinContainer, authChoiceContainer));
 
 function validateEmail(email) {
   const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
@@ -230,19 +229,34 @@ function validatePassword(password) {
 }
 
 function startLoader(button) {
+  const originalHTML = button.innerHTML;
   const originalText = button.textContent;
-  let dotCount = 0;
   button.disabled = true;
-  const intervalId = setInterval(() => {
-    dotCount = (dotCount % 3) + 1;
-    button.textContent = originalText + ' ' + '.'.repeat(dotCount);
-  }, 500);
+  button.classList.add('btn-loading');
+  button.innerHTML = '<span class="btn-spinner"></span><span class="btn-label">' + originalText + '</span>';
   return {
     stop: () => {
-      clearInterval(intervalId);
-      button.textContent = originalText;
+      button.classList.remove('btn-loading');
+      button.innerHTML = originalHTML;
       button.disabled = false;
     }
+  };
+}
+
+/* ── Full-screen processing overlay for heavy ops ── */
+function showProcessingOverlay(msg) {
+  let overlay = document.getElementById('processing-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'processing-overlay';
+    overlay.innerHTML = '<div class="processing-content"><div class="processing-ring"></div><p class="processing-text"></p><div class="processing-bar"><div class="processing-bar-fill"></div></div></div>';
+    document.body.appendChild(overlay);
+  }
+  overlay.querySelector('.processing-text').textContent = msg || 'Processing...';
+  overlay.classList.add('visible');
+  return {
+    update: (text) => { overlay.querySelector('.processing-text').textContent = text; },
+    hide: () => { overlay.classList.remove('visible'); }
   };
 }
 
@@ -276,7 +290,6 @@ function solveCaptcha() {
         .catch(err => {
           loader.stop();
           captchaError.textContent = err.message || "Error loading captcha.";
-          console.error("Captcha load error:", err);
           refreshBtn.disabled = true;
           setTimeout(() => {
             refreshBtn.disabled = false;
@@ -285,7 +298,6 @@ function solveCaptcha() {
     }
 
     loadCaptcha();
-    console.log("Endpoints loaded successfully.");
     modal.style.display = "flex";
 
     verifyBtn.onclick = function() {
@@ -326,7 +338,6 @@ function solveCaptcha() {
         })
         .catch(err => {
           captchaError.textContent = err.message || "Error verifying captcha.";
-          console.error("Captcha verify error:", err);
           verifyBtn.disabled = true;
           setTimeout(() => {
             verifyBtn.disabled = false;
@@ -352,52 +363,51 @@ function solveCaptcha() {
 }
 
 signupSubmitBtn.addEventListener('click', async () => {
+  if (signupSubmitBtn.disabled) return;
   const email = signupEmailInput.value.trim();
   const password = signupPasswordInput.value.trim();
   const confirmPassword = signupPasswordConfirmInput.value.trim();
 
   if (!email || !password || !confirmPassword) {
-    signupMessageEl.style.color = 'red';
-    signupMessageEl.textContent = 'Email and both password fields are required.';
+    showMessage(signupMessageEl, 'Email and both password fields are required.', 'red');
     return;
   }
   if (!validateEmail(email)) {
-    signupMessageEl.style.color = 'red';
-    signupMessageEl.textContent = 'Invalid email format.';
+    showMessage(signupMessageEl, 'Invalid email format.', 'red');
     return;
   }
   if (!validatePassword(password)) {
-    signupMessageEl.style.color = 'red';
-    signupMessageEl.textContent =
-      'Password must be 8–20 chars long and include uppercase, lowercase, number & one special character.';
+    showMessage(signupMessageEl, 'Password must be 8\u201320 chars long and include uppercase, lowercase, number & one special character.', 'red');
     return;
   }
 
   if (password !== confirmPassword) {
-    signupMessageEl.style.color = 'red';
-    signupMessageEl.textContent = 'Passwords do not match.';
+    showMessage(signupMessageEl, 'Passwords do not match.', 'red');
     return;
   }
-  
+
+  signupSubmitBtn.disabled = true;
+  signupMessageEl.textContent = '';
+  signupMessageEl.classList.remove('msg-animate');
+
   try {
     await solveCaptcha();
   } catch (err) {
-    signupMessageEl.style.color = 'red';
-    signupMessageEl.textContent = 'Captcha verification failed or cancelled. Please try again.';
+    showMessage(signupMessageEl, 'Captcha verification failed or cancelled. Please try again.', 'red');
+    signupSubmitBtn.disabled = false;
     return;
   }
 
   try {
     const isDisposable = await checkDisposable(email);
     if (isDisposable) {
-      signupMessageEl.style.color = 'red';
-      signupMessageEl.textContent = 'Disposable email addresses are not allowed. Please use a valid email.';
+      showMessage(signupMessageEl, 'Disposable email addresses are not allowed. Please use a valid email.', 'red');
+      signupSubmitBtn.disabled = false;
       return;
     }
   } catch (err) {
-    console.error("Error during disposable check");
-    signupMessageEl.style.color = 'red';
-    signupMessageEl.textContent = 'Unable to validate email. Please try again later.';
+    showMessage(signupMessageEl, 'Unable to validate email. Please try again later.', 'red');
+    signupSubmitBtn.disabled = false;
     return;
   }
 
@@ -419,22 +429,15 @@ signupSubmitBtn.addEventListener('click', async () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
-      } catch (notifyErr) {
-        console.error('Failed to notify!');
-      }
+      } catch (notifyErr) {}
     })();
     loader.stop();
-    signupMessageEl.style.color = 'green';
-    signupMessageEl.textContent =
-      'Sign-up successful! Please check your email for a verification link. The page will refresh shortly. Once verified, please log in again.';
-    setTimeout(() => {
-      location.reload();
-    }, 5000);
+    showMessage(signupMessageEl, 'Sign-up successful! Please check your email for a verification link. The page will refresh shortly. Once verified, please log in again.', 'green');
+    setTimeout(() => { location.reload(); }, 5000);
   } catch (error) {
     loader.stop();
-    console.error("Sign-up error", error);
-    signupMessageEl.style.color = 'red';
-    signupMessageEl.textContent = 'Sign-up failed. Please try again later.';
+    signupSubmitBtn.disabled = false;
+    showMessage(signupMessageEl, 'Sign-up failed. Please try again later.', 'red');
   }
 });
 
@@ -459,30 +462,34 @@ function startSessionTimer() {
   }
 
 signinSubmitBtn.addEventListener('click', async () => {
+  if (signinSubmitBtn.disabled) return;
   const email = signinEmailInput.value.trim();
   const password = signinPasswordInput.value.trim();
   if (!email || !password) {
-    signinMessageEl.style.color = 'red';
-    signinMessageEl.textContent = 'Email and password cannot be empty.';
+    showMessage(signinMessageEl, 'Email and password cannot be empty.', 'red');
     return;
   }
-  
+
+  signinSubmitBtn.disabled = true;
+  signinMessageEl.textContent = '';
+  signinMessageEl.classList.remove('msg-animate');
+
   try {
     await solveCaptcha();
   } catch (err) {
-    signinMessageEl.style.color = 'red';
-    signinMessageEl.textContent = 'Captcha verification failed or cancelled. Please try again.';
+    showMessage(signinMessageEl, 'Captcha verification failed or cancelled. Please try again.', 'red');
+    signinSubmitBtn.disabled = false;
     return;
   }
-  
+
   const loader = startLoader(signinSubmitBtn);
   try {
     const userCredential = await auth.signInWithEmailAndPassword(email, password);
     const user = userCredential.user;
     if (!user.emailVerified) {
       loader.stop();
-      signinMessageEl.style.color = 'red';
-      signinMessageEl.textContent = 'Please verify your email before signing in.';
+      signinSubmitBtn.disabled = false;
+      showMessage(signinMessageEl, 'Please verify your email before signing in.', 'red');
       return;
     }
     
@@ -502,43 +509,28 @@ signinSubmitBtn.addEventListener('click', async () => {
           },
           body: JSON.stringify(payload)
         });
-      } catch (notifyErr) {
-        console.error('Failed to notify!');
-      }
+      } catch (notifyErr) {}
     })();
     
     loader.stop();
-    signinContainer.style.display = 'none';
-    decryptionContainer.style.display = 'block';
+    switchView(signinContainer, decryptionContainer);
     userEmailSpan.textContent = user.email;
     startSessionTimer();
   } catch (error) {
     loader.stop();
-    console.error("Sign-in error", error);
-    signinMessageEl.style.color = 'red';
-    signinMessageEl.textContent = 'Sign-in failed. Please check your credentials and try again.';
+    signinSubmitBtn.disabled = false;
+    showMessage(signinMessageEl, 'Sign-in failed. Please check your credentials and try again.', 'red');
   }
 });
 
-signoutBtn.addEventListener('click', async () => {
-  try {
-    await auth.signOut();
-  } catch (error) {
-    console.error("Sign-out error", error);
-  }
-  localStorage.removeItem("Key");
-  location.reload();
-});
-
-signout.addEventListener('click', async () => {
-  try {
-    await auth.signOut();
-  } catch (error) {
-    console.error("Sign-out error", error);
-  }
-  localStorage.removeItem("Key");
-  location.reload();
-});
+function handleSignOut() {
+  auth.signOut().catch(function(){}).finally(function() {
+    localStorage.removeItem("Key");
+    location.reload();
+  });
+}
+signoutBtn.addEventListener('click', handleSignOut);
+signout.addEventListener('click', handleSignOut);
 
 function base64ToArrayBuffer(base64) {
   const binaryString = window.atob(base64);
@@ -603,7 +595,6 @@ async function fetchEncryptionKeys() {
     const iv = base64ToArrayBuffer(ivBase64);
     return { salt, iv };
   } catch (error) {
-    console.error("Error fetching encryption keys:", error);
     throw new Error("Access denied or encryption keys not found.");
   }
 }
@@ -615,54 +606,68 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 });
 
-document.getElementById('decrypt-btn').addEventListener('click', async () => {
-  const buttonloader = this;
+const decryptBtn = document.getElementById('decrypt-btn');
+decryptBtn.addEventListener('click', async () => {
+  if (decryptBtn.disabled) return;
   const decryptPassword = document.getElementById('decrypt-password').value.trim();
-  const loader = startLoader(buttonloader);
   if (!decryptPassword) {
-    loader.stop();
-    decryptionMessageEl.style.color = "red";
-    decryptionMessageEl.textContent = "Please enter the decryption password.";
+    showMessage(decryptionMessageEl, 'Please enter the decryption password.', 'red');
     return;
   }
-  decryptionMessageEl.style.color = "green";
-  decryptionMessageEl.textContent = "Fetching encryption keys, verifying password, and decrypting resume, please wait...";
+
+  const overlay = showProcessingOverlay('Fetching encryption keys...');
+  const loader = startLoader(decryptBtn);
+  decryptionMessageEl.textContent = '';
+
   try {
+    overlay.update('Retrieving encryption keys...');
     const { salt, iv } = await fetchEncryptionKeys();
+
+    overlay.update('Downloading encrypted resume...');
     const response = await fetch("https://surya-api.vercel.app/api/cvEnc");
-    if (!response.ok) {
-      throw new Error("Failed to load the resume file.");
-    }
+    if (!response.ok) throw new Error("Failed to load the resume file.");
     const encryptedData = await response.arrayBuffer();
+
+    overlay.update('Decrypting resume...');
     const decryptedBuffer = await decryptResume(encryptedData, decryptPassword, salt, iv);
     localStorage.setItem("Key", decryptPassword);
+
+    overlay.update('Rendering document...');
     const blob = new Blob([decryptedBuffer], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
     document.getElementById('resume-frame').src = url;
-    decryptionContainer.style.display = "none";
-    resumeContainer.style.display = "block";
+
     fetch('https://surya-verify.vercel.app/api/notify-view', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({})
-    }).catch(err => console.error('Notify failed'));
+    }).catch(function(){});
+
+    overlay.hide();
     loader.stop();
+    switchView(decryptionContainer, resumeContainer);
   } catch (error) {
+    overlay.hide();
     loader.stop();
-    decryptionMessageEl.style.color = "red";
-    decryptionMessageEl.textContent = error.message;
+    showMessage(decryptionMessageEl, error.message, 'red');
   }
 });
 
-function togglePassword(inputId, event) {
-  event.preventDefault();
-  var passwordInput = document.getElementById(inputId);
-  if (passwordInput.type === "password") {
-      passwordInput.type = "text";
-  } else {
-      passwordInput.type = "password";
-  }
-}
+document.querySelectorAll('.show-password').forEach(function(link) {
+  link.addEventListener('click', function(e) {
+    e.preventDefault();
+    var inputId = this.getAttribute('data-toggle');
+    var input = document.getElementById(inputId);
+    if (!input) return;
+    if (input.type === 'password') {
+      input.type = 'text';
+      this.textContent = 'Hide';
+    } else {
+      input.type = 'password';
+      this.textContent = 'Show';
+    }
+  });
+});
 
 signupContainer.addEventListener('keydown', function(e) {
   if (e.key === 'Enter') {
@@ -681,3 +686,12 @@ decryptionContainer.addEventListener('keydown', function(e) {
     document.getElementById('decrypt-btn').click();
   }
 });
+
+/* ── Animated status messages ── */
+function showMessage(el, text, color) {
+  el.classList.remove('msg-animate');
+  void el.offsetWidth; /* reflow to restart animation */
+  el.style.color = color;
+  el.textContent = text;
+  el.classList.add('msg-animate');
+}

@@ -20,7 +20,9 @@
   <script src="/blocker.js"></script>
   <style>
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-    html,body{overflow:hidden;height:100%;background:#000;font-family:Arial,sans-serif;color:#fff}
+    html,body{overflow:hidden;height:100%;background:#000;font-family:Arial,sans-serif;color:#fff;
+      transition:background-color .3s ease}
+    body.light-theme,body.light-theme html{background:#f5f5f5;color:#111}
     canvas{display:block;position:fixed;inset:0}
 
     #preloader{
@@ -28,12 +30,17 @@
       display:flex;flex-direction:column;justify-content:center;align-items:center;
       opacity:1;transition:opacity .5s ease
     }
+    body.light-theme #preloader{background:#f5f5f5}
     #preloader.done{opacity:0;pointer-events:none}
     .spinner{width:40px;height:40px;border:2px solid #222;border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+    body.light-theme .spinner{border-color:#ccc;border-top-color:#222}
     @keyframes spin{to{transform:rotate(360deg)}}
     .loader-label{margin-top:20px;font:600 10px/1 Arial,sans-serif;letter-spacing:5px;text-transform:uppercase;color:#444}
+    body.light-theme .loader-label{color:#999}
     .bar-track{width:160px;height:1px;background:#1a1a1a;margin-top:14px;overflow:hidden}
+    body.light-theme .bar-track{background:#ddd}
     .bar-fill{height:100%;width:0%;background:#fff;transition:width .2s linear}
+    body.light-theme .bar-fill{background:#222}
 
     #menu-btn{
       position:fixed;top:14px;right:14px;z-index:30;
@@ -41,9 +48,11 @@
       border:1px solid #2a2a2a;color:#555;
       font:600 10px/1 Arial,sans-serif;letter-spacing:3px;text-transform:uppercase;
       padding:7px 14px;cursor:pointer;
-      transition:border-color .25s,color .25s,transform .25s
+      transition:border-color .25s,color .25s,transform .25s,background .25s
     }
     #menu-btn:hover{border-color:#888;color:#fff;transform:scale(1.04)}
+    body.light-theme #menu-btn{background:rgba(255,255,255,.7);border-color:#ccc;color:#888}
+    body.light-theme #menu-btn:hover{border-color:#555;color:#222}
 
     #panel{
       position:fixed;top:14px;right:14px;z-index:25;
@@ -56,19 +65,27 @@
       transition:transform .3s cubic-bezier(.4,0,.2,1),opacity .3s ease;
       pointer-events:none
     }
+    body.light-theme #panel{background:rgba(250,250,250,.92);border-color:#ccc;color:#666}
     #panel.open{transform:translateX(0);opacity:1;pointer-events:auto}
 
     #panel h3{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#ccc;border-bottom:1px solid #222;padding-bottom:6px;margin-bottom:10px}
+    body.light-theme #panel h3{color:#444;border-bottom-color:#ddd}
     #panel .x{position:absolute;top:10px;right:0;background:0;border:0;color:#444;font-size:16px;cursor:pointer;line-height:1;transition:color .2s}
     #panel .x:hover{color:#fff}
+    body.light-theme #panel .x{color:#aaa}
+    body.light-theme #panel .x:hover{color:#222}
     #panel label{display:block;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#555;margin:10px 0 3px}
+    body.light-theme #panel label{color:#888}
     #panel select,#panel button{
       width:100%;background:#0a0a0a;border:1px solid #222;color:#777;
       font:11px/1 Arial,sans-serif;padding:5px 7px;margin-bottom:3px;cursor:pointer;
-      transition:border-color .2s,color .2s
+      transition:border-color .2s,color .2s,background .2s
     }
     #panel select:hover,#panel button:hover{border-color:#666;color:#fff}
+    body.light-theme #panel select,body.light-theme #panel button{background:#fff;border-color:#ccc;color:#666}
+    body.light-theme #panel select:hover,body.light-theme #panel button:hover{border-color:#888;color:#222}
     #panel .sep{border:0;border-top:1px solid #181818;margin:10px 0}
+    body.light-theme #panel .sep{border-top-color:#ddd}
 
     #hints{
       position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:20;
@@ -76,10 +93,19 @@
       text-transform:uppercase;pointer-events:none;
       opacity:1;transition:opacity 1s ease
     }
+    body.light-theme #hints{color:#bbb}
     #hints.hide{opacity:0}
   </style>
 </head>
 <body>
+
+<script>
+(function() {
+    if (localStorage.getItem('suryaLightTheme') === 'true') {
+        document.body.classList.add('light-theme');
+    }
+})();
+</script>
 
 <div id="preloader">
   <div class="spinner"></div>
@@ -213,6 +239,9 @@ const C = {
   mouse: true,
 };
 
+const isLight = document.body.classList.contains('light-theme');
+const BG = isLight ? '#f5f5f5' : '#000';
+
 const BRIGHT_STEPS = 16;
 const CELL = C.fs + 2;    
 let atlas, atlasReady = false;
@@ -229,7 +258,13 @@ function buildAtlas() {
   ox.font = `${C.fs}px 'Courier New',monospace`;
 
   for (let b = 0; b < BRIGHT_STEPS; b++) {
-    const v = Math.round((b / (BRIGHT_STEPS - 1)) * 255);
+    const t = b / (BRIGHT_STEPS - 1);
+    let v;
+    if (isLight) {
+      v = Math.round((1 - t) * 255);
+    } else {
+      v = Math.round(t * 255);
+    }
     ox.fillStyle = `rgb(${v},${v},${v})`;
     for (let g = 0; g < GL; g++) {
       ox.fillText(glyphs[g], g * CELL, b * CELL);
@@ -298,14 +333,14 @@ function resetColumn(c, initial) {
 function resize() {
   W = cvs.width  = window.innerWidth;
   H = cvs.height = window.innerHeight;
-  ctx.fillStyle = '#000';
+  ctx.fillStyle = BG;
   ctx.fillRect(0, 0, W, H);
   initColumns();
 }
 
 function drawFrame(dt) {
   ctx.globalAlpha = C.trail;
-  ctx.fillStyle = '#000';
+  ctx.fillStyle = BG;
   ctx.fillRect(0, 0, W, H);
   ctx.globalAlpha = 1;
 

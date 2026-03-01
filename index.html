@@ -182,7 +182,7 @@
 
 <script>
 (function() {
-    if (sessionStorage.getItem('suryaLightTheme') === 'true') {
+    if (localStorage.getItem('suryaLightTheme') === 'true') {
         document.body.classList.add('light-theme');
         window.__lightThemeOnLoad = true;
     }
@@ -2033,9 +2033,9 @@ function isOldBrowser() {
         const overlay = document.getElementById('sunrise-overlay');
 
         if (isLight) {
-            sessionStorage.setItem('suryaLightTheme', 'true');
+            localStorage.setItem('suryaLightTheme', 'true');
         } else {
-            sessionStorage.removeItem('suryaLightTheme');
+            localStorage.removeItem('suryaLightTheme');
         }
 
         document.body.classList.add('theme-transitioning');
