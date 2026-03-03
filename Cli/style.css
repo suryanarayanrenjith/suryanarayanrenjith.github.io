@@ -235,6 +235,33 @@ a:hover {
     border-bottom-color: rgba(255, 255, 255, 0.7);
 }
 
+/* ── Terminal Enhancement Styles ── */
+.term-dim {
+    opacity: 0.5;
+    font-style: italic;
+}
+
+.tab-completions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 18px;
+    padding: 6px 0;
+    opacity: 0.8;
+    font-size: 0.95em;
+}
+
+.tab-completions .ls-dir {
+    font-weight: 600;
+}
+
+#output pre {
+    margin: 0;
+    font-family: inherit;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    line-height: 1.5;
+}
+
 .terminal::-webkit-scrollbar {
     width: 6px;
 }
@@ -622,6 +649,14 @@ body.light-theme a:hover {
     color: #000;
     text-shadow: none;
     border-bottom-color: rgba(0, 0, 0, 0.6);
+}
+
+body.light-theme .term-dim {
+    opacity: 0.45;
+}
+
+body.light-theme .tab-completions .ls-dir {
+    color: #111;
 }
 
 body.light-theme .input-line {

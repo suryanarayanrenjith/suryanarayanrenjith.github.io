@@ -47,72 +47,85 @@
     </script>
     <title>Access Restricted</title>
     <style>
-        * {
+        *, *::before, *::after {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
+        :root {
+            --bg: #050609;
+            --text: #f6f7ff;
+            --muted: #888da0;
+            --border: rgba(255,255,255,0.08);
+            --glass: rgba(255,255,255,0.04);
+            --glass-border: rgba(255,255,255,0.1);
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-            background: #000;
-            color: #fff;
+            background: var(--bg);
+            color: var(--text);
             overflow: hidden;
             height: 100vh;
+            height: 100dvh;
             position: relative;
+            -webkit-font-smoothing: antialiased;
         }
 
-        .grid-background {
-            position: absolute;
-            top: 0;
-            left: 0;
+        #bg-canvas {
+            position: fixed;
+            inset: 0;
             width: 100%;
             height: 100%;
-            background-image: 
-                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-            background-size: 80px 80px;
-            animation: grid-move 20s linear infinite;
+            z-index: 0;
         }
 
-        @keyframes grid-move {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(80px, 80px); }
-        }
-
-        .dots {
-            position: absolute;
-            width: 100%;
-            height: 100%;
+        .orbs {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
             pointer-events: none;
+            overflow: hidden;
         }
-
-        .dot {
+        .orb {
             position: absolute;
-            width: 2px;
-            height: 2px;
-            background: rgba(255, 255, 255, 0.4);
             border-radius: 50%;
-            animation: float-dot 15s infinite linear;
+            filter: blur(100px);
+            opacity: 0.15;
+        }
+        .orb-1 {
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(180,185,220,0.4) 0%, transparent 70%);
+            top: -20%; left: -10%;
+            animation: orb-drift 28s ease-in-out infinite;
+        }
+        .orb-2 {
+            width: 450px; height: 450px;
+            background: radial-gradient(circle, rgba(255,255,255,0.25) 0%, transparent 70%);
+            bottom: -15%; right: -8%;
+            animation: orb-drift 34s ease-in-out infinite reverse;
+        }
+        .orb-3 {
+            width: 350px; height: 350px;
+            background: radial-gradient(circle, rgba(200,200,220,0.2) 0%, transparent 70%);
+            top: 40%; left: 55%;
+            animation: orb-drift 22s ease-in-out infinite;
+            animation-delay: -8s;
+        }
+        @keyframes orb-drift {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25%      { transform: translate(40px, -25px) scale(1.08); }
+            50%      { transform: translate(-25px, 40px) scale(0.94); }
+            75%      { transform: translate(25px, 20px) scale(1.04); }
         }
 
-        @keyframes float-dot {
-            0% { 
-                transform: translateY(100vh) scale(0);
-                opacity: 0;
-            }
-            10% { 
-                opacity: 1;
-                transform: translateY(90vh) scale(1);
-            }
-            90% { 
-                opacity: 1;
-                transform: translateY(10vh) scale(1);
-            }
-            100% { 
-                transform: translateY(-10vh) scale(0);
-                opacity: 0;
-            }
+        .vignette {
+            position: fixed;
+            inset: 0;
+            z-index: 2;
+            background: radial-gradient(ellipse at center, transparent 40%, var(--bg) 100%);
+            pointer-events: none;
         }
 
         .container {
@@ -123,223 +136,366 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
+            height: 100dvh;
             text-align: center;
             padding: 40px;
-            max-width: 800px;
+            max-width: 720px;
             margin: 0 auto;
         }
 
-        .warning-icon {
-            width: 80px;
-            height: 80px;
-            border: 2px solid rgba(255, 255, 255, 0.8);
-            border-radius: 20px;
+        .shield {
+            position: relative;
+            width: 90px;
+            height: 90px;
+            margin-bottom: 44px;
+        }
+        .shield-ring {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: 1.5px solid var(--glass-border);
+            animation: ring-rotate 12s linear infinite;
+        }
+        .shield-ring::before {
+            content: '';
+            position: absolute;
+            top: -2px; left: 50%;
+            width: 5px; height: 5px;
+            background: rgba(255,255,255,0.6);
+            border-radius: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 0 8px rgba(255,255,255,0.4);
+        }
+        .shield-ring-outer {
+            position: absolute;
+            inset: -14px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.04);
+            animation: ring-rotate 20s linear infinite reverse;
+        }
+        .shield-ring-outer::before {
+            content: '';
+            position: absolute;
+            top: -1.5px; left: 50%;
+            width: 3px; height: 3px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            transform: translateX(-50%);
+        }
+        @keyframes ring-rotate {
+            to { transform: rotate(360deg); }
+        }
+        .shield-core {
+            position: absolute;
+            inset: 8px;
+            border-radius: 50%;
+            background: var(--glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 48px;
-            position: relative;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            animation: gentle-pulse 3s infinite ease-in-out;
+            box-shadow: 0 0 50px rgba(255,255,255,0.03), inset 0 0 30px rgba(255,255,255,0.02);
+        }
+        .shield-core svg {
+            width: 32px;
+            height: 32px;
+            opacity: 0.85;
         }
 
-        .warning-icon::before {
-            content: "!";
-            font-size: 36px;
-            font-weight: 600;
-            color: #fff;
-            font-family: system-ui;
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            margin-bottom: 28px;
+            font-size: 0.75rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted);
         }
-
-        @keyframes gentle-pulse {
-            0%, 100% { 
-                transform: scale(1);
-                box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.1);
-            }
-            50% { 
-                transform: scale(1.02);
-                box-shadow: 0 0 0 20px rgba(255, 255, 255, 0);
-            }
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #fff;
+            animation: status-blink 2s ease-in-out infinite;
+            box-shadow: 0 0 6px rgba(255,255,255,0.4);
+        }
+        @keyframes status-blink {
+            0%, 100% { opacity: 1; }
+            50%      { opacity: 0.3; }
         }
 
         .title {
-            font-size: 3rem;
+            font-size: clamp(2.2rem, 5vw, 3.4rem);
             font-weight: 200;
-            margin-bottom: 16px;
-            letter-spacing: -0.02em;
-            color: #fff;
+            margin-bottom: 18px;
+            letter-spacing: -0.03em;
+            color: var(--text);
             line-height: 1.1;
         }
 
         .subtitle {
-            font-size: 1.25rem;
+            font-size: clamp(0.95rem, 1.5vw, 1.15rem);
             font-weight: 400;
-            margin-bottom: 24px;
-            opacity: 0.7;
-            max-width: 500px;
-            line-height: 1.5;
-            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 36px;
+            max-width: 480px;
+            line-height: 1.7;
+            color: var(--muted);
         }
 
         .btn {
-            padding: 16px 32px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            background: rgba(255, 255, 255, 0.1);
+            padding: 14px 36px;
+            border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.06);
             backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             color: #fff;
             text-decoration: none;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-weight: 500;
-            letter-spacing: 0.025em;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border-radius: 12px;
+            letter-spacing: 0.04em;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 10px;
             position: relative;
             overflow: hidden;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
         }
-
+        .btn svg {
+            width: 16px;
+            height: 16px;
+            transition: transform 0.35s ease;
+        }
         .btn::before {
-            content: "";
+            content: '';
             position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-            transition: left 0.6s ease;
+            inset: 0;
+            background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.08) 50%, transparent 60%);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
         }
-
         .btn:hover::before {
-            left: 100%;
+            transform: translateX(100%);
         }
-
         .btn:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 255, 255, 0.3);
-            transform: translateY(-1px);
-            box-shadow: 0 8px 32px rgba(255, 255, 255, 0.1);
+            background: rgba(255,255,255,0.12);
+            border-color: rgba(255,255,255,0.28);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(255,255,255,0.06);
         }
-
+        .btn:hover svg {
+            transform: rotate(180deg);
+        }
         .btn:active {
             transform: translateY(0);
         }
 
-        @media (max-width: 768px) {
-            .container {
-                padding: 32px 24px;
-            }
-
-            .title {
-                font-size: 2.5rem;
-            }
-
-            .subtitle {
-                font-size: 1.125rem;
-            }
-
-            .warning-icon {
-                width: 70px;
-                height: 70px;
-                margin-bottom: 40px;
-            }
-
-            .warning-icon::before {
-                font-size: 32px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .title {
-                font-size: 2rem;
-            }
-
-            .container {
-                padding: 24px 20px;
-            }
-
-            .warning-icon {
-                width: 60px;
-                height: 60px;
-                margin-bottom: 32px;
-            }
-
-            .warning-icon::before {
-                font-size: 28px;
-            }
-        }
-
-        .container {
+        .container > * {
             opacity: 0;
-            transform: translateY(20px);
-            animation: fadeInUp 1s ease-out 0.3s forwards;
+            transform: translateY(18px);
         }
+        .container .shield       { animation: fadeUp 0.7s ease-out 0.2s forwards; }
+        .container .status-badge { animation: fadeUp 0.6s ease-out 0.35s forwards; }
+        .container .title        { animation: fadeUp 0.6s ease-out 0.5s forwards; }
+        .container .subtitle     { animation: fadeUp 0.6s ease-out 0.65s forwards; }
+        .container .btn          { animation: fadeUp 0.6s ease-out 0.95s forwards; }
 
-        @keyframes fadeInUp {
+        @keyframes fadeUp {
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
 
-        .warning-icon {
-            box-shadow: 0 0 40px rgba(255, 255, 255, 0.05);
+        @media (max-width: 768px) {
+            .container { padding: 32px 24px; }
+            .shield { width: 78px; height: 78px; margin-bottom: 36px; }
+            .shield-ring-outer { inset: -12px; }
+            .info-row { gap: 10px; }
+            .info-card { padding: 10px 14px; font-size: 0.78rem; }
         }
 
-        .btn {
-            box-shadow: 0 4px 20px rgba(255, 255, 255, 0.05);
+        @media (max-width: 480px) {
+            .container { padding: 24px 18px; }
+            .shield { width: 68px; height: 68px; margin-bottom: 28px; }
+            .shield-core { inset: 6px; }
+            .shield-core svg { width: 26px; height: 26px; }
+            .shield-ring-outer { inset: -10px; }
+            .info-row { flex-direction: column; align-items: center; }
+            .info-card { width: 100%; max-width: 260px; justify-content: center; }
+            .btn { padding: 12px 28px; font-size: 0.85rem; }
         }
     </style>
 </head>
 <body>
-    <div class="grid-background"></div>
-    <div class="dots" id="dots"></div>
+
+    <canvas id="bg-canvas"></canvas>
+
+    <div class="orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <div class="vignette"></div>
 
     <div class="container">
-        <div class="warning-icon"></div>
-        
+        <div class="shield">
+            <div class="shield-ring-outer"></div>
+            <div class="shield-ring"></div>
+            <div class="shield-core">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+            </div>
+        </div>
+
+        <div class="status-badge">
+            <span class="status-dot"></span>
+            <span>Connection Blocked</span>
+        </div>
+
         <h1 class="title">Access Restricted</h1>
-        
+
         <p class="subtitle">
-            Please disable your VPN or proxy service and refresh the page to continue. 
-            This helps to ensure a secure and spam-free environment for all visitors.
+            Your connection has been flagged. Please disable your VPN or proxy service and refresh the page to continue browsing.
         </p>
-        
-        <a href="https://surya.is-a.dev/" class="btn" onclick="location.reload()">Refresh Page</a>
+
+        <a href="javascript:void(0)" class="btn" onclick="location.reload()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            Refresh Page
+        </a>
     </div>
 
     <script>
-        function createDots() {
-            const dotsContainer = document.getElementById('dots');
-            const dotCount = 20;
-            
-            for (let i = 0; i < dotCount; i++) {
-                const dot = document.createElement('div');
-                dot.className = 'dot';
-                dot.style.left = Math.random() * 100 + '%';
-                dot.style.animationDelay = Math.random() * 15 + 's';
-                dot.style.animationDuration = (Math.random() * 10 + 10) + 's';
-                dotsContainer.appendChild(dot);
+    (function() {
+        /* ── Particle + Grid Canvas ── */
+        var canvas = document.getElementById('bg-canvas');
+        var ctx = canvas.getContext('2d');
+        var W, H, particles = [], mouseX = -1, mouseY = -1;
+        var PARTICLE_COUNT = 60, CONNECTION_DIST = 140, MOUSE_DIST = 180;
+
+        function resize() {
+            W = canvas.width = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        function Particle() {
+            this.x = Math.random() * W;
+            this.y = Math.random() * H;
+            this.vx = (Math.random() - 0.5) * 0.35;
+            this.vy = (Math.random() - 0.5) * 0.35;
+            this.r = Math.random() * 1.5 + 0.5;
+        }
+        Particle.prototype.update = function() {
+            this.x += this.vx;
+            this.y += this.vy;
+            if (this.x < 0 || this.x > W) this.vx *= -1;
+            if (this.y < 0 || this.y > H) this.vy *= -1;
+        };
+
+        for (var i = 0; i < PARTICLE_COUNT; i++) particles.push(new Particle());
+
+        /* ── Grid ── */
+        var gridSize = 80;
+        var gridOffset = { x: 0, y: 0 };
+        var gridSpeed = 0.15;
+
+        function drawGrid() {
+            ctx.strokeStyle = 'rgba(255,255,255,0.025)';
+            ctx.lineWidth = 0.5;
+            var ox = gridOffset.x % gridSize;
+            var oy = gridOffset.y % gridSize;
+            ctx.beginPath();
+            for (var x = ox; x <= W; x += gridSize) {
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, H);
             }
+            for (var y = oy; y <= H; y += gridSize) {
+                ctx.moveTo(0, y);
+                ctx.lineTo(W, y);
+            }
+            ctx.stroke();
+            gridOffset.x += gridSpeed;
+            gridOffset.y += gridSpeed;
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            createDots();
-        });
+        function frame() {
+            ctx.clearRect(0, 0, W, H);
+
+            drawGrid();
+
+            /* Particles */
+            for (var i = 0; i < particles.length; i++) {
+                particles[i].update();
+            }
+
+            /* Connections */
+            ctx.lineWidth = 0.5;
+            for (var i = 0; i < particles.length; i++) {
+                for (var j = i + 1; j < particles.length; j++) {
+                    var dx = particles[i].x - particles[j].x;
+                    var dy = particles[i].y - particles[j].y;
+                    var dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < CONNECTION_DIST) {
+                        var alpha = (1 - dist / CONNECTION_DIST) * 0.12;
+                        ctx.strokeStyle = 'rgba(255,255,255,' + alpha + ')';
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.stroke();
+                    }
+                }
+                /* Mouse connections */
+                if (mouseX >= 0) {
+                    var mdx = particles[i].x - mouseX;
+                    var mdy = particles[i].y - mouseY;
+                    var mdist = Math.sqrt(mdx * mdx + mdy * mdy);
+                    if (mdist < MOUSE_DIST) {
+                        var ma = (1 - mdist / MOUSE_DIST) * 0.2;
+                        ctx.strokeStyle = 'rgba(255,255,255,' + ma + ')';
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(mouseX, mouseY);
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            /* Dots */
+            for (var i = 0; i < particles.length; i++) {
+                var p = particles[i];
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                ctx.fill();
+            }
+
+            requestAnimationFrame(frame);
+        }
+        requestAnimationFrame(frame);
 
         document.addEventListener('mousemove', function(e) {
-            const mouseX = e.clientX / window.innerWidth - 0.5;
-            const mouseY = e.clientY / window.innerHeight - 0.5;
-            
-            const warningIcon = document.querySelector('.warning-icon');
-            if (!policy_rafPending) {
-                policy_rafPending = true;
-                requestAnimationFrame(function() {
-                    warningIcon.style.transform = `translate(${mouseX * 10}px, ${mouseY * 10}px)`;
-                    policy_rafPending = false;
-                });
-            }
+            mouseX = e.clientX;
+            mouseY = e.clientY;
         });
-        var policy_rafPending = false;
+        document.addEventListener('mouseleave', function() {
+            mouseX = -1;
+            mouseY = -1;
+        });
+    })();
     </script>
 </body>
 </html>
