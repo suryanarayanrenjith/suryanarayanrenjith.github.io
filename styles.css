@@ -106,6 +106,8 @@ body, html {
     color: #fff;
     position: relative;
     z-index: 1;
+    padding: 0 20px;
+    box-sizing: border-box;
 }
 
 body::after {
@@ -1982,6 +1984,8 @@ body.light-theme a[id^="forceDownload"] {
     text-shadow: 0 0 30px rgba(255,255,255,0.15);
     letter-spacing: 3px;
     text-transform: uppercase;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 body.light-theme .animated-text {
@@ -2139,10 +2143,12 @@ body.light-theme .section-indicator-total {
 @media (max-width: 768px) {
     .animated-text {
         font-size: 2em;
+        letter-spacing: 2px;
     }
 
     .tagline {
         font-size: 1em;
+        letter-spacing: 1px;
     }
 
     .center-button {
@@ -2168,10 +2174,12 @@ body.light-theme .section-indicator-total {
 @media (max-width: 480px) {
     .animated-text {
         font-size: 1.6em;
+        letter-spacing: 1px;
     }
 
     .tagline {
         font-size: 0.85em;
+        letter-spacing: 0.5px;
     }
 
     .center-button {
@@ -2218,6 +2226,12 @@ body.light-theme .section-indicator-total {
 @media (max-width: 360px) {
     .animated-text {
         font-size: 1.3em;
+        letter-spacing: 0.5px;
+    }
+
+    .tagline {
+        font-size: 0.75em;
+        letter-spacing: 0.5px;
     }
 
     .center-button {
