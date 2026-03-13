@@ -145,11 +145,11 @@ body, html {
 
 .center-button {
     margin-top: 20px;
-    padding: 15px 30px;
+    padding: 15px 40px;
     font-size: 1.5em;
     font-weight: bold;
     cursor: pointer;
-    border-radius: 8px;
+    border-radius: 50px;
     animation: fadeInUp 2s 1s forwards;
     opacity: 0;
     transform: translateY(20px);
@@ -161,7 +161,7 @@ body, html {
     border: 1px solid rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(12px) saturate(160%);
     box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
 .center-button::before {
@@ -182,21 +182,23 @@ body, html {
 }
 
 .center-button:hover {
-    background: rgba(255, 255, 255, 0.1);
-    transform: translateY(-8px) scale(1.08);
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 0px;
+    transform: translateY(-8px) scale(1.1);
     box-shadow: 
         0 15px 40px rgba(0,0,0,0.6), 
-        0 0 25px rgba(255,255,255,0.4), 
-        inset 0 0 15px rgba(255,255,255,0.15),
-        0 0 50px rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.8);
-    letter-spacing: 1px;
+        0 0 30px rgba(255,255,255,0.5), 
+        inset 0 0 15px rgba(255,255,255,0.2),
+        0 0 60px rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.9);
+    letter-spacing: 3px;
 }
 
 .center-button:active {
     transform: translateY(-2px) scale(1.02);
+    border-radius: 15px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.4), 0 0 10px rgba(255,255,255,0.2);
-    transition: all 0.1s ease;
+    transition: all 0.15s ease;
 }
 
 .center-button a {
