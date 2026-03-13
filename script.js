@@ -67,108 +67,66 @@ document.addEventListener("DOMContentLoaded", () => {
         const content = document.getElementById('content');
         if (!content) return;
 
-        // Animate headings with clip-path reveal
+        // Collect all animatable children and hide them instantly
         const headings = content.querySelectorAll('h1, h2, h3, .animated-text');
-        if (headings.length) {
-            gsap.fromTo(headings,
-                {
-                    opacity: 0,
-                    y: 40,
-                    clipPath: 'inset(0 0 100% 0)'
-                },
-                {
-                    opacity: 1,
-                    y: 0,
-                    clipPath: 'inset(0 0 0% 0)',
-                    duration: 0.8,
-                    ease: "power3.out",
-                    stagger: 0.12
-                }
-            );
-        }
-
-        // Animate paragraphs and text content
         const paragraphs = content.querySelectorAll('p, .tagline');
-        if (paragraphs.length) {
-            gsap.fromTo(paragraphs,
-                { opacity: 0, y: 25 },
-                {
-                    opacity: 1,
-                    y: 0,
-                    duration: 0.6,
-                    ease: "power2.out",
-                    stagger: 0.08,
-                    delay: 0.15
-                }
-            );
-        }
-
-        // Animate buttons with scale + fade
         const buttons = content.querySelectorAll('.center-button, button, a[class]');
-        if (buttons.length) {
-            gsap.fromTo(buttons,
-                { opacity: 0, y: 20, scale: 0.92 },
-                {
-                    opacity: 1,
-                    y: 0,
-                    scale: 1,
-                    duration: 0.6,
-                    ease: "back.out(1.4)",
-                    stagger: 0.1,
-                    delay: 0.25
-                }
-            );
-        }
-
-        // Animate lists with staggered slide-in
         const listItems = content.querySelectorAll('li, .link-card');
-        if (listItems.length) {
-            gsap.fromTo(listItems,
-                { opacity: 0, x: -20 },
-                {
-                    opacity: 1,
-                    x: 0,
-                    duration: 0.5,
-                    ease: "power2.out",
-                    stagger: 0.06,
-                    delay: 0.2
-                }
-            );
-        }
-
-        // Animate images and icons
-        const visuals = content.querySelectorAll('img, .fa, .fas, .far, .fab, svg');
-        if (visuals.length) {
-            gsap.fromTo(visuals,
-                { opacity: 0, scale: 0.8, rotation: -5 },
-                {
-                    opacity: 1,
-                    scale: 1,
-                    rotation: 0,
-                    duration: 0.5,
-                    ease: "back.out(1.7)",
-                    stagger: 0.05,
-                    delay: 0.3
-                }
-            );
-        }
-
-        // Animate dividers / horizontal rules
+        const visuals = content.querySelectorAll('img, svg');
         const dividers = content.querySelectorAll('hr, .divider');
+
+        // Set everything hidden immediately (no flash)
+        const allEls = [headings, paragraphs, buttons, listItems, visuals, dividers];
+        allEls.forEach(group => {
+            if (group.length) gsap.set(group, { opacity: 0 });
+        });
+
+        // Stagger-reveal with a master timeline
+        const tl = gsap.timeline({ delay: 0.05 });
+
+        if (headings.length) {
+            tl.fromTo(headings,
+                { opacity: 0, y: 40, clipPath: 'inset(0 0 100% 0)' },
+                { opacity: 1, y: 0, clipPath: 'inset(0 0 0% 0)', duration: 0.8, ease: "power3.out", stagger: 0.12 },
+                0
+            );
+        }
+        if (paragraphs.length) {
+            tl.fromTo(paragraphs,
+                { opacity: 0, y: 25 },
+                { opacity: 1, y: 0, duration: 0.6, ease: "power2.out", stagger: 0.08 },
+                0.12
+            );
+        }
+        if (buttons.length) {
+            tl.fromTo(buttons,
+                { opacity: 0, y: 20, scale: 0.92 },
+                { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: "back.out(1.4)", stagger: 0.1 },
+                0.2
+            );
+        }
+        if (listItems.length) {
+            tl.fromTo(listItems,
+                { opacity: 0, x: -20 },
+                { opacity: 1, x: 0, duration: 0.5, ease: "power2.out", stagger: 0.06 },
+                0.15
+            );
+        }
+        if (visuals.length) {
+            tl.fromTo(visuals,
+                { opacity: 0, scale: 0.8 },
+                { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.7)", stagger: 0.05 },
+                0.25
+            );
+        }
         if (dividers.length) {
-            gsap.fromTo(dividers,
+            tl.fromTo(dividers,
                 { scaleX: 0, transformOrigin: 'left center' },
-                {
-                    scaleX: 1,
-                    duration: 0.8,
-                    ease: "power3.inOut",
-                    stagger: 0.1,
-                    delay: 0.35
-                }
+                { scaleX: 1, duration: 0.8, ease: "power3.inOut", stagger: 0.1 },
+                0.3
             );
         }
 
-        // Init magnetic buttons for any new center-buttons in loaded content
         initMagneticButtons();
     };
 
@@ -198,6 +156,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const isVertical = direction === 'up' || direction === 'down';
         const dirMult = (direction === 'down' || direction === 'right') ? 1 : -1;
 
+        // Hide children immediately, then reveal them as container enters
+        window.animateContentIn();
+
         gsap.set(content, {
             opacity: 0,
             scale: 0.88,
@@ -220,7 +181,6 @@ document.addEventListener("DOMContentLoaded", () => {
             ease: "power3.out",
             onComplete: () => {
                 gsap.set(content, { clearProps: "all" });
-                window.animateContentIn();
             }
         });
     };
@@ -240,6 +200,9 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     window.gsapFadeIn = function(content) {
+        // Hide children first, then fade container in — children animate alongside
+        window.animateContentIn();
+
         gsap.fromTo(content,
             { opacity: 0, scale: 0.96, y: 15, filter: 'blur(4px)' },
             {
@@ -251,7 +214,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 ease: "power2.out",
                 onComplete: () => {
                     gsap.set(content, { clearProps: "all" });
-                    window.animateContentIn();
                 }
             }
         );
@@ -261,39 +223,63 @@ document.addEventListener("DOMContentLoaded", () => {
     initMagneticButtons();
 
     /* ── Nav Link Hover Enhancement ─────────────────── */
-    document.querySelectorAll('.menu-bar ul li a').forEach(link => {
+    const navLinks = document.querySelectorAll('.menu-bar ul li a');
+    navLinks.forEach(link => {
         link.addEventListener('mouseenter', () => {
-            gsap.to(link, {
-                y: -2,
-                duration: 0.3,
-                ease: "power2.out"
-            });
+            gsap.to(link, { y: -2, duration: 0.3, ease: "power2.out" });
         });
         link.addEventListener('mouseleave', () => {
-            gsap.to(link, {
-                y: 0,
-                duration: 0.4,
-                ease: "elastic.out(1, 0.5)"
-            });
+            gsap.to(link, { y: 0, duration: 0.3, ease: "power2.out" });
         });
     });
 
-    /* ── Header Entrance ────────────────────────────── */
-    const header = document.querySelector('header');
-    if (header) {
-        gsap.fromTo(header,
-            { y: -60, opacity: 0 },
-            { y: 0, opacity: 1, duration: 0.8, ease: "power3.out", delay: 0.5 }
-        );
-    }
-
-    /* ── Footer Entrance ────────────────────────────── */
+    /* ── Footer Text Entrance ──────────────────────── */
     if (footerText) {
         gsap.fromTo(footerText,
             { y: 20, opacity: 0 },
             { y: 0, opacity: 1, duration: 0.6, ease: "power2.out", delay: 1 }
         );
     }
+
+    /* ── GSAP Header Popup Animation ───────────────── */
+    window.gsapHeaderEntrance = function() {
+        const header = document.querySelector('header');
+        const menuBar = document.querySelector('.menu-bar');
+        const menuItems = document.querySelectorAll('.menu-bar ul li');
+
+        if (!header) return;
+
+        // Reset CSS class-based animations
+        if (menuBar) {
+            menuBar.classList.remove('animate-menu-bar');
+            menuItems.forEach(item => item.classList.remove('animate-menu-item'));
+        }
+
+        // Header slides down + fades in
+        const tl = gsap.timeline();
+        tl.fromTo(header,
+            { y: -40, opacity: 0, scale: 0.95 },
+            { y: 0, opacity: 1, scale: 1, duration: 0.7, ease: "power3.out" }
+        );
+
+        // Menu bar fades in
+        if (menuBar) {
+            tl.fromTo(menuBar,
+                { opacity: 0, y: -10 },
+                { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" },
+                0.15
+            );
+        }
+
+        // Each nav item staggers in with a clip reveal
+        if (menuItems.length) {
+            tl.fromTo(menuItems,
+                { opacity: 0, y: 12, scale: 0.9 },
+                { opacity: 1, y: 0, scale: 1, duration: 0.4, ease: "back.out(1.5)", stagger: 0.08 },
+                0.25
+            );
+        }
+    };
 
     /* ── Help Button Entrance ───────────────────────── */
     const helpBtn = document.querySelector('.help-button');
