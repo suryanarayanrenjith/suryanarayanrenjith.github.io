@@ -359,7 +359,7 @@ body.light-theme #preloader { background: #f5f5f5; }
     background: rgba(255,255,255,0.12);
 }
 body.light-theme .preloader-corner::before,
-body.light-theme .preloader-corner::after { background: rgba(0,0,0,0.1); }
+body.light-theme .preloader-corner::after { background: rgba(0,0,0,0.15); }
 .preloader-corner::before { width: 100%; height: 1px; }
 .preloader-corner::after { width: 1px; height: 100%; }
 .preloader-corner-tl { top: 40px; left: 40px; }
@@ -377,11 +377,11 @@ body.light-theme .preloader-corner::after { background: rgba(0,0,0,0.1); }
 .preloader-line {
     width: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
     opacity: 0;
 }
 body.light-theme .preloader-line {
-    background: linear-gradient(90deg, transparent, rgba(0,0,0,0.12), transparent);
+    background: linear-gradient(90deg, transparent, rgba(0,0,0,0.22), transparent);
 }
 .preloader-line-top { margin-bottom: 32px; }
 .preloader-line-bottom { margin-top: 32px; }
@@ -410,19 +410,19 @@ body.light-theme .preloader-initials { color: #111; }
     background: rgba(255,255,255,0.2);
     display: inline-block;
 }
-body.light-theme .preloader-divider-line { background: rgba(0,0,0,0.15); }
+body.light-theme .preloader-divider-line { background: rgba(0,0,0,0.25); }
 .preloader-fullname {
     font-family: 'Courier New', monospace;
     font-size: 11px;
     letter-spacing: 6px;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.35);
+    color: rgba(255,255,255,0.6);
     margin-top: 18px;
     overflow: hidden;
     white-space: nowrap;
     opacity: 0;
 }
-body.light-theme .preloader-fullname { color: rgba(0,0,0,0.3); }
+body.light-theme .preloader-fullname { color: rgba(0,0,0,0.55); }
 .preloader-fullname span {
     display: inline-block;
     opacity: 0;
@@ -430,12 +430,12 @@ body.light-theme .preloader-fullname { color: rgba(0,0,0,0.3); }
 .preloader-rule {
     width: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
     margin-top: 10px;
     opacity: 0;
 }
 body.light-theme .preloader-rule {
-    background: linear-gradient(90deg, transparent, rgba(0,0,0,0.1), transparent);
+    background: linear-gradient(90deg, transparent, rgba(0,0,0,0.25), transparent);
 }
 .preloader-progress {
     display: flex;
@@ -448,11 +448,11 @@ body.light-theme .preloader-rule {
 .preloader-progress-pct {
     font-family: 'Courier New', monospace;
     font-size: 10px;
-    color: rgba(255,255,255,0.25);
+    color: rgba(255,255,255,0.55);
     letter-spacing: 3px;
     text-transform: uppercase;
 }
-body.light-theme .preloader-progress-pct { color: rgba(0,0,0,0.2); }
+body.light-theme .preloader-progress-pct { color: rgba(0,0,0,0.5); }
 .preloader-particles {
     position: absolute;
     top: 50%; left: 50%;
@@ -1960,6 +1960,10 @@ document.addEventListener('DOMContentLoaded', function() {
           opacity: [0, 1], duration: 50
       }, 900);
 
+      var isLight = document.body.classList.contains('light-theme');
+      var decodeBright = isLight ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.75)';
+      var decodeRest = isLight ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.6)';
+
       masterTL.add({
           targets: fullnameLetterize.listAll,
           opacity: [0, 1],
@@ -1967,14 +1971,14 @@ document.addEventListener('DOMContentLoaded', function() {
           delay: anime.stagger(12),
           begin: function() {
               var spans = fullnameLetterize.listAll;
-              spans.forEach(function(s) { s.style.color = 'rgba(255,255,255,0.6)'; });
+              spans.forEach(function(s) { s.style.color = decodeBright; });
               startDecode(spans, 25, 50, 800);
           },
           complete: function() {
               var spans = fullnameLetterize.listAll;
               anime({
                   targets: spans,
-                  color: ['rgba(255,255,255,0.6)', 'rgba(255,255,255,0.35)'],
+                  color: [decodeBright, decodeRest],
                   easing: 'easeOutExpo',
                   duration: 600,
                   delay: anime.stagger(20)
@@ -2005,7 +2009,7 @@ document.addEventListener('DOMContentLoaded', function() {
           masterTL.add({
               targets: '.preloader-progress-pct',
               keyframes: [
-                  { opacity: [0.25, 0.35], duration: counterDuration }
+                  { opacity: [0.5, 0.7], duration: counterDuration }
               ],
               easing: 'linear',
               begin: function() {
@@ -2025,7 +2029,7 @@ document.addEventListener('DOMContentLoaded', function() {
                               scrambled += scrambleChars[Math.floor(Math.random() * scrambleChars.length)];
                           }
                           pctEl.textContent = '[ ' + scrambled + '% ]';
-                          pctEl.style.opacity = (0.15 + Math.random() * 0.2).toString();
+                          pctEl.style.opacity = (0.35 + Math.random() * 0.25).toString();
                       }
                   }, 60);
               },
