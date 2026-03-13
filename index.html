@@ -995,7 +995,6 @@ function isDesktop() {
             return promise;
         }
 
-        /* ── Prefetch adjacent sections ────────────────── */
         function prefetchAdjacent(section) {
             const idx = sectionOrder.indexOf(section);
             if (idx === -1) return;
@@ -1009,7 +1008,6 @@ function isDesktop() {
             });
         }
 
-        /* ── Top Loading Bar ───────────────────────────── */
         let topBar = null;
         function getTopBar() {
             if (!topBar) topBar = document.getElementById('topLoadingBar');
@@ -1032,7 +1030,6 @@ function isDesktop() {
             setTimeout(() => bar.classList.remove('done'), 500);
         }
 
-        /* ── Skeleton Placeholder ──────────────────────── */
         function buildSkeleton() {
             return '<div class="content-skeleton">' +
                 '<div class="skeleton-line title"></div>' +
@@ -1044,7 +1041,6 @@ function isDesktop() {
                 '</div>';
         }
 
-        /* ── Error UI with Retry ───────────────────────── */
         let lastFailedSection = null;
         let lastFailedDirection = 'none';
         function buildErrorUI(section, direction) {
@@ -1063,7 +1059,6 @@ function isDesktop() {
             }
         }
 
-        /* ── Fetch with retry (1 automatic retry) ──────── */
         function fetchWithRetry(section, retries = 1) {
             return fetchSection(section).catch(err => {
                 if (retries > 0) {
@@ -1089,7 +1084,6 @@ function isDesktop() {
             showContent(sectionToLoad);
             updateProgressBar(sectionToLoad);
 
-            // Hide section indicator and progress bar for non-standard sections like links
             if (!sectionOrder.includes(sectionToLoad)) {
                 const indicator = document.getElementById('sectionIndicator');
                 const progressBar = document.querySelector('.progress-bar');
@@ -1103,7 +1097,6 @@ function isDesktop() {
             if (!content) return;
             const isCached = !!sectionCache[section];
 
-            // Kill any running GSAP animations on content
             if (typeof gsap !== 'undefined' && window.gsap) {
                 gsap.killTweensOf(content);
             }
@@ -1119,7 +1112,6 @@ function isDesktop() {
 
             if (direction === 'none') {
                 if (isCached) {
-                    // Use GSAP fade swap if available
                     if (window.gsapFadeSwap) {
                         window.gsapFadeSwap(content).then(() => {
                             content.innerHTML = sectionCache[section];
@@ -1205,7 +1197,6 @@ function isDesktop() {
                         content.innerHTML = buildErrorUI(section, direction);
                     });
             } else {
-                // Fallback to CSS transitions
                 const prefix = isMobile ? 'm-' : '';
                 const exitMap  = { down: 'slide-out-up', up: 'slide-out-down', left: 'slide-out-right', right: 'slide-out-left' };
                 const enterMap = { down: 'slide-in-from-bottom', up: 'slide-in-from-top', left: 'slide-in-from-left', right: 'slide-in-from-right' };
@@ -1266,7 +1257,6 @@ function isDesktop() {
             if (!numEl) return;
             const newNum = String(idx + 1).padStart(2, '0');
             if (numEl.textContent === newNum) return;
-            // Animate out with anime.js, swap, animate in
             if (typeof anime !== 'undefined') {
                 anime({
                     targets: numEl,
@@ -1304,7 +1294,6 @@ function isDesktop() {
             showContent(section, direction);
             updateProgressBar(section);
             updateSectionIndicator(section);
-            // Restore indicator/progress bar when returning to a main section
             if (sectionOrder.includes(section)) {
                 const indicator = document.getElementById('sectionIndicator');
                 const progressBar = document.querySelector('.progress-bar');
@@ -1332,7 +1321,6 @@ function isDesktop() {
             isThrottled = true;
             setTimeout(() => { isThrottled = false; }, 1200);
 
-            // Normalize index if coming from a non-standard section (e.g. links)
             if (currentSectionIndex < 0) currentSectionIndex = 0;
 
             if (direction === 'down' || direction === 'right') {
@@ -1345,7 +1333,6 @@ function isDesktop() {
             showContent(nextSection, direction);
             updateProgressBar(nextSection);
             updateSectionIndicator(nextSection);
-            // Restore indicator/progress bar and clean URL when leaving links
             const indicator = document.getElementById('sectionIndicator');
             const progressBar = document.querySelector('.progress-bar');
             if (indicator) indicator.style.display = '';
@@ -1545,11 +1532,9 @@ function isDesktop() {
     });
 
     function startAnimations() {
-        // Use GSAP-powered header animation if available
         if (window.gsapHeaderEntrance) {
             window.gsapHeaderEntrance();
         } else {
-            // CSS fallback
             var menuBar = document.querySelector('.menu-bar');
             menuBar.classList.add('animate-menu-bar');
             var menuItems = document.querySelectorAll('.menu-bar ul li');
@@ -1895,7 +1880,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
       const TOTAL = 4200;
 
-      // Generate floating particles
       const particleContainer = document.querySelector('.preloader-particles');
       if (particleContainer) {
           for (let i = 0; i < 20; i++) {
@@ -1907,7 +1891,6 @@ document.addEventListener('DOMContentLoaded', function() {
           }
       }
 
-      // Letterize setup
       const fullnameEl = document.querySelector('.preloader-fullname');
       const taglineEl = document.querySelector('.preloader-tagline');
       fullnameEl.textContent = 'Suryanarayan Renjith';
@@ -1918,10 +1901,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
       const pctEl = document.querySelector('.preloader-progress-pct');
 
-      // Master timeline
       const masterTL = anime.timeline({ easing: 'easeOutExpo', autoplay: true });
 
-      // Corner brackets draw in
       masterTL.add({
           targets: '.preloader-corner',
           width: [0, 30], height: [0, 30], opacity: [0, 1],
@@ -1929,7 +1910,6 @@ document.addEventListener('DOMContentLoaded', function() {
           delay: anime.stagger(100)
       }, 0);
 
-      // Particles fade in and scatter
       masterTL.add({
           targets: '.preloader-particle',
           opacity: [0, function() { return 0.1 + Math.random() * 0.4; }],
@@ -1940,7 +1920,6 @@ document.addEventListener('DOMContentLoaded', function() {
           delay: anime.stagger(40, { from: 'center' })
       }, 0);
 
-      // Lines draw in
       masterTL.add({
           targets: '.preloader-line-top',
           width: [0, 160], opacity: [0, 1],
@@ -1952,7 +1931,6 @@ document.addEventListener('DOMContentLoaded', function() {
           easing: 'easeInOutQuart', duration: 800
       }, 100);
 
-      // Letter S slides up with glow
       masterTL.add({
           targets: '.preloader-letter-s',
           opacity: [0, 1], translateY: [50, 0],
@@ -1960,14 +1938,12 @@ document.addEventListener('DOMContentLoaded', function() {
           easing: 'easeOutExpo', duration: 1000
       }, 300);
 
-      // Divider line grows
       masterTL.add({
           targets: '.preloader-divider-line',
           height: [0, 52], opacity: [0, 0.25],
           easing: 'easeInOutQuart', duration: 700
       }, 500);
 
-      // Letter R slides down with glow
       masterTL.add({
           targets: '.preloader-letter-r',
           opacity: [0, 1], translateY: [-50, 0],
@@ -1975,13 +1951,11 @@ document.addEventListener('DOMContentLoaded', function() {
           easing: 'easeOutExpo', duration: 1000
       }, 600);
 
-      // Fullname container visible
       masterTL.add({
           targets: '.preloader-fullname',
           opacity: [0, 1], duration: 50
       }, 900);
 
-      // Each letter of name staggers from center with 3D rotate
       masterTL.add({
           targets: fullnameLetterize.listAll,
           opacity: [0, 1], translateY: [14, 0], rotateX: [90, 0],
@@ -1989,20 +1963,17 @@ document.addEventListener('DOMContentLoaded', function() {
           delay: anime.stagger(22, { from: 'center' })
       }, 920);
 
-      // Horizontal rule
       masterTL.add({
           targets: '.preloader-rule',
           width: [0, 80], opacity: [0, 1],
           easing: 'easeInOutQuart', duration: 600
       }, 1300);
 
-      // Tagline container visible
       masterTL.add({
           targets: '.preloader-tagline',
           opacity: [0, 1], duration: 50
       }, 1400);
 
-      // Each letter of tagline typewriter-style
       masterTL.add({
           targets: taglineLetterize.listAll,
           opacity: [0, 0.7], translateX: [-6, 0],
@@ -2010,14 +1981,12 @@ document.addEventListener('DOMContentLoaded', function() {
           delay: anime.stagger(15)
       }, 1420);
 
-      // Progress bar appears
       masterTL.add({
           targets: '.preloader-progress',
           opacity: [0, 1], translateY: [10, 0],
           easing: 'easeOutExpo', duration: 500
       }, 1200);
 
-      // Progress fill with live percentage
       masterTL.add({
           targets: '.preloader-progress-fill',
           width: ['0%', '100%'],
@@ -2027,14 +1996,12 @@ document.addEventListener('DOMContentLoaded', function() {
           }
       }, 1300);
 
-      // Glow dot tracks the fill
       masterTL.add({
           targets: '.preloader-progress-glow',
           opacity: [0, 1], left: ['0%', '100%'],
           easing: 'easeInOutQuart', duration: 2400
       }, 1300);
 
-      // Particles drift outwards
       masterTL.add({
           targets: '.preloader-particle',
           translateX: function() { return anime.random(-150, 150); },
@@ -2043,7 +2010,6 @@ document.addEventListener('DOMContentLoaded', function() {
           easing: 'easeInOutSine', duration: 2000
       }, 1600);
 
-      // Glitch flash on initials
       masterTL.add({
           targets: '.preloader-initials',
           opacity: [1, 0.2, 1, 0.4, 1],
@@ -2051,7 +2017,6 @@ document.addEventListener('DOMContentLoaded', function() {
           easing: 'easeInOutQuad', duration: 250
       }, 2600);
 
-      // Second subtle split-glitch
       masterTL.add({
           targets: '.preloader-letter-s',
           translateX: [0, 2, -1, 0],
@@ -2063,7 +2028,6 @@ document.addEventListener('DOMContentLoaded', function() {
           easing: 'steps(3)', duration: 120
       }, 2920);
 
-      // EXIT: Corners collapse
       masterTL.add({
           targets: '.preloader-corner',
           width: [30, 0], height: [30, 0], opacity: [1, 0],
@@ -2071,7 +2035,6 @@ document.addEventListener('DOMContentLoaded', function() {
           delay: anime.stagger(60, { direction: 'reverse' })
       }, TOTAL - 900);
 
-      // EXIT: Particles scatter out
       masterTL.add({
           targets: '.preloader-particle',
           translateX: function() { return anime.random(-300, 300); },
@@ -2081,21 +2044,18 @@ document.addEventListener('DOMContentLoaded', function() {
           delay: anime.stagger(20)
       }, TOTAL - 800);
 
-      // EXIT: Lines shrink
       masterTL.add({
           targets: ['.preloader-line-top', '.preloader-line-bottom', '.preloader-rule'],
           width: 0, opacity: 0,
           easing: 'easeInExpo', duration: 400
       }, TOTAL - 700);
 
-      // EXIT: Inner content lifts and fades
       masterTL.add({
           targets: '.preloader-inner',
           opacity: [1, 0], translateY: [0, -40], scale: [1, 0.96],
           easing: 'easeInExpo', duration: 550
       }, TOTAL - 650);
 
-      // EXIT: Preloader fades
       masterTL.add({
           targets: '#preloader',
           opacity: [1, 0],
@@ -2309,8 +2269,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     draw();
 
-    // ── Anime.js: Fallback overlay effects ──────────
-    // Add floating ambient particles using anime.js (CSS-based, no WebGL needed)
+
     if (typeof anime !== 'undefined') {
         const fallbackOverlay = document.createElement('div');
         fallbackOverlay.id = 'fallback-particles';
@@ -2320,7 +2279,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const isLight = document.body.classList.contains('light-theme');
         const dotColor = isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.04)';
 
-        // Create ambient floating dots
         for (let i = 0; i < 30; i++) {
             const dot = document.createElement('div');
             const size = 2 + Math.random() * 4;
@@ -2328,7 +2286,6 @@ document.addEventListener('DOMContentLoaded', function() {
             fallbackOverlay.appendChild(dot);
         }
 
-        // Animate them with continuous drifting loops
         anime({
             targets: '#fallback-particles div',
             translateX: function() { return anime.random(-60, 60); },
@@ -2348,7 +2305,6 @@ document.addEventListener('DOMContentLoaded', function() {
             direction: 'alternate'
         });
 
-        // Respond to theme changes
         window.addEventListener('themeChanged', (e) => {
             const newColor = (e.detail && e.detail.light) ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.04)';
             fallbackOverlay.querySelectorAll('div').forEach(d => { d.style.background = newColor; });
@@ -2377,7 +2333,6 @@ function isOldBrowser() {
         });
          fallbackToCanvasAnimation();
 
-        // Anime.js: Show a brief "Lite Mode" notice
         if (typeof anime !== 'undefined') {
             const notice = document.createElement('div');
             notice.textContent = 'LITE MODE';
@@ -2392,7 +2347,6 @@ function isOldBrowser() {
                     complete: function() { notice.remove(); }
                 });
 
-            // Add a burst of particles on each section change
             window.addEventListener('sectionChanged', () => {
                 const burst = document.createElement('div');
                 burst.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:0;';

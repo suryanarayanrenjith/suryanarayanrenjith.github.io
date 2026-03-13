@@ -106,13 +106,6 @@ body, html {
     color: #fff;
     position: relative;
     z-index: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    padding: 80px 24px 60px;
-    box-sizing: border-box;
 }
 
 body::after {
@@ -2052,7 +2045,6 @@ body.light-theme::after {
     );
 }
 
-/* ── Section Indicator ──────────────────────────── */
 .section-indicator {
     position: fixed;
     left: 24px;
@@ -2118,13 +2110,16 @@ body.light-theme .section-indicator-total {
     }
 }
 
-/* ── Mobile Responsiveness ─────────────────────── */
+.links-wrapper {
+    max-width: 420px !important;
+}
+
+.links-wrapper h1 {
+    font-size: 1.5rem !important;
+    white-space: nowrap;
+}
 
 @media (max-width: 768px) {
-    .container {
-        padding: 70px 16px 50px;
-    }
-
     .animated-text {
         font-size: 2em;
     }
@@ -2139,14 +2134,6 @@ body.light-theme .section-indicator-total {
         letter-spacing: 1px;
     }
 
-    footer {
-        position: relative;
-        bottom: auto;
-        margin-top: 20px;
-        font-size: 0.75em;
-        padding: 0 16px;
-    }
-
     #music-popup {
         font-size: 15px;
     }
@@ -2155,26 +2142,13 @@ body.light-theme .section-indicator-total {
         margin: 30% auto;
         padding: 24px 20px;
     }
+
+    .links-wrapper h1 {
+        font-size: 1.3rem !important;
+    }
 }
 
 @media (max-width: 480px) {
-    header {
-        padding: 6px 12px;
-        top: 10px;
-    }
-
-    .menu-bar ul li {
-        margin-right: 12px;
-    }
-
-    .menu-bar ul li a {
-        font-size: 0.75em !important;
-    }
-
-    .container {
-        padding: 60px 12px 40px;
-    }
-
     .animated-text {
         font-size: 1.6em;
     }
@@ -2200,10 +2174,6 @@ body.light-theme .section-indicator-total {
         font-size: 12px;
     }
 
-    footer {
-        font-size: 0.7em;
-    }
-
     #popup-content {
         margin: 40% auto;
         padding: 20px 16px;
@@ -2217,21 +2187,18 @@ body.light-theme .section-indicator-total {
     .content-skeleton {
         padding: 40px 12px;
     }
+
+    .links-wrapper h1 {
+        font-size: 1.1rem !important;
+    }
+
+    .links-wrapper {
+        max-width: 300px !important;
+        padding: 1.5rem 0.5rem !important;
+    }
 }
 
 @media (max-width: 360px) {
-    header {
-        padding: 5px 8px;
-    }
-
-    .menu-bar ul li {
-        margin-right: 8px;
-    }
-
-    .menu-bar ul li a {
-        font-size: 0.65em !important;
-    }
-
     .animated-text {
         font-size: 1.3em;
     }
@@ -2240,15 +2207,13 @@ body.light-theme .section-indicator-total {
         padding: 8px 18px;
         font-size: 0.9em;
     }
+
+    .links-wrapper h1 {
+        font-size: 0.95rem !important;
+    }
 }
 
-/* Landscape mobile */
 @media (max-height: 500px) and (orientation: landscape) {
-    .container {
-        padding: 60px 24px 30px;
-        min-height: 100vh;
-    }
-
     #popup-content {
         margin: 5% auto;
     }
@@ -2256,15 +2221,8 @@ body.light-theme .section-indicator-total {
     .animated-text {
         font-size: 1.8em;
     }
-
-    footer {
-        position: relative;
-        bottom: auto;
-        margin-top: 10px;
-    }
 }
 
-/* ── Container perspective for GSAP 3D transforms ── */
 #content {
     perspective: 1200px;
     transform-style: preserve-3d;
