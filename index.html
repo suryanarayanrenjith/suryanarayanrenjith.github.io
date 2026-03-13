@@ -295,12 +295,19 @@
     top: 20%;
     left: 0;
     width: 100%;
-    background-color: black;
+    background-color: rgba(0, 0, 0, 0.9);
     color: white;
     padding: 15px;
     text-align: center;
     font-size: 18px;
     z-index: 1000;
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+body.light-theme .offline-message {
+    background-color: rgba(245, 245, 245, 0.95);
+    color: #111;
+    border-bottom-color: rgba(0, 0, 0, 0.1);
 }
 @media only screen and (max-width: 600px) {
     .offline-message { font-size: 14px; padding: 10px; }
@@ -769,9 +776,119 @@ function isDesktop() {
 
     <script>   
         const CLOUD_FLARE_WORKER_URL = 'https://pages.surya-ops.workers.dev/';
-        
+
         let isMobile = /Mobi|Android/i.test(navigator.userAgent);
-        
+
+        /* ── Section Cache ─────────────────────────────── */
+        const sectionCache = {};
+        const inflightFetches = {};
+
+        function fetchSection(section) {
+            if (sectionCache[section]) {
+                return Promise.resolve(sectionCache[section]);
+            }
+            if (inflightFetches[section]) {
+                return inflightFetches[section];
+            }
+            const promise = fetch(`${CLOUD_FLARE_WORKER_URL}?section=${section}`)
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    return response.text();
+                })
+                .then(html => {
+                    sectionCache[section] = html;
+                    delete inflightFetches[section];
+                    return html;
+                })
+                .catch(err => {
+                    delete inflightFetches[section];
+                    throw err;
+                });
+            inflightFetches[section] = promise;
+            return promise;
+        }
+
+        /* ── Prefetch adjacent sections ────────────────── */
+        function prefetchAdjacent(section) {
+            const idx = sectionOrder.indexOf(section);
+            if (idx === -1) return;
+            const neighbors = [idx - 1, idx + 1]
+                .filter(i => i >= 0 && i < sectionOrder.length)
+                .map(i => sectionOrder[i]);
+            neighbors.forEach(s => {
+                if (!sectionCache[s] && !inflightFetches[s]) {
+                    fetchSection(s).catch(() => {});
+                }
+            });
+        }
+
+        /* ── Top Loading Bar ───────────────────────────── */
+        let topBar = null;
+        function getTopBar() {
+            if (!topBar) topBar = document.getElementById('topLoadingBar');
+            return topBar;
+        }
+        function showLoadingBar() {
+            const bar = getTopBar();
+            if (!bar) return;
+            bar.classList.remove('done');
+            bar.style.animation = 'none';
+            void bar.offsetWidth;
+            bar.style.animation = '';
+            bar.classList.add('active');
+        }
+        function hideLoadingBar() {
+            const bar = getTopBar();
+            if (!bar) return;
+            bar.classList.remove('active');
+            bar.classList.add('done');
+            setTimeout(() => bar.classList.remove('done'), 500);
+        }
+
+        /* ── Skeleton Placeholder ──────────────────────── */
+        function buildSkeleton() {
+            return '<div class="content-skeleton">' +
+                '<div class="skeleton-line title"></div>' +
+                '<div class="skeleton-line long"></div>' +
+                '<div class="skeleton-line medium"></div>' +
+                '<div class="skeleton-line long"></div>' +
+                '<div class="skeleton-line short"></div>' +
+                '<div class="skeleton-line medium"></div>' +
+                '</div>';
+        }
+
+        /* ── Error UI with Retry ───────────────────────── */
+        let lastFailedSection = null;
+        let lastFailedDirection = 'none';
+        function buildErrorUI(section, direction) {
+            lastFailedSection = section;
+            lastFailedDirection = direction;
+            return '<div class="fetch-error">' +
+                '<div class="fetch-error-icon">&#x26A0;</div>' +
+                '<p>Something went wrong loading this section. Check your connection and try again.</p>' +
+                '<button class="fetch-error-retry" onclick="retryFetch()">Retry</button>' +
+                '</div>';
+        }
+        function retryFetch() {
+            if (lastFailedSection) {
+                delete sectionCache[lastFailedSection];
+                showContent(lastFailedSection, lastFailedDirection);
+            }
+        }
+
+        /* ── Fetch with retry (1 automatic retry) ──────── */
+        function fetchWithRetry(section, retries = 1) {
+            return fetchSection(section).catch(err => {
+                if (retries > 0) {
+                    delete sectionCache[section];
+                    return new Promise(resolve =>
+                        setTimeout(() => resolve(fetchWithRetry(section, retries - 1)), 800)
+                    );
+                }
+                throw err;
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             const urlParams       = new URLSearchParams(window.location.search);
             const sectionFromQuery = urlParams.get('section');
@@ -785,9 +902,10 @@ function isDesktop() {
             showContent(sectionToLoad);
             updateProgressBar(sectionToLoad);
         });
-        
+
         function showContent(section, direction = 'none') {
             const content = document.getElementById('content');
+            const isCached = !!sectionCache[section];
 
             content.className = content.className
                 .replace(/\b(slide-out|slide-in|m-slide-out|m-slide-in)[^\s]*/g, '')
@@ -797,18 +915,37 @@ function isDesktop() {
             content.style.opacity = '';
 
             if (direction === 'none') {
-                content.style.opacity = '0';
-                fetch(`${CLOUD_FLARE_WORKER_URL}?section=${section}`)
-                    .then(response => response.text())
+                if (isCached) {
+                    content.style.opacity = '0';
+                    content.innerHTML = sectionCache[section];
+                    sessionStorage.setItem('lastSection', section);
+                    content.style.transition = 'opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+                    requestAnimationFrame(() => { content.style.opacity = '1'; });
+                    prefetchAdjacent(section);
+                    return;
+                }
+
+                content.innerHTML = buildSkeleton();
+                content.style.opacity = '1';
+                showLoadingBar();
+
+                fetchWithRetry(section)
                     .then(html => {
-                        content.innerHTML = html;
-                        content.style.transition = 'opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
-                        content.style.opacity = '1';
-                        sessionStorage.setItem('lastSection', section);
+                        hideLoadingBar();
+                        content.style.opacity = '0';
+                        content.style.transition = 'opacity 0.15s ease';
+                        setTimeout(() => {
+                            content.innerHTML = html;
+                            sessionStorage.setItem('lastSection', section);
+                            content.style.transition = 'opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+                            content.style.opacity = '1';
+                            prefetchAdjacent(section);
+                        }, 150);
                     })
                     .catch(error => {
+                        hideLoadingBar();
                         console.error('Error fetching content:', error);
-                        content.innerHTML = '<p>Error loading content.</p>';
+                        content.innerHTML = buildErrorUI(section, direction);
                         content.style.opacity = '1';
                     });
                 return;
@@ -824,12 +961,14 @@ function isDesktop() {
 
             content.classList.add('transitioning', exitClass);
 
-            const fetchPromise = fetch(`${CLOUD_FLARE_WORKER_URL}?section=${section}`)
-                .then(response => response.text());
+            if (!isCached) showLoadingBar();
+
+            const fetchPromise = fetchWithRetry(section);
             const exitPromise = new Promise(resolve => setTimeout(resolve, exitDuration));
 
             Promise.all([fetchPromise, exitPromise])
                 .then(([html]) => {
+                    hideLoadingBar();
                     content.classList.remove(exitClass);
                     content.innerHTML = html;
                     sessionStorage.setItem('lastSection', section);
@@ -839,20 +978,22 @@ function isDesktop() {
                     content.classList.add(enterClass);
                     setTimeout(() => {
                         content.classList.remove(enterClass, 'transitioning');
+                        prefetchAdjacent(section);
                     }, enterDuration + 50);
                 })
                 .catch(error => {
+                    hideLoadingBar();
                     console.error('Error fetching content:', error);
                     content.classList.remove(exitClass, 'transitioning');
-                    content.innerHTML = '<p>Error loading content.</p>';
+                    content.innerHTML = buildErrorUI(section, direction);
                     content.style.opacity = '1';
                 });
         }
-        
+
         const sectionOrder = ['home', 'about', 'projects', 'resume'];
         let currentSectionIndex = 0;
         let isThrottled = false;
-        
+
         function updateProgressBar(section) {
             const progressBar = document.querySelector('.progress-bar div');
             const index = sectionOrder.indexOf(section);
@@ -1150,6 +1291,7 @@ function isDesktop() {
 </script>
 
     <div class="container" id="content"></div>
+    <div class="top-loading-bar" id="topLoadingBar"></div>
     
     <div id="preloader">
         <canvas id="preloaderCanvas"></canvas>
