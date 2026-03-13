@@ -67,12 +67,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const headings = content.querySelectorAll('h1, h2, h3, .animated-text');
         const paragraphs = content.querySelectorAll('p, .tagline');
-        const buttons = content.querySelectorAll('.center-button, button, a[class]');
-        const listItems = content.querySelectorAll('li, .link-card');
+        const buttons = content.querySelectorAll('.center-button, button, a[class]:not(.link-card)');
+        const listItems = content.querySelectorAll('li:not(.link-card)');
+        const linkCards = content.querySelectorAll('.link-card');
         const visuals = content.querySelectorAll('img, svg');
         const dividers = content.querySelectorAll('hr, .divider');
 
-        const allEls = [headings, paragraphs, buttons, listItems, visuals, dividers];
+        const allEls = [headings, paragraphs, buttons, listItems, linkCards, visuals, dividers];
         allEls.forEach(group => {
             if (group.length) gsap.set(group, { opacity: 0 });
         });
@@ -122,6 +123,14 @@ document.addEventListener("DOMContentLoaded", () => {
             );
         }
 
+        if (linkCards.length && typeof anime === 'undefined') {
+            tl.fromTo(linkCards,
+                { opacity: 0, y: 20, scale: 0.95 },
+                { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: "back.out(1.4)", stagger: 0.08 },
+                0.2
+            );
+        }
+
         initMagneticButtons();
 
         if (typeof Letterize !== 'undefined' && typeof anime !== 'undefined') {
@@ -143,7 +152,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         if (typeof anime !== 'undefined') {
-            const linkCards = content.querySelectorAll('.link-card');
             if (linkCards.length) {
                 anime({
                     targets: linkCards,
@@ -311,34 +319,44 @@ document.addEventListener("DOMContentLoaded", () => {
     window.gsapHeaderEntrance = function() {
         const header = document.querySelector('header');
         const menuBar = document.querySelector('.menu-bar');
-        const menuItems = document.querySelectorAll('.menu-bar ul li');
+        const navItems = document.querySelectorAll('.menu-bar ul li:not(.music-button-container)');
+        const musicContainer = document.querySelector('.music-button-container');
 
         if (!header) return;
 
         if (menuBar) {
             menuBar.classList.remove('animate-menu-bar');
-            menuItems.forEach(item => item.classList.remove('animate-menu-item'));
+            document.querySelectorAll('.menu-bar ul li').forEach(item => item.classList.remove('animate-menu-item'));
         }
 
         const tl = gsap.timeline();
         tl.fromTo(header,
             { y: -40, opacity: 0, scale: 0.95 },
-            { y: 0, opacity: 1, scale: 1, duration: 0.7, ease: "power3.out" }
+            { y: 0, opacity: 1, scale: 1, duration: 0.9, ease: "power3.out" }
         );
 
         if (menuBar) {
             tl.fromTo(menuBar,
                 { opacity: 0, y: -10 },
-                { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" },
+                { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" },
                 0.15
             );
         }
 
-        if (menuItems.length) {
-            tl.fromTo(menuItems,
+        if (navItems.length) {
+            tl.fromTo(navItems,
                 { opacity: 0, y: 12, scale: 0.9 },
-                { opacity: 1, y: 0, scale: 1, duration: 0.4, ease: "back.out(1.5)", stagger: 0.08 },
+                { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "back.out(1.5)", stagger: 0.1 },
                 0.25
+            );
+        }
+
+        // Music button: slow, smooth, delayed reveal
+        if (musicContainer) {
+            tl.fromTo(musicContainer,
+                { opacity: 0, scale: 0.8, x: 10 },
+                { opacity: 1, scale: 1, x: 0, duration: 0.8, ease: "power2.out" },
+                0.7
             );
         }
     };

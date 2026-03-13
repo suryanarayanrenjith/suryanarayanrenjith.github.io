@@ -1088,6 +1088,14 @@ function isDesktop() {
             currentSectionIndex = sectionOrder.indexOf(sectionToLoad);
             showContent(sectionToLoad);
             updateProgressBar(sectionToLoad);
+
+            // Hide section indicator and progress bar for non-standard sections like links
+            if (!sectionOrder.includes(sectionToLoad)) {
+                const indicator = document.getElementById('sectionIndicator');
+                const progressBar = document.querySelector('.progress-bar');
+                if (indicator) indicator.style.display = 'none';
+                if (progressBar) progressBar.style.display = 'none';
+            }
         });
 
         function showContent(section, direction = 'none') {
@@ -1296,8 +1304,12 @@ function isDesktop() {
             showContent(section, direction);
             updateProgressBar(section);
             updateSectionIndicator(section);
-            // Clean /?section=links from URL when navigating to a main section
+            // Restore indicator/progress bar when returning to a main section
             if (sectionOrder.includes(section)) {
+                const indicator = document.getElementById('sectionIndicator');
+                const progressBar = document.querySelector('.progress-bar');
+                if (indicator) indicator.style.display = '';
+                if (progressBar) progressBar.style.display = '';
                 const url = new URL(window.location);
                 if (url.searchParams.has('section')) {
                     url.searchParams.delete('section');
@@ -1320,6 +1332,9 @@ function isDesktop() {
             isThrottled = true;
             setTimeout(() => { isThrottled = false; }, 1200);
 
+            // Normalize index if coming from a non-standard section (e.g. links)
+            if (currentSectionIndex < 0) currentSectionIndex = 0;
+
             if (direction === 'down' || direction === 'right') {
                 currentSectionIndex = (currentSectionIndex + 1) % sectionOrder.length;
             } else if (direction === 'up' || direction === 'left') {
@@ -1330,7 +1345,11 @@ function isDesktop() {
             showContent(nextSection, direction);
             updateProgressBar(nextSection);
             updateSectionIndicator(nextSection);
-            // Clean /?section=links from URL when scrolling to a section
+            // Restore indicator/progress bar and clean URL when leaving links
+            const indicator = document.getElementById('sectionIndicator');
+            const progressBar = document.querySelector('.progress-bar');
+            if (indicator) indicator.style.display = '';
+            if (progressBar) progressBar.style.display = '';
             const url = new URL(window.location);
             if (url.searchParams.has('section')) {
                 url.searchParams.delete('section');
@@ -1435,15 +1454,11 @@ function isDesktop() {
     mButton.classList.add('hidden');
 
     function autoCollapse() {
-        buttonhide.style.display = 'none';
-        menubar.style.marginRight = '-20px';
-        buttonhide.style.pointerEvents = 'none';
+        buttonhide.classList.add('collapsed');
     }
 
     function expandHeader() {
-        buttonhide.style.display = 'block';
-        menubar.style.marginRight = '5px';
-        buttonhide.style.pointerEvents = 'auto';
+        buttonhide.classList.remove('collapsed');
     }
 
     function isMobileDevice() {
