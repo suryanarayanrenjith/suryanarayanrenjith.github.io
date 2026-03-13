@@ -1195,7 +1195,6 @@ function isDesktop() {
                 return;
             }
 
-            // Directional transition using GSAP
             if (window.gsapTransitionOut) {
                 content.style.pointerEvents = 'none';
 
@@ -2407,7 +2406,20 @@ function isOldBrowser() {
         }
     }
     </script>
-    
+
+    <script>
+    document.addEventListener('mousemove', function(e) {
+        var btns = document.querySelectorAll('.center-button');
+        for (var i = 0; i < btns.length; i++) {
+            var rect = btns[i].getBoundingClientRect();
+            var x = ((e.clientX - rect.left) / rect.width * 100);
+            var y = ((e.clientY - rect.top) / rect.height * 100);
+            btns[i].style.setProperty('--x', x + '%');
+            btns[i].style.setProperty('--y', y + '%');
+        }
+    });
+    </script>
+
     <script type="module" src="script.js"></script>
 
 <div id="sunrise-overlay"></div>
