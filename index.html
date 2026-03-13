@@ -441,48 +441,18 @@ body.light-theme .preloader-rule {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
-    margin-top: 22px;
-    margin-bottom: 10px;
+    gap: 6px;
+    margin-top: 18px;
     opacity: 0;
-    width: 100%;
-}
-.preloader-progress-track {
-    width: 140px;
-    height: 2px;
-    background: rgba(255,255,255,0.08);
-    position: relative;
-    overflow: hidden;
-    border-radius: 1px;
-}
-body.light-theme .preloader-progress-track { background: rgba(0,0,0,0.05); }
-.preloader-progress-fill {
-    position: absolute;
-    top: 0; left: 0;
-    height: 100%;
-    width: 0%;
-    background: rgba(255,255,255,0.5);
-}
-body.light-theme .preloader-progress-fill { background: rgba(0,0,0,0.35); }
-.preloader-progress-glow {
-    position: absolute;
-    top: -4px; left: 0;
-    width: 8px; height: 9px;
-    background: radial-gradient(circle, rgba(255,255,255,0.6) 0%, transparent 70%);
-    opacity: 0;
-    pointer-events: none;
-}
-body.light-theme .preloader-progress-glow {
-    background: radial-gradient(circle, rgba(0,0,0,0.3) 0%, transparent 70%);
 }
 .preloader-progress-pct {
     font-family: 'Courier New', monospace;
     font-size: 10px;
-    color: rgba(255,255,255,0.3);
-    letter-spacing: 2px;
-    min-width: 30px;
+    color: rgba(255,255,255,0.25);
+    letter-spacing: 3px;
+    text-transform: uppercase;
 }
-body.light-theme .preloader-progress-pct { color: rgba(0,0,0,0.25); }
+body.light-theme .preloader-progress-pct { color: rgba(0,0,0,0.2); }
 .preloader-particles {
     position: absolute;
     top: 50%; left: 50%;
@@ -500,8 +470,8 @@ body.light-theme .preloader-particle { background: rgba(0,0,0,0.2); }
 @media (max-width: 768px) {
     .preloader-initials { font-size: 48px; gap: 16px; letter-spacing: 4px; }
     .preloader-fullname { font-size: 9px; letter-spacing: 4px; }
-    .preloader-progress-track { width: 90px; }
-    .preloader-progress { margin-top: 18px; }
+    .preloader-progress { margin-top: 14px; }
+    .preloader-progress-pct { font-size: 9px; }
     .preloader-line-top { margin-bottom: 22px; }
     .preloader-line-bottom { margin-top: 22px; }
     .preloader-corner-tl, .preloader-corner-tr,
@@ -511,8 +481,7 @@ body.light-theme .preloader-particle { background: rgba(0,0,0,0.2); }
 @media (max-width: 480px) {
     .preloader-initials { font-size: 36px; gap: 12px; letter-spacing: 3px; }
     .preloader-fullname { font-size: 8px; letter-spacing: 3px; }
-    .preloader-progress-track { width: 70px; }
-    .preloader-progress { margin-top: 14px; gap: 8px; }
+    .preloader-progress { margin-top: 12px; }
     .preloader-progress-pct { font-size: 8px; }
     .preloader-line-top { margin-bottom: 16px; }
     .preloader-line-bottom { margin-top: 16px; }
@@ -522,8 +491,8 @@ body.light-theme .preloader-particle { background: rgba(0,0,0,0.2); }
 @media (max-width: 360px) {
     .preloader-initials { font-size: 30px; gap: 10px; letter-spacing: 2px; }
     .preloader-fullname { font-size: 7px; letter-spacing: 2px; }
-    .preloader-progress-track { width: 60px; }
-    .preloader-progress { margin-top: 12px; }
+    .preloader-progress { margin-top: 10px; }
+    .preloader-progress-pct { font-size: 7px; }
 }
 
 *, *::before, *::after { -webkit-tap-highlight-color: transparent; }
@@ -1640,11 +1609,7 @@ function isDesktop() {
             <div class="preloader-fullname"></div>
             <div class="preloader-rule"></div>
             <div class="preloader-progress">
-                <div class="preloader-progress-track">
-                    <div class="preloader-progress-fill"></div>
-                    <div class="preloader-progress-glow"></div>
-                </div>
-                <span class="preloader-progress-pct">0%</span>
+                <span class="preloader-progress-pct">[ 0% ]</span>
             </div>
             <div class="preloader-line preloader-line-bottom"></div>
             <div class="preloader-particles"></div>
@@ -2029,20 +1994,48 @@ document.addEventListener('DOMContentLoaded', function() {
           easing: 'easeOutExpo', duration: 500
       }, 1200);
 
-      masterTL.add({
-          targets: '.preloader-progress-fill',
-          width: ['0%', '100%'],
-          easing: 'easeInOutQuart', duration: 2400,
-          update: function(anim) {
-              pctEl.textContent = Math.round(anim.progress) + '%';
-          }
-      }, 1300);
+      // Retro hacking percentage counter
+      (function() {
+          var scrambleChars = '!@#$%^&*01';
+          var counterDuration = 2400;
+          var counterStart = 1300;
+          var counterInterval = null;
+          var counterStartTime = null;
 
-      masterTL.add({
-          targets: '.preloader-progress-glow',
-          opacity: [0, 1], left: ['0%', '100%'],
-          easing: 'easeInOutQuart', duration: 2400
-      }, 1300);
+          masterTL.add({
+              targets: '.preloader-progress-pct',
+              keyframes: [
+                  { opacity: [0.25, 0.35], duration: counterDuration }
+              ],
+              easing: 'linear',
+              begin: function() {
+                  counterStartTime = Date.now();
+                  counterInterval = setInterval(function() {
+                      if (!counterStartTime) return;
+                      var elapsed = Date.now() - counterStartTime;
+                      var progress = Math.min(100, Math.round((elapsed / counterDuration) * 100));
+                      var pStr = progress < 10 ? '  ' + progress : progress < 100 ? ' ' + progress : '' + progress;
+
+                      if (Math.random() > 0.3 || progress > 95) {
+                          pctEl.textContent = '[ ' + pStr + '% ]';
+                          pctEl.style.opacity = '';
+                      } else {
+                          var scrambled = '';
+                          for (var si = 0; si < 3; si++) {
+                              scrambled += scrambleChars[Math.floor(Math.random() * scrambleChars.length)];
+                          }
+                          pctEl.textContent = '[ ' + scrambled + '% ]';
+                          pctEl.style.opacity = (0.15 + Math.random() * 0.2).toString();
+                      }
+                  }, 60);
+              },
+              complete: function() {
+                  if (counterInterval) { clearInterval(counterInterval); counterInterval = null; }
+                  pctEl.textContent = '[ 100% ]';
+                  pctEl.style.opacity = '';
+              }
+          }, counterStart);
+      })();
 
       masterTL.add({
           targets: '.preloader-particle',
