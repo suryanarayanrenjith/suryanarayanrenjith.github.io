@@ -452,9 +452,11 @@ body.light-theme .preloader-tagline { color: rgba(0,0,0,0.15); }
 .preloader-progress {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 12px;
     margin-top: 28px;
     opacity: 0;
+    width: 100%;
 }
 .preloader-progress-track {
     width: 140px;
@@ -1441,11 +1443,13 @@ function isDesktop() {
     mButton.classList.add('hidden');
 
     function autoCollapse() {
+        if (typeof gsap !== 'undefined') gsap.set(buttonhide, { clearProps: 'all' });
         buttonhide.classList.add('collapsed');
     }
 
     function expandHeader() {
         buttonhide.classList.remove('collapsed');
+        if (typeof gsap !== 'undefined') gsap.set(buttonhide, { clearProps: 'all' });
     }
 
     function isMobileDevice() {
