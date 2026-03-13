@@ -34,7 +34,6 @@ document.addEventListener("DOMContentLoaded", () => {
         changeTextWithGSAP(`© ${currentYear} Suryanarayan Renjith. All rights reserved.`);
     });
 
-    /* ── Magnetic Button Effect ─────────────────────── */
     function initMagneticButtons() {
         const magneticEls = document.querySelectorAll('.center-button, .help-button');
         magneticEls.forEach(btn => {
@@ -62,12 +61,10 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    /* ── Content Entrance Animations ────────────────── */
     window.animateContentIn = function() {
         const content = document.getElementById('content');
         if (!content) return;
 
-        // Collect all animatable children and hide them instantly
         const headings = content.querySelectorAll('h1, h2, h3, .animated-text');
         const paragraphs = content.querySelectorAll('p, .tagline');
         const buttons = content.querySelectorAll('.center-button, button, a[class]');
@@ -75,13 +72,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const visuals = content.querySelectorAll('img, svg');
         const dividers = content.querySelectorAll('hr, .divider');
 
-        // Set everything hidden immediately (no flash)
         const allEls = [headings, paragraphs, buttons, listItems, visuals, dividers];
         allEls.forEach(group => {
             if (group.length) gsap.set(group, { opacity: 0 });
         });
 
-        // Stagger-reveal with a master timeline
         const tl = gsap.timeline({ delay: 0.05 });
 
         if (headings.length) {
@@ -128,9 +123,64 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         initMagneticButtons();
+
+        if (typeof Letterize !== 'undefined' && typeof anime !== 'undefined') {
+            headings.forEach(heading => {
+                if (heading.dataset.letterized) return;
+                heading.dataset.letterized = 'true';
+                try {
+                    const letterized = new Letterize({ targets: heading });
+                    anime.timeline({ loop: false }).add({
+                        targets: letterized.listAll,
+                        opacity: [0, 1],
+                        translateY: [8, 0],
+                        easing: 'easeOutExpo',
+                        duration: 600,
+                        delay: anime.stagger(20, { from: 'center' })
+                    });
+                } catch(e) { /* skip if letterize fails on complex HTML */ }
+            });
+        }
+
+        if (typeof anime !== 'undefined') {
+            const linkCards = content.querySelectorAll('.link-card');
+            if (linkCards.length) {
+                anime({
+                    targets: linkCards,
+                    translateY: [20, 0],
+                    opacity: [0, 1],
+                    scale: [0.95, 1],
+                    easing: 'easeOutExpo',
+                    duration: 700,
+                    delay: anime.stagger(80, { start: 200 })
+                });
+            }
+
+            linkCards.forEach(card => {
+                if (card.dataset.animeHover) return;
+                card.dataset.animeHover = 'true';
+                card.addEventListener('mouseenter', () => {
+                    anime({
+                        targets: card,
+                        scale: [1, 1.03],
+                        boxShadow: ['0 2px 8px rgba(255,255,255,0)', '0 8px 30px rgba(255,255,255,0.08)'],
+                        easing: 'easeOutExpo',
+                        duration: 400
+                    });
+                });
+                card.addEventListener('mouseleave', () => {
+                    anime({
+                        targets: card,
+                        scale: [1.03, 1],
+                        boxShadow: ['0 8px 30px rgba(255,255,255,0.08)', '0 2px 8px rgba(255,255,255,0)'],
+                        easing: 'easeOutExpo',
+                        duration: 400
+                    });
+                });
+            });
+        }
     };
 
-    /* ── GSAP Section Transitions ───────────────────── */
     window.gsapTransitionOut = function(content, direction) {
         return new Promise(resolve => {
             const isVertical = direction === 'up' || direction === 'down';
@@ -156,7 +206,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const isVertical = direction === 'up' || direction === 'down';
         const dirMult = (direction === 'down' || direction === 'right') ? 1 : -1;
 
-        // Hide children immediately, then reveal them as container enters
         window.animateContentIn();
 
         gsap.set(content, {
@@ -200,7 +249,6 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     window.gsapFadeIn = function(content) {
-        // Hide children first, then fade container in — children animate alongside
         window.animateContentIn();
 
         gsap.fromTo(content,
@@ -219,21 +267,40 @@ document.addEventListener("DOMContentLoaded", () => {
         );
     };
 
-    // Init magnetic buttons for static elements
     initMagneticButtons();
 
-    /* ── Nav Link Hover Enhancement ─────────────────── */
     const navLinks = document.querySelectorAll('.menu-bar ul li a');
     navLinks.forEach(link => {
         link.addEventListener('mouseenter', () => {
-            gsap.to(link, { y: -2, duration: 0.3, ease: "power2.out" });
+            if (typeof anime !== 'undefined') {
+                anime.remove(link);
+                anime({
+                    targets: link,
+                    translateY: -3,
+                    letterSpacing: '2px',
+                    easing: 'easeOutExpo',
+                    duration: 300
+                });
+            } else {
+                gsap.to(link, { y: -2, duration: 0.3, ease: "power2.out" });
+            }
         });
         link.addEventListener('mouseleave', () => {
-            gsap.to(link, { y: 0, duration: 0.3, ease: "power2.out" });
+            if (typeof anime !== 'undefined') {
+                anime.remove(link);
+                anime({
+                    targets: link,
+                    translateY: 0,
+                    letterSpacing: '0px',
+                    easing: 'easeOutExpo',
+                    duration: 300
+                });
+            } else {
+                gsap.to(link, { y: 0, duration: 0.3, ease: "power2.out" });
+            }
         });
     });
 
-    /* ── Footer Text Entrance ──────────────────────── */
     if (footerText) {
         gsap.fromTo(footerText,
             { y: 20, opacity: 0 },
@@ -241,7 +308,6 @@ document.addEventListener("DOMContentLoaded", () => {
         );
     }
 
-    /* ── GSAP Header Popup Animation ───────────────── */
     window.gsapHeaderEntrance = function() {
         const header = document.querySelector('header');
         const menuBar = document.querySelector('.menu-bar');
@@ -249,20 +315,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (!header) return;
 
-        // Reset CSS class-based animations
         if (menuBar) {
             menuBar.classList.remove('animate-menu-bar');
             menuItems.forEach(item => item.classList.remove('animate-menu-item'));
         }
 
-        // Header slides down + fades in
         const tl = gsap.timeline();
         tl.fromTo(header,
             { y: -40, opacity: 0, scale: 0.95 },
             { y: 0, opacity: 1, scale: 1, duration: 0.7, ease: "power3.out" }
         );
 
-        // Menu bar fades in
         if (menuBar) {
             tl.fromTo(menuBar,
                 { opacity: 0, y: -10 },
@@ -271,7 +334,6 @@ document.addEventListener("DOMContentLoaded", () => {
             );
         }
 
-        // Each nav item staggers in with a clip reveal
         if (menuItems.length) {
             tl.fromTo(menuItems,
                 { opacity: 0, y: 12, scale: 0.9 },
@@ -281,16 +343,25 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    /* ── Help Button Entrance ───────────────────────── */
     const helpBtn = document.querySelector('.help-button');
     if (helpBtn) {
-        gsap.fromTo(helpBtn,
-            { scale: 0, opacity: 0 },
-            { scale: 1, opacity: 1, duration: 0.5, ease: "back.out(2)", delay: 1.2 }
-        );
+        if (typeof anime !== 'undefined') {
+            anime({
+                targets: helpBtn,
+                scale: [0, 1],
+                opacity: [0, 1],
+                easing: 'easeOutElastic(1, 0.5)',
+                duration: 800,
+                delay: 1200
+            });
+        } else {
+            gsap.fromTo(helpBtn,
+                { scale: 0, opacity: 0 },
+                { scale: 1, opacity: 1, duration: 0.5, ease: "back.out(2)", delay: 1.2 }
+            );
+        }
     }
 
-    /* ── Progress Bar Enhancement ───────────────────── */
     const progressBarDiv = document.querySelector('.progress-bar div');
     if (progressBarDiv) {
         window.addEventListener('sectionChanged', () => {
@@ -298,6 +369,30 @@ document.addEventListener("DOMContentLoaded", () => {
                 { boxShadow: '0 0 12px rgba(255,255,255,0.5)' },
                 { boxShadow: '0 0 0px rgba(255,255,255,0)', duration: 1, ease: "power2.out" }
             );
+        });
+    }
+
+    if (typeof anime !== 'undefined') {
+        window.addEventListener('sectionChanged', () => {
+            const indicator = document.getElementById('sectionIndicator');
+            if (indicator) {
+                anime({
+                    targets: indicator,
+                    scale: [1, 1.15, 1],
+                    easing: 'easeOutElastic(1, 0.5)',
+                    duration: 600
+                });
+            }
+
+            const divider = document.querySelector('.section-indicator-divider');
+            if (divider) {
+                anime({
+                    targets: divider,
+                    scaleX: [1, 1.5, 1],
+                    easing: 'easeOutExpo',
+                    duration: 500
+                });
+            }
         });
     }
 
@@ -398,12 +493,10 @@ document.addEventListener("DOMContentLoaded", () => {
     let shockwaveTime = 0;
     let blackHoleEffect = false;
 
-    /* ── Warp Speed Burst (triggered on section change) ── */
     let warpBurstIntensity = 0;
 
     function triggerWarpBurst() {
         warpBurstIntensity = 1.0;
-        // Rapidly decay across 60 frames
         const decay = () => {
             warpBurstIntensity *= 0.94;
             if (warpBurstIntensity < 0.01) {
@@ -537,7 +630,6 @@ function applyTwinkleEffect() {
     }
 
 function switchCameraPosition() {
-    // More aggressive camera movement
     const randomX = (Math.random() - 0.5) * 800;
     const randomY = (Math.random() - 0.5) * 600;
     const randomZ = Math.random() * 800 + 200;
@@ -548,15 +640,12 @@ function switchCameraPosition() {
     const zoomInFOV = Math.random() * 15 + 55;
     const originalFOV = camera.fov;
 
-    // Trigger star warp burst
     triggerWarpBurst();
 
-    // Trigger shockwave
     shockwaveTime = 1.0;
 
     const tl = gsap.timeline();
 
-    // Dramatic FOV zoom punch
     tl.to(camera, {
         fov: zoomInFOV,
         duration: 0.6,
@@ -564,7 +653,6 @@ function switchCameraPosition() {
         onUpdate: () => camera.updateProjectionMatrix()
     });
 
-    // Aggressive position shift
     tl.to(camera.position, {
         x: randomX,
         y: randomY,
@@ -577,7 +665,6 @@ function switchCameraPosition() {
         }
     }, 0);
 
-    // Aggressive rotation
     tl.to(camera.rotation, {
         x: randomRotationX,
         y: randomRotationY,
@@ -589,14 +676,12 @@ function switchCameraPosition() {
         }
     }, 0);
 
-    // Star field rotation burst
     tl.to(starFieldWhite.rotation, {
         z: starFieldWhite.rotation.z + (Math.random() - 0.5) * 0.3,
         duration: 1.5,
         ease: "power2.inOut"
     }, 0);
 
-    // Snap FOV back with overshoot
     tl.to(camera, {
         fov: originalFOV,
         duration: 1.2,
