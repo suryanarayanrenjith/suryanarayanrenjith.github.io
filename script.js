@@ -1,5 +1,5 @@
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.168.0/three.module.js';
-import { gsap } from 'https://cdn.jsdelivr.net/npm/gsap@3.10.4/index.js';
+// GSAP is loaded globally via <script> tag in index.html
 
 document.addEventListener("DOMContentLoaded", () => {
     const text = document.querySelector('.animated-text');
@@ -14,14 +14,14 @@ document.addEventListener("DOMContentLoaded", () => {
         gsap.to(footerText, {
             duration: 0.3,
             opacity: 0,
+            y: -4,
             ease: "power2.out",
             onComplete: function() {
                 footerText.textContent = newText;
-                gsap.to(footerText, {
-                    duration: 0.3,
-                    opacity: 1,
-                    ease: "power2.in"
-                });
+                gsap.fromTo(footerText,
+                    { opacity: 0, y: 4 },
+                    { duration: 0.3, opacity: 1, y: 0, ease: "power2.out" }
+                );
             }
         });
     }
@@ -34,6 +34,287 @@ document.addEventListener("DOMContentLoaded", () => {
         changeTextWithGSAP(`© ${currentYear} Suryanarayan Renjith. All rights reserved.`);
     });
 
+    /* ── Magnetic Button Effect ─────────────────────── */
+    function initMagneticButtons() {
+        const magneticEls = document.querySelectorAll('.center-button, .help-button');
+        magneticEls.forEach(btn => {
+            if (btn.dataset.magnetic) return;
+            btn.dataset.magnetic = 'true';
+            btn.addEventListener('mousemove', (e) => {
+                const rect = btn.getBoundingClientRect();
+                const x = e.clientX - rect.left - rect.width / 2;
+                const y = e.clientY - rect.top - rect.height / 2;
+                gsap.to(btn, {
+                    x: x * 0.3,
+                    y: y * 0.3,
+                    duration: 0.4,
+                    ease: "power2.out"
+                });
+            });
+            btn.addEventListener('mouseleave', () => {
+                gsap.to(btn, {
+                    x: 0,
+                    y: 0,
+                    duration: 0.6,
+                    ease: "elastic.out(1, 0.4)"
+                });
+            });
+        });
+    }
+
+    /* ── Content Entrance Animations ────────────────── */
+    window.animateContentIn = function() {
+        const content = document.getElementById('content');
+        if (!content) return;
+
+        // Animate headings with clip-path reveal
+        const headings = content.querySelectorAll('h1, h2, h3, .animated-text');
+        if (headings.length) {
+            gsap.fromTo(headings,
+                {
+                    opacity: 0,
+                    y: 40,
+                    clipPath: 'inset(0 0 100% 0)'
+                },
+                {
+                    opacity: 1,
+                    y: 0,
+                    clipPath: 'inset(0 0 0% 0)',
+                    duration: 0.8,
+                    ease: "power3.out",
+                    stagger: 0.12
+                }
+            );
+        }
+
+        // Animate paragraphs and text content
+        const paragraphs = content.querySelectorAll('p, .tagline');
+        if (paragraphs.length) {
+            gsap.fromTo(paragraphs,
+                { opacity: 0, y: 25 },
+                {
+                    opacity: 1,
+                    y: 0,
+                    duration: 0.6,
+                    ease: "power2.out",
+                    stagger: 0.08,
+                    delay: 0.15
+                }
+            );
+        }
+
+        // Animate buttons with scale + fade
+        const buttons = content.querySelectorAll('.center-button, button, a[class]');
+        if (buttons.length) {
+            gsap.fromTo(buttons,
+                { opacity: 0, y: 20, scale: 0.92 },
+                {
+                    opacity: 1,
+                    y: 0,
+                    scale: 1,
+                    duration: 0.6,
+                    ease: "back.out(1.4)",
+                    stagger: 0.1,
+                    delay: 0.25
+                }
+            );
+        }
+
+        // Animate lists with staggered slide-in
+        const listItems = content.querySelectorAll('li, .link-card');
+        if (listItems.length) {
+            gsap.fromTo(listItems,
+                { opacity: 0, x: -20 },
+                {
+                    opacity: 1,
+                    x: 0,
+                    duration: 0.5,
+                    ease: "power2.out",
+                    stagger: 0.06,
+                    delay: 0.2
+                }
+            );
+        }
+
+        // Animate images and icons
+        const visuals = content.querySelectorAll('img, .fa, .fas, .far, .fab, svg');
+        if (visuals.length) {
+            gsap.fromTo(visuals,
+                { opacity: 0, scale: 0.8, rotation: -5 },
+                {
+                    opacity: 1,
+                    scale: 1,
+                    rotation: 0,
+                    duration: 0.5,
+                    ease: "back.out(1.7)",
+                    stagger: 0.05,
+                    delay: 0.3
+                }
+            );
+        }
+
+        // Animate dividers / horizontal rules
+        const dividers = content.querySelectorAll('hr, .divider');
+        if (dividers.length) {
+            gsap.fromTo(dividers,
+                { scaleX: 0, transformOrigin: 'left center' },
+                {
+                    scaleX: 1,
+                    duration: 0.8,
+                    ease: "power3.inOut",
+                    stagger: 0.1,
+                    delay: 0.35
+                }
+            );
+        }
+
+        // Init magnetic buttons for any new center-buttons in loaded content
+        initMagneticButtons();
+    };
+
+    /* ── GSAP Section Transitions ───────────────────── */
+    window.gsapTransitionOut = function(content, direction) {
+        return new Promise(resolve => {
+            const isVertical = direction === 'up' || direction === 'down';
+            const dirMult = (direction === 'down' || direction === 'right') ? -1 : 1;
+
+            const tl = gsap.timeline({ onComplete: resolve });
+
+            tl.to(content, {
+                opacity: 0,
+                scale: 0.92,
+                y: isVertical ? dirMult * 60 : 0,
+                x: !isVertical ? dirMult * 80 : 0,
+                rotationY: !isVertical ? dirMult * -4 : 0,
+                rotationX: isVertical ? dirMult * 3 : 0,
+                filter: 'blur(8px)',
+                duration: 0.45,
+                ease: "power3.in"
+            });
+        });
+    };
+
+    window.gsapTransitionIn = function(content, direction) {
+        const isVertical = direction === 'up' || direction === 'down';
+        const dirMult = (direction === 'down' || direction === 'right') ? 1 : -1;
+
+        gsap.set(content, {
+            opacity: 0,
+            scale: 0.88,
+            y: isVertical ? dirMult * 80 : 0,
+            x: !isVertical ? dirMult * 100 : 0,
+            rotationY: !isVertical ? dirMult * 5 : 0,
+            rotationX: isVertical ? dirMult * -4 : 0,
+            filter: 'blur(10px)'
+        });
+
+        gsap.to(content, {
+            opacity: 1,
+            scale: 1,
+            y: 0,
+            x: 0,
+            rotationY: 0,
+            rotationX: 0,
+            filter: 'blur(0px)',
+            duration: 0.7,
+            ease: "power3.out",
+            onComplete: () => {
+                gsap.set(content, { clearProps: "all" });
+                window.animateContentIn();
+            }
+        });
+    };
+
+    window.gsapFadeSwap = function(content, directionHint) {
+        return new Promise(resolve => {
+            gsap.to(content, {
+                opacity: 0,
+                scale: 0.96,
+                y: -15,
+                filter: 'blur(4px)',
+                duration: 0.25,
+                ease: "power2.in",
+                onComplete: resolve
+            });
+        });
+    };
+
+    window.gsapFadeIn = function(content) {
+        gsap.fromTo(content,
+            { opacity: 0, scale: 0.96, y: 15, filter: 'blur(4px)' },
+            {
+                opacity: 1,
+                scale: 1,
+                y: 0,
+                filter: 'blur(0px)',
+                duration: 0.45,
+                ease: "power2.out",
+                onComplete: () => {
+                    gsap.set(content, { clearProps: "all" });
+                    window.animateContentIn();
+                }
+            }
+        );
+    };
+
+    // Init magnetic buttons for static elements
+    initMagneticButtons();
+
+    /* ── Nav Link Hover Enhancement ─────────────────── */
+    document.querySelectorAll('.menu-bar ul li a').forEach(link => {
+        link.addEventListener('mouseenter', () => {
+            gsap.to(link, {
+                y: -2,
+                duration: 0.3,
+                ease: "power2.out"
+            });
+        });
+        link.addEventListener('mouseleave', () => {
+            gsap.to(link, {
+                y: 0,
+                duration: 0.4,
+                ease: "elastic.out(1, 0.5)"
+            });
+        });
+    });
+
+    /* ── Header Entrance ────────────────────────────── */
+    const header = document.querySelector('header');
+    if (header) {
+        gsap.fromTo(header,
+            { y: -60, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.8, ease: "power3.out", delay: 0.5 }
+        );
+    }
+
+    /* ── Footer Entrance ────────────────────────────── */
+    if (footerText) {
+        gsap.fromTo(footerText,
+            { y: 20, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.6, ease: "power2.out", delay: 1 }
+        );
+    }
+
+    /* ── Help Button Entrance ───────────────────────── */
+    const helpBtn = document.querySelector('.help-button');
+    if (helpBtn) {
+        gsap.fromTo(helpBtn,
+            { scale: 0, opacity: 0 },
+            { scale: 1, opacity: 1, duration: 0.5, ease: "back.out(2)", delay: 1.2 }
+        );
+    }
+
+    /* ── Progress Bar Enhancement ───────────────────── */
+    const progressBarDiv = document.querySelector('.progress-bar div');
+    if (progressBarDiv) {
+        window.addEventListener('sectionChanged', () => {
+            gsap.fromTo(progressBarDiv,
+                { boxShadow: '0 0 12px rgba(255,255,255,0.5)' },
+                { boxShadow: '0 0 0px rgba(255,255,255,0)', duration: 1, ease: "power2.out" }
+            );
+        });
+    }
+
     function isWebGLAvailable() {
         try {
             const canvas = document.createElement('canvas');
@@ -44,7 +325,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return false;
         }
     }
-    
+
     if (isWebGLAvailable()) {
     const canvas = document.getElementById('animationCanvas');
     const scene = new THREE.Scene();
@@ -56,16 +337,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const pointLight = new THREE.PointLight(0xffffff, 1, 1000);
     pointLight.position.set(0, 0, 500);
     scene.add(pointLight);
-    
+
     const starDensity = 0.002;
     let starCount = Math.floor(window.innerWidth * window.innerHeight * starDensity);
-    
+
 
     const stars = new THREE.BufferGeometry();
     let starVertices = new Float32Array(starCount * 3);
     let starSpeeds = new Float32Array(starCount);
     let starTwinkles = new Float32Array(starCount);
-    
+
     function generateStars() {
         for (let i = 0; i < starCount * 3; i += 3) {
             starVertices[i] = (Math.random() - 0.5) * 2000;
@@ -76,9 +357,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         stars.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
     }
-    
+
     generateStars();
-    
+
     const starMaterialWhite = new THREE.PointsMaterial({
         color: 0xffffff,
         size: 2,
@@ -87,10 +368,10 @@ document.addEventListener("DOMContentLoaded", () => {
         blending: THREE.AdditiveBlending,
         depthWrite: false,
     });
-    
+
     const starFieldWhite = new THREE.Points(stars, starMaterialWhite);
     scene.add(starFieldWhite);
-    
+
     camera.position.z = 1000;
 
     window.addEventListener('themeChanged', (e) => {
@@ -105,56 +386,75 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         starMaterialWhite.needsUpdate = true;
     });
-    
+
     window.addEventListener('resize', () => {
         renderer.setSize(window.innerWidth, window.innerHeight);
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
-        
+
         starCount = Math.floor(window.innerWidth * window.innerHeight * starDensity);
         starVertices = new Float32Array(starCount * 3);
         starSpeeds = new Float32Array(starCount);
         starTwinkles = new Float32Array(starCount);
         generateStars();
     });
-    
+
     let mouseX = 0, mouseY = 0;
     let targetMouseX = 0, targetMouseY = 0;
     let velocityX = 0, velocityY = 0;
     const mouseRotationEasing = 0.1;
     const acceleration = 0.002;
-    
+
     let alpha = 0, beta = 0, gamma = 0;
     let targetRotationX = 0, targetRotationY = 0;
     const rotationEasing = 0.05;
-    
+
     let shockwaveTime = 0;
     let blackHoleEffect = false;
-    
+
+    /* ── Warp Speed Burst (triggered on section change) ── */
+    let warpBurstIntensity = 0;
+
+    function triggerWarpBurst() {
+        warpBurstIntensity = 1.0;
+        // Rapidly decay across 60 frames
+        const decay = () => {
+            warpBurstIntensity *= 0.94;
+            if (warpBurstIntensity < 0.01) {
+                warpBurstIntensity = 0;
+                return;
+            }
+            requestAnimationFrame(decay);
+        };
+        requestAnimationFrame(decay);
+    }
+
     function setupMouseControl() {
         window.addEventListener('mousemove', (event) => {
             targetMouseX = (event.clientX / window.innerWidth) * 2 - 1;
             targetMouseY = -(event.clientY / window.innerHeight) * 2 + 1;
         });
     }
-    
+
     function applyWarpSpeed() {
+        const burstMultiplier = 1 + warpBurstIntensity * 40;
         for (let i = 0; i < starVertices.length; i += 3) {
-            starVertices[i + 2] += starSpeeds[i / 3] * 20;
-    
+            starVertices[i + 2] += starSpeeds[i / 3] * 20 * burstMultiplier;
+
             if (starVertices[i + 2] > 1000) {
                 starVertices[i + 2] = -1000;
             }
         }
         stars.attributes.position.needsUpdate = true;
     }
-    
+
     function applyDynamicStarScaling() {
         const positions = stars.attributes.position.array;
         const lastZ = positions[positions.length - 1];
-        starMaterialWhite.size = Math.max(1, 10 / (lastZ / 100 + 1));
+        const burstSize = warpBurstIntensity * 3;
+        starMaterialWhite.size = Math.max(1, 10 / (lastZ / 100 + 1)) + burstSize;
     }
-    
+
     function applyShockwaveEffect() {
         if (shockwaveTime > 0) {
             for (let i = 0; i < starVertices.length; i += 3) {
@@ -171,7 +471,7 @@ document.addEventListener("DOMContentLoaded", () => {
             stars.attributes.position.needsUpdate = true;
         }
     }
-    
+
     function applyBlackHoleEffect() {
         if (blackHoleEffect) {
             for (let i = 0; i < starVertices.length; i += 3) {
@@ -199,114 +499,133 @@ function applyTwinkleEffect() {
     const layeredEffect = Math.sin(time * 1.2 + Math.sin(time * 0.7) * 2 + 0.75 * 25) * 0.4 + 0.6;
     const depthEffect = Math.sin(time * 0.2 + 0.75 * 50) * 0.3 + 0.7;
 
-    const twinkleIntensity = 
-        (baseSineWave * 0.3 + baseCosineWave * 0.3 + flicker * 0.2 + noise * 0.1) 
+    const twinkleIntensity =
+        (baseSineWave * 0.3 + baseCosineWave * 0.3 + flicker * 0.2 + noise * 0.1)
         * slowBreath * layeredEffect * depthEffect;
 
-    starMaterialWhite.opacity = 3.0 + twinkleIntensity * 0.8; 
+    starMaterialWhite.opacity = 3.0 + twinkleIntensity * 0.8;
     starMaterialWhite.size = 2.0 + twinkleIntensity * 4.0;
 }
-    
+
     function animateStars() {
         const time = performance.now() * 0.001;
-    
+
         const driftX = Math.sin(time * 0.3) * 0.001;
         const driftY = Math.cos(time * 0.25) * 0.001;
-    
+
         starFieldWhite.rotation.x += 0.0005 + driftX;
         starFieldWhite.rotation.y += 0.0007 + driftY;
-    
+
         starFieldWhite.position.z += Math.sin(time * 0.5) * 0.05;
     }
-    
+
     function applyMouseAcceleration() {
-        const maxTiltX = 15; 
+        const maxTiltX = 15;
         const maxTiltY = 15;
-    
+
         velocityX += (targetMouseX - mouseX) * acceleration;
         velocityY += (targetMouseY - mouseY) * acceleration;
-    
+
         velocityX *= 0.95;
         velocityY *= 0.95;
-    
+
         mouseX += velocityX;
         mouseY += velocityY;
-    
+
         const mouseTiltX = mouseY * maxTiltX;
         const mouseTiltY = -mouseX * maxTiltY;
-    
+
         gsap.to(camera.rotation, {
-            x: THREE.MathUtils.degToRad(mouseTiltX),  
-            y: THREE.MathUtils.degToRad(mouseTiltY),  
-            duration: 0.5,                            
-            ease: "power2.out"                        
+            x: THREE.MathUtils.degToRad(mouseTiltX),
+            y: THREE.MathUtils.degToRad(mouseTiltY),
+            duration: 0.5,
+            ease: "power2.out"
         });
-    
+
         gsap.to(pointLight.position, {
-            x: mouseX * 100,  
-            y: mouseY * 100,  
-            duration: 0.5, 
+            x: mouseX * 100,
+            y: mouseY * 100,
+            duration: 0.5,
             ease: "power2.out"
         });
     }
 
 function switchCameraPosition() {
-    const randomX = (Math.random() - 0.5) * 500;
-    const randomY = (Math.random() - 0.5) * 400;
-    const randomZ = Math.random() * 600 + 300;
+    // More aggressive camera movement
+    const randomX = (Math.random() - 0.5) * 800;
+    const randomY = (Math.random() - 0.5) * 600;
+    const randomZ = Math.random() * 800 + 200;
 
-    const randomRotationX = (Math.random() - 0.5) * Math.PI / 12;  
-    const randomRotationY = (Math.random() - 0.5) * Math.PI / 12;
+    const randomRotationX = (Math.random() - 0.5) * Math.PI / 8;
+    const randomRotationY = (Math.random() - 0.5) * Math.PI / 8;
 
-    const zoomInFOV = Math.random() * 5 + 65;
+    const zoomInFOV = Math.random() * 15 + 55;
     const originalFOV = camera.fov;
+
+    // Trigger star warp burst
+    triggerWarpBurst();
+
+    // Trigger shockwave
+    shockwaveTime = 1.0;
 
     const tl = gsap.timeline();
 
+    // Dramatic FOV zoom punch
     tl.to(camera, {
         fov: zoomInFOV,
-        duration: 1,
-        ease: "power1.inOut",
+        duration: 0.6,
+        ease: "power3.in",
         onUpdate: () => camera.updateProjectionMatrix()
     });
 
+    // Aggressive position shift
     tl.to(camera.position, {
         x: randomX,
         y: randomY,
         z: randomZ,
-        duration: 2,
-        ease: "power2.inOut",
+        duration: 1.8,
+        ease: "power3.inOut",
         onUpdate: () => {
-            camera.position.x += Math.sin(performance.now() * 0.001) * 0.3;
+            camera.position.x += Math.sin(performance.now() * 0.002) * 0.5;
+            camera.position.y += Math.cos(performance.now() * 0.0015) * 0.3;
         }
     }, 0);
 
+    // Aggressive rotation
     tl.to(camera.rotation, {
         x: randomRotationX,
         y: randomRotationY,
-        duration: 2,
-        ease: "power2.inOut",
+        duration: 1.8,
+        ease: "power3.inOut",
         onUpdate: () => {
-            camera.rotation.x += Math.sin(performance.now() * 0.0008) * 0.0015;
-            camera.rotation.y += Math.cos(performance.now() * 0.0008) * 0.0015;
+            camera.rotation.x += Math.sin(performance.now() * 0.001) * 0.002;
+            camera.rotation.y += Math.cos(performance.now() * 0.001) * 0.002;
         }
     }, 0);
 
+    // Star field rotation burst
+    tl.to(starFieldWhite.rotation, {
+        z: starFieldWhite.rotation.z + (Math.random() - 0.5) * 0.3,
+        duration: 1.5,
+        ease: "power2.inOut"
+    }, 0);
+
+    // Snap FOV back with overshoot
     tl.to(camera, {
         fov: originalFOV,
-        duration: 1.5,
-        ease: "power1.out",
+        duration: 1.2,
+        ease: "elastic.out(1, 0.6)",
         onUpdate: () => camera.updateProjectionMatrix()
-    }, "-=0.8");
+    }, "-=1.0");
 }
-    
+
     window.addEventListener('sectionChanged', () => {
         switchCameraPosition();
     });
 
 document.addEventListener('keydown', (event) => {
     if (event.ctrlKey && event.shiftKey) {
-        switch (event.code) {              
+        switch (event.code) {
             case 'Digit5':
                 event.preventDefault();
                 switchCameraPosition();
@@ -335,13 +654,13 @@ document.addEventListener('keydown', (event) => {
 
     function render() {
         applyWarpSpeed();
-        applyMouseAcceleration();        
-        applyDynamicStarScaling(); 
-        applyShockwaveEffect();   
-        applyBlackHoleEffect();   
-        applyTwinkleEffect(); 
+        applyMouseAcceleration();
+        applyDynamicStarScaling();
+        applyShockwaveEffect();
+        applyBlackHoleEffect();
+        applyTwinkleEffect();
         animateStars();
-    
+
         renderer.render(scene, camera);
         requestAnimationFrame(render);
     }
@@ -349,7 +668,7 @@ document.addEventListener('keydown', (event) => {
     setupMouseControl();
     switchCameraPosition();
     render();
-    
+
     }
-    
+
 });

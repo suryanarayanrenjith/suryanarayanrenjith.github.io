@@ -108,7 +108,6 @@ body, html {
     z-index: 1;
 }
 
-/* ── CRT Scanline Overlay ────────────────────────── */
 body::after {
     content: '';
     position: fixed;
@@ -127,7 +126,6 @@ body::after {
     z-index: 9998;
 }
 
-/* ── Glitch Hover Effect ─────────────────────────── */
 @keyframes glitchClip {
     0%   { clip-path: inset(40% 0 61% 0); transform: translate(-2px, 2px); }
     20%  { clip-path: inset(92% 0 1% 0);  transform: translate(2px, -1px); }
@@ -145,13 +143,11 @@ body::after {
     98% { text-shadow: 1px 0 #ff0040, -1px 0 #0ff; opacity: 1; }
 }
 
-/* ── Retro Flicker for Headers ───────────────────── */
 @keyframes retroFlicker {
     0%, 19.999%, 22%, 62.999%, 64%, 64.999%, 70%, 100% { opacity: 1; }
     20%, 21.999%, 63%, 63.999%, 65%, 69.999% { opacity: 0.5; }
 }
 
-/* ── Top Loading Bar ─────────────────────────────── */
 .top-loading-bar {
     position: fixed;
     top: 0;
@@ -181,7 +177,6 @@ body::after {
     100% { width: 92%; }
 }
 
-/* ── Skeleton Shimmer ────────────────────────────── */
 .content-skeleton {
     display: flex;
     flex-direction: column;
@@ -224,7 +219,6 @@ body::after {
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Fetch Error State ───────────────────────────── */
 .fetch-error {
     display: flex;
     flex-direction: column;
@@ -292,17 +286,11 @@ body::after {
 
 .animated-text {
     font-size: 3em;
-    opacity: 0;
-    transform: translateY(-20px);
-    animation: fadeInUp 2s forwards;
     color: #fff;
 }
 
 .tagline {
     font-size: 1.2em;
-    opacity: 0;
-    transform: translateY(20px);
-    animation: fadeInUp 2s 0.5s forwards;
     color: #fff;
 }
 
@@ -312,9 +300,6 @@ body::after {
     font-size: 1.4em;
     font-weight: 600;
     cursor: pointer;
-    animation: fadeInUp 2s 1s forwards;
-    opacity: 0;
-    transform: translateY(20px);
     position: relative;
     overflow: hidden;
     z-index: 1;
@@ -1479,7 +1464,6 @@ body.light-theme .cursor-dot {
     background-color: #000;
 }
 
-/* Light theme hover state */
 body.light-theme.cursor-hover .cursor-dot-outline {
     width: 48px;
     height: 48px;
@@ -1554,7 +1538,7 @@ body.light-theme .center-button {
 }
 
 body.light-theme .center-button::before {
-    background: linear-gradient(180deg, transparent, rgba(0,0,0,0.05), transparent);
+    background: linear-gradient(90deg, transparent, rgba(0,0,0,0.06), transparent);
 }
 
 body.light-theme .center-button:hover {
@@ -2045,4 +2029,76 @@ body.light-theme::after {
         rgba(0,0,0,0.008) 3px,
         rgba(0,0,0,0.008) 6px
     );
+}
+
+/* ── Section Indicator ──────────────────────────── */
+.section-indicator {
+    position: fixed;
+    left: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    letter-spacing: 2px;
+    color: rgba(255, 255, 255, 0.4);
+    pointer-events: none;
+    user-select: none;
+}
+
+.section-indicator-current {
+    font-size: 22px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.85);
+    display: inline-block;
+}
+
+.section-indicator-divider {
+    width: 1px;
+    height: 30px;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.4), rgba(255,255,255,0.05));
+}
+
+.section-indicator-total {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.25);
+}
+
+body.light-theme .section-indicator {
+    color: rgba(0, 0, 0, 0.3);
+}
+body.light-theme .section-indicator-current {
+    color: rgba(0, 0, 0, 0.7);
+}
+body.light-theme .section-indicator-divider {
+    background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.05));
+}
+body.light-theme .section-indicator-total {
+    color: rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 768px) {
+    .section-indicator {
+        left: 10px;
+        gap: 4px;
+    }
+    .section-indicator-current {
+        font-size: 16px;
+    }
+    .section-indicator-divider {
+        height: 20px;
+    }
+    .section-indicator-total {
+        font-size: 9px;
+    }
+}
+
+/* ── Container perspective for GSAP 3D transforms ── */
+#content {
+    perspective: 1200px;
+    transform-style: preserve-3d;
 }

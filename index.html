@@ -50,6 +50,9 @@
     <link rel="preload" href="styles.css" as="style">
     <link rel="preload" href="/blocker.js" as="script">
 
+    <!-- GSAP (global, used by inline scripts + module) -->
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+
     <script defer src="/blocker.js"></script>
     <script type="application/ld+json">
         {
@@ -905,7 +908,13 @@ function isDesktop() {
 
         function showContent(section, direction = 'none') {
             const content = document.getElementById('content');
+            if (!content) return;
             const isCached = !!sectionCache[section];
+
+            // Kill any running GSAP animations on content
+            if (typeof gsap !== 'undefined' && window.gsap) {
+                gsap.killTweensOf(content);
+            }
 
             content.className = content.className
                 .replace(/\b(slide-out|slide-in|m-slide-out|m-slide-in)[^\s]*/g, '')
@@ -913,15 +922,30 @@ function isDesktop() {
                 .trim();
             content.style.transition = '';
             content.style.opacity = '';
+            content.style.transform = '';
+            content.style.filter = '';
 
             if (direction === 'none') {
                 if (isCached) {
-                    content.style.opacity = '0';
-                    content.innerHTML = sectionCache[section];
-                    sessionStorage.setItem('lastSection', section);
-                    content.style.transition = 'opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
-                    requestAnimationFrame(() => { content.style.opacity = '1'; });
-                    prefetchAdjacent(section);
+                    // Use GSAP fade swap if available
+                    if (window.gsapFadeSwap) {
+                        window.gsapFadeSwap(content).then(() => {
+                            content.innerHTML = sectionCache[section];
+                            sessionStorage.setItem('lastSection', section);
+                            window.gsapFadeIn(content);
+                            prefetchAdjacent(section);
+                        });
+                    } else {
+                        content.style.opacity = '0';
+                        content.innerHTML = sectionCache[section];
+                        sessionStorage.setItem('lastSection', section);
+                        content.style.transition = 'opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+                        requestAnimationFrame(() => {
+                            content.style.opacity = '1';
+                            if (window.animateContentIn) window.animateContentIn();
+                        });
+                        prefetchAdjacent(section);
+                    }
                     return;
                 }
 
@@ -932,15 +956,25 @@ function isDesktop() {
                 fetchWithRetry(section)
                     .then(html => {
                         hideLoadingBar();
-                        content.style.opacity = '0';
-                        content.style.transition = 'opacity 0.15s ease';
-                        setTimeout(() => {
-                            content.innerHTML = html;
-                            sessionStorage.setItem('lastSection', section);
-                            content.style.transition = 'opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
-                            content.style.opacity = '1';
-                            prefetchAdjacent(section);
-                        }, 150);
+                        if (window.gsapFadeSwap) {
+                            window.gsapFadeSwap(content).then(() => {
+                                content.innerHTML = html;
+                                sessionStorage.setItem('lastSection', section);
+                                window.gsapFadeIn(content);
+                                prefetchAdjacent(section);
+                            });
+                        } else {
+                            content.style.opacity = '0';
+                            content.style.transition = 'opacity 0.15s ease';
+                            setTimeout(() => {
+                                content.innerHTML = html;
+                                sessionStorage.setItem('lastSection', section);
+                                content.style.transition = 'opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+                                content.style.opacity = '1';
+                                prefetchAdjacent(section);
+                                if (window.animateContentIn) window.animateContentIn();
+                            }, 150);
+                        }
                     })
                     .catch(error => {
                         hideLoadingBar();
@@ -951,43 +985,73 @@ function isDesktop() {
                 return;
             }
 
-            const prefix = isMobile ? 'm-' : '';
-            const exitMap  = { down: 'slide-out-up', up: 'slide-out-down', left: 'slide-out-right', right: 'slide-out-left' };
-            const enterMap = { down: 'slide-in-from-bottom', up: 'slide-in-from-top', left: 'slide-in-from-left', right: 'slide-in-from-right' };
-            const exitClass  = prefix + exitMap[direction];
-            const enterClass = prefix + enterMap[direction];
-            const exitDuration  = isMobile ? 380 : 420;
-            const enterDuration = isMobile ? 600 : 650;
+            // Directional transition using GSAP
+            if (window.gsapTransitionOut) {
+                content.style.pointerEvents = 'none';
 
-            content.classList.add('transitioning', exitClass);
+                if (!isCached) showLoadingBar();
 
-            if (!isCached) showLoadingBar();
+                const fetchPromise = fetchWithRetry(section);
+                const exitPromise = window.gsapTransitionOut(content, direction);
 
-            const fetchPromise = fetchWithRetry(section);
-            const exitPromise = new Promise(resolve => setTimeout(resolve, exitDuration));
-
-            Promise.all([fetchPromise, exitPromise])
-                .then(([html]) => {
-                    hideLoadingBar();
-                    content.classList.remove(exitClass);
-                    content.innerHTML = html;
-                    sessionStorage.setItem('lastSection', section);
-
-                    void content.offsetWidth;
-
-                    content.classList.add(enterClass);
-                    setTimeout(() => {
-                        content.classList.remove(enterClass, 'transitioning');
+                Promise.all([fetchPromise, exitPromise])
+                    .then(([html]) => {
+                        hideLoadingBar();
+                        content.innerHTML = html;
+                        sessionStorage.setItem('lastSection', section);
+                        content.style.pointerEvents = '';
+                        window.gsapTransitionIn(content, direction);
                         prefetchAdjacent(section);
-                    }, enterDuration + 50);
-                })
-                .catch(error => {
-                    hideLoadingBar();
-                    console.error('Error fetching content:', error);
-                    content.classList.remove(exitClass, 'transitioning');
-                    content.innerHTML = buildErrorUI(section, direction);
-                    content.style.opacity = '1';
-                });
+                    })
+                    .catch(error => {
+                        hideLoadingBar();
+                        console.error('Error fetching content:', error);
+                        content.style.pointerEvents = '';
+                        content.style.opacity = '1';
+                        content.style.transform = '';
+                        content.style.filter = '';
+                        content.innerHTML = buildErrorUI(section, direction);
+                    });
+            } else {
+                // Fallback to CSS transitions
+                const prefix = isMobile ? 'm-' : '';
+                const exitMap  = { down: 'slide-out-up', up: 'slide-out-down', left: 'slide-out-right', right: 'slide-out-left' };
+                const enterMap = { down: 'slide-in-from-bottom', up: 'slide-in-from-top', left: 'slide-in-from-left', right: 'slide-in-from-right' };
+                const exitClass  = prefix + exitMap[direction];
+                const enterClass = prefix + enterMap[direction];
+                const exitDuration  = isMobile ? 380 : 420;
+                const enterDuration = isMobile ? 600 : 650;
+
+                content.classList.add('transitioning', exitClass);
+
+                if (!isCached) showLoadingBar();
+
+                const fetchPromise = fetchWithRetry(section);
+                const exitFallbackPromise = new Promise(resolve => setTimeout(resolve, exitDuration));
+
+                Promise.all([fetchPromise, exitFallbackPromise])
+                    .then(([html]) => {
+                        hideLoadingBar();
+                        content.classList.remove(exitClass);
+                        content.innerHTML = html;
+                        sessionStorage.setItem('lastSection', section);
+
+                        void content.offsetWidth;
+
+                        content.classList.add(enterClass);
+                        setTimeout(() => {
+                            content.classList.remove(enterClass, 'transitioning');
+                            prefetchAdjacent(section);
+                        }, enterDuration + 50);
+                    })
+                    .catch(error => {
+                        hideLoadingBar();
+                        console.error('Error fetching content:', error);
+                        content.classList.remove(exitClass, 'transitioning');
+                        content.innerHTML = buildErrorUI(section, direction);
+                        content.style.opacity = '1';
+                    });
+            }
         }
 
         const sectionOrder = ['home', 'about', 'projects', 'resume'];
@@ -996,9 +1060,32 @@ function isDesktop() {
 
         function updateProgressBar(section) {
             const progressBar = document.querySelector('.progress-bar div');
+            if (!progressBar) return;
             const index = sectionOrder.indexOf(section);
             const progress = index / (sectionOrder.length - 1) * 100;
             progressBar.style.width = `${progress}%`;
+        }
+
+        function updateSectionIndicator(section) {
+            const idx = sectionOrder.indexOf(section);
+            const el = document.getElementById('sectionIndicator');
+            if (!el || idx === -1) return;
+            const numEl = el.querySelector('.section-indicator-current');
+            if (!numEl) return;
+            const newNum = String(idx + 1).padStart(2, '0');
+            if (numEl.textContent === newNum) return;
+            // Animate out, swap, animate in
+            if (typeof gsap !== 'undefined' && window.gsap) {
+                gsap.to(numEl, {
+                    y: -12, opacity: 0, duration: 0.2, ease: 'power2.in',
+                    onComplete: () => {
+                        numEl.textContent = newNum;
+                        gsap.fromTo(numEl, { y: 12, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3, ease: 'power2.out' });
+                    }
+                });
+            } else {
+                numEl.textContent = newNum;
+            }
         }
 
         function navigateToSection(section, direction) {
@@ -1006,6 +1093,7 @@ function isDesktop() {
             if (idx !== -1) currentSectionIndex = idx;
             showContent(section, direction);
             updateProgressBar(section);
+            updateSectionIndicator(section);
             window.dispatchEvent(new CustomEvent('sectionChanged'));
         }
 
@@ -1031,6 +1119,7 @@ function isDesktop() {
             const nextSection = sectionOrder[currentSectionIndex];
             showContent(nextSection, direction);
             updateProgressBar(nextSection);
+            updateSectionIndicator(nextSection);
             window.dispatchEvent(new CustomEvent('sectionChanged'));
         }
         
@@ -1289,6 +1378,12 @@ function isDesktop() {
     }
 });   
 </script>
+
+    <div class="section-indicator" id="sectionIndicator">
+        <span class="section-indicator-current">01</span>
+        <span class="section-indicator-divider"></span>
+        <span class="section-indicator-total">04</span>
+    </div>
 
     <div class="container" id="content"></div>
     <div class="top-loading-bar" id="topLoadingBar"></div>
