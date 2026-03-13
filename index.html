@@ -1443,13 +1443,11 @@ function isDesktop() {
     mButton.classList.add('hidden');
 
     function autoCollapse() {
-        if (typeof gsap !== 'undefined') gsap.set(buttonhide, { clearProps: 'all' });
-        buttonhide.classList.add('collapsed');
+        buttonhide.style.display = 'none';
     }
 
     function expandHeader() {
-        buttonhide.classList.remove('collapsed');
-        if (typeof gsap !== 'undefined') gsap.set(buttonhide, { clearProps: 'all' });
+        buttonhide.style.display = 'block';
     }
 
     function isMobileDevice() {

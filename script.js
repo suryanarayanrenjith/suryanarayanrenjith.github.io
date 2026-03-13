@@ -319,14 +319,13 @@ document.addEventListener("DOMContentLoaded", () => {
     window.gsapHeaderEntrance = function() {
         const header = document.querySelector('header');
         const menuBar = document.querySelector('.menu-bar');
-        const navItems = document.querySelectorAll('.menu-bar ul li:not(.music-button-container)');
-        const musicContainer = document.querySelector('.music-button-container');
+        const menuItems = document.querySelectorAll('.menu-bar ul li');
 
         if (!header) return;
 
         if (menuBar) {
             menuBar.classList.remove('animate-menu-bar');
-            document.querySelectorAll('.menu-bar ul li').forEach(item => item.classList.remove('animate-menu-item'));
+            menuItems.forEach(item => item.classList.remove('animate-menu-item'));
         }
 
         const tl = gsap.timeline();
@@ -343,20 +342,11 @@ document.addEventListener("DOMContentLoaded", () => {
             );
         }
 
-        if (navItems.length) {
-            tl.fromTo(navItems,
+        if (menuItems.length) {
+            tl.fromTo(menuItems,
                 { opacity: 0, y: 12, scale: 0.9 },
                 { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "back.out(1.5)", stagger: 0.1 },
                 0.25
-            );
-        }
-
-        // Music button: slow, smooth, delayed reveal
-        if (musicContainer) {
-            tl.fromTo(musicContainer,
-                { opacity: 0, scale: 0.8, x: 10 },
-                { opacity: 1, scale: 1, x: 0, duration: 0.8, ease: "power2.out" },
-                0.7
             );
         }
     };
