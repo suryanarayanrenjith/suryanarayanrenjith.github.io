@@ -1657,3 +1657,127 @@ body.light-theme .link-icon {
 body.light-theme a[id^="forceDownload"] {
     color: #111 !important;
 }
+
+.animated-text {
+    text-shadow: 0 0 25px rgba(255, 255, 255, 0.4);
+    letter-spacing: 2px;
+}
+
+body.light-theme .animated-text {
+    text-shadow: 0 0 25px rgba(0, 0, 0, 0.15);
+}
+
+.center-button {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: #fff !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    backdrop-filter: blur(12px) saturate(160%);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3) !important;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.center-button a {
+    color: #fff !important;
+    transition: color 0.4s ease !important;
+}
+
+.center-button::before {
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%) !important;
+    transition: top 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.center-button:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    transform: translateY(-5px) scale(1.05) !important;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.6), 0 0 20px rgba(255,255,255,0.3), inset 0 0 10px rgba(255,255,255,0.1) !important;
+    border-color: rgba(255, 255, 255, 0.6) !important;
+}
+
+body.light-theme .center-button {
+    background: rgba(0, 0, 0, 0.03) !important;
+    color: #000 !important;
+    border: 1px solid rgba(0, 0, 0, 0.15) !important;
+}
+body.light-theme .center-button a {
+    color: #000 !important;
+}
+body.light-theme .center-button:hover {
+    background: rgba(0, 0, 0, 0.08) !important;
+    border-color: rgba(0, 0, 0, 0.4) !important;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15), 0 0 20px rgba(0,0,0,0.1) !important;
+}
+
+.menu-bar ul li a {
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0);
+    transition: color 0.3s ease, text-shadow 0.3s ease, transform 0.3s ease !important;
+    display: inline-block;
+}
+.menu-bar ul li a:hover {
+    color: #fff !important;
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.8), 0 0 30px rgba(255, 255, 255, 0.4);
+    transform: translateY(-2px);
+}
+.menu-bar ul li a::after {
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.8) !important;
+}
+body.light-theme .menu-bar ul li a:hover {
+    color: #000 !important;
+    text-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+}
+body.light-theme .menu-bar ul li a::after {
+    box-shadow: none !important;
+}
+
+.modal-overlay {
+    backdrop-filter: blur(8px) !important;
+    background-color: rgba(0, 0, 0, 0.4) !important;
+}
+.shortcuts-modal {
+    background: rgba(12, 12, 12, 0.6) !important;
+    backdrop-filter: blur(25px) saturate(180%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+    border-radius: 18px !important;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+@keyframes modalPulse {
+    0% { box-shadow: 0 25px 60px rgba(0,0,0,0.6), 0 0 20px rgba(255,255,255,0.02); }
+    100% { box-shadow: 0 25px 60px rgba(0,0,0,0.6), 0 0 40px rgba(255,255,255,0.06); }
+}
+
+.shortcuts-modal[style*="display: block"] {
+    animation: modalPulse 4s infinite alternate;
+}
+
+body.light-theme .shortcuts-modal {
+    background: rgba(255, 255, 255, 0.75) !important;
+    backdrop-filter: blur(25px) saturate(180%) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15), inset 0 0 0 1px rgba(255,255,255,0.5) !important;
+}
+body.light-theme .modal-overlay {
+    background-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.action-button, .tab-button, .close-modal, .help-button {
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+.action-button:hover, .tab-button:hover, .help-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 255, 255, 0.15) !important;
+}
+body.light-theme .action-button:hover, body.light-theme .tab-button:hover, body.light-theme .help-button:hover {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1) !important;
+}
+.close-modal:hover {
+    transform: rotate(90deg) scale(1.2);
+    color: #ff5555 !important;
+}
+.tagline {
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+    letter-spacing: 1px;
+}
+body.light-theme .tagline {
+    text-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
