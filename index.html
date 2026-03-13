@@ -1443,11 +1443,19 @@ function isDesktop() {
     mButton.classList.add('hidden');
 
     function autoCollapse() {
-        buttonhide.style.display = 'none';
+        buttonhide.style.maxWidth = '0';
+        buttonhide.style.opacity = '0';
+        buttonhide.style.pointerEvents = 'none';
+        var prevLi = buttonhide.previousElementSibling;
+        if (prevLi) prevLi.style.marginRight = '0';
     }
 
     function expandHeader() {
-        buttonhide.style.display = 'block';
+        buttonhide.style.maxWidth = '60px';
+        buttonhide.style.opacity = '1';
+        buttonhide.style.pointerEvents = '';
+        var prevLi = buttonhide.previousElementSibling;
+        if (prevLi) prevLi.style.marginRight = '';
     }
 
     function isMobileDevice() {
