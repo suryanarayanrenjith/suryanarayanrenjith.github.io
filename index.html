@@ -437,28 +437,12 @@ body.light-theme .preloader-fullname { color: rgba(0,0,0,0.3); }
 body.light-theme .preloader-rule {
     background: linear-gradient(90deg, transparent, rgba(0,0,0,0.1), transparent);
 }
-.preloader-tagline {
-    font-family: 'Segoe UI', system-ui, sans-serif;
-    font-size: 10px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: rgba(255,255,255,0.18);
-    margin-top: 10px;
-    overflow: hidden;
-    white-space: nowrap;
-    opacity: 0;
-}
-body.light-theme .preloader-tagline { color: rgba(0,0,0,0.15); }
-.preloader-tagline span {
-    display: inline-block;
-    opacity: 0;
-}
 .preloader-progress {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 12px;
-    margin-top: 42px;
+    margin-top: 56px;
     opacity: 0;
     width: 100%;
 }
@@ -514,9 +498,8 @@ body.light-theme .preloader-particle { background: rgba(0,0,0,0.2); }
 @media (max-width: 768px) {
     .preloader-initials { font-size: 48px; gap: 16px; letter-spacing: 4px; }
     .preloader-fullname { font-size: 9px; letter-spacing: 4px; }
-    .preloader-tagline { font-size: 8px; letter-spacing: 2px; }
     .preloader-progress-track { width: 90px; }
-    .preloader-progress { margin-top: 32px; }
+    .preloader-progress { margin-top: 38px; }
     .preloader-line-top { margin-bottom: 22px; }
     .preloader-line-bottom { margin-top: 22px; }
     .preloader-corner-tl, .preloader-corner-tr,
@@ -526,9 +509,8 @@ body.light-theme .preloader-particle { background: rgba(0,0,0,0.2); }
 @media (max-width: 480px) {
     .preloader-initials { font-size: 36px; gap: 12px; letter-spacing: 3px; }
     .preloader-fullname { font-size: 8px; letter-spacing: 3px; }
-    .preloader-tagline { font-size: 7px; letter-spacing: 1.5px; }
     .preloader-progress-track { width: 70px; }
-    .preloader-progress { margin-top: 26px; gap: 8px; }
+    .preloader-progress { margin-top: 30px; gap: 8px; }
     .preloader-progress-pct { font-size: 8px; }
     .preloader-line-top { margin-bottom: 16px; }
     .preloader-line-bottom { margin-top: 16px; }
@@ -538,9 +520,8 @@ body.light-theme .preloader-particle { background: rgba(0,0,0,0.2); }
 @media (max-width: 360px) {
     .preloader-initials { font-size: 30px; gap: 10px; letter-spacing: 2px; }
     .preloader-fullname { font-size: 7px; letter-spacing: 2px; }
-    .preloader-tagline { font-size: 6px; letter-spacing: 1px; }
     .preloader-progress-track { width: 60px; }
-    .preloader-progress { margin-top: 22px; }
+    .preloader-progress { margin-top: 24px; }
 }
 
 *, *::before, *::after { -webkit-tap-highlight-color: transparent; }
@@ -1656,7 +1637,6 @@ function isDesktop() {
             </div>
             <div class="preloader-fullname"></div>
             <div class="preloader-rule"></div>
-            <div class="preloader-tagline"></div>
             <div class="preloader-progress">
                 <div class="preloader-progress-track">
                     <div class="preloader-progress-fill"></div>
@@ -1925,12 +1905,36 @@ document.addEventListener('DOMContentLoaded', function() {
       }
 
       const fullnameEl = document.querySelector('.preloader-fullname');
-      const taglineEl = document.querySelector('.preloader-tagline');
-      fullnameEl.textContent = 'Suryanarayan Renjith';
-      taglineEl.textContent = 'Fusing Imagination with Innovation';
+      const fullnameText = 'SURYANARAYAN RENJITH';
+      fullnameEl.textContent = fullnameText;
 
       const fullnameLetterize = new Letterize({ targets: '.preloader-fullname' });
-      const taglineLetterize = new Letterize({ targets: '.preloader-tagline' });
+
+      // Retro hacking decode: each letter cycles random glyphs before resolving
+      var glyphChars = '01@#$%&*!?<>{}[]=/\\|~^_:;ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      var decodeIntervals = [];
+      function startDecode(spans, staggerMs, cycleMs, resolveMs) {
+          spans.forEach(function(span, i) {
+              var original = span.textContent;
+              if (original === ' ') return;
+              var startTime = staggerMs * i;
+              var resolved = false;
+              setTimeout(function() {
+                  var interval = setInterval(function() {
+                      if (!resolved) {
+                          span.textContent = glyphChars[Math.floor(Math.random() * glyphChars.length)];
+                      }
+                  }, cycleMs);
+                  decodeIntervals.push(interval);
+                  setTimeout(function() {
+                      resolved = true;
+                      clearInterval(interval);
+                      span.textContent = original;
+                      span.style.color = '';
+                  }, resolveMs);
+              }, startTime);
+          });
+      }
 
       const pctEl = document.querySelector('.preloader-progress-pct');
 
@@ -1991,9 +1995,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
       masterTL.add({
           targets: fullnameLetterize.listAll,
-          opacity: [0, 1], translateY: [14, 0], rotateX: [90, 0],
-          easing: 'easeOutExpo', duration: 700,
-          delay: anime.stagger(22, { from: 'center' })
+          opacity: [0, 1],
+          easing: 'easeOutExpo', duration: 100,
+          delay: anime.stagger(12),
+          begin: function() {
+              var spans = fullnameLetterize.listAll;
+              spans.forEach(function(s) { s.style.color = 'rgba(255,255,255,0.6)'; });
+              startDecode(spans, 25, 50, 800);
+          },
+          complete: function() {
+              var spans = fullnameLetterize.listAll;
+              anime({
+                  targets: spans,
+                  color: ['rgba(255,255,255,0.6)', 'rgba(255,255,255,0.35)'],
+                  easing: 'easeOutExpo',
+                  duration: 600,
+                  delay: anime.stagger(20)
+              });
+          }
       }, 920);
 
       masterTL.add({
@@ -2001,18 +2020,6 @@ document.addEventListener('DOMContentLoaded', function() {
           width: [0, 80], opacity: [0, 1],
           easing: 'easeInOutQuart', duration: 600
       }, 1300);
-
-      masterTL.add({
-          targets: '.preloader-tagline',
-          opacity: [0, 1], duration: 50
-      }, 1400);
-
-      masterTL.add({
-          targets: taglineLetterize.listAll,
-          opacity: [0, 0.7], translateX: [-6, 0],
-          easing: 'easeOutExpo', duration: 500,
-          delay: anime.stagger(15)
-      }, 1420);
 
       masterTL.add({
           targets: '.preloader-progress',
@@ -2094,6 +2101,7 @@ document.addEventListener('DOMContentLoaded', function() {
           opacity: [1, 0],
           easing: 'easeInExpo', duration: 300,
           complete: function() {
+              decodeIntervals.forEach(function(id) { clearInterval(id); });
               preloader.style.display = 'none';
               document.body.classList.add('loaded');
           }
