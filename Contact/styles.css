@@ -5,6 +5,9 @@
     --success: #ffffff;
     --warning: #e0e0e0;
     --danger: #969696;
+    --ease-fluid: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-silk: cubic-bezier(0.16, 1, 0.3, 1);
+    --panel-glow: 0 24px 64px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
 }
 
 ::-webkit-scrollbar {
@@ -76,24 +79,27 @@ body::after {
 
 .bg-aurora {
     z-index: 0;
-    opacity: 0.7;
+    opacity: 0.64;
     background:
-        radial-gradient(circle at 20% 25%, rgba(255, 255, 255, 0.08), transparent 26%),
-        radial-gradient(circle at 78% 20%, rgba(255, 255, 255, 0.06), transparent 24%),
-        radial-gradient(circle at 50% 82%, rgba(255, 255, 255, 0.05), transparent 30%);
-    filter: blur(38px);
-    animation: auroraShift 18s ease-in-out infinite alternate;
+        radial-gradient(circle at 20% 25%, rgba(255, 255, 255, 0.075), transparent 26%),
+        radial-gradient(circle at 78% 20%, rgba(220, 220, 220, 0.055), transparent 24%),
+        radial-gradient(circle at 50% 82%, rgba(255, 255, 255, 0.04), transparent 30%);
+    filter: blur(42px);
+    animation: auroraShift 24s var(--ease-silk) infinite alternate;
 }
 
 .bg-ribbons {
     z-index: 0;
-    opacity: 0.38;
+    opacity: 0.42;
     background:
-        linear-gradient(115deg, transparent 0%, rgba(255, 255, 255, 0.05) 18%, transparent 38%),
-        linear-gradient(300deg, transparent 0%, rgba(255, 255, 255, 0.035) 16%, transparent 34%);
-    transform: scale(1.25);
+        linear-gradient(116deg, transparent 0%, rgba(255, 255, 255, 0.055) 13%, rgba(255, 255, 255, 0.012) 18%, transparent 28%),
+        linear-gradient(300deg, transparent 2%, rgba(190, 190, 190, 0.045) 16%, rgba(255, 255, 255, 0.01) 23%, transparent 34%),
+        linear-gradient(96deg, transparent 36%, rgba(20, 20, 20, 0.28) 48%, transparent 61%),
+        linear-gradient(282deg, transparent 58%, rgba(255, 255, 255, 0.028) 69%, transparent 79%);
+    filter: blur(0.2px);
+    transform: scale(1.28);
     transform-origin: center;
-    animation: ribbonDrift 22s linear infinite;
+    animation: ribbonDrift 30s var(--ease-silk) infinite alternate;
 }
 
 .bg-noise {
@@ -129,21 +135,31 @@ body::after {
 @keyframes auroraShift {
     0% {
         transform: translate3d(-2%, -1%, 0) scale(1);
-        opacity: 0.58;
+        opacity: 0.5;
     }
-    50% {
-        transform: translate3d(1.5%, 2%, 0) scale(1.08);
-        opacity: 0.78;
+    45% {
+        transform: translate3d(1.5%, 1.8%, 0) scale(1.08);
+        opacity: 0.74;
     }
     100% {
-        transform: translate3d(2%, -1.5%, 0) scale(1.02);
-        opacity: 0.62;
+        transform: translate3d(2.6%, -1.2%, 0) scale(1.03);
+        opacity: 0.58;
     }
 }
 
 @keyframes ribbonDrift {
-    from { transform: translate3d(-3%, 0, 0) scale(1.22); }
-    to { transform: translate3d(3%, -2%, 0) scale(1.28); }
+    0% {
+        transform: translate3d(-4%, 1.5%, 0) rotate(-1deg) scale(1.24);
+        opacity: 0.3;
+    }
+    50% {
+        transform: translate3d(1.5%, -1.2%, 0) rotate(0.5deg) scale(1.31);
+        opacity: 0.44;
+    }
+    100% {
+        transform: translate3d(4%, -3%, 0) rotate(1.4deg) scale(1.27);
+        opacity: 0.34;
+    }
 }
 
 @keyframes noiseDrift {
@@ -197,7 +213,8 @@ body::after {
 .robot-section,
 .form-section {
     position: relative;
-    animation: fadeSlideIn 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+    will-change: transform, opacity;
+    animation: fadeSlideIn 0.85s var(--ease-fluid) both;
 }
 
 .robot-section {
@@ -216,11 +233,13 @@ body::after {
 @keyframes fadeSlideIn {
     from {
         opacity: 0;
-        transform: translateY(24px);
+        transform: translateY(24px) scale(0.985);
+        filter: blur(10px);
     }
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateY(0) scale(1);
+        filter: blur(0);
     }
 }
 
@@ -239,6 +258,8 @@ body::after {
     align-items: center;
     justify-content: center;
     min-height: 100%;
+    animation: shellFloat 9s ease-in-out infinite;
+    will-change: transform;
 }
 
 .robot-container {
@@ -252,6 +273,7 @@ body::after {
     background:
         radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.14), transparent 22%),
         radial-gradient(circle at 50% 72%, rgba(255, 255, 255, 0.04), transparent 28%);
+    will-change: transform, opacity;
 }
 
 .robot-container::before {
@@ -263,7 +285,7 @@ body::after {
     filter: blur(36px);
     opacity: 0.85;
     pointer-events: none;
-    animation: robotGlow 4s ease-in-out infinite alternate;
+    animation: robotGlow 5.6s ease-in-out infinite alternate;
 }
 
 .robot-container::after {
@@ -283,6 +305,11 @@ body::after {
 @keyframes robotGlow {
     0% { opacity: 0.75; transform: scale(1); }
     100% { opacity: 0.95; transform: scale(1.05); }
+}
+
+@keyframes shellFloat {
+    0%, 100% { transform: translate3d(0, 0, 0); }
+    50% { transform: translate3d(0, -6px, 0); }
 }
 
 #robotCanvas {
@@ -311,10 +338,12 @@ body::after {
     line-height: 1.75;
     opacity: 0;
     transform: translateY(16px) scale(0.92);
-    transition: opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1),
-                transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
-    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4),
-                0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+    filter: blur(8px);
+    will-change: transform, opacity, filter;
+    transition: opacity 0.5s var(--ease-fluid),
+                transform 0.5s var(--ease-fluid),
+                filter 0.5s var(--ease-fluid);
+    box-shadow: var(--panel-glow);
 }
 
 .speech-bubble::before,
@@ -342,6 +371,7 @@ body::after {
 .speech-bubble.visible {
     opacity: 1;
     transform: translateY(0) scale(1);
+    filter: blur(0);
 }
 
 .robot-console {
@@ -361,8 +391,9 @@ body::after {
     letter-spacing: 2.5px;
     text-transform: uppercase;
     color: var(--muted);
-    transition: color 0.4s cubic-bezier(0.22, 1, 0.36, 1),
-                opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: color 0.4s var(--ease-fluid),
+                opacity 0.4s var(--ease-fluid),
+                text-shadow 0.4s var(--ease-fluid);
 }
 
 .robot-status[data-tone="alert"] { color: var(--warning); }
@@ -422,27 +453,27 @@ body::after {
 
 /* Staggered animation for form elements */
 .form-header {
-    animation: fadeSlideIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+    animation: fadeSlideIn 0.8s var(--ease-fluid) 0.1s both;
 }
 
 .form-fields .field-row:first-child .input-field:first-child {
-    animation: fadeSlideIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+    animation: fadeSlideIn 0.65s var(--ease-fluid) 0.2s both;
 }
 
 .form-fields .field-row:first-child .input-field:last-child {
-    animation: fadeSlideIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.25s both;
+    animation: fadeSlideIn 0.65s var(--ease-fluid) 0.25s both;
 }
 
 .form-fields > .input-field:nth-child(2) {
-    animation: fadeSlideIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
+    animation: fadeSlideIn 0.65s var(--ease-fluid) 0.3s both;
 }
 
 .form-fields > .input-field:nth-child(3) {
-    animation: fadeSlideIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.35s both;
+    animation: fadeSlideIn 0.65s var(--ease-fluid) 0.35s both;
 }
 
 .submit-btn {
-    animation: fadeSlideIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.4s both;
+    animation: fadeSlideIn 0.7s var(--ease-fluid) 0.4s both;
 }
 
 .input-field {
@@ -452,8 +483,11 @@ body::after {
     border: 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     background: transparent;
-    transition: border-color 0.4s cubic-bezier(0.22, 1, 0.36, 1),
-                background 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform, border-color, background;
+    transition: border-color 0.45s var(--ease-fluid),
+                background 0.45s var(--ease-fluid),
+                transform 0.45s var(--ease-fluid),
+                box-shadow 0.45s var(--ease-fluid);
 }
 
 .input-field::before {
@@ -465,7 +499,7 @@ body::after {
     bottom: 0;
     background: radial-gradient(ellipse at 50% 100%, rgba(255, 255, 255, 0.03), transparent 70%);
     opacity: 0;
-    transition: opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: opacity 0.45s var(--ease-fluid);
     pointer-events: none;
 }
 
@@ -479,14 +513,15 @@ body::after {
 }
 
 .input-field:hover {
-    transform: none;
+    transform: translateY(-1px);
     border-bottom-color: rgba(255, 255, 255, 0.14);
 }
 
 .input-field:focus-within {
     border-bottom-color: rgba(255, 255, 255, 0.2);
-    box-shadow: none;
-    background: transparent;
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.18);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent 72%);
+    transform: translateY(-1px);
 }
 
 .input-field.valid {
@@ -547,11 +582,12 @@ body::after {
     color: var(--muted);
     letter-spacing: 0.03em;
     pointer-events: none;
-    transition: top 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-                font-size 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-                color 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-                letter-spacing 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-                opacity 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: top 0.38s var(--ease-fluid),
+                font-size 0.38s var(--ease-fluid),
+                color 0.38s var(--ease-fluid),
+                letter-spacing 0.38s var(--ease-fluid),
+                opacity 0.38s var(--ease-fluid),
+                transform 0.38s var(--ease-fluid);
 }
 
 .input-field input:focus ~ label,
@@ -564,6 +600,7 @@ body::after {
     letter-spacing: 2.5px;
     text-transform: uppercase;
     opacity: 0.85;
+    transform: translateY(-1px);
 }
 
 .input-line {
@@ -576,14 +613,16 @@ body::after {
     opacity: 1;
     transform: scaleX(0);
     transform-origin: left;
-    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    transition: transform 0.55s var(--ease-fluid),
                 background 0.4s ease,
-                opacity 0.4s ease;
+                opacity 0.4s ease,
+                box-shadow 0.45s var(--ease-fluid);
 }
 
 .input-field:focus-within .input-line,
 .input-field.valid .input-line {
     transform: scaleX(1);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.16);
 }
 
 .input-field.invalid .input-line {
@@ -659,19 +698,20 @@ body::after {
     cursor: pointer;
     overflow: hidden;
     box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
-    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
-                border-color 0.4s cubic-bezier(0.22, 1, 0.36, 1),
-                background 0.4s cubic-bezier(0.22, 1, 0.36, 1),
-                box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform, box-shadow;
+    transition: transform 0.42s var(--ease-fluid),
+                border-color 0.42s var(--ease-fluid),
+                background 0.42s var(--ease-fluid),
+                box-shadow 0.42s var(--ease-fluid);
 }
 
 .submit-btn::before {
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.42), transparent);
     transform: translateX(-120%);
-    transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: transform 0.9s var(--ease-silk);
 }
 
 .submit-btn::after {
@@ -680,16 +720,17 @@ body::after {
     inset: -1px;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), transparent 50%, rgba(255, 255, 255, 0.08));
     opacity: 0;
-    transition: opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: opacity 0.42s var(--ease-fluid);
     pointer-events: none;
 }
 
 .submit-btn:hover {
-    transform: translateY(-4px);
+    transform: translateY(-4px) scale(1.01);
     border-color: rgba(255, 255, 255, 0.4);
     background: rgba(255, 255, 255, 0.04);
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3),
-                0 0 0 1px rgba(255, 255, 255, 0.08);
+                0 0 0 1px rgba(255, 255, 255, 0.08),
+                0 0 32px rgba(255, 255, 255, 0.04);
 }
 
 .submit-btn:hover::before {
@@ -701,7 +742,7 @@ body::after {
 }
 
 .submit-btn:active {
-    transform: translateY(-2px);
+    transform: translateY(-2px) scale(0.995);
     transition-duration: 0.1s;
 }
 
@@ -767,16 +808,18 @@ body::after {
     font-size: 10px;
     letter-spacing: 4px;
     text-transform: uppercase;
-    transition: color 0.4s cubic-bezier(0.22, 1, 0.36, 1),
-                transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
-                border-color 0.4s cubic-bezier(0.22, 1, 0.36, 1),
-                background 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
+    transition: color 0.4s var(--ease-fluid),
+                transform 0.4s var(--ease-fluid),
+                border-color 0.4s var(--ease-fluid),
+                background 0.4s var(--ease-fluid),
+                box-shadow 0.4s var(--ease-fluid);
 }
 
 .back-arrow {
     font-size: 17px;
     line-height: 1;
-    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: transform 0.4s var(--ease-fluid);
 }
 
 .back-link:hover {
@@ -784,6 +827,7 @@ body::after {
     color: var(--text);
     border-color: rgba(255, 255, 255, 0.08);
     background: rgba(255, 255, 255, 0.02);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
 }
 
 .back-link:hover .back-arrow {
@@ -806,15 +850,18 @@ body::after {
     line-height: 1.7;
     text-align: center;
     opacity: 0;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5),
-                0 0 0 1px rgba(255, 255, 255, 0.05) inset;
-    transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
-                opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+    filter: blur(10px);
+    will-change: transform, opacity, filter;
+    box-shadow: var(--panel-glow);
+    transition: transform 0.6s var(--ease-fluid),
+                opacity 0.6s var(--ease-fluid),
+                filter 0.6s var(--ease-fluid);
 }
 
 .toast.visible {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
+    filter: blur(0);
 }
 
 .confetti-container {

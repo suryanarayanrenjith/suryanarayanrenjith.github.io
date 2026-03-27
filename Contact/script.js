@@ -1,12 +1,44 @@
 const PERSONAL_EMAIL_DOMAINS = new Set([
-    "gmail.com",
-    "outlook.com",
-    "hotmail.com",
-    "icloud.com",
-    "yahoo.com",
-    "proton.me",
-    "protonmail.com",
-    "live.com"
+  "gmail.com",
+  "googlemail.com",
+  "outlook.com",
+  "hotmail.com",
+  "live.com",
+  "msn.com",
+  "yahoo.com",
+  "ymail.com",
+  "rocketmail.com",
+  "icloud.com",
+  "me.com",
+  "mac.com",
+  "proton.me",
+  "protonmail.com",
+  "pm.me",
+  "tuta.io",
+  "tutanota.com",
+  "tutamail.com",
+  "startmail.com",
+  "mailfence.com",
+  "disroot.org",
+  "posteo.net",
+  "gmx.com",
+  "gmx.de",
+  "gmx.net",
+  "web.de",
+  "mail.com",
+  "email.com",
+  "usa.com",
+  "inbox.com",
+  "aol.com",
+  "aim.com",
+  "comcast.net",
+  "verizon.net",
+  "att.net",
+  "bellsouth.net",
+  "btinternet.com",
+  "virginmedia.com",
+  "orange.fr",
+  "wanadoo.fr",
 ]);
 
 const FIELD_LABELS = {
@@ -40,6 +72,11 @@ const CONTACT_API_URL = "https://surya-verify.vercel.app/api/contact.js";
 const CONTACT_ALLOWED_ORIGIN = "https://surya.is-a.dev";
 const DISPOSABLE_SCALER_MEAN = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 const DISPOSABLE_SCALER_STD = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const NAME_ALLOWED_PATTERN = /^[\p{L}\p{M}\s.'-]+$/u;
+const PLACEHOLDER_PATTERN = /\b(?:test(?:ing)?|dummy|sample|placeholder|lorem(?:\s+ipsum)?|foo|bar)\b/i;
+const KEYBOARD_MASH_PATTERN = /\b(?:asdf(?:gh)?|qwer(?:ty)?|zxcv(?:bn)?|fdsa|poiuy|lkjhg|mnbvc|qazwsx|wsxedc|edcrfv|sdfgh|dfghj|abc123|12345|54321|sdfsdf|dfsdf)\b/i;
+const TEST_MESSAGE_ONLY_PATTERN = /^\s*(?:hi[,.!\s]+)?(?:this\s+is\s+)?(?:just\s+)?(?:a\s+)?(?:test|testing|dummy|sample)(?:\s+message)?[.!?\s]*$/i;
 
 let disposableModel = null;
 const disposableCheckCache = new Map();
@@ -69,6 +106,210 @@ function readableList(items) {
     if (items.length === 1) return items[0];
     if (items.length === 2) return `${items[0]} and ${items[1]}`;
     return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`;
+}
+
+function normalizeToken(value) {
+    return value.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
+}
+
+function extractLetters(value) {
+    return (value.match(/\p{L}/gu) || []).join("");
+}
+
+function tokenizeText(value) {
+    return value.match(/[\p{L}\p{N}]+(?:['-][\p{L}\p{N}]+)*/gu) || [];
+}
+
+function hasVowel(value) {
+    return /[aeiouy]/i.test(value);
+}
+
+function uniqueTokenRatio(tokens) {
+    const normalized = tokens.map((token) => normalizeToken(token)).filter(Boolean);
+    if (!normalized.length) return 0;
+    return new Set(normalized).size / normalized.length;
+}
+
+function isAcronymToken(token) {
+    const compact = token.replace(/[^A-Za-z0-9]/g, "");
+    return compact.length >= 2 && compact.length <= 6 && compact === compact.toUpperCase();
+}
+
+function isRepeatedPattern(value) {
+    const normalized = normalizeToken(value);
+    if (normalized.length < 3) return false;
+
+    for (let size = 1; size <= Math.floor(normalized.length / 2); size += 1) {
+        if (normalized.length % size !== 0) continue;
+        const chunk = normalized.slice(0, size);
+        if (chunk.repeat(normalized.length / size) === normalized) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function isSuspiciousWord(token) {
+    const letters = extractLetters(token).toLowerCase();
+    const normalized = normalizeToken(token);
+    if (!normalized) return false;
+    if (KEYBOARD_MASH_PATTERN.test(token)) return true;
+    if (letters.length >= 3 && isRepeatedPattern(letters)) return true;
+    if (letters.length >= 4 && !hasVowel(letters) && !isAcronymToken(token)) return true;
+    if (letters.length >= 5 && computeEntropy(letters) < 1.45) return true;
+    return false;
+}
+
+function getTextSignals(value) {
+    const words = tokenizeText(value);
+    const suspiciousWordCount = words.filter((word) => isSuspiciousWord(word)).length;
+    const naturalWordCount = words.filter((word) => {
+        const letters = extractLetters(word);
+        if (!letters) return false;
+        if (isAcronymToken(word)) return true;
+        if (letters.length <= 2) return true;
+        return hasVowel(letters);
+    }).length;
+
+    const placeholderHits = [
+        PLACEHOLDER_PATTERN.test(value),
+        KEYBOARD_MASH_PATTERN.test(value),
+        TEST_MESSAGE_ONLY_PATTERN.test(value),
+        /(.)\1{3,}/.test(value)
+    ].filter(Boolean).length;
+
+    return {
+        words,
+        wordCount: words.length,
+        suspiciousWordCount,
+        naturalWordCount,
+        uniqueRatio: uniqueTokenRatio(words),
+        placeholderHits
+    };
+}
+
+function createAssessment(valid, message) {
+    return { valid, message };
+}
+
+function assessNameField(value) {
+    const trimmed = value.trim();
+    if (!trimmed) return createAssessment(false, "Name is required.");
+
+    const letters = extractLetters(trimmed);
+    const segments = trimmed
+        .split(/[\s'-]+/)
+        .map((segment) => extractLetters(segment))
+        .filter(Boolean);
+
+    if (letters.length < 2) {
+        return createAssessment(false, "Name needs at least two letters.");
+    }
+
+    if (!NAME_ALLOWED_PATTERN.test(trimmed)) {
+        return createAssessment(false, "Use letters, spaces, apostrophes, or hyphens for the name.");
+    }
+
+    if (!segments.some((segment) => segment.length >= 2)) {
+        return createAssessment(false, "Use more than initials so I know who I am replying to.");
+    }
+
+    if (PLACEHOLDER_PATTERN.test(trimmed) || KEYBOARD_MASH_PATTERN.test(trimmed)) {
+        return createAssessment(false, "Name looks like placeholder text. Use your real name.");
+    }
+
+    if (segments.some((segment) => segment.length >= 3 && isRepeatedPattern(segment))) {
+        return createAssessment(false, "Name looks synthetic. Use your real name.");
+    }
+
+    if (segments.some((segment) => segment.length >= 4 && !hasVowel(segment))) {
+        return createAssessment(false, "Name looks synthetic. Use your real name.");
+    }
+
+    return createAssessment(true, "");
+}
+
+function assessSubjectField(value) {
+    const trimmed = value.trim();
+    const letters = extractLetters(trimmed);
+    const signals = getTextSignals(trimmed);
+
+    if (!trimmed) return createAssessment(false, "Subject is required.");
+    if (letters.length < 3) return createAssessment(false, "Subject needs a clearer headline.");
+    if (!signals.wordCount) return createAssessment(false, "Subject needs a real topic or request.");
+
+    if (signals.placeholderHits >= 2 || (signals.placeholderHits >= 1 && signals.wordCount <= 4)) {
+        return createAssessment(false, "Subject looks like test text. Use the real topic or request.");
+    }
+
+    if (signals.wordCount === 1 && signals.suspiciousWordCount === 1) {
+        return createAssessment(false, "Subject reads like random characters. Use the actual topic.");
+    }
+
+    if (signals.suspiciousWordCount >= Math.max(1, Math.ceil(signals.wordCount * 0.6))) {
+        return createAssessment(false, "Subject needs a real topic, not placeholder text.");
+    }
+
+    if (signals.uniqueRatio < 0.5 && signals.wordCount >= 3) {
+        return createAssessment(false, "Subject repeats itself too much. Make it more specific.");
+    }
+
+    return createAssessment(true, "");
+}
+
+function assessMessageField(value) {
+    const trimmed = value.trim();
+    const signals = getTextSignals(trimmed);
+
+    if (!trimmed) return createAssessment(false, "Message is required.");
+
+    if (TEST_MESSAGE_ONLY_PATTERN.test(trimmed)) {
+        return createAssessment(false, "Message reads like a test ping. Add the real reason you are reaching out.");
+    }
+
+    if (signals.placeholderHits >= 2 || (signals.placeholderHits >= 1 && signals.wordCount <= 6)) {
+        return createAssessment(false, "Message reads like test content. Add the real goal, context, or question.");
+    }
+
+    if (signals.suspiciousWordCount >= Math.max(2, Math.ceil(signals.wordCount * 0.5))) {
+        return createAssessment(false, "Message reads like random characters. Add a real goal, question, or project brief.");
+    }
+
+    if (trimmed.length < 10 || signals.wordCount < 4) {
+        return createAssessment(false, "Message is too short. Add a real question, goal, or context.");
+    }
+
+    if (signals.naturalWordCount < Math.max(3, Math.ceil(signals.wordCount * 0.6))) {
+        return createAssessment(false, "Message needs clearer wording. Add a real question, goal, or project context.");
+    }
+
+    if (signals.uniqueRatio < 0.45 && signals.wordCount >= 5) {
+        return createAssessment(false, "Message repeats itself too much. Add more specific context instead of filler.");
+    }
+
+    return createAssessment(true, "");
+}
+
+function assessContactField(fieldName, value) {
+    switch (fieldName) {
+        case "name":
+            return assessNameField(value);
+        case "email":
+            return createAssessment(EMAIL_PATTERN.test(value.trim()), !value.trim()
+                ? "Email is required."
+                : !value.includes("@")
+                    ? "Email needs an @ symbol."
+                    : !/\.[A-Za-z]{2,}$/.test(value)
+                        ? "Email domain looks incomplete."
+                        : "Email needs a valid inbox format.");
+        case "subject":
+            return assessSubjectField(value);
+        case "message":
+            return assessMessageField(value);
+        default:
+            return createAssessment(Boolean(value.trim()), "That field needs another pass.");
+    }
 }
 
 async function loadDisposableModel() {
@@ -276,6 +517,7 @@ class Robot3D {
             hasDeliverable: false,
             detail: "empty",
             missingSignals: [],
+            qualityIssues: [],
             statusLine: "Awaiting input",
             coachLine: "Full brief channel open. Goal, context, and next step are all useful.",
             coachSignature: "General|empty|Low",
@@ -686,21 +928,20 @@ class Robot3D {
 
     markField(fieldName, field, input, committed) {
         const value = input.value.trim();
-        const valid = this.validateField({ value }, fieldName);
-        field.classList.toggle("valid", Boolean(value) && valid);
-        field.classList.toggle("invalid", Boolean(value) && !valid && committed);
-        return valid;
+        const assessment = this.fieldAssessment(fieldName, value);
+        field.classList.toggle("valid", Boolean(value) && assessment.valid);
+        field.classList.toggle("invalid", committed && !assessment.valid);
+        input.setAttribute("aria-invalid", String(committed && !assessment.valid));
+        input.setCustomValidity(assessment.valid || !committed ? "" : assessment.message);
+        return assessment.valid;
     }
 
     validateField(inputLike, fieldName) {
-        const value = inputLike.value.trim();
-        switch (fieldName) {
-            case "name": return value.length >= 2 && /[A-Za-z]/.test(value);
-            case "email": return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-            case "subject": return value.length >= 2;
-            case "message": return value.length >= 10;
-            default: return value.length > 0;
-        }
+        return this.fieldAssessment(fieldName, inputLike.value).valid;
+    }
+
+    fieldAssessment(fieldName, value) {
+        return assessContactField(fieldName, value);
     }
 
     detectIntent(corpus, message) {
@@ -755,6 +996,7 @@ class Robot3D {
 
     statusLine(analysis) {
         if (!analysis.wordCount) return "Awaiting input";
+        if (analysis.qualityIssues.length) return analysis.qualityIssues[0].message;
         if (analysis.urgency === "High") return "Urgent signal detected";
         if (analysis.actionable) return "Brief reads actionable";
         if (analysis.missingSignals.length) return `Need ${readableList(analysis.missingSignals)}`;
@@ -766,6 +1008,19 @@ class Robot3D {
     coachLine(analysis) {
         if (!analysis.wordCount) {
             return "Full brief channel open. Goal, context, and next step are all useful.";
+        }
+
+        if (analysis.qualityIssues.length) {
+            const primary = analysis.qualityIssues[0];
+            if (primary.field === "name") {
+                return "Use your real name so the message feels trustworthy and reply-ready.";
+            }
+            if (primary.field === "subject") {
+                return "Replace the subject with the real topic so I can classify the request immediately.";
+            }
+            if (primary.field === "message") {
+                return "This reads like filler or test text. Tell me what you need, why you are reaching out, and what response would help.";
+            }
         }
 
         if (analysis.intent === "Project request") {
@@ -838,12 +1093,21 @@ class Robot3D {
         const message = this.formData.message.trim();
         const corpus = `${subject} ${message}`.toLowerCase();
         const wordCount = countWords(message);
-        const validMap = {
-            name: this.validateField({ value: name }, "name"),
-            email: this.validateField({ value: email }, "email"),
-            subject: this.validateField({ value: subject }, "subject"),
-            message: this.validateField({ value: message }, "message")
+        const fieldAssessments = {
+            name: this.fieldAssessment("name", name),
+            email: this.fieldAssessment("email", email),
+            subject: this.fieldAssessment("subject", subject),
+            message: this.fieldAssessment("message", message)
         };
+        const validMap = {
+            name: fieldAssessments.name.valid,
+            email: fieldAssessments.email.valid,
+            subject: fieldAssessments.subject.valid,
+            message: fieldAssessments.message.valid
+        };
+        const qualityIssues = Object.entries(fieldAssessments)
+            .filter(([fieldName, assessment]) => fieldName !== "email" && !assessment.valid && this.formData[fieldName].trim())
+            .map(([fieldName, assessment]) => ({ field: fieldName, message: assessment.message }));
 
         const intent = this.detectIntent(corpus, message);
         const urgency = this.detectUrgency(corpus);
@@ -887,9 +1151,10 @@ class Robot3D {
         if (hasBudget) readiness += 1;
         if (hasLink) readiness += 2;
         readiness -= Math.min(missingSignals.length * 3, 12);
+        readiness -= Math.min(qualityIssues.length * 10, 26);
         readiness = clamp(readiness, 0, 100);
         const nameTag = firstName(name);
-        const actionable = missingSignals.length === 0 && wordCount >= 14 && intent !== "General";
+        const actionable = qualityIssues.length === 0 && missingSignals.length === 0 && wordCount >= 14 && intent !== "General";
         const analysis = {
             intent,
             urgency,
@@ -908,6 +1173,7 @@ class Robot3D {
             hasDeliverable,
             detail,
             missingSignals,
+            qualityIssues,
             actionable
         };
 
@@ -967,13 +1233,7 @@ class Robot3D {
     }
 
     validationMessage(fieldName, value) {
-        switch (fieldName) {
-            case "name": return value.length < 2 ? "Name needs at least two characters." : "Name looks unusual. Try a clearer identity.";
-            case "email": return !value.includes("@") ? "Email needs an @ symbol." : !/\.[A-Za-z]{2,}$/.test(value) ? "Email domain looks incomplete." : "Email needs a valid inbox format.";
-            case "subject": return "Subject needs a clearer headline.";
-            case "message": return "Message is too short. Add goal, context, and next step.";
-            default: return "That field needs another pass.";
-        }
+        return this.fieldAssessment(fieldName, value).message;
     }
 
     emailVerificationFeedback(result) {
@@ -1158,7 +1418,7 @@ class Robot3D {
             this.setStatus("The form still needs attention", "error");
             this.speak(issues[0] || "The form needs another pass.");
             this.shake();
-            this.toast("Please complete the fields before sending.");
+            this.toast(issues[0] || "Please correct the highlighted fields before sending.");
             return;
         }
 
@@ -1252,18 +1512,57 @@ class Robot3D {
 
     confetti() {
         const container = document.getElementById("confetti");
-        const colors = ["#ffffff", "#d6d6d6", "#a3a3a3", "#6f6f6f"];
+        const surfaces = [
+            {
+                background: "linear-gradient(180deg, rgba(255,255,255,0.98), rgba(206,206,206,0.78))",
+                shadow: "0 0 14px rgba(255,255,255,0.18)"
+            },
+            {
+                background: "linear-gradient(180deg, rgba(235,235,235,0.94), rgba(138,138,138,0.74))",
+                shadow: "0 0 12px rgba(255,255,255,0.1)"
+            },
+            {
+                background: "linear-gradient(180deg, rgba(38,38,38,0.98), rgba(120,120,120,0.7))",
+                border: "1px solid rgba(255,255,255,0.14)",
+                shadow: "0 0 10px rgba(255,255,255,0.08)"
+            }
+        ];
+
         for (let i = 0; i < 44; i += 1) {
             const piece = document.createElement("div");
-            const size = 5 + Math.random() * 8;
-            piece.style.cssText = `position:absolute;width:${size}px;height:${size * 0.72}px;background:${colors[Math.floor(Math.random() * colors.length)]};left:${Math.random() * 100}%;top:-20px;opacity:0;border-radius:2px`;
+            const surface = surfaces[Math.floor(Math.random() * surfaces.length)];
+            const ribbon = Math.random() < 0.34;
+            const width = ribbon ? 4 + Math.random() * 3 : 6 + Math.random() * 8;
+            const height = ribbon ? 18 + Math.random() * 24 : width * (0.62 + Math.random() * 0.24);
+            const startRotate = (Math.random() - 0.5) * 70;
+            const endRotate = startRotate + (Math.random() - 0.5) * 880;
+            const driftX = (Math.random() - 0.5) * 380;
+
+            piece.style.cssText = `position:absolute;width:${width}px;height:${height}px;background:${surface.background};left:${Math.random() * 100}%;top:-26px;opacity:0;border-radius:${ribbon ? "999px" : "2px"};box-shadow:${surface.shadow};border:${surface.border || "0"};transform:translate3d(0,0,0) rotate(${startRotate}deg);will-change:transform,opacity`;
             container.appendChild(piece);
+
             piece.animate([
-                { opacity: 1, transform: "translate3d(0,0,0) rotate(0deg)" },
-                { opacity: 0, transform: `translate3d(${(Math.random() - 0.5) * 320}px, ${window.innerHeight + 120}px, 0) rotate(${Math.random() * 720}deg)` }
+                {
+                    opacity: 0,
+                    transform: `translate3d(0,-18px,0) rotate(${startRotate}deg) scale(0.88)`
+                },
+                {
+                    opacity: 0.96,
+                    offset: 0.15,
+                    transform: `translate3d(${driftX * 0.22}px, ${window.innerHeight * 0.18}px, 0) rotate(${startRotate + (endRotate - startRotate) * 0.18}deg) scale(1)`
+                },
+                {
+                    opacity: 0.82,
+                    offset: 0.68,
+                    transform: `translate3d(${driftX * 0.72}px, ${window.innerHeight * 0.7}px, 0) rotate(${startRotate + (endRotate - startRotate) * 0.72}deg) scale(0.98)`
+                },
+                {
+                    opacity: 0,
+                    transform: `translate3d(${driftX}px, ${window.innerHeight + 120}px, 0) rotate(${endRotate}deg) scale(0.92)`
+                }
             ], {
-                duration: 2200 + Math.random() * 1800,
-                easing: "cubic-bezier(0.2, 0.8, 0.2, 1)",
+                duration: 2400 + Math.random() * 1900,
+                easing: "cubic-bezier(0.16, 1, 0.3, 1)",
                 delay: Math.random() * 220
             }).onfinish = () => piece.remove();
         }
