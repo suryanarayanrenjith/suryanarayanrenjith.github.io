@@ -20,7 +20,7 @@ async function initializeFirebase() {
     auth = firebase.auth();
     firestore = firebase.firestore();
   } catch (error) {
-    // Config initialization failed silently
+    console.error("Error initializing Firebase:", error);
   }
 }
 
@@ -693,10 +693,9 @@ decryptionContainer.addEventListener('keydown', function(e) {
   }
 });
 
-/* ── Animated status messages ── */
 function showMessage(el, text, color) {
   el.classList.remove('msg-animate');
-  void el.offsetWidth; /* reflow to restart animation */
+  void el.offsetWidth;
   el.style.color = color;
   el.textContent = text;
   el.classList.add('msg-animate');
