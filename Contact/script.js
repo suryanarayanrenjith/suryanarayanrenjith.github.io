@@ -318,19 +318,7 @@ async function loadDisposableModel() {
             throw new Error("TensorFlow unavailable");
         }
         const modelPath = "https://model.surya-ops.workers.dev/model.json";
-        const requestInit = {
-            mode: "cors",
-            credentials: "omit",
-            referrerPolicy: "origin"
-        };
-
-        if (window.location && window.location.origin) {
-            requestInit.referrer = `${window.location.origin}/`;
-        }
-
-        disposableModel = await window.tf.loadLayersModel(modelPath, {
-            requestInit
-        });
+        disposableModel = await window.tf.loadLayersModel(modelPath);
     }
 }
 
