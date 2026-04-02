@@ -328,29 +328,34 @@ body.light-theme .offline-message {
 }
 
 #preloader {
-    --preloader-base-0: #010101;
-    --preloader-base-1: #050505;
-    --preloader-base-2: #0a0a0a;
-    --preloader-grid-minor: rgba(255,255,255,0.035);
-    --preloader-grid-major: rgba(255,255,255,0.07);
-    --preloader-glow-soft: rgba(255,255,255,0.08);
-    --preloader-glow-strong: rgba(255,255,255,0.14);
-    --preloader-sweep: rgba(255,255,255,0.09);
-    --preloader-panel-bg-1: rgba(255,255,255,0.05);
-    --preloader-panel-bg-2: rgba(255,255,255,0.015);
-    --preloader-panel-border: rgba(255,255,255,0.08);
-    --preloader-panel-shadow: rgba(0,0,0,0.6);
-    --preloader-panel-highlight: rgba(255,255,255,0.05);
-    --preloader-panel-sheen: rgba(255,255,255,0.11);
-    --preloader-core-glow: rgba(255,255,255,0.08);
-    --preloader-ring: rgba(255,255,255,0.07);
+    --preloader-base-0: #000000;
+    --preloader-base-1: #010101;
+    --preloader-base-2: #050505;
+    --preloader-grid-minor: rgba(255,255,255,0.024);
+    --preloader-grid-major: rgba(255,255,255,0.05);
+    --preloader-glow-soft: rgba(255,255,255,0.05);
+    --preloader-glow-strong: rgba(255,255,255,0.1);
+    --preloader-sweep: rgba(255,255,255,0.07);
+    --preloader-panel-bg-1: rgba(12,12,12,0.84);
+    --preloader-panel-bg-2: rgba(0,0,0,0.94);
+    --preloader-panel-border: rgba(255,255,255,0.14);
+    --preloader-panel-shadow: rgba(0,0,0,0.9);
+    --preloader-panel-highlight: rgba(255,255,255,0.08);
+    --preloader-panel-sheen: rgba(255,255,255,0.07);
+    --preloader-panel-outline: rgba(255,255,255,0.04);
+    --preloader-panel-depth: rgba(255,255,255,0.025);
+    --preloader-core-glow: rgba(255,255,255,0.055);
+    --preloader-ring: rgba(255,255,255,0.05);
+    --preloader-vignette: rgba(0,0,0,0.84);
+    --preloader-frame: rgba(255,255,255,0.045);
+    --preloader-scanline: rgba(255,255,255,0.018);
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
     background:
-        radial-gradient(circle at 20% 18%, var(--preloader-glow-strong) 0%, transparent 28%),
-        radial-gradient(circle at 80% 22%, var(--preloader-glow-soft) 0%, transparent 26%),
-        linear-gradient(135deg, var(--preloader-base-0) 0%, var(--preloader-base-1) 48%, var(--preloader-base-2) 100%);
+        radial-gradient(circle at 50% 14%, var(--preloader-glow-strong) 0%, transparent 22%),
+        radial-gradient(circle at 50% 46%, var(--preloader-glow-soft) 0%, transparent 42%),
+        linear-gradient(180deg, var(--preloader-base-0) 0%, var(--preloader-base-1) 38%, var(--preloader-base-2) 100%);
     z-index: 10000;
     overflow: hidden;
     display: flex;
@@ -367,43 +372,51 @@ body.light-theme .offline-message {
 }
 #preloader::before {
     background:
-        radial-gradient(circle at center, var(--preloader-glow-soft) 0%, transparent 58%),
+        radial-gradient(ellipse at center 86%, var(--preloader-glow-strong) 0%, transparent 36%),
         linear-gradient(var(--preloader-grid-minor) 1px, transparent 1px),
         linear-gradient(90deg, var(--preloader-grid-minor) 1px, transparent 1px),
         linear-gradient(var(--preloader-grid-major) 1px, transparent 1px),
-        linear-gradient(90deg, var(--preloader-grid-major) 1px, transparent 1px);
-    background-size: 100% 100%, 30px 30px, 30px 30px, 120px 120px, 120px 120px;
-    opacity: 0.55;
-    transform: perspective(1600px) rotateX(73deg) scale(1.55) translateY(18%);
-    transform-origin: center 72%;
-    animation: preloaderGridShift 18s linear infinite;
+        linear-gradient(90deg, var(--preloader-grid-major) 1px, transparent 1px),
+        repeating-linear-gradient(180deg, transparent 0 3px, var(--preloader-scanline) 3px 4px);
+    background-size: 100% 100%, 24px 24px, 24px 24px, 96px 96px, 96px 96px, 100% 4px;
+    opacity: 0.58;
+    transform: perspective(1600px) rotateX(76deg) scale(1.72) translate3d(0, 22%, 0);
+    transform-origin: center 78%;
+    animation: preloaderGridShift 16s linear infinite;
 }
 #preloader::after {
     background:
-        radial-gradient(circle at 20% 30%, var(--preloader-glow-soft) 0%, transparent 24%),
-        radial-gradient(circle at 78% 26%, var(--preloader-glow-strong) 0%, transparent 28%),
-        linear-gradient(115deg, transparent 30%, var(--preloader-sweep) 48%, transparent 67%);
-    filter: blur(22px);
+        radial-gradient(circle at 50% 18%, var(--preloader-glow-strong) 0%, transparent 18%),
+        linear-gradient(90deg, transparent 0%, transparent 12%, var(--preloader-frame) 12.35%, transparent 13%, transparent 87%, var(--preloader-frame) 87.65%, transparent 88%, transparent 100%),
+        linear-gradient(180deg, transparent 0%, transparent 10%, var(--preloader-frame) 10.35%, transparent 11%, transparent 89%, var(--preloader-frame) 89.65%, transparent 90%, transparent 100%),
+        linear-gradient(112deg, transparent 36%, var(--preloader-sweep) 50%, transparent 64%),
+        radial-gradient(circle at center, transparent 44%, var(--preloader-vignette) 100%);
+    filter: blur(18px);
     opacity: 0.9;
-    animation: preloaderBeamSweep 10s ease-in-out infinite alternate;
+    animation: preloaderBeamSweep 9s ease-in-out infinite alternate;
 }
 body.light-theme #preloader {
-    --preloader-base-0: #fcfcfc;
+    --preloader-base-0: #fafafa;
     --preloader-base-1: #f2f2f2;
-    --preloader-base-2: #e8e8e8;
-    --preloader-grid-minor: rgba(0,0,0,0.035);
-    --preloader-grid-major: rgba(0,0,0,0.07);
-    --preloader-glow-soft: rgba(0,0,0,0.05);
-    --preloader-glow-strong: rgba(0,0,0,0.09);
-    --preloader-sweep: rgba(0,0,0,0.06);
-    --preloader-panel-bg-1: rgba(255,255,255,0.56);
-    --preloader-panel-bg-2: rgba(255,255,255,0.22);
-    --preloader-panel-border: rgba(0,0,0,0.08);
-    --preloader-panel-shadow: rgba(155,155,155,0.28);
-    --preloader-panel-highlight: rgba(255,255,255,0.7);
-    --preloader-panel-sheen: rgba(255,255,255,0.34);
-    --preloader-core-glow: rgba(0,0,0,0.06);
-    --preloader-ring: rgba(0,0,0,0.06);
+    --preloader-base-2: #ebebeb;
+    --preloader-grid-minor: rgba(0,0,0,0.028);
+    --preloader-grid-major: rgba(0,0,0,0.05);
+    --preloader-glow-soft: rgba(0,0,0,0.04);
+    --preloader-glow-strong: rgba(0,0,0,0.07);
+    --preloader-sweep: rgba(0,0,0,0.05);
+    --preloader-panel-bg-1: rgba(255,255,255,0.76);
+    --preloader-panel-bg-2: rgba(242,242,242,0.9);
+    --preloader-panel-border: rgba(0,0,0,0.1);
+    --preloader-panel-shadow: rgba(150,150,150,0.34);
+    --preloader-panel-highlight: rgba(255,255,255,0.85);
+    --preloader-panel-sheen: rgba(255,255,255,0.3);
+    --preloader-panel-outline: rgba(255,255,255,0.52);
+    --preloader-panel-depth: rgba(255,255,255,0.14);
+    --preloader-core-glow: rgba(0,0,0,0.05);
+    --preloader-ring: rgba(0,0,0,0.045);
+    --preloader-vignette: rgba(246,246,246,0.84);
+    --preloader-frame: rgba(0,0,0,0.035);
+    --preloader-scanline: rgba(0,0,0,0.015);
 }
 .preloader-inner {
     display: flex;
@@ -413,11 +426,16 @@ body.light-theme #preloader {
     position: relative;
     z-index: 2;
     isolation: isolate;
-    padding: 46px 54px;
-    border-radius: 32px;
-    background: linear-gradient(135deg, var(--preloader-panel-bg-1), var(--preloader-panel-bg-2));
+    padding: 44px 56px;
+    border-radius: 18px;
+    overflow: hidden;
+    background: linear-gradient(180deg, var(--preloader-panel-bg-1) 0%, var(--preloader-panel-bg-2) 100%);
     border: 1px solid var(--preloader-panel-border);
-    box-shadow: 0 28px 90px var(--preloader-panel-shadow), inset 0 1px 0 var(--preloader-panel-highlight);
+    box-shadow:
+        0 32px 120px var(--preloader-panel-shadow),
+        0 0 0 1px var(--preloader-panel-outline),
+        inset 0 1px 0 var(--preloader-panel-highlight),
+        inset 0 0 80px var(--preloader-panel-depth);
     backdrop-filter: blur(18px) saturate(135%);
     -webkit-backdrop-filter: blur(18px) saturate(135%);
 }
@@ -429,21 +447,24 @@ body.light-theme #preloader {
     z-index: 0;
 }
 .preloader-inner::before {
-    inset: -110px -150px;
+    inset: -92px -132px;
     border-radius: 999px;
     background:
-        radial-gradient(circle at center, var(--preloader-core-glow) 0%, transparent 58%),
-        repeating-radial-gradient(circle at center, transparent 0 32px, var(--preloader-ring) 32px 33px, transparent 33px 64px);
-    opacity: 0.85;
-    animation: preloaderHaloPulse 8s ease-in-out infinite;
+        radial-gradient(circle at center, var(--preloader-core-glow) 0%, transparent 56%),
+        repeating-radial-gradient(circle at center, transparent 0 26px, var(--preloader-ring) 26px 27px, transparent 27px 52px);
+    opacity: 0.82;
+    animation: preloaderHaloPulse 7s ease-in-out infinite;
 }
 .preloader-inner::after {
-    inset: 0;
-    border-radius: inherit;
-    background: linear-gradient(120deg, transparent 16%, var(--preloader-panel-sheen) 50%, transparent 84%);
+    inset: 10px;
+    border-radius: 10px;
+    border: 1px solid var(--preloader-frame);
+    background:
+        linear-gradient(180deg, var(--preloader-panel-highlight) 0%, transparent 18%, transparent 82%, var(--preloader-panel-depth) 100%),
+        linear-gradient(120deg, transparent 22%, var(--preloader-panel-sheen) 50%, transparent 78%);
     background-size: 220% 220%;
-    opacity: 0.5;
-    animation: preloaderPanelSweep 6s ease-in-out infinite;
+    opacity: 0.55;
+    animation: preloaderPanelSweep 6.5s ease-in-out infinite;
 }
 .preloader-corner {
     position: fixed;
@@ -481,9 +502,11 @@ body.light-theme .preloader-corner::after { background: rgba(0,0,0,0.15); }
     opacity: 0;
     position: relative;
     z-index: 1;
+    box-shadow: 0 0 18px rgba(255,255,255,0.06);
 }
 body.light-theme .preloader-line {
     background: linear-gradient(90deg, transparent, rgba(0,0,0,0.22), transparent);
+    box-shadow: 0 0 12px rgba(0,0,0,0.05);
 }
 .preloader-line-top { margin-bottom: 32px; }
 .preloader-line-bottom { margin-top: 32px; }
@@ -499,8 +522,12 @@ body.light-theme .preloader-line {
     overflow: hidden;
     position: relative;
     z-index: 1;
+    text-shadow: 0 0 16px rgba(255,255,255,0.06);
 }
-body.light-theme .preloader-initials { color: #111; }
+body.light-theme .preloader-initials {
+    color: #111;
+    text-shadow: 0 0 14px rgba(0,0,0,0.06);
+}
 .preloader-letter-s,
 .preloader-letter-r {
     display: inline-block;
@@ -512,8 +539,12 @@ body.light-theme .preloader-initials { color: #111; }
     height: 0;
     background: rgba(255,255,255,0.2);
     display: inline-block;
+    box-shadow: 0 0 12px rgba(255,255,255,0.08);
 }
-body.light-theme .preloader-divider-line { background: rgba(0,0,0,0.25); }
+body.light-theme .preloader-divider-line {
+    background: rgba(0,0,0,0.25);
+    box-shadow: 0 0 10px rgba(0,0,0,0.05);
+}
 .preloader-fullname {
     font-family: 'Courier New', monospace;
     font-size: 11px;
@@ -526,8 +557,12 @@ body.light-theme .preloader-divider-line { background: rgba(0,0,0,0.25); }
     opacity: 0;
     position: relative;
     z-index: 1;
+    text-shadow: 0 0 10px rgba(255,255,255,0.08);
 }
-body.light-theme .preloader-fullname { color: rgba(0,0,0,0.55); }
+body.light-theme .preloader-fullname {
+    color: rgba(0,0,0,0.55);
+    text-shadow: 0 0 10px rgba(0,0,0,0.04);
+}
 .preloader-fullname span {
     display: inline-block;
     opacity: 0;
@@ -540,9 +575,11 @@ body.light-theme .preloader-fullname { color: rgba(0,0,0,0.55); }
     opacity: 0;
     position: relative;
     z-index: 1;
+    box-shadow: 0 0 18px rgba(255,255,255,0.08);
 }
 body.light-theme .preloader-rule {
     background: linear-gradient(90deg, transparent, rgba(0,0,0,0.25), transparent);
+    box-shadow: 0 0 12px rgba(0,0,0,0.05);
 }
 .preloader-progress {
     display: flex;
@@ -560,8 +597,12 @@ body.light-theme .preloader-rule {
     color: rgba(255,255,255,0.55);
     letter-spacing: 3px;
     text-transform: uppercase;
+    text-shadow: 0 0 10px rgba(255,255,255,0.08);
 }
-body.light-theme .preloader-progress-pct { color: rgba(0,0,0,0.5); }
+body.light-theme .preloader-progress-pct {
+    color: rgba(0,0,0,0.5);
+    text-shadow: 0 0 10px rgba(0,0,0,0.04);
+}
 .preloader-particles {
     position: absolute;
     top: 50%; left: 50%;
@@ -584,48 +625,48 @@ body.light-theme .preloader-particle {
 }
 @keyframes preloaderGridShift {
     0% {
-        transform: perspective(1600px) rotateX(73deg) scale(1.55) translate3d(-2%, 14%, 0);
-        background-position: center, 0 0, 0 0, 0 0, 0 0;
-        opacity: 0.45;
+        transform: perspective(1600px) rotateX(76deg) scale(1.72) translate3d(-2%, 20%, 0);
+        background-position: center, 0 0, 0 0, 0 0, 0 0, 0 0;
+        opacity: 0.48;
     }
     50% {
-        transform: perspective(1600px) rotateX(69deg) scale(1.62) translate3d(2%, 20%, 0);
-        background-position: center, 0 28px, 28px 0, 0 0, 0 0;
-        opacity: 0.68;
+        transform: perspective(1600px) rotateX(73deg) scale(1.78) translate3d(1%, 26%, 0);
+        background-position: center, 0 34px, 34px 0, 0 0, 0 0, 0 2px;
+        opacity: 0.72;
     }
     100% {
-        transform: perspective(1600px) rotateX(73deg) scale(1.55) translate3d(-1%, 26%, 0);
-        background-position: center, 0 56px, 56px 0, 0 0, 0 0;
-        opacity: 0.45;
+        transform: perspective(1600px) rotateX(76deg) scale(1.72) translate3d(-1%, 32%, 0);
+        background-position: center, 0 68px, 68px 0, 0 0, 0 0, 0 4px;
+        opacity: 0.48;
     }
 }
 @keyframes preloaderBeamSweep {
-    0% { transform: translate3d(-4%, -3%, 0) scale(1); }
-    50% { transform: translate3d(5%, 3%, 0) scale(1.08); }
-    100% { transform: translate3d(-2%, 5%, 0) scale(0.98); }
+    0% { transform: translate3d(-3%, -2%, 0) scale(1); }
+    50% { transform: translate3d(2%, 2%, 0) scale(1.04); }
+    100% { transform: translate3d(-1%, 5%, 0) scale(0.99); }
 }
 @keyframes preloaderHaloPulse {
     0%, 100% {
         transform: scale(0.96) rotate(0deg);
-        opacity: 0.68;
+        opacity: 0.66;
     }
     50% {
-        transform: scale(1.04) rotate(5deg);
-        opacity: 0.95;
+        transform: scale(1.03) rotate(2deg);
+        opacity: 0.92;
     }
 }
 @keyframes preloaderPanelSweep {
     0% {
         background-position: 140% 50%;
-        opacity: 0.18;
+        opacity: 0.22;
     }
     50% {
-        background-position: 25% 50%;
-        opacity: 0.45;
+        background-position: 32% 50%;
+        opacity: 0.52;
     }
     100% {
-        background-position: -40% 50%;
-        opacity: 0.18;
+        background-position: -35% 50%;
+        opacity: 0.22;
     }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -639,7 +680,7 @@ body.light-theme .preloader-particle {
 @media (max-width: 768px) {
     .preloader-inner {
         padding: 34px 38px;
-        border-radius: 28px;
+        border-radius: 16px;
     }
     .preloader-initials { font-size: 48px; gap: 16px; letter-spacing: 4px; }
     .preloader-fullname { font-size: 9px; letter-spacing: 4px; }
@@ -654,7 +695,7 @@ body.light-theme .preloader-particle {
 @media (max-width: 480px) {
     .preloader-inner {
         padding: 28px 24px;
-        border-radius: 24px;
+        border-radius: 14px;
     }
     .preloader-inner::before { inset: -70px -85px; }
     .preloader-initials { font-size: 36px; gap: 12px; letter-spacing: 3px; }
@@ -669,7 +710,7 @@ body.light-theme .preloader-particle {
 @media (max-width: 360px) {
     .preloader-inner {
         padding: 24px 18px;
-        border-radius: 20px;
+        border-radius: 12px;
     }
     .preloader-initials { font-size: 30px; gap: 10px; letter-spacing: 2px; }
     .preloader-fullname { font-size: 7px; letter-spacing: 2px; }
@@ -2086,6 +2127,10 @@ document.addEventListener('DOMContentLoaded', function() {
       }
 
       const pctEl = document.querySelector('.preloader-progress-pct');
+      var isLight = document.body.classList.contains('light-theme');
+      var letterGlow = isLight ? '0 0 18px rgba(0,0,0,0.12)' : '0 0 24px rgba(255,255,255,0.18)';
+      var decodeBright = isLight ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.75)';
+      var decodeRest = isLight ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.6)';
 
       const masterTL = anime.timeline({ easing: 'easeOutExpo', autoplay: true });
 
@@ -2120,7 +2165,7 @@ document.addEventListener('DOMContentLoaded', function() {
       masterTL.add({
           targets: '.preloader-letter-s',
           opacity: [0, 1], translateY: [50, 0],
-          textShadow: ['0 0 0px transparent', '0 0 20px rgba(255,255,255,0.15)'],
+          textShadow: ['0 0 0px transparent', letterGlow],
           easing: 'easeOutExpo', duration: 1000
       }, 300);
 
@@ -2133,7 +2178,7 @@ document.addEventListener('DOMContentLoaded', function() {
       masterTL.add({
           targets: '.preloader-letter-r',
           opacity: [0, 1], translateY: [-50, 0],
-          textShadow: ['0 0 0px transparent', '0 0 20px rgba(255,255,255,0.15)'],
+          textShadow: ['0 0 0px transparent', letterGlow],
           easing: 'easeOutExpo', duration: 1000
       }, 600);
 
@@ -2141,10 +2186,6 @@ document.addEventListener('DOMContentLoaded', function() {
           targets: '.preloader-fullname',
           opacity: [0, 1], duration: 50
       }, 900);
-
-      var isLight = document.body.classList.contains('light-theme');
-      var decodeBright = isLight ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.75)';
-      var decodeRest = isLight ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.6)';
 
       masterTL.add({
           targets: fullnameLetterize.listAll,
