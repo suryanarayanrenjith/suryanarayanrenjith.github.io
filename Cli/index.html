@@ -118,6 +118,28 @@
             </div>
         </div>
     </div>
+
+    <div class="vim-shell vim-hidden" id="vimShell" aria-hidden="true">
+        <div class="vim-shell__chrome">
+            <div class="vim-shell__title" id="vimTitle">vim</div>
+            <div class="vim-shell__mode" id="vimModeLabel">NORMAL</div>
+        </div>
+        <div class="vim-shell__editor">
+            <pre class="vim-shell__gutter" id="vimGutter" aria-hidden="true">1</pre>
+            <textarea
+                id="vimBuffer"
+                class="vim-shell__buffer"
+                spellcheck="false"
+                autocapitalize="off"
+                autocomplete="off"
+                autocorrect="off"
+            ></textarea>
+        </div>
+        <div class="vim-shell__statusline">
+            <span id="vimStatusLeft">NORMAL</span>
+            <span id="vimStatusRight">[No Name]</span>
+        </div>
+    </div>
     
     <script src="script.js"></script>
     <script src="animation.js"></script>

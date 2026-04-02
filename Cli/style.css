@@ -241,6 +241,10 @@ a:hover {
     font-style: italic;
 }
 
+.term-error {
+    color: #ff7c7c;
+}
+
 .tab-completions {
     display: flex;
     flex-wrap: wrap;
@@ -252,6 +256,56 @@ a:hover {
 
 .tab-completions .ls-dir {
     font-weight: 600;
+}
+
+.tab-completions span {
+    display: inline-flex;
+    align-items: center;
+}
+
+.ls-output,
+.tree-output {
+    margin: 0;
+    font-family: inherit;
+    white-space: pre-wrap;
+    word-break: break-word;
+    line-height: 1.5;
+}
+
+.ls-entry,
+.tree-node {
+    transition: color 0.2s ease;
+}
+
+.ls-dir,
+.tree-dir {
+    color: #6aa9ff;
+    font-weight: 600;
+}
+
+.ls-exec,
+.tree-exec {
+    color: #55d48a;
+    font-weight: 600;
+}
+
+.ls-link,
+.tree-link {
+    color: #64d8ff;
+}
+
+.ls-hidden,
+.tree-hidden {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.ls-heading {
+    color: rgba(255, 255, 255, 0.78);
+    font-weight: 600;
+}
+
+.tree-branch {
+    color: rgba(255, 255, 255, 0.45);
 }
 
 #output pre {
@@ -392,6 +446,109 @@ a:hover {
     background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.05), transparent);
 }
 
+.vim-hidden {
+    display: none;
+}
+
+.vim-shell {
+    position: fixed;
+    inset: 4vh 4vw;
+    z-index: 20;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background:
+        linear-gradient(180deg, rgba(8, 14, 16, 0.96), rgba(3, 8, 10, 0.98));
+    box-shadow:
+        0 35px 90px rgba(0, 0, 0, 0.55),
+        0 0 80px rgba(79, 226, 146, 0.08);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+}
+
+.vim-shell__chrome,
+.vim-shell__statusline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 18px;
+    background: rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.vim-shell__statusline {
+    border-bottom: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 0.92rem;
+}
+
+.vim-shell__title {
+    color: #f4f7f5;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+}
+
+.vim-shell__mode {
+    color: #55d48a;
+    font-size: 0.88rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+}
+
+.vim-shell__editor {
+    display: grid;
+    grid-template-columns: minmax(48px, 72px) 1fr;
+    min-height: 0;
+    height: calc(100% - 106px);
+}
+
+.vim-shell__gutter,
+.vim-shell__buffer {
+    margin: 0;
+    padding: 18px 18px 22px;
+    border: none;
+    resize: none;
+    font: 0.98rem/1.55 'JetBrains Mono', monospace;
+    background: transparent;
+    color: #eef9f1;
+    overflow: auto;
+    outline: none;
+}
+
+.vim-shell__gutter {
+    text-align: right;
+    user-select: none;
+    color: rgba(255, 255, 255, 0.34);
+    background: rgba(255, 255, 255, 0.03);
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.vim-shell__buffer {
+    caret-color: #55d48a;
+    white-space: pre;
+    tab-size: 2;
+}
+
+.vim-shell__buffer::selection {
+    background: rgba(85, 212, 138, 0.26);
+}
+
+.vim-shell--insert .vim-shell__mode {
+    color: #ffe37b;
+}
+
+.vim-shell--command .vim-shell__mode {
+    color: #64d8ff;
+}
+
+.vim-shell--dirty .vim-shell__title::after {
+    content: " [+]";
+    color: #ffe37b;
+    font-weight: 500;
+}
+
 
 @media screen and (max-width: 768px) {
     .terminal {
@@ -405,6 +562,14 @@ a:hover {
     
     .html-content .animated-text {
         font-size: 20px;
+    }
+
+    .vim-shell {
+        inset: 3vh 3vw;
+    }
+
+    .vim-shell__editor {
+        grid-template-columns: 52px 1fr;
     }
 }
 
@@ -425,9 +590,25 @@ a:hover {
     .html-content .animated-text {
         font-size: 18px;
     }
-    
+
     .prompt {
         font-size: 0.85em;
+    }
+
+    .vim-shell {
+        inset: 0;
+        border-radius: 0;
+    }
+
+    .vim-shell__chrome,
+    .vim-shell__statusline {
+        padding: 10px 12px;
+    }
+
+    .vim-shell__gutter,
+    .vim-shell__buffer {
+        padding: 14px 12px 18px;
+        font-size: 0.88rem;
     }
 }
 
@@ -638,6 +819,74 @@ body.light-theme .html-content .center-button a {
 body.light-theme .html-content .logo {
     border: 1px solid #bbb;
     background: rgba(0, 0, 0, 0.02);
+}
+
+body.light-theme .term-error {
+    color: #b42318;
+}
+
+body.light-theme .ls-dir,
+body.light-theme .tree-dir {
+    color: #1d4ed8;
+}
+
+body.light-theme .ls-exec,
+body.light-theme .tree-exec {
+    color: #0f8a43;
+}
+
+body.light-theme .ls-link,
+body.light-theme .tree-link {
+    color: #0f7da8;
+}
+
+body.light-theme .ls-hidden,
+body.light-theme .tree-hidden,
+body.light-theme .tree-branch {
+    color: rgba(0, 0, 0, 0.48);
+}
+
+body.light-theme .ls-heading {
+    color: rgba(0, 0, 0, 0.7);
+}
+
+body.light-theme .vim-shell {
+    background:
+        linear-gradient(180deg, rgba(250, 252, 251, 0.98), rgba(238, 245, 240, 0.99));
+    border-color: rgba(0, 0, 0, 0.12);
+    box-shadow:
+        0 35px 90px rgba(0, 0, 0, 0.18),
+        0 0 70px rgba(15, 138, 67, 0.08);
+}
+
+body.light-theme .vim-shell__chrome,
+body.light-theme .vim-shell__statusline {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.08);
+    color: #1f2937;
+}
+
+body.light-theme .vim-shell__title {
+    color: #111827;
+}
+
+body.light-theme .vim-shell__mode {
+    color: #0f8a43;
+}
+
+body.light-theme .vim-shell__gutter {
+    color: rgba(0, 0, 0, 0.38);
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+body.light-theme .vim-shell__buffer {
+    color: #111827;
+    caret-color: #0f8a43;
+}
+
+body.light-theme .vim-shell__buffer::selection {
+    background: rgba(15, 138, 67, 0.18);
 }
 
 body.light-theme a {
