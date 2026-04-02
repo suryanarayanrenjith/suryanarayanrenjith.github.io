@@ -328,150 +328,29 @@ body.light-theme .offline-message {
 }
 
 #preloader {
-    --preloader-base-0: #000000;
-    --preloader-base-1: #010101;
-    --preloader-base-2: #050505;
-    --preloader-grid-minor: rgba(255,255,255,0.024);
-    --preloader-grid-major: rgba(255,255,255,0.05);
-    --preloader-glow-soft: rgba(255,255,255,0.05);
-    --preloader-glow-strong: rgba(255,255,255,0.1);
-    --preloader-sweep: rgba(255,255,255,0.07);
-    --preloader-panel-bg-1: rgba(12,12,12,0.84);
-    --preloader-panel-bg-2: rgba(0,0,0,0.94);
-    --preloader-panel-border: rgba(255,255,255,0.14);
-    --preloader-panel-shadow: rgba(0,0,0,0.9);
-    --preloader-panel-highlight: rgba(255,255,255,0.08);
-    --preloader-panel-sheen: rgba(255,255,255,0.07);
-    --preloader-panel-outline: rgba(255,255,255,0.04);
-    --preloader-panel-depth: rgba(255,255,255,0.025);
-    --preloader-core-glow: rgba(255,255,255,0.055);
-    --preloader-ring: rgba(255,255,255,0.05);
-    --preloader-vignette: rgba(0,0,0,0.84);
-    --preloader-frame: rgba(255,255,255,0.045);
-    --preloader-scanline: rgba(255,255,255,0.018);
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
-    background:
-        radial-gradient(circle at 50% 14%, var(--preloader-glow-strong) 0%, transparent 22%),
-        radial-gradient(circle at 50% 46%, var(--preloader-glow-soft) 0%, transparent 42%),
-        linear-gradient(180deg, var(--preloader-base-0) 0%, var(--preloader-base-1) 38%, var(--preloader-base-2) 100%);
+    background: #000;
     z-index: 10000;
     overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
-    isolation: isolate;
 }
-#preloader::before,
-#preloader::after {
-    content: '';
-    position: absolute;
-    inset: -12%;
-    pointer-events: none;
-}
-#preloader::before {
-    background:
-        radial-gradient(ellipse at center 86%, var(--preloader-glow-strong) 0%, transparent 36%),
-        linear-gradient(var(--preloader-grid-minor) 1px, transparent 1px),
-        linear-gradient(90deg, var(--preloader-grid-minor) 1px, transparent 1px),
-        linear-gradient(var(--preloader-grid-major) 1px, transparent 1px),
-        linear-gradient(90deg, var(--preloader-grid-major) 1px, transparent 1px),
-        repeating-linear-gradient(180deg, transparent 0 3px, var(--preloader-scanline) 3px 4px);
-    background-size: 100% 100%, 24px 24px, 24px 24px, 96px 96px, 96px 96px, 100% 4px;
-    opacity: 0.58;
-    transform: perspective(1600px) rotateX(76deg) scale(1.72) translate3d(0, 22%, 0);
-    transform-origin: center 78%;
-    animation: preloaderGridShift 16s linear infinite;
-}
-#preloader::after {
-    background:
-        radial-gradient(circle at 50% 18%, var(--preloader-glow-strong) 0%, transparent 18%),
-        linear-gradient(90deg, transparent 0%, transparent 12%, var(--preloader-frame) 12.35%, transparent 13%, transparent 87%, var(--preloader-frame) 87.65%, transparent 88%, transparent 100%),
-        linear-gradient(180deg, transparent 0%, transparent 10%, var(--preloader-frame) 10.35%, transparent 11%, transparent 89%, var(--preloader-frame) 89.65%, transparent 90%, transparent 100%),
-        linear-gradient(112deg, transparent 36%, var(--preloader-sweep) 50%, transparent 64%),
-        radial-gradient(circle at center, transparent 44%, var(--preloader-vignette) 100%);
-    filter: blur(18px);
-    opacity: 0.9;
-    animation: preloaderBeamSweep 9s ease-in-out infinite alternate;
-}
-body.light-theme #preloader {
-    --preloader-base-0: #fafafa;
-    --preloader-base-1: #f2f2f2;
-    --preloader-base-2: #ebebeb;
-    --preloader-grid-minor: rgba(0,0,0,0.028);
-    --preloader-grid-major: rgba(0,0,0,0.05);
-    --preloader-glow-soft: rgba(0,0,0,0.04);
-    --preloader-glow-strong: rgba(0,0,0,0.07);
-    --preloader-sweep: rgba(0,0,0,0.05);
-    --preloader-panel-bg-1: rgba(255,255,255,0.76);
-    --preloader-panel-bg-2: rgba(242,242,242,0.9);
-    --preloader-panel-border: rgba(0,0,0,0.1);
-    --preloader-panel-shadow: rgba(150,150,150,0.34);
-    --preloader-panel-highlight: rgba(255,255,255,0.85);
-    --preloader-panel-sheen: rgba(255,255,255,0.3);
-    --preloader-panel-outline: rgba(255,255,255,0.52);
-    --preloader-panel-depth: rgba(255,255,255,0.14);
-    --preloader-core-glow: rgba(0,0,0,0.05);
-    --preloader-ring: rgba(0,0,0,0.045);
-    --preloader-vignette: rgba(246,246,246,0.84);
-    --preloader-frame: rgba(0,0,0,0.035);
-    --preloader-scanline: rgba(0,0,0,0.015);
-}
+body.light-theme #preloader { background: #f5f5f5; }
 .preloader-inner {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 0;
     position: relative;
-    z-index: 2;
-    isolation: isolate;
-    padding: 44px 56px;
-    border-radius: 18px;
-    overflow: hidden;
-    background: linear-gradient(180deg, var(--preloader-panel-bg-1) 0%, var(--preloader-panel-bg-2) 100%);
-    border: 1px solid var(--preloader-panel-border);
-    box-shadow:
-        0 32px 120px var(--preloader-panel-shadow),
-        0 0 0 1px var(--preloader-panel-outline),
-        inset 0 1px 0 var(--preloader-panel-highlight),
-        inset 0 0 80px var(--preloader-panel-depth);
-    backdrop-filter: blur(18px) saturate(135%);
-    -webkit-backdrop-filter: blur(18px) saturate(135%);
-}
-.preloader-inner::before,
-.preloader-inner::after {
-    content: '';
-    position: absolute;
-    pointer-events: none;
-    z-index: 0;
-}
-.preloader-inner::before {
-    inset: -92px -132px;
-    border-radius: 999px;
-    background:
-        radial-gradient(circle at center, var(--preloader-core-glow) 0%, transparent 56%),
-        repeating-radial-gradient(circle at center, transparent 0 26px, var(--preloader-ring) 26px 27px, transparent 27px 52px);
-    opacity: 0.82;
-    animation: preloaderHaloPulse 7s ease-in-out infinite;
-}
-.preloader-inner::after {
-    inset: 10px;
-    border-radius: 10px;
-    border: 1px solid var(--preloader-frame);
-    background:
-        linear-gradient(180deg, var(--preloader-panel-highlight) 0%, transparent 18%, transparent 82%, var(--preloader-panel-depth) 100%),
-        linear-gradient(120deg, transparent 22%, var(--preloader-panel-sheen) 50%, transparent 78%);
-    background-size: 220% 220%;
-    opacity: 0.55;
-    animation: preloaderPanelSweep 6.5s ease-in-out infinite;
 }
 .preloader-corner {
     position: fixed;
     width: 0;
     height: 0;
     opacity: 0;
-    z-index: 1;
 }
 .preloader-corner::before,
 .preloader-corner::after {
@@ -500,13 +379,9 @@ body.light-theme .preloader-corner::after { background: rgba(0,0,0,0.15); }
     height: 1px;
     background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
     opacity: 0;
-    position: relative;
-    z-index: 1;
-    box-shadow: 0 0 18px rgba(255,255,255,0.06);
 }
 body.light-theme .preloader-line {
     background: linear-gradient(90deg, transparent, rgba(0,0,0,0.22), transparent);
-    box-shadow: 0 0 12px rgba(0,0,0,0.05);
 }
 .preloader-line-top { margin-bottom: 32px; }
 .preloader-line-bottom { margin-top: 32px; }
@@ -521,13 +396,8 @@ body.light-theme .preloader-line {
     color: #fff;
     overflow: hidden;
     position: relative;
-    z-index: 1;
-    text-shadow: 0 0 16px rgba(255,255,255,0.06);
 }
-body.light-theme .preloader-initials {
-    color: #111;
-    text-shadow: 0 0 14px rgba(0,0,0,0.06);
-}
+body.light-theme .preloader-initials { color: #111; }
 .preloader-letter-s,
 .preloader-letter-r {
     display: inline-block;
@@ -539,12 +409,8 @@ body.light-theme .preloader-initials {
     height: 0;
     background: rgba(255,255,255,0.2);
     display: inline-block;
-    box-shadow: 0 0 12px rgba(255,255,255,0.08);
 }
-body.light-theme .preloader-divider-line {
-    background: rgba(0,0,0,0.25);
-    box-shadow: 0 0 10px rgba(0,0,0,0.05);
-}
+body.light-theme .preloader-divider-line { background: rgba(0,0,0,0.25); }
 .preloader-fullname {
     font-family: 'Courier New', monospace;
     font-size: 11px;
@@ -555,14 +421,8 @@ body.light-theme .preloader-divider-line {
     overflow: hidden;
     white-space: nowrap;
     opacity: 0;
-    position: relative;
-    z-index: 1;
-    text-shadow: 0 0 10px rgba(255,255,255,0.08);
 }
-body.light-theme .preloader-fullname {
-    color: rgba(0,0,0,0.55);
-    text-shadow: 0 0 10px rgba(0,0,0,0.04);
-}
+body.light-theme .preloader-fullname { color: rgba(0,0,0,0.55); }
 .preloader-fullname span {
     display: inline-block;
     opacity: 0;
@@ -573,13 +433,9 @@ body.light-theme .preloader-fullname {
     background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
     margin-top: 10px;
     opacity: 0;
-    position: relative;
-    z-index: 1;
-    box-shadow: 0 0 18px rgba(255,255,255,0.08);
 }
 body.light-theme .preloader-rule {
     background: linear-gradient(90deg, transparent, rgba(0,0,0,0.25), transparent);
-    box-shadow: 0 0 12px rgba(0,0,0,0.05);
 }
 .preloader-progress {
     display: flex;
@@ -588,8 +444,6 @@ body.light-theme .preloader-rule {
     gap: 6px;
     margin-top: 18px;
     opacity: 0;
-    position: relative;
-    z-index: 1;
 }
 .preloader-progress-pct {
     font-family: 'Courier New', monospace;
@@ -597,91 +451,23 @@ body.light-theme .preloader-rule {
     color: rgba(255,255,255,0.55);
     letter-spacing: 3px;
     text-transform: uppercase;
-    text-shadow: 0 0 10px rgba(255,255,255,0.08);
 }
-body.light-theme .preloader-progress-pct {
-    color: rgba(0,0,0,0.5);
-    text-shadow: 0 0 10px rgba(0,0,0,0.04);
-}
+body.light-theme .preloader-progress-pct { color: rgba(0,0,0,0.5); }
 .preloader-particles {
     position: absolute;
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
-    width: 360px; height: 360px;
+    width: 300px; height: 300px;
     pointer-events: none;
-    z-index: 0;
-    filter: blur(0.2px);
 }
 .preloader-particle {
     position: absolute;
     width: 2px; height: 2px;
     background: rgba(255,255,255,0.3);
     border-radius: 50%;
-    box-shadow: 0 0 12px rgba(255,255,255,0.18);
 }
-body.light-theme .preloader-particle {
-    background: rgba(0,0,0,0.2);
-    box-shadow: 0 0 12px rgba(0,0,0,0.08);
-}
-@keyframes preloaderGridShift {
-    0% {
-        transform: perspective(1600px) rotateX(76deg) scale(1.72) translate3d(-2%, 20%, 0);
-        background-position: center, 0 0, 0 0, 0 0, 0 0, 0 0;
-        opacity: 0.48;
-    }
-    50% {
-        transform: perspective(1600px) rotateX(73deg) scale(1.78) translate3d(1%, 26%, 0);
-        background-position: center, 0 34px, 34px 0, 0 0, 0 0, 0 2px;
-        opacity: 0.72;
-    }
-    100% {
-        transform: perspective(1600px) rotateX(76deg) scale(1.72) translate3d(-1%, 32%, 0);
-        background-position: center, 0 68px, 68px 0, 0 0, 0 0, 0 4px;
-        opacity: 0.48;
-    }
-}
-@keyframes preloaderBeamSweep {
-    0% { transform: translate3d(-3%, -2%, 0) scale(1); }
-    50% { transform: translate3d(2%, 2%, 0) scale(1.04); }
-    100% { transform: translate3d(-1%, 5%, 0) scale(0.99); }
-}
-@keyframes preloaderHaloPulse {
-    0%, 100% {
-        transform: scale(0.96) rotate(0deg);
-        opacity: 0.66;
-    }
-    50% {
-        transform: scale(1.03) rotate(2deg);
-        opacity: 0.92;
-    }
-}
-@keyframes preloaderPanelSweep {
-    0% {
-        background-position: 140% 50%;
-        opacity: 0.22;
-    }
-    50% {
-        background-position: 32% 50%;
-        opacity: 0.52;
-    }
-    100% {
-        background-position: -35% 50%;
-        opacity: 0.22;
-    }
-}
-@media (prefers-reduced-motion: reduce) {
-    #preloader::before,
-    #preloader::after,
-    .preloader-inner::before,
-    .preloader-inner::after {
-        animation: none;
-    }
-}
+body.light-theme .preloader-particle { background: rgba(0,0,0,0.2); }
 @media (max-width: 768px) {
-    .preloader-inner {
-        padding: 34px 38px;
-        border-radius: 16px;
-    }
     .preloader-initials { font-size: 48px; gap: 16px; letter-spacing: 4px; }
     .preloader-fullname { font-size: 9px; letter-spacing: 4px; }
     .preloader-progress { margin-top: 14px; }
@@ -693,11 +479,6 @@ body.light-theme .preloader-particle {
     .preloader-particles { width: 200px; height: 200px; }
 }
 @media (max-width: 480px) {
-    .preloader-inner {
-        padding: 28px 24px;
-        border-radius: 14px;
-    }
-    .preloader-inner::before { inset: -70px -85px; }
     .preloader-initials { font-size: 36px; gap: 12px; letter-spacing: 3px; }
     .preloader-fullname { font-size: 8px; letter-spacing: 3px; }
     .preloader-progress { margin-top: 12px; }
@@ -708,10 +489,6 @@ body.light-theme .preloader-particle {
     .preloader-particles { width: 150px; height: 150px; }
 }
 @media (max-width: 360px) {
-    .preloader-inner {
-        padding: 24px 18px;
-        border-radius: 12px;
-    }
     .preloader-initials { font-size: 30px; gap: 10px; letter-spacing: 2px; }
     .preloader-fullname { font-size: 7px; letter-spacing: 2px; }
     .preloader-progress { margin-top: 10px; }
@@ -2127,10 +1904,6 @@ document.addEventListener('DOMContentLoaded', function() {
       }
 
       const pctEl = document.querySelector('.preloader-progress-pct');
-      var isLight = document.body.classList.contains('light-theme');
-      var letterGlow = isLight ? '0 0 18px rgba(0,0,0,0.12)' : '0 0 24px rgba(255,255,255,0.18)';
-      var decodeBright = isLight ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.75)';
-      var decodeRest = isLight ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.6)';
 
       const masterTL = anime.timeline({ easing: 'easeOutExpo', autoplay: true });
 
@@ -2165,7 +1938,7 @@ document.addEventListener('DOMContentLoaded', function() {
       masterTL.add({
           targets: '.preloader-letter-s',
           opacity: [0, 1], translateY: [50, 0],
-          textShadow: ['0 0 0px transparent', letterGlow],
+          textShadow: ['0 0 0px transparent', '0 0 20px rgba(255,255,255,0.15)'],
           easing: 'easeOutExpo', duration: 1000
       }, 300);
 
@@ -2178,7 +1951,7 @@ document.addEventListener('DOMContentLoaded', function() {
       masterTL.add({
           targets: '.preloader-letter-r',
           opacity: [0, 1], translateY: [-50, 0],
-          textShadow: ['0 0 0px transparent', letterGlow],
+          textShadow: ['0 0 0px transparent', '0 0 20px rgba(255,255,255,0.15)'],
           easing: 'easeOutExpo', duration: 1000
       }, 600);
 
@@ -2186,6 +1959,10 @@ document.addEventListener('DOMContentLoaded', function() {
           targets: '.preloader-fullname',
           opacity: [0, 1], duration: 50
       }, 900);
+
+      var isLight = document.body.classList.contains('light-theme');
+      var decodeBright = isLight ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.75)';
+      var decodeRest = isLight ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.6)';
 
       masterTL.add({
           targets: fullnameLetterize.listAll,
