@@ -179,6 +179,8 @@
         window.__cloak(Function.prototype.toString);
         window.__cloak(handleKeyBlock);
         window.__cloak(blockEvent);
+
+            try { Object.freeze(Function.prototype); } catch (_) {}
     })();
 
     (function() {
