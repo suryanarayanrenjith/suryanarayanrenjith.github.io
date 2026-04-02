@@ -31,8 +31,8 @@ var shellBuiltins = {
 var externalCommandNames = [
   'ls','cat','head','tail','grep','wc','touch','mkdir','rm','rmdir','cp','mv',
   'tree','find','file','stat','echo','rev','sort','uniq','whoami','hostname',
-  'uname','date','uptime','id','groups','df','free','ps','curl','ping',
-  'neofetch','cowsay','fortune','cal','factor','vim','nano','vi','chmod',
+  'uname','date','uptime','id','groups','df','free','ps',
+  'neofetch','cowsay','fortune','cal','factor','vim','chmod',
   'chown','sudo','top','htop','sl','wget','ssh','apt','brew','pip','npm','su'
 ];
 var sessionStart = Date.now();
@@ -178,7 +178,7 @@ function initFS() {
   _mkfile(HOME+'/.bashrc','# ~/.bashrc\nexport PATH="/usr/local/bin:/usr/bin:/bin"\nexport EDITOR="vim"\nalias ll="ls -la"\nalias la="ls -a"\n');
   _mkfile(HOME+'/.profile','# ~/.profile\n# Executed on login.\n');
   _mkfile(HOME+'/.bash_history','');
-  _mkfile(HOME+'/README.txt','Run ./about, ./projects, or ./resume to browse portfolio sections.\nUse vim <file> to edit local files in your home directory.\n');
+  _mkfile(HOME+'/README.txt','Run ./about, ./projects, or ./resume to browse portfolio sections.\nRun help to see available commands and current open targets.\nUse vim <file> to edit local files in your home directory.\n');
   _mkfile('/etc/hostname', HOST + '\n', { readOnly:true });
   _mkfile('/etc/os-release','NAME="SuryaOS"\nVERSION="3.1"\nID=suryaos\nPRETTY_NAME="SuryaOS 3.1 (Terminal)"\n', { readOnly:true });
   _mkfile('/etc/passwd','root:x:0:0:root:/root:/bin/bash\nsurya:x:1000:1000:Suryanarayan Renjith:'+HOME+':/bin/bash\n', { readOnly:true });
@@ -343,6 +343,16 @@ function getCommandPath(name) {
   }
   return null;
 }
+function getOpenOptionNames() {
+  var names = Object.keys(routeMap);
+  Object.keys(fileLinks || {}).forEach(function (name) {
+    if (names.indexOf(name) < 0) names.push(name);
+  });
+  return names.sort();
+}
+function getOpenOptionsSummary() {
+  return getOpenOptionNames().join(', ');
+}
 
 var manPages = {
   ls:       'ls [OPTIONS] [PATH...]\n  List directory contents with Linux-style coloring.\n  -a  Show hidden files\n  -l  Long listing format\n  -h  Human-readable sizes (with -l)',
@@ -385,9 +395,7 @@ var manPages = {
   env:      'env\n  Display all environment variables.',
   which:    'which COMMAND\n  Show the location of a command.',
   type:     'type COMMAND\n  Show the type of a command.',
-  open:     'open NAME\n  Open a linked page in a new tab.\n  Try: open resume, open github',
-  curl:     'curl URL\n  Fetch the content of a URL.',
-  ping:     'ping HOST\n  Send simulated ICMP packets to a host.',
+  open:     'open NAME\n  Open a linked page in a new tab.\n  Use help to see the current open targets.',
   neofetch: 'neofetch\n  Display system information with ASCII art.',
   cowsay:   'cowsay [TEXT]\n  Make a cow say something.',
   fortune:  'fortune\n  Display a random inspirational quote.',
@@ -907,8 +915,7 @@ commands.help = function () {
     ['Text', 'echo  grep  wc  rev  sort  uniq'],
     ['System', 'whoami  hostname  uname  date  uptime  id  groups  df  free  ps'],
     ['Shell', 'help  man  history  clear  exit  alias  unalias  export  env  which  type'],
-    ['Network', 'curl  ping'],
-    ['Editor', 'vim  vi  nano'],
+    ['Editor', 'vim'],
     ['Fun', 'neofetch  cowsay  fortune  cal  factor  sudo']
   ];
   var lines = ['', '  Available commands:', ''];
@@ -925,6 +932,8 @@ commands.help = function () {
   lines.push('  Chaining:   cmd1 ; cmd2    cmd1 && cmd2    cmd1 || cmd2');
   lines.push('  Piping:     cmd1 | cmd2');
   lines.push('  History:    !!  (repeat last)    !n  (repeat nth)');
+  lines.push('  Open targets:');
+  lines.push('    ' + getOpenOptionsSummary());
   lines.push('  Vim:        i insert, Esc normal, :w save, :q quit, dd delete line');
   lines.push('  Use \'man <command>\' for detailed usage.');
   lines.push('');
@@ -944,7 +953,7 @@ commands.open = function (args) {
   }
   var url = fileLinks[name];
   if (url) { window.open(url, '_blank'); return 'Opening ' + name + '...'; }
-  return fail('open: ' + name + ': No such file or link\nAvailable: ' + Object.keys(fileLinks).join(', '));
+  return fail('open: ' + name + ': No such file or link\nAvailable: ' + getOpenOptionsSummary());
 };
 
 commands.section = async function (args) {
@@ -965,38 +974,6 @@ commands.builtin = function (args, stdin) {
   if (args[0] === 'builtin') return fail('builtin: recursion detected');
   if (!commands[args[0]]) return fail('builtin: ' + args[0] + ': not found');
   return commands[args[0]](args.slice(1), stdin);
-};
-
-commands.curl = async function (args) {
-  if (!args.length) return fail('curl: no URL specified');
-  var url = args[0];
-  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
-  try {
-    var res = await fetch(url, { mode: 'cors' });
-    if (!res.ok) return fail('curl: (22) The requested URL returned error: ' + res.status);
-    var text = await res.text();
-    if (text.length > 2000) text = text.slice(0, 2000) + '\n... (truncated)';
-    return text;
-  } catch (e) {
-    return fail('curl: (7) Failed to connect to ' + args[0] + ' - CORS policy or network error');
-  }
-};
-
-commands.ping = async function (args) {
-  if (!args.length) return fail('ping: usage error: Destination address required');
-  var host = args[0];
-  print('PING ' + host + ' 56(84) bytes of data.');
-  for (var i = 1; i <= 4; i++) {
-    if (interrupted) { interrupted = false; print('\n--- ' + host + ' ping statistics ---\n' + (i-1) + ' packets transmitted, ' + (i-1) + ' received'); return ''; }
-    await delay(600 + Math.random() * 400);
-    var ms = (8 + Math.random() * 45).toFixed(1);
-    print('64 bytes from ' + host + ': icmp_seq=' + i + ' ttl=55 time=' + ms + ' ms');
-    scroll();
-  }
-  print('');
-  print('--- ' + host + ' ping statistics ---');
-  print('4 packets transmitted, 4 received, 0% packet loss');
-  return '';
 };
 
 commands.sudo = function (args) {
@@ -1026,20 +1003,24 @@ commands.neofetch = function () {
   ];
   var info = [
     USER + '@' + HOST,
-    '──────────────────',
-    'OS: SuryaOS 3.0 (Web)',
+    '------------------',
+    'OS: SuryaOS 3.1 (Web)',
     'Host: ' + HOST,
-    'Kernel: 3.0.0-web',
+    'Kernel: 3.1.0-web',
     'Uptime: ' + upStr,
     'Shell: bash 5.2',
     'Terminal: ' + envVars.TERM,
-    'CPU: WebAssembly @ ∞GHz',
+    'CPU: WebAssembly @ infGHz',
     'Memory: Dynamic'
   ];
+  var logoWidth = 0;
+  for (var j = 0; j < logo.length; j++) {
+    if (logo[j].length > logoWidth) logoWidth = logo[j].length;
+  }
   var lines = [];
   var max = Math.max(logo.length, info.length);
   for (var i = 0; i < max; i++) {
-    var left = i < logo.length ? logo[i] : rpad('', 20);
+    var left = i < logo.length ? rpad(logo[i], logoWidth) : rpad('', logoWidth);
     var right = i < info.length ? info[i] : '';
     lines.push(left + '   ' + right);
   }
@@ -1155,13 +1136,11 @@ function applyChmodSpec(node, spec) {
 }
 
 commands.vim  = function (args) { return openVim(args[0] || ''); };
-commands.nano = commands.vim;
-commands.vi   = commands.vim;
 commands.apt  = function () { return fail('apt: package manager not available in this web terminal.'); };
 commands.brew = commands.apt;
 commands.pip  = commands.apt;
 commands.npm  = commands.apt;
-commands.wget = function () { return fail('wget: not available. Use \'curl\' instead.'); };
+commands.wget = function () { return fail('wget: disabled in this terminal.'); };
 commands.ssh  = function () { return fail('ssh: network access restricted in this terminal.'); };
 commands.chmod = function (args) {
   if (args.length < 2) return fail('chmod: missing operand');
