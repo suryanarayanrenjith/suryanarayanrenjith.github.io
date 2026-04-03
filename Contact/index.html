@@ -24,6 +24,14 @@
 </head>
 <body>
 <script>
+(function() {
+    if (localStorage.getItem('suryaLightTheme') === 'true') {
+        document.documentElement.classList.add('light-theme');
+        document.body.classList.add('light-theme');
+    }
+})();
+</script>
+<script>
   (async function verifyAndProceed() {
     function getFingerprint() {
       return `${navigator.userAgent}-${screen.width}-${screen.height}-${navigator.language}-${window.devicePixelRatio}`;

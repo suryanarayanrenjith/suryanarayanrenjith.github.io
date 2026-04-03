@@ -1147,6 +1147,240 @@ body::after {
     }
 }
 
+html.light-theme {
+    color-scheme: light;
+    background:
+        radial-gradient(ellipse at 20% 15%, rgba(0, 0, 0, 0.035), transparent 30%),
+        radial-gradient(ellipse at 82% 12%, rgba(0, 0, 0, 0.028), transparent 24%),
+        radial-gradient(ellipse at 50% 95%, rgba(0, 0, 0, 0.02), transparent 30%),
+        linear-gradient(175deg, #fafafa 0%, #f2f2f2 45%, #f8f8f8 100%);
+}
+
+body.light-theme {
+    --text: #111111;
+    --muted: #525252;
+    --accent: #101010;
+    --success: #121212;
+    --warning: #4f4f4f;
+    --danger: #6a6a6a;
+    --panel-glow: 0 24px 64px rgba(0, 0, 0, 0.14), 0 0 0 1px rgba(0, 0, 0, 0.06) inset;
+    background:
+        radial-gradient(ellipse at 20% 15%, rgba(0, 0, 0, 0.035), transparent 30%),
+        radial-gradient(ellipse at 82% 12%, rgba(0, 0, 0, 0.028), transparent 24%),
+        radial-gradient(ellipse at 50% 95%, rgba(0, 0, 0, 0.02), transparent 30%),
+        linear-gradient(175deg, #fafafa 0%, #f2f2f2 45%, #f8f8f8 100%);
+}
+
+body.light-theme::before {
+    background:
+        radial-gradient(circle at 50% 42%, rgba(0, 0, 0, 0.032), transparent 26%),
+        linear-gradient(180deg, rgba(0, 0, 0, 0.018), transparent 26%, transparent 74%, rgba(0, 0, 0, 0.018));
+}
+
+body.light-theme::after {
+    background:
+        radial-gradient(circle at center, transparent 42%, rgba(0, 0, 0, 0.12) 100%),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.014), transparent 16%, transparent 84%, rgba(0, 0, 0, 0.014));
+}
+
+body.light-theme .bg-aurora {
+    opacity: 0.46;
+    background:
+        radial-gradient(circle at 20% 25%, rgba(0, 0, 0, 0.05), transparent 26%),
+        radial-gradient(circle at 78% 20%, rgba(0, 0, 0, 0.04), transparent 24%),
+        radial-gradient(circle at 50% 82%, rgba(0, 0, 0, 0.03), transparent 30%);
+}
+
+body.light-theme .bg-ribbons {
+    opacity: 0.28;
+    background:
+        linear-gradient(116deg, transparent 0%, rgba(0, 0, 0, 0.035) 13%, rgba(0, 0, 0, 0.01) 18%, transparent 28%),
+        linear-gradient(300deg, transparent 2%, rgba(0, 0, 0, 0.03) 16%, rgba(0, 0, 0, 0.01) 23%, transparent 34%),
+        linear-gradient(96deg, transparent 36%, rgba(0, 0, 0, 0.08) 48%, transparent 61%),
+        linear-gradient(282deg, transparent 58%, rgba(0, 0, 0, 0.02) 69%, transparent 79%);
+}
+
+body.light-theme .bg-grid {
+    background-image:
+        linear-gradient(rgba(0, 0, 0, 0.028) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.028) 1px, transparent 1px);
+    opacity: 0.42;
+}
+
+body.light-theme .bg-noise {
+    opacity: 0.045;
+    background-image:
+        radial-gradient(circle at 20% 20%, rgba(0, 0, 0, 0.7) 0 0.7px, transparent 0.8px),
+        radial-gradient(circle at 80% 40%, rgba(0, 0, 0, 0.65) 0 0.7px, transparent 0.8px),
+        radial-gradient(circle at 30% 70%, rgba(0, 0, 0, 0.6) 0 0.7px, transparent 0.8px);
+}
+
+body.light-theme .scanlines {
+    opacity: 0.16;
+    mix-blend-mode: multiply;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.012) 2px,
+        rgba(0, 0, 0, 0.012) 4px
+    );
+}
+
+body.light-theme .robot-container {
+    background:
+        radial-gradient(circle at 50% 30%, rgba(0, 0, 0, 0.08), transparent 22%),
+        radial-gradient(circle at 50% 72%, rgba(0, 0, 0, 0.035), transparent 28%);
+}
+
+body.light-theme .robot-container::before {
+    background: radial-gradient(circle, rgba(0, 0, 0, 0.1), transparent 55%);
+}
+
+body.light-theme .robot-container::after {
+    background: radial-gradient(ellipse, rgba(0, 0, 0, 0.1), transparent 60%);
+}
+
+body.light-theme #robotCanvas {
+    filter: drop-shadow(0 24px 40px rgba(0, 0, 0, 0.22))
+            drop-shadow(0 8px 16px rgba(0, 0, 0, 0.15))
+            drop-shadow(0 0 48px rgba(0, 0, 0, 0.04));
+}
+
+body.light-theme .speech-bubble,
+body.light-theme .toast {
+    background: rgba(255, 255, 255, 0.94);
+    border-color: rgba(0, 0, 0, 0.14);
+    color: #111;
+}
+
+body.light-theme .robot-status[data-tone="success"] {
+    text-shadow: 0 0 12px rgba(0, 0, 0, 0.16);
+}
+
+body.light-theme .robot-status[data-tone="active"] {
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.12);
+}
+
+body.light-theme .form-header h1 {
+    background: linear-gradient(135deg, #111111 0%, #343434 50%, #0f0f0f 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+body.light-theme .input-field {
+    border-bottom-color: rgba(0, 0, 0, 0.14);
+}
+
+body.light-theme .input-field::before {
+    background: radial-gradient(ellipse at 50% 100%, rgba(0, 0, 0, 0.045), transparent 70%);
+}
+
+body.light-theme .input-field:hover {
+    border-bottom-color: rgba(0, 0, 0, 0.24);
+}
+
+body.light-theme .input-field:focus-within {
+    border-bottom-color: rgba(0, 0, 0, 0.34);
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.1);
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.03), transparent 72%);
+}
+
+body.light-theme .input-field.valid {
+    border-bottom-color: rgba(0, 0, 0, 0.26);
+}
+
+body.light-theme .input-field.valid::after {
+    background: rgba(0, 0, 0, 0.45);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.18);
+}
+
+body.light-theme .input-field.invalid {
+    border-bottom-color: rgba(0, 0, 0, 0.2);
+}
+
+body.light-theme .input-field input,
+body.light-theme .input-field textarea {
+    caret-color: rgba(0, 0, 0, 0.75);
+}
+
+body.light-theme .input-field input::selection,
+body.light-theme .input-field textarea::selection {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+body.light-theme .input-line {
+    background: linear-gradient(90deg, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.72));
+}
+
+body.light-theme .input-field:focus-within .input-line,
+body.light-theme .input-field.valid .input-line {
+    box-shadow: 0 0 14px rgba(0, 0, 0, 0.12);
+}
+
+body.light-theme .input-field.invalid .input-line {
+    background: rgba(0, 0, 0, 0.34);
+}
+
+body.light-theme .submit-btn {
+    border-color: rgba(0, 0, 0, 0.22);
+}
+
+body.light-theme .submit-btn::before {
+    background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.22), transparent);
+}
+
+body.light-theme .submit-btn::after {
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.08), transparent 50%, rgba(0, 0, 0, 0.05));
+}
+
+body.light-theme .submit-btn:hover {
+    border-color: rgba(0, 0, 0, 0.38);
+    background: rgba(0, 0, 0, 0.04);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12),
+                0 0 0 1px rgba(0, 0, 0, 0.05),
+                0 0 20px rgba(0, 0, 0, 0.04);
+}
+
+body.light-theme .submit-btn.loading::after {
+    border-color: rgba(0, 0, 0, 0.18);
+    border-top-color: #111111;
+    background: transparent;
+}
+
+body.light-theme .submit-btn.success {
+    border-color: #111111;
+    background: #111111;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18),
+                0 0 40px rgba(0, 0, 0, 0.08);
+}
+
+body.light-theme .submit-btn.success .btn-text {
+    color: #ffffff;
+}
+
+body.light-theme .back-link {
+    color: rgba(0, 0, 0, 0.56);
+}
+
+body.light-theme .back-link:hover {
+    color: #111;
+    border-color: rgba(0, 0, 0, 0.14);
+    background: rgba(0, 0, 0, 0.03);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1);
+}
+
+body.light-theme .submit-btn:focus-visible,
+body.light-theme .back-link:focus-visible {
+    outline-color: rgba(0, 0, 0, 0.45);
+}
+
+body.light-theme ::selection {
+    background: rgba(0, 0, 0, 0.1);
+    color: #111111;
+}
+
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
