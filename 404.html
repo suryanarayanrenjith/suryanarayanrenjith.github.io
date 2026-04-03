@@ -25,6 +25,8 @@
   <style>
     :root {
       color-scheme: dark;
+      --viewport-pad-y: clamp(0.75rem, 1.9vh, 1.5rem);
+      --viewport-pad-x: clamp(0.9rem, 4.5vw, 4rem);
       --bg-color: #05060a;
       --panel-glass: rgba(5, 6, 10, 0.45);
       --panel-border: rgba(255, 255, 255, 0.08);
@@ -51,19 +53,24 @@
     }
 
     body {
-      min-height: 100vh;
+      height: 100vh;
+      min-height: 100dvh;
       margin: 0;
-      padding: clamp(1.5rem, 4vw, 3.75rem) clamp(1rem, 6vw, 5rem);
+      padding-top: max(var(--viewport-pad-y), env(safe-area-inset-top));
+      padding-right: max(var(--viewport-pad-x), env(safe-area-inset-right));
+      padding-bottom: max(var(--viewport-pad-y), env(safe-area-inset-bottom));
+      padding-left: max(var(--viewport-pad-x), env(safe-area-inset-left));
       font-family: var(--font-base);
       font-size: clamp(0.95rem, 0.35vw + 0.85rem, 1.05rem);
       background-color: var(--bg-color);
       color: var(--text-color);
       line-height: 1.6;
-      overflow-x: hidden;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
       position: relative;
     }
 
-    /* Enhanced Background Layers */
     .background-layers {
       position: fixed;
       inset: 0;
@@ -71,7 +78,6 @@
       overflow: hidden;
     }
 
-    /* Advanced Halftone Canvas */
     #halftoneCanvas {
       position: absolute;
       inset: 0;
@@ -80,7 +86,6 @@
       opacity: 0.6;
     }
 
-    /* Particle System Canvas */
     #particleCanvas {
       position: absolute;
       inset: 0;
@@ -89,7 +94,6 @@
       opacity: 0.9;
     }
 
-    /* Gradient Orbs */
     .gradient-orbs {
       position: absolute;
       inset: 0;
@@ -211,8 +215,9 @@
       position: relative;
       z-index: 1;
       width: min(1100px, 100%);
-      margin: 0 auto;
-      padding: clamp(1.5rem, 4vw, 4rem);
+      margin: 0;
+      max-height: calc(100dvh - var(--viewport-pad-y) - var(--viewport-pad-y));
+      padding: clamp(1rem, 2.4vh, 2rem) clamp(1rem, 3vw, 2.5rem);
       border-radius: clamp(1.25rem, 2vw, 2.5rem);
       border: 1px solid var(--border-color);
       background: linear-gradient(
@@ -226,7 +231,7 @@
         inset 0 -1px 0 rgba(255, 255, 255, 0.05);
       display: flex;
       flex-direction: column;
-      gap: clamp(1.5rem, 2vw, 2.5rem);
+      gap: clamp(1rem, 1.8vh, 1.9rem);
       position: relative;
       overflow: hidden;
     }
@@ -298,7 +303,7 @@
     .hero-grid {
       display: grid;
       grid-template-columns: 1fr;
-      gap: clamp(2rem, 4vw, 4rem);
+      gap: clamp(1.25rem, 2.2vh, 2.25rem);
       align-items: center;
     }
 
@@ -548,7 +553,7 @@
 
     /* Enhanced Astronaut */
     .astronaut {
-      width: min(360px, 70vw);
+      width: min(330px, 65vw);
       height: auto;
       animation: float 8s ease-in-out infinite;
       filter: drop-shadow(0 0 30px var(--glow-soft));
@@ -677,7 +682,8 @@
 
     @media (max-width: 600px) {
       body {
-        padding: 1.25rem;
+        --viewport-pad-y: 0.65rem;
+        --viewport-pad-x: 0.85rem;
       }
 
       .cta-group {
@@ -691,6 +697,41 @@
 
       .path-display {
         letter-spacing: 0.15em;
+      }
+
+      .main-shell {
+        padding: 0.9rem;
+      }
+    }
+
+    @media (max-height: 860px) {
+      :root {
+        --viewport-pad-y: clamp(0.55rem, 1.1vh, 0.95rem);
+      }
+
+      .main-shell {
+        padding: clamp(0.85rem, 1.6vh, 1.35rem) clamp(0.9rem, 2.5vw, 1.8rem);
+        gap: clamp(0.75rem, 1.4vh, 1.2rem);
+      }
+
+      .hero-grid {
+        gap: clamp(0.9rem, 1.6vh, 1.4rem);
+      }
+
+      .message {
+        font-size: clamp(1.45rem, 3vw, 2.2rem);
+      }
+
+      .description {
+        line-height: 1.45;
+      }
+
+      .figure-wrap {
+        padding: clamp(0.8rem, 1.8vh, 1.3rem);
+      }
+
+      .astronaut {
+        width: min(280px, 46vw);
       }
     }
 
