@@ -67,8 +67,9 @@
       color:#ccc;letter-spacing:1px;
     }
     #hud .col{display:flex;flex-direction:column;gap:2px}
-    .hp-bar{width:clamp(80px,20vw,140px);height:4px;background:#222;margin-top:4px;overflow:hidden}
-    .hp-fill{height:100%;background:#fff;transition:width .2s ease}
+    .lives-row{display:flex;gap:5px;margin-top:4px;min-height:8px}
+    .life-pip{width:14px;height:6px;border:1px solid #444;background:#111;transition:background .2s,border-color .2s,opacity .2s;opacity:.55}
+    .life-pip.on{background:#fff;border-color:#fff;opacity:1}
     .blast-bar{width:clamp(80px,20vw,140px);height:3px;background:#222;margin-top:3px;overflow:hidden}
     .blast-fill{height:100%;background:#666;transition:width .15s ease}
 
@@ -94,8 +95,8 @@
   </div>
   <div class="col" style="align-items:flex-end">
     <div>Level <span id="hLevel">1</span></div>
-    <div style="font-size:.7em;color:#555">HP</div>
-    <div class="hp-bar"><div class="hp-fill" id="hpFill" style="width:100%"></div></div>
+    <div style="font-size:.7em;color:#555">Lives</div>
+    <div id="hLives" class="lives-row" aria-label="Lives"></div>
     <div style="font-size:.7em;color:#555;margin-top:3px">Heat</div>
     <div class="blast-bar"><div class="blast-fill" id="heatFill" style="width:0%"></div></div>
     <div style="font-size:.7em;color:#555;margin-top:3px">Blast</div>
@@ -380,9 +381,9 @@ function spawnPickup(x, y) {
   if (pickups.length >= MAX_PICKUPS) return;
   const r = Math.random();
   let type;
-  if (r < 0.30) type = 'hp';
-  else if (r < 0.55) type = 'blast';
-  else if (r < 0.72) type = 'rapid';
+  if (r < 0.20) type = 'hp';
+  else if (r < 0.50) type = 'blast';
+  else if (r < 0.70) type = 'rapid';
   else if (r < 0.88) type = 'spread';
   else type = 'shield';
   pickups.push({ x, y, type, sz: 10, life: 5000, active: true });
@@ -397,7 +398,7 @@ const ship = {
   x: 0, y: 0,
   targetX: 0, targetY: 0,
   w: 18, h: 22,
-  hp: 5, maxHp: 5,
+  hp: 3, maxHp: 3,
   invuln: 0,
   trail: [],
 };
@@ -701,11 +702,18 @@ const hBestEl = document.getElementById('hBest');
 const hComboEl = document.getElementById('hCombo');
 const hRankEl = document.getElementById('hRank');
 const hLevelEl = document.getElementById('hLevel');
-const hpFill = document.getElementById('hpFill');
+const hLivesEl = document.getElementById('hLives');
 const heatFillEl = document.getElementById('heatFill');
 const blastFillEl = document.getElementById('blastFill');
 const focusFillEl = document.getElementById('focusFill');
 const hStormEl = document.getElementById('hStorm');
+const lifePips = [];
+for (let i = 0; i < ship.maxHp; i++) {
+  const pip = document.createElement('span');
+  pip.className = 'life-pip';
+  hLivesEl.appendChild(pip);
+  lifePips.push(pip);
+}
 
 function updateHUD() {
   hScoreEl.textContent = score;
@@ -713,7 +721,9 @@ function updateHUD() {
   hComboEl.textContent = combo;
   hRankEl.textContent = computeRank();
   hLevelEl.textContent = level;
-  hpFill.style.width = `${(ship.hp / ship.maxHp) * 100}%`;
+  for (let i = 0; i < lifePips.length; i++) {
+    lifePips[i].classList.toggle('on', i < ship.hp);
+  }
   const heatPct = (heat / MAX_HEAT) * 100;
   heatFillEl.style.width = `${heatPct}%`;
   heatFillEl.style.background = overheated ? '#fff' : (heatPct > 70 ? '#ccc' : '#666');
