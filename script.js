@@ -538,7 +538,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const MIN_STARS = 1200;
     const MAX_STARS = 7000;
     const FIELD_DEPTH = 2000;
-    const FIELD_SPREAD_DEPTH = 760;
+    const FIELD_SPREAD_DEPTH = 900;
     const FIELD_PADDING = 1.1;
     const STAR_NEAR_CLIP = 14;
     let starCount = 0;
@@ -550,10 +550,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function getFieldBounds() {
         const fovRad = THREE.MathUtils.degToRad(camera.fov);
-        const halfHeight = Math.tan(fovRad * 0.5) * FIELD_SPREAD_DEPTH * FIELD_PADDING;
+        const spreadDepth = Math.max(FIELD_SPREAD_DEPTH, FIELD_DEPTH * 0.75);
+        const halfHeight = Math.tan(fovRad * 0.5) * spreadDepth * FIELD_PADDING;
         const halfWidth = halfHeight * camera.aspect * FIELD_PADDING;
-        const minZ = camera.position.z - FIELD_DEPTH;
-        const maxZ = camera.position.z - STAR_NEAR_CLIP;
+        const minZ = -FIELD_DEPTH;
+        const maxZ = -STAR_NEAR_CLIP;
         return { halfWidth, halfHeight, minZ, maxZ };
     }
 
@@ -564,8 +565,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function respawnStar(index, bounds, forceBackPlane = false) {
         const i = index * 3;
-        starVertices[i] = camera.position.x + (Math.random() * 2 - 1) * bounds.halfWidth;
-        starVertices[i + 1] = camera.position.y + (Math.random() * 2 - 1) * bounds.halfHeight;
+        starVertices[i] = (Math.random() * 2 - 1) * bounds.halfWidth;
+        starVertices[i + 1] = (Math.random() * 2 - 1) * bounds.halfHeight;
         starVertices[i + 2] = forceBackPlane
             ? bounds.minZ
             : bounds.minZ + Math.random() * (bounds.maxZ - bounds.minZ);
@@ -581,8 +582,8 @@ document.addEventListener("DOMContentLoaded", () => {
         starTwinkles = new Float32Array(starCount);
 
         const bounds = getFieldBounds();
-        const minX = camera.position.x - bounds.halfWidth;
-        const minY = camera.position.y - bounds.halfHeight;
+        const minX = -bounds.halfWidth;
+        const minY = -bounds.halfHeight;
         const minZ = bounds.minZ;
         const rangeX = bounds.halfWidth * 2;
         const rangeY = bounds.halfHeight * 2;
@@ -622,7 +623,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const starFieldWhite = new THREE.Points(stars, starMaterialWhite);
     starFieldWhite.frustumCulled = false;
-    scene.add(starFieldWhite);
+    const starfieldRig = new THREE.Group();
+    starfieldRig.add(starFieldWhite);
+    scene.add(starfieldRig);
 
     camera.position.z = 1000;
     let dynamicStarBaseSize = starMaterialWhite.size;
@@ -663,6 +666,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let blackHoleEffect = false;
 
     let warpBurstIntensity = 0;
+    const shockwaveTargetScale = new THREE.Vector3(1, 1, 1);
 
     function triggerWarpBurst() {
         warpBurstIntensity = isMotionFxEnabled() ? 1.85 : 1.0;
@@ -684,21 +688,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    function wrapValueToRange(value, min, max) {
-        const range = max - min;
-        if (range <= 0) return value;
-        if (value < min || value > max) {
-            value = ((value - min) % range + range) % range + min;
-        }
-        return value;
-    }
-
     function applyWarpSpeed() {
         const bounds = getFieldBounds();
-        const minX = camera.position.x - bounds.halfWidth;
-        const maxX = camera.position.x + bounds.halfWidth;
-        const minY = camera.position.y - bounds.halfHeight;
-        const maxY = camera.position.y + bounds.halfHeight;
+        const minX = -bounds.halfWidth;
+        const maxX = bounds.halfWidth;
+        const minY = -bounds.halfHeight;
+        const maxY = bounds.halfHeight;
         const minZ = bounds.minZ;
         const maxZ = bounds.maxZ;
 
@@ -714,8 +709,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 starVertices[i + 2] = maxZ - (minZ - starVertices[i + 2]);
             }
 
-            starVertices[i] = wrapValueToRange(starVertices[i], minX, maxX);
-            starVertices[i + 1] = wrapValueToRange(starVertices[i + 1], minY, maxY);
+            // Soft toroidal wrapping in x/y prevents edge thinning without visible popping.
+            if (starVertices[i] > maxX) starVertices[i] = minX + (starVertices[i] - maxX);
+            else if (starVertices[i] < minX) starVertices[i] = maxX - (minX - starVertices[i]);
+
+            if (starVertices[i + 1] > maxY) starVertices[i + 1] = minY + (starVertices[i + 1] - maxY);
+            else if (starVertices[i + 1] < minY) starVertices[i + 1] = maxY - (minY - starVertices[i + 1]);
         }
 
         stars.attributes.position.needsUpdate = true;
@@ -729,20 +728,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function applyShockwaveEffect() {
         if (shockwaveTime > 0) {
-            const amplitude = isMotionFxEnabled() ? 3.4 : 2.2;
-            for (let i = 0; i < starVertices.length; i += 3) {
-                const x = starVertices[i], y = starVertices[i + 1];
-                const distSq = x * x + y * y;
-                if (distSq < 250000) {
-                    const dist = Math.sqrt(distSq);
-                    const wave = Math.sin(shockwaveTime * 10 + dist * 0.05) * amplitude;
-                    starVertices[i] += wave;
-                    starVertices[i + 1] += wave;
-                }
-            }
+            const amp = isMotionFxEnabled() ? 0.09 : 0.055;
+            const pulse = 1 + Math.sin(shockwaveTime * 11) * amp;
+            shockwaveTargetScale.set(pulse, pulse, 1);
             shockwaveTime -= isMotionFxEnabled() ? 0.028 : 0.02;
-            stars.attributes.position.needsUpdate = true;
+        } else {
+            shockwaveTargetScale.set(1, 1, 1);
         }
+
+        starFieldWhite.scale.lerp(shockwaveTargetScale, 0.2);
     }
 
     function applyBlackHoleEffect() {
@@ -781,7 +775,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         starFieldWhite.rotation.x += 0.0005 + driftX;
         starFieldWhite.rotation.y += 0.0007 + driftY;
-        starFieldWhite.position.z = Math.sin(time * 0.5) * 2.2;
+        starFieldWhite.position.z = Math.sin(time * 0.5) * 1.1;
     }
 
     function applyMouseAcceleration() {
@@ -935,6 +929,10 @@ document.addEventListener('keydown', (event) => {
                 camera.position.y += Math.cos(performance.now() * 0.015) * 0.03;
             }
         }
+
+        // Keep starfield camera-relative so GSAP camera moves cannot clip one side of the field.
+        starfieldRig.position.copy(camera.position);
+        starfieldRig.quaternion.copy(camera.quaternion);
 
         renderer.render(scene, camera);
         requestAnimationFrame(render);
