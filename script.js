@@ -73,20 +73,40 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!content) return;
         const hyper = isHyperModeEnabled();
 
-        const headings = content.querySelectorAll('h1, h2, h3, .animated-text');
-        const paragraphs = content.querySelectorAll('p, .tagline');
-        const buttons = content.querySelectorAll('.center-button, button, a[class]:not(.link-card)');
-        const listItems = content.querySelectorAll('li:not(.link-card)');
-        const linkCards = content.querySelectorAll('.link-card');
-        const visuals = content.querySelectorAll('img, svg');
-        const dividers = content.querySelectorAll('hr, .divider');
+        const canAnimateText = (el) => !hyper || !el.closest('.link-card');
+
+        const headings = Array.from(content.querySelectorAll('h1, h2, h3, .animated-text')).filter(canAnimateText);
+        const paragraphs = Array.from(content.querySelectorAll('p, .tagline')).filter(canAnimateText);
+        const buttons = Array.from(content.querySelectorAll('.center-button, button, a[class]:not(.link-card)')).filter(canAnimateText);
+        const listItems = Array.from(content.querySelectorAll('li:not(.link-card)')).filter(canAnimateText);
+        const linkCards = Array.from(content.querySelectorAll('.link-card'));
+        const visuals = Array.from(content.querySelectorAll('img, svg'));
+        const dividers = Array.from(content.querySelectorAll('hr, .divider'));
 
         const allEls = [headings, paragraphs, buttons, listItems, linkCards, visuals, dividers];
+        const animatedTargets = allEls.flat();
+
+        const resetAnimatedTextState = () => {
+            if (!animatedTargets.length) return;
+            gsap.set(animatedTargets, { opacity: 1 });
+            gsap.set(animatedTargets, { clearProps: 'transform,filter,clipPath' });
+        };
+
+        if (animatedTargets.length) {
+            gsap.killTweensOf(animatedTargets);
+            gsap.set(animatedTargets, { clearProps: 'transform,filter,clipPath,opacity' });
+        }
+
         allEls.forEach(group => {
             if (group.length) gsap.set(group, { opacity: 0 });
         });
 
-        const tl = gsap.timeline({ delay: hyper ? 0 : 0.05 });
+        const tl = gsap.timeline({
+            delay: hyper ? 0 : 0.05,
+            defaults: { overwrite: 'auto' },
+            onComplete: resetAnimatedTextState,
+            onInterrupt: resetAnimatedTextState
+        });
 
         if (headings.length) {
             tl.fromTo(headings,
@@ -142,7 +162,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     duration: 0.04,
                     ease: 'steps(2)',
                     yoyo: true,
-                    repeat: 2,
+                    repeat: 1,
                     stagger: 0.02
                 }, 0.11);
             }
@@ -265,6 +285,12 @@ document.addEventListener("DOMContentLoaded", () => {
             const hyper = isHyperModeEnabled();
             const isVertical = direction === 'up' || direction === 'down';
             const dirMult = (direction === 'down' || direction === 'right') ? -1 : 1;
+            let finished = false;
+            const finish = () => {
+                if (finished) return;
+                finished = true;
+                resolve();
+            };
 
             gsap.to(content, {
                 opacity: 0,
@@ -278,7 +304,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 ease: hyper ? 'steps(4)' : 'power3.in',
                 force3D: true,
                 overwrite: 'auto',
-                onComplete: resolve
+                onComplete: finish,
+                onInterrupt: finish
             });
         });
     };
@@ -315,6 +342,9 @@ document.addEventListener("DOMContentLoaded", () => {
             overwrite: 'auto',
             onComplete: () => {
                 gsap.set(content, { clearProps: 'all' });
+            },
+            onInterrupt: () => {
+                gsap.set(content, { clearProps: 'all' });
             }
         });
     };
@@ -322,6 +352,12 @@ document.addEventListener("DOMContentLoaded", () => {
     window.gsapFadeSwap = function(content, directionHint) {
         return new Promise(resolve => {
             const hyper = isHyperModeEnabled();
+            let finished = false;
+            const finish = () => {
+                if (finished) return;
+                finished = true;
+                resolve();
+            };
             gsap.to(content, {
                 opacity: 0,
                 scale: hyper ? 0.76 : 0.96,
@@ -331,7 +367,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 ease: hyper ? 'steps(2)' : 'power2.in',
                 force3D: true,
                 overwrite: 'auto',
-                onComplete: resolve
+                onComplete: finish,
+                onInterrupt: finish
             });
         });
     };
@@ -357,6 +394,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 force3D: true,
                 overwrite: 'auto',
                 onComplete: () => {
+                    gsap.set(content, { clearProps: 'all' });
+                },
+                onInterrupt: () => {
                     gsap.set(content, { clearProps: 'all' });
                 }
             }
