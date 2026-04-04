@@ -1021,36 +1021,39 @@ function switchCameraPosition() {
     if (starfieldFrozen) return;
 
     const smartDir = getDensityAwareVelocityDirection();
-    const visibilityGuard = THREE.MathUtils.clamp((smartDir.visibleRatio - 0.2) / 0.5, 0.45, 1);
-    const directionalTravel = (130 + smartDir.confidence * 210) * visibilityGuard;
-    const randomScatterX = (Math.random() - 0.5) * (smartDir.confidence > 0.3 ? 120 : 180);
-    const randomScatterY = (Math.random() - 0.5) * (smartDir.confidence > 0.3 ? 95 : 150);
+    const visibilityGuard = THREE.MathUtils.clamp((smartDir.visibleRatio - 0.2) / 0.5, 0.6, 1);
+    const directionalTravel = (260 + smartDir.confidence * 410) * visibilityGuard;
+    const randomScatterX = (Math.random() - 0.5) * (smartDir.confidence > 0.3 ? 240 : 340);
+    const randomScatterY = (Math.random() - 0.5) * (smartDir.confidence > 0.3 ? 180 : 270);
 
-    const centerPullStrength = 0.3 + (1 - visibilityGuard) * 0.2;
+    // Only pull back when we are near the outer safe envelope, so movement doesn't feel like snapping home.
+    const centerPullStrength = 0.06 + (1 - visibilityGuard) * 0.06;
+    const centerPullX = Math.sign(camera.position.x) * Math.max(0, Math.abs(camera.position.x) - 340) * centerPullStrength;
+    const centerPullY = Math.sign(camera.position.y) * Math.max(0, Math.abs(camera.position.y) - 260) * centerPullStrength;
     const targetX = camera.position.x
         + smartDir.x * directionalTravel
         + randomScatterX
-        - camera.position.x * centerPullStrength;
+        - centerPullX;
     const targetY = camera.position.y
         + smartDir.y * directionalTravel
         + randomScatterY
-        - camera.position.y * centerPullStrength;
+        - centerPullY;
 
-    const maxX = 430 + smartDir.confidence * 110;
-    const maxY = 320 + smartDir.confidence * 90;
+    const maxX = 760 + smartDir.confidence * 230;
+    const maxY = 560 + smartDir.confidence * 180;
     const randomX = THREE.MathUtils.clamp(targetX, -maxX, maxX);
     const randomY = THREE.MathUtils.clamp(targetY, -maxY, maxY);
     const randomZ = THREE.MathUtils.clamp(
-        860 + (Math.random() - 0.5) * 260 + smartDir.confidence * 70,
-        740,
-        1120
+        920 + (Math.random() - 0.5) * 420 + smartDir.confidence * 120,
+        650,
+        1340
     );
 
-    const rotationBias = smartDir.confidence * (Math.PI / 26);
-    const randomRotationX = (Math.random() - 0.5) * Math.PI / 10 - smartDir.y * rotationBias;
-    const randomRotationY = (Math.random() - 0.5) * Math.PI / 10 + smartDir.x * rotationBias;
+    const rotationBias = smartDir.confidence * (Math.PI / 18);
+    const randomRotationX = (Math.random() - 0.5) * Math.PI / 7 - smartDir.y * rotationBias;
+    const randomRotationY = (Math.random() - 0.5) * Math.PI / 7 + smartDir.x * rotationBias;
 
-    const zoomInFOV = Math.random() * 15 + 55;
+    const zoomInFOV = Math.random() * 18 + 48;
     const originalFOV = camera.fov;
 
     triggerWarpBurst();
@@ -1061,7 +1064,7 @@ function switchCameraPosition() {
 
     tl.to(camera, {
         fov: zoomInFOV,
-        duration: 0.6,
+        duration: 0.68,
         ease: "power3.in",
         onUpdate: () => camera.updateProjectionMatrix()
     });
@@ -1070,18 +1073,18 @@ function switchCameraPosition() {
         x: randomX,
         y: randomY,
         z: randomZ,
-        duration: 1.8,
+        duration: 2.05,
         ease: "power3.inOut",
         onUpdate: () => {
-            camera.position.x += Math.sin(performance.now() * 0.002) * 0.5;
-            camera.position.y += Math.cos(performance.now() * 0.0015) * 0.3;
+            camera.position.x += Math.sin(performance.now() * 0.002) * 0.35;
+            camera.position.y += Math.cos(performance.now() * 0.0015) * 0.22;
         }
     }, 0);
 
     tl.to(camera.rotation, {
         x: randomRotationX,
         y: randomRotationY,
-        duration: 1.8,
+        duration: 2.05,
         ease: "power3.inOut",
         onUpdate: () => {
             camera.rotation.x += Math.sin(performance.now() * 0.001) * 0.002;
@@ -1090,14 +1093,14 @@ function switchCameraPosition() {
     }, 0);
 
     tl.to(starFieldWhite.rotation, {
-        z: starFieldWhite.rotation.z + (Math.random() - 0.5) * 0.3,
-        duration: 1.5,
+        z: starFieldWhite.rotation.z + (Math.random() - 0.5) * 0.42,
+        duration: 1.85,
         ease: "power2.inOut"
     }, 0);
 
     tl.to(camera, {
         fov: originalFOV,
-        duration: 1.2,
+        duration: 1.35,
         ease: "elastic.out(1, 0.6)",
         onUpdate: () => camera.updateProjectionMatrix()
     }, "-=1.0");
