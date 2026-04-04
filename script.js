@@ -690,7 +690,8 @@ document.addEventListener("DOMContentLoaded", () => {
     pointLight.position.set(0, 0, 500);
     scene.add(pointLight);
 
-    const starDensity = 0.002;
+    const starDensity = 0.0032;
+    const starBounds = { x: 1500, y: 1200, z: 1500 };
     let starCount = Math.floor(window.innerWidth * window.innerHeight * starDensity);
 
 
@@ -701,9 +702,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function generateStars() {
         for (let i = 0; i < starCount * 3; i += 3) {
-            starVertices[i] = (Math.random() - 0.5) * 2000;
-            starVertices[i + 1] = (Math.random() - 0.5) * 2000;
-            starVertices[i + 2] = (Math.random() - 0.5) * 2000;
+            starVertices[i] = (Math.random() - 0.5) * starBounds.x * 2;
+            starVertices[i + 1] = (Math.random() - 0.5) * starBounds.y * 2;
+            starVertices[i + 2] = (Math.random() - 0.5) * starBounds.z * 2;
             starSpeeds[i / 3] = Math.random() * 0.1 + 0.02;
             starTwinkles[i / 3] = Math.random() * 0.5 + 0.5;
         }
@@ -802,8 +803,8 @@ document.addEventListener("DOMContentLoaded", () => {
         for (let i = 0; i < starVertices.length; i += 3) {
             starVertices[i + 2] += starSpeeds[i / 3] * 20 * burstMultiplier;
 
-            if (starVertices[i + 2] > 1000) {
-                starVertices[i + 2] = -1000;
+            if (starVertices[i + 2] > starBounds.z) {
+                starVertices[i + 2] = -starBounds.z;
             }
         }
         stars.attributes.position.needsUpdate = true;
@@ -932,7 +933,7 @@ function applyTwinkleEffect() {
         const posAttr = stars.getAttribute('position');
         if (!posAttr || !posAttr.array || posAttr.array.length < 3) {
             const angle = Math.random() * Math.PI * 2;
-            return { x: Math.cos(angle), y: Math.sin(angle), confidence: 0 };
+            return { x: Math.cos(angle), y: Math.sin(angle), confidence: 0, visibleRatio: 0.6 };
         }
 
         camera.updateMatrixWorld();
@@ -943,8 +944,10 @@ function applyTwinkleEffect() {
         const maxSamples = 1600;
         const stride = Math.max(1, Math.ceil(starTotal / maxSamples));
         let visibleCount = 0;
+        let sampledCount = 0;
 
         for (let starIdx = 0; starIdx < starTotal; starIdx += stride) {
+            sampledCount += 1;
             const i = starIdx * 3;
             densityProbe.set(positions[i], positions[i + 1], positions[i + 2]).project(camera);
 
@@ -967,9 +970,10 @@ function applyTwinkleEffect() {
 
         const randomAngle = Math.random() * Math.PI * 2;
         const randomDir = { x: Math.cos(randomAngle), y: Math.sin(randomAngle) };
+        const visibleRatio = visibleCount / Math.max(1, sampledCount);
 
         if (visibleCount < 25) {
-            return { x: randomDir.x, y: randomDir.y, confidence: 0 };
+            return { x: randomDir.x, y: randomDir.y, confidence: 0, visibleRatio };
         }
 
         let maxVal = -Infinity;
@@ -996,7 +1000,7 @@ function applyTwinkleEffect() {
 
         const tLen = Math.hypot(tx, ty);
         if (tLen < 0.08 || confidence < 0.08) {
-            return { x: randomDir.x, y: randomDir.y, confidence: 0 };
+            return { x: randomDir.x, y: randomDir.y, confidence: 0, visibleRatio };
         }
 
         tx /= tLen;
@@ -1010,24 +1014,41 @@ function applyTwinkleEffect() {
         bx /= blendedLen;
         by /= blendedLen;
 
-        return { x: bx, y: by, confidence };
+        return { x: bx, y: by, confidence, visibleRatio };
     }
 
 function switchCameraPosition() {
     if (starfieldFrozen) return;
 
     const smartDir = getDensityAwareVelocityDirection();
-    const directionalTravel = 320 + smartDir.confidence * 360;
-    const randomScatterX = (Math.random() - 0.5) * (smartDir.confidence > 0 ? 280 : 520);
-    const randomScatterY = (Math.random() - 0.5) * (smartDir.confidence > 0 ? 220 : 420);
+    const visibilityGuard = THREE.MathUtils.clamp((smartDir.visibleRatio - 0.2) / 0.5, 0.45, 1);
+    const directionalTravel = (130 + smartDir.confidence * 210) * visibilityGuard;
+    const randomScatterX = (Math.random() - 0.5) * (smartDir.confidence > 0.3 ? 120 : 180);
+    const randomScatterY = (Math.random() - 0.5) * (smartDir.confidence > 0.3 ? 95 : 150);
 
-    const randomX = THREE.MathUtils.clamp(smartDir.x * directionalTravel + randomScatterX, -900, 900);
-    const randomY = THREE.MathUtils.clamp(smartDir.y * directionalTravel + randomScatterY, -700, 700);
-    const randomZ = Math.random() * 800 + 200;
+    const centerPullStrength = 0.3 + (1 - visibilityGuard) * 0.2;
+    const targetX = camera.position.x
+        + smartDir.x * directionalTravel
+        + randomScatterX
+        - camera.position.x * centerPullStrength;
+    const targetY = camera.position.y
+        + smartDir.y * directionalTravel
+        + randomScatterY
+        - camera.position.y * centerPullStrength;
 
-    const rotationBias = smartDir.confidence * (Math.PI / 20);
-    const randomRotationX = (Math.random() - 0.5) * Math.PI / 8 - smartDir.y * rotationBias;
-    const randomRotationY = (Math.random() - 0.5) * Math.PI / 8 + smartDir.x * rotationBias;
+    const maxX = 430 + smartDir.confidence * 110;
+    const maxY = 320 + smartDir.confidence * 90;
+    const randomX = THREE.MathUtils.clamp(targetX, -maxX, maxX);
+    const randomY = THREE.MathUtils.clamp(targetY, -maxY, maxY);
+    const randomZ = THREE.MathUtils.clamp(
+        860 + (Math.random() - 0.5) * 260 + smartDir.confidence * 70,
+        740,
+        1120
+    );
+
+    const rotationBias = smartDir.confidence * (Math.PI / 26);
+    const randomRotationX = (Math.random() - 0.5) * Math.PI / 10 - smartDir.y * rotationBias;
+    const randomRotationY = (Math.random() - 0.5) * Math.PI / 10 + smartDir.x * rotationBias;
 
     const zoomInFOV = Math.random() * 15 + 55;
     const originalFOV = camera.fov;
