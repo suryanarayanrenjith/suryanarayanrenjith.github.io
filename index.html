@@ -676,7 +676,7 @@ function isDesktop() {
                                 <li data-action="go-projects"><span class="shortcut-key">Ctrl + Shift + 7</span> Go to Projects section</li>
                                 <li data-action="go-resume"><span class="shortcut-key">Ctrl + Shift + 8</span> Go to Resume section</li>
                                 <li data-action="open-terminal"><span class="shortcut-key">Ctrl + Shift + K</span> Open Terminal in new tab</li>
-                                <li data-action="open-links"><span class="shortcut-key">Ctrl + Shift + L</span> Open Links in the same tab</li>
+                                <li data-action="open-links"><span class="shortcut-key">Ctrl + Shift + L</span> Open Links in new tab</li>
                                 <li data-action="open-resume"><span class="shortcut-key">Ctrl + Shift + V</span> Open Resume in new tab</li>
                             </ul>
                         </div>
@@ -851,8 +851,8 @@ function isDesktop() {
                                 setActiveCommand(firstVisible);
                             }
 
-                            const openLinksSameTab = () => {
-                                setTimeout(() => window.open('/?section=links', '_self'), 100);
+                            const openLinksNewTab = () => {
+                                setTimeout(() => window.open('/?section=links', '_blank', 'noopener,noreferrer'), 100);
                             };
 
                             const openResumeNewTab = () => {
@@ -913,7 +913,7 @@ function isDesktop() {
                                         hideCommandPalette();
                                         break;
                                     case 'links':
-                                        openLinksSameTab();
+                                        openLinksNewTab();
                                         hideCommandPalette();
                                         break;
                                     case 'toggle-stars': {
@@ -1119,7 +1119,7 @@ function isDesktop() {
                     case 'go-projects':   navigateToSection?.('projects', 'none'); break;
                     case 'go-resume':     navigateToSection?.('resume', 'none'); break;
                     case 'open-terminal': launchTerminal(); break;
-                                        case 'open-links':    openLinksSameTab(); break;
+                                        case 'open-links':    openLinksNewTab(); break;
                                         case 'open-resume':   openResumeNewTab(); break;
                   }
                 });
@@ -1205,7 +1205,7 @@ function isDesktop() {
                     case 'Digit7': event.preventDefault(); navigateToSection?.('projects', 'none'); break;
                     case 'Digit8': event.preventDefault(); navigateToSection?.('resume', 'none'); break;
                     case 'KeyK':   event.preventDefault(); launchTerminal(); break;
-                                        case 'KeyL':   event.preventDefault(); openLinksSameTab(); break;
+                                        case 'KeyL':   event.preventDefault(); openLinksNewTab(); break;
                                         case 'KeyV':   event.preventDefault(); openResumeNewTab(); break;
                   }
                 }
