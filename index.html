@@ -624,13 +624,12 @@ function isDesktop() {
                     <li><button type="button" class="command-item" data-command="projects" data-search="projects go to projects section"><span class="command-item-title">Go to Projects</span><span class="command-item-meta">Section</span></button></li>
                     <li><button type="button" class="command-item" data-command="resume" data-search="resume go to resume section"><span class="command-item-title">Go to Resume</span><span class="command-item-meta">Section</span></button></li>
                     <li><button type="button" class="command-item" data-command="links" data-search="links open links section"><span class="command-item-title">Open Links</span><span class="command-item-meta">Section</span></button></li>
-                    <li><button type="button" class="command-item" data-command="resume-page" data-search="open resume page pdf profile"><span class="command-item-title">Open Resume</span><span class="command-item-meta">Link</span></button></li>
+                    <li><button type="button" class="command-item" data-command="resume-page" data-search="open resume page pdf profile"><span class="command-item-title">Open Resume</span><span class="command-item-meta">/Resume</span></button></li>
                     <li><button type="button" class="command-item" data-command="terminal" data-search="terminal cli open terminal"><span class="command-item-title">Open Terminal</span><span class="command-item-meta">Link</span></button></li>
                     <li><button type="button" class="command-item" data-command="toggle-stars" data-search="disable enable starfield animation webgl fallback"><span class="command-item-title">Toggle Star Field</span><span class="command-item-meta" data-starfield-status>On</span></button></li>
                     <li><button type="button" class="command-item" data-command="toggle-hyper-mode" data-search="hyper mode neon next level experimental"><span class="command-item-title">Toggle Hyper Mode</span><span class="command-item-meta" data-hyper-status>Off</span></button></li>
-                    <li><button type="button" class="command-item" data-command="toggle-glitch-fx" data-search="glitch fx cyberpunk visual experimental"><span class="command-item-title">Toggle Glitch FX</span><span class="command-item-meta" data-glitch-status>Off</span></button></li>
+                    <li><button type="button" class="command-item" data-command="toggle-motion-fx" data-search="motion fx shake cinematic experimental"><span class="command-item-title">Toggle Motion FX</span><span class="command-item-meta" data-motionfx-status>Off</span></button></li>
                     <li><button type="button" class="command-item" data-command="toggle-vortex-cursor" data-search="cursor vortex orbit futuristic experimental"><span class="command-item-title">Toggle Vortex Cursor</span><span class="command-item-meta" data-vortex-status>Off</span></button></li>
-                    <li><button type="button" class="command-item" data-command="toggle-scanline-boost" data-search="scanline boost crt hacker effect experimental"><span class="command-item-title">Toggle Scanline Boost</span><span class="command-item-meta" data-scanline-status>Off</span></button></li>
                     <li><button type="button" class="command-item" data-command="toggle-motion-freeze" data-search="motion freeze calm reduce animation experimental"><span class="command-item-title">Toggle Motion Freeze</span><span class="command-item-meta" data-motion-status>Off</span></button></li>
                     <li><button type="button" class="command-item" data-command="matrix" data-search="matrix popup experimental"><span class="command-item-title">Open Matrix</span><span class="command-item-meta">Experimental</span></button></li>
                     <li><button type="button" class="command-item" data-command="light" data-search="surya light mode theme toggle"><span class="command-item-title">Toggle Light Mode</span><span class="command-item-meta">Experimental</span></button></li>
@@ -766,9 +765,8 @@ function isDesktop() {
                             const commandPaletteHint  = document.querySelector('.command-palette-hint');
                             const starfieldStatus     = document.querySelector('[data-starfield-status]');
                             const hyperStatus         = document.querySelector('[data-hyper-status]');
-                            const glitchStatus        = document.querySelector('[data-glitch-status]');
+                            const motionFxStatus      = document.querySelector('[data-motionfx-status]');
                             const vortexStatus        = document.querySelector('[data-vortex-status]');
-                            const scanlineStatus      = document.querySelector('[data-scanline-status]');
                             const motionStatus        = document.querySelector('[data-motion-status]');
                             const commandPaletteItems = commandPaletteList
                                 ? Array.from(commandPaletteList.querySelectorAll('.command-item'))
@@ -847,26 +845,25 @@ function isDesktop() {
                                 if (starfieldStatus) starfieldStatus.textContent = enabled ? 'On' : 'Off';
                             }
 
+                            window.__motionFreezeContext = window.__motionFreezeContext || {
+                                hadStarfieldBeforeFreeze: null
+                            };
+
                             const experimentalToggleConfig = {
                                 hyperMode: {
                                     className: 'experimental-hyper-mode',
                                     storageKey: 'exp.hyperMode',
                                     statusEl: hyperStatus
                                 },
-                                glitchFx: {
-                                    className: 'experimental-glitch-fx',
-                                    storageKey: 'exp.glitchFx',
-                                    statusEl: glitchStatus
+                                motionFx: {
+                                    className: 'experimental-motion-fx',
+                                    storageKey: 'exp.motionFx',
+                                    statusEl: motionFxStatus
                                 },
                                 vortexCursor: {
                                     className: 'experimental-vortex-cursor',
                                     storageKey: 'exp.vortexCursor',
                                     statusEl: vortexStatus
-                                },
-                                scanlineBoost: {
-                                    className: 'experimental-scanline-boost',
-                                    storageKey: 'exp.scanlineBoost',
-                                    statusEl: scanlineStatus
                                 },
                                 motionFreeze: {
                                     className: 'experimental-motion-freeze',
@@ -907,6 +904,24 @@ function isDesktop() {
                                     ? forceEnabled
                                     : !document.body.classList.contains(config.className);
 
+                                if (name === 'motionFreeze') {
+                                    const state = window.__motionFreezeContext || (window.__motionFreezeContext = {
+                                        hadStarfieldBeforeFreeze: null
+                                    });
+
+                                    if (enabled) {
+                                        state.hadStarfieldBeforeFreeze = isStarfieldEnabled();
+                                        if (window.toggleStarFieldAnimation) {
+                                            window.toggleStarFieldAnimation(false);
+                                        }
+                                    } else {
+                                        if (state.hadStarfieldBeforeFreeze && window.toggleStarFieldAnimation) {
+                                            window.toggleStarFieldAnimation(true);
+                                        }
+                                        state.hadStarfieldBeforeFreeze = null;
+                                    }
+                                }
+
                                 document.body.classList.toggle(config.className, enabled);
                                 setStoredToggle(config.storageKey, enabled);
                                 syncExperimentalToggleLabels();
@@ -914,11 +929,15 @@ function isDesktop() {
                             }
 
                             function initializeExperimentalFeatures() {
-                                Object.values(experimentalToggleConfig).forEach(config => {
+                                Object.entries(experimentalToggleConfig).forEach(([name, config]) => {
                                     const enabled = getStoredToggle(config.storageKey);
-                                    document.body.classList.toggle(config.className, enabled);
+                                    if (enabled) {
+                                        toggleExperimentalFeature(name, true);
+                                    } else {
+                                        document.body.classList.remove(config.className);
+                                    }
                                 });
-                                syncExperimentalToggleLabels();
+                                syncStarfieldLabel();
                             }
 
                             function resetExperimentalFeatures() {
@@ -1015,6 +1034,14 @@ function isDesktop() {
                                         hideCommandPalette();
                                         break;
                                     case 'toggle-stars': {
+                                        if (document.body.classList.contains('experimental-motion-freeze')) {
+                                            if (window.toggleStarFieldAnimation) {
+                                                window.toggleStarFieldAnimation(false);
+                                            }
+                                            syncStarfieldLabel(false);
+                                            hideCommandPalette();
+                                            break;
+                                        }
                                         const next = window.toggleStarFieldAnimation ? window.toggleStarFieldAnimation() : !isStarfieldEnabled();
                                         syncStarfieldLabel(next);
                                         hideCommandPalette();
@@ -1024,21 +1051,17 @@ function isDesktop() {
                                         toggleExperimentalFeature('hyperMode');
                                         hideCommandPalette();
                                         break;
-                                    case 'toggle-glitch-fx':
-                                        toggleExperimentalFeature('glitchFx');
+                                    case 'toggle-motion-fx':
+                                        toggleExperimentalFeature('motionFx');
                                         hideCommandPalette();
                                         break;
                                     case 'toggle-vortex-cursor':
                                         toggleExperimentalFeature('vortexCursor');
                                         hideCommandPalette();
                                         break;
-                                    case 'toggle-scanline-boost':
-                                        toggleExperimentalFeature('scanlineBoost');
-                                        hideCommandPalette();
-                                        break;
                                     case 'toggle-motion-freeze':
+                                        toggleExperimentalFeature('motionFreeze');
                                         hideCommandPalette();
-                                        setTimeout(() => toggleExperimentalFeature('motionFreeze'), 60);
                                         break;
                                     case 'matrix':
                                         if (typeof window.showMatrixPopup === 'function') {

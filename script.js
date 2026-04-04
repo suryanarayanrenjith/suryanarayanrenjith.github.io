@@ -162,24 +162,29 @@ document.addEventListener("DOMContentLoaded", () => {
                     duration: 700,
                     delay: anime.stagger(80, { start: 200 })
                 });
+
+            function isHyperModeEnabled() {
+                return document.body.classList.contains('experimental-hyper-mode');
+            }
             }
 
             linkCards.forEach(card => {
                 if (card.dataset.animeHover) return;
                 card.dataset.animeHover = 'true';
+                    const hyper = isHyperModeEnabled();
                 card.addEventListener('mouseenter', () => {
                     anime({
                         targets: card,
                         scale: [1, 1.03],
                         boxShadow: ['0 2px 8px rgba(255,255,255,0)', '0 8px 30px rgba(255,255,255,0.08)'],
-                        easing: 'easeOutExpo',
-                        duration: 400
-                    });
-                });
-                card.addEventListener('mouseleave', () => {
-                    anime({
-                        targets: card,
-                        scale: [1.03, 1],
+                        scale: hyper ? 0.76 : 0.92,
+                        y: isVertical ? dirMult * (hyper ? 150 : 60) : 0,
+                        x: !isVertical ? dirMult * (hyper ? 180 : 80) : 0,
+                        rotationY: !isVertical ? dirMult * (hyper ? -12 : -4) : 0,
+                        rotationX: isVertical ? dirMult * (hyper ? 9 : 3) : 0,
+                        filter: hyper ? 'blur(16px)' : 'blur(8px)',
+                        duration: hyper ? 0.62 : 0.45,
+                        ease: hyper ? "expo.in" : "power3.in"
                         boxShadow: ['0 8px 30px rgba(255,255,255,0.08)', '0 2px 8px rgba(255,255,255,0)'],
                         easing: 'easeOutExpo',
                         duration: 400
@@ -187,17 +192,18 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
             });
         }
+                const hyper = isHyperModeEnabled();
     };
 
     window.gsapTransitionOut = function(content, direction) {
         return new Promise(resolve => {
             const isVertical = direction === 'up' || direction === 'down';
-            const dirMult = (direction === 'down' || direction === 'right') ? -1 : 1;
-
-            const tl = gsap.timeline({ onComplete: resolve });
-
-            tl.to(content, {
-                opacity: 0,
+                    scale: hyper ? 0.7 : 0.88,
+                    y: isVertical ? dirMult * (hyper ? 180 : 80) : 0,
+                    x: !isVertical ? dirMult * (hyper ? 220 : 100) : 0,
+                    rotationY: !isVertical ? dirMult * (hyper ? 14 : 5) : 0,
+                    rotationX: isVertical ? dirMult * (hyper ? -10 : -4) : 0,
+                    filter: hyper ? 'blur(18px)' : 'blur(10px)'
                 scale: 0.92,
                 y: isVertical ? dirMult * 60 : 0,
                 x: !isVertical ? dirMult * 80 : 0,
@@ -234,8 +240,8 @@ document.addEventListener("DOMContentLoaded", () => {
             rotationY: 0,
             rotationX: 0,
             filter: 'blur(0px)',
-            duration: 0.7,
-            ease: "power3.out",
+            duration: hyper ? 0.95 : 0.7,
+            ease: hyper ? "expo.out" : "power3.out",
             onComplete: () => {
                 gsap.set(content, { clearProps: "all" });
             }
@@ -244,30 +250,37 @@ document.addEventListener("DOMContentLoaded", () => {
 
     window.gsapFadeSwap = function(content, directionHint) {
         return new Promise(resolve => {
+            const hyper = isHyperModeEnabled();
             gsap.to(content, {
                 opacity: 0,
-                scale: 0.96,
-                y: -15,
-                filter: 'blur(4px)',
-                duration: 0.25,
-                ease: "power2.in",
+                scale: hyper ? 0.84 : 0.96,
+                y: hyper ? -42 : -15,
+                filter: hyper ? 'blur(12px)' : 'blur(4px)',
+                duration: hyper ? 0.42 : 0.25,
+                ease: hyper ? "expo.in" : "power2.in",
                 onComplete: resolve
             });
         });
     };
 
     window.gsapFadeIn = function(content) {
+        const hyper = isHyperModeEnabled();
         window.animateContentIn();
 
         gsap.fromTo(content,
-            { opacity: 0, scale: 0.96, y: 15, filter: 'blur(4px)' },
+            {
+                opacity: 0,
+                scale: hyper ? 0.8 : 0.96,
+                y: hyper ? 65 : 15,
+                filter: hyper ? 'blur(14px)' : 'blur(4px)'
+            },
             {
                 opacity: 1,
                 scale: 1,
                 y: 0,
                 filter: 'blur(0px)',
-                duration: 0.45,
-                ease: "power2.out",
+                duration: hyper ? 0.82 : 0.45,
+                ease: hyper ? "expo.out" : "power2.out",
                 onComplete: () => {
                     gsap.set(content, { clearProps: "all" });
                 }
