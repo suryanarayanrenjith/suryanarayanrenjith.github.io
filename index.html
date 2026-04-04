@@ -517,7 +517,11 @@ function isDesktop() {
     return window.innerWidth > 768 && !("ontouchstart" in window || navigator.maxTouchPoints > 0);
   }
 
+    window.__fallbackCursorInUse = !!window.__fallbackCursorInUse;
+
   function initializeCursor() {
+        window.__fallbackCursorInUse = false;
+        document.body.classList.remove('fallback-cursor');
     document.body.classList.add("custom-cursor-active");
 
     const cursorDot = document.createElement("div");
@@ -863,6 +867,7 @@ function isDesktop() {
                             const commandPaletteItems = commandPaletteList
                                 ? Array.from(commandPaletteList.querySelectorAll('.command-item'))
                                 : [];
+                            const vortexCommandItem = commandPaletteItems.find(item => item.dataset.command === 'toggle-vortex-cursor');
           
               const ua                = navigator.userAgent.toLowerCase();
               const isMac             = /macintosh|mac os x/i.test(ua) || (navigator.platform && /Mac/i.test(navigator.platform));
@@ -932,6 +937,29 @@ function isDesktop() {
                                 return !(window.__starfieldState && window.__starfieldState.enabled === false);
                             }
 
+                            function isVortexCursorAvailable() {
+                                if (window.__fallbackCursorInUse) return false;
+                                const hasCursorRoot = document.body.classList.contains('custom-cursor-active');
+                                const hasCursorNodes = !!document.querySelector('.cursor-dot') && !!document.querySelector('.cursor-dot-outline');
+                                return hasCursorRoot && hasCursorNodes;
+                            }
+
+                            function syncVortexCursorCommandAvailability(refreshFilter) {
+                                if (!vortexCommandItem) return;
+                                const available = isVortexCursorAvailable();
+                                vortexCommandItem.dataset.unavailable = available ? '0' : '1';
+
+                                if (!available) {
+                                    vortexCommandItem.classList.remove('is-active');
+                                    document.body.classList.remove('experimental-vortex-cursor');
+                                    setStoredToggle('exp.vortexCursor', false);
+                                }
+
+                                if (refreshFilter) {
+                                    filterCommandPalette(commandPaletteInput ? commandPaletteInput.value : '');
+                                }
+                            }
+
                             function syncStarfieldLabel(forceEnabled) {
                                 const enabled = typeof forceEnabled === 'boolean' ? forceEnabled : isStarfieldEnabled();
                                 if (starfieldStatus) starfieldStatus.textContent = enabled ? 'On' : 'Off';
@@ -990,9 +1018,13 @@ function isDesktop() {
                                 const config = experimentalToggleConfig[name];
                                 if (!config) return false;
 
-                                const enabled = typeof forceEnabled === 'boolean'
+                                let enabled = typeof forceEnabled === 'boolean'
                                     ? forceEnabled
                                     : !document.body.classList.contains(config.className);
+
+                                if (name === 'vortexCursor' && enabled && !isVortexCursorAvailable()) {
+                                    enabled = false;
+                                }
 
                                 if (name === 'motionFreeze') {
                                     if (window.setStarFieldFrozen) {
@@ -1015,6 +1047,7 @@ function isDesktop() {
                                         document.body.classList.remove(config.className);
                                     }
                                 });
+                                syncVortexCursorCommandAvailability(false);
                                 syncStarfieldLabel();
                             }
 
@@ -1030,7 +1063,8 @@ function isDesktop() {
 
                                 commandPaletteItems.forEach(item => {
                                     const hay = String(item.dataset.search || item.textContent || '').toLowerCase();
-                                    const visible = !needle || hay.includes(needle);
+                                    const unavailable = item.dataset.unavailable === '1';
+                                    const visible = !unavailable && (!needle || hay.includes(needle));
                                     item.parentElement.style.display = visible ? '' : 'none';
                                     if (visible && !firstVisible) firstVisible = item;
                                 });
@@ -1059,6 +1093,7 @@ function isDesktop() {
                                 commandPalette.setAttribute('aria-hidden', 'false');
                                 syncStarfieldLabel();
                                 syncExperimentalToggleLabels();
+                                syncVortexCursorCommandAvailability(false);
                                 filterCommandPalette(commandPaletteInput ? commandPaletteInput.value : '');
                                 if (commandPaletteInput) {
                                     commandPaletteInput.focus();
@@ -1126,6 +1161,12 @@ function isDesktop() {
                                         hideCommandPalette();
                                         break;
                                     case 'toggle-vortex-cursor':
+                                        if (!isVortexCursorAvailable()) {
+                                            toggleExperimentalFeature('vortexCursor', false);
+                                            syncVortexCursorCommandAvailability(true);
+                                            hideCommandPalette();
+                                            break;
+                                        }
                                         toggleExperimentalFeature('vortexCursor');
                                         hideCommandPalette();
                                         break;
@@ -1374,6 +1415,7 @@ function isDesktop() {
                             };
 
                             const handlePaletteToggleShortcut = (event) => {
+                                if (event.type !== 'keydown') return false;
                                 if (!isPaletteToggleEvent(event)) return false;
 
                                 const now = (window.performance && typeof window.performance.now === 'function')
@@ -1461,10 +1503,6 @@ function isDesktop() {
                                         case 'KeyV':   event.preventDefault(); openResumeNewTab(); break;
                   }
                 }
-                            }, true);
-
-                            window.addEventListener('keyup', event => {
-                                if (handlePaletteToggleShortcut(event)) return;
                             }, true);
             });
           </script>
@@ -3033,6 +3071,8 @@ function isOldBrowser() {
 
     if (!isWebGLAvailable() || isOldBrowser()) {
         console.log("WebGL is not supported or the browser is outdated. Switching to fallback animation.");
+        window.__fallbackCursorInUse = true;
+        document.body.classList.add('fallback-cursor');
         document.querySelectorAll(".cursor-dot, .cursor-dot-outline").forEach(element => {
             element.remove();
         });
