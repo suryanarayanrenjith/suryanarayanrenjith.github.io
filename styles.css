@@ -650,6 +650,10 @@ header {
 header.command-palette-open {
     width: min(920px, calc(100vw - 30px));
     padding: 0;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    transform: none !important;
     border-color: transparent;
     background-color: transparent;
     backdrop-filter: none;
@@ -662,6 +666,7 @@ header.command-palette-open {
     width: 100%;
     align-items: stretch;
     gap: 0;
+    transform: none !important;
 }
 
 .menu-bar.command-palette-open > ul {
