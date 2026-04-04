@@ -936,7 +936,8 @@ function applyTwinkleEffect() {
             return { x: Math.cos(angle), y: Math.sin(angle), confidence: 0, visibleRatio: 0.6 };
         }
 
-        camera.updateMatrixWorld();
+        camera.updateMatrixWorld(true);
+        starFieldWhite.updateMatrixWorld(true);
 
         const positions = posAttr.array;
         const bins = new Float32Array(densityGridCols * densityGridRows);
@@ -949,7 +950,10 @@ function applyTwinkleEffect() {
         for (let starIdx = 0; starIdx < starTotal; starIdx += stride) {
             sampledCount += 1;
             const i = starIdx * 3;
-            densityProbe.set(positions[i], positions[i + 1], positions[i + 2]).project(camera);
+            densityProbe
+                .set(positions[i], positions[i + 1], positions[i + 2])
+                .applyMatrix4(starFieldWhite.matrixWorld)
+                .project(camera);
 
             const nx = densityProbe.x;
             const ny = densityProbe.y;
@@ -990,8 +994,10 @@ function applyTwinkleEffect() {
         }
 
         const avg = visibleCount / bins.length;
-        let confidence = THREE.MathUtils.clamp(((maxVal - avg) / Math.max(avg, 1)) / 1.2, 0, 1);
-        if (maxVal - minVal <= 1.2) confidence = 0;
+        const dominance = (maxVal - avg) / Math.max(avg, 1);
+        const spread = (maxVal - minVal) / Math.max(maxVal, 1);
+        let confidence = THREE.MathUtils.clamp(dominance * 0.42 + spread * 1.05, 0, 1);
+        if (maxVal - minVal <= 0.35) confidence *= 0.18;
 
         const col = maxIdx % densityGridCols;
         const row = Math.floor(maxIdx / densityGridCols);
@@ -999,20 +1005,30 @@ function applyTwinkleEffect() {
         let ty = (0.5 - (row + 0.5) / densityGridRows) * 2;
 
         const tLen = Math.hypot(tx, ty);
-        if (tLen < 0.08 || confidence < 0.08) {
+        if (tLen < 0.08) {
             return { x: randomDir.x, y: randomDir.y, confidence: 0, visibleRatio };
         }
 
         tx /= tLen;
         ty /= tLen;
 
-        const randomWeight = 0.72 - confidence * 0.52;
+        const randomWeight = THREE.MathUtils.clamp(0.84 - confidence * 0.76, 0.08, 0.84);
         let bx = tx * (1 - randomWeight) + randomDir.x * randomWeight;
         let by = ty * (1 - randomWeight) + randomDir.y * randomWeight;
 
         const blendedLen = Math.hypot(bx, by) || 1;
         bx /= blendedLen;
         by /= blendedLen;
+
+        window.__densitySteerDebug = {
+            confidence,
+            visibleRatio,
+            maxVal,
+            minVal,
+            bestBin: { col, row },
+            target: { x: tx, y: ty },
+            blended: { x: bx, y: by }
+        };
 
         return { x: bx, y: by, confidence, visibleRatio };
     }
@@ -1105,9 +1121,17 @@ function switchCameraPosition() {
 
     const smartDir = getDensityAwareVelocityDirection();
     const visibilityGuard = THREE.MathUtils.clamp((smartDir.visibleRatio - 0.2) / 0.5, 0.6, 1);
-    const directionalTravel = (profile.travelBase + smartDir.confidence * profile.travelBoost) * visibilityGuard;
-    const randomScatterX = (Math.random() - 0.5) * (smartDir.confidence > 0.3 ? profile.scatterXConfident : profile.scatterXLoose);
-    const randomScatterY = (Math.random() - 0.5) * (smartDir.confidence > 0.3 ? profile.scatterYConfident : profile.scatterYLoose);
+    const directionInfluence = THREE.MathUtils.clamp(0.22 + smartDir.confidence * 0.78, 0.22, 1);
+    const directionalTravel = (profile.travelBase + smartDir.confidence * profile.travelBoost)
+        * visibilityGuard
+        * (0.8 + directionInfluence * 0.35);
+    const scatterDamp = 1.06 - directionInfluence * 0.56;
+    const randomScatterX = (Math.random() - 0.5)
+        * (smartDir.confidence > 0.3 ? profile.scatterXConfident : profile.scatterXLoose)
+        * scatterDamp;
+    const randomScatterY = (Math.random() - 0.5)
+        * (smartDir.confidence > 0.3 ? profile.scatterYConfident : profile.scatterYLoose)
+        * scatterDamp;
 
     // Only pull back when we are near the outer safe envelope, so movement doesn't feel like snapping home.
     const centerPullStrength = profile.centerPullBase + (1 - visibilityGuard) * profile.centerPullGuardScale;
