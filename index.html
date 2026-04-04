@@ -868,6 +868,11 @@ function isDesktop() {
                                 ? Array.from(commandPaletteList.querySelectorAll('.command-item'))
                                 : [];
                             const vortexCommandItem = commandPaletteItems.find(item => item.dataset.command === 'toggle-vortex-cursor');
+
+                            if (commandPalette && commandPalette.parentElement !== document.body) {
+                                document.body.appendChild(commandPalette);
+                            }
+
                             const commandPaletteAliases = {
                                 home: 'start landing main welcome',
                                 about: 'profile bio intro who',
@@ -1295,6 +1300,7 @@ function isDesktop() {
                                 setCommandPaletteLockState(true);
                                 menuBar.classList.add('command-palette-open');
                                 header.classList.add('command-palette-open');
+                                commandPalette.classList.add('is-open');
                                 commandPalette.setAttribute('aria-hidden', 'false');
                                 syncStarfieldLabel();
                                 syncExperimentalToggleLabels();
@@ -1312,6 +1318,7 @@ function isDesktop() {
                                 setCommandPaletteLockState(false);
                                 menuBar.classList.remove('command-palette-open');
                                 header.classList.remove('command-palette-open');
+                                commandPalette.classList.remove('is-open');
                                 commandPalette.setAttribute('aria-hidden', 'true');
                                 if (commandPaletteInput) commandPaletteInput.value = '';
                                 filterCommandPalette('');

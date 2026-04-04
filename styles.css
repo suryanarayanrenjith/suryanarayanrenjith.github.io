@@ -220,7 +220,8 @@ body.experimental-motion-fx .menu-bar.command-palette-open .command-item {
     transform: none !important;
 }
 
-body.experimental-motion-fx .menu-bar.command-palette-open .command-palette {
+body.experimental-motion-fx .menu-bar.command-palette-open .command-palette,
+body.experimental-motion-fx .command-palette.is-open {
     animation: none !important;
     transform: translate(-50%, 0) !important;
 }
@@ -869,7 +870,8 @@ header.command-palette-open {
                 box-shadow 0.24s ease;
 }
 
-.menu-bar.command-palette-open .command-palette {
+.menu-bar.command-palette-open .command-palette,
+.command-palette.is-open {
     max-height: min(76vh, 760px);
     opacity: 1;
     visibility: visible;
@@ -883,20 +885,31 @@ header.command-palette-open {
     transform: translate(-50%, 0);
 }
 
-.menu-bar.command-palette-open .command-item {
+.menu-bar.command-palette-open .command-item,
+.command-palette.is-open .command-item {
     animation: commandPaletteItemIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.menu-bar.command-palette-open .command-palette-list li:nth-child(1) .command-item { animation-delay: 0.02s; }
-.menu-bar.command-palette-open .command-palette-list li:nth-child(2) .command-item { animation-delay: 0.04s; }
-.menu-bar.command-palette-open .command-palette-list li:nth-child(3) .command-item { animation-delay: 0.06s; }
-.menu-bar.command-palette-open .command-palette-list li:nth-child(4) .command-item { animation-delay: 0.08s; }
-.menu-bar.command-palette-open .command-palette-list li:nth-child(5) .command-item { animation-delay: 0.1s; }
-.menu-bar.command-palette-open .command-palette-list li:nth-child(6) .command-item { animation-delay: 0.12s; }
-.menu-bar.command-palette-open .command-palette-list li:nth-child(7) .command-item { animation-delay: 0.14s; }
-.menu-bar.command-palette-open .command-palette-list li:nth-child(8) .command-item { animation-delay: 0.16s; }
-.menu-bar.command-palette-open .command-palette-list li:nth-child(9) .command-item { animation-delay: 0.18s; }
-.menu-bar.command-palette-open .command-palette-list li:nth-child(10) .command-item { animation-delay: 0.2s; }
+.menu-bar.command-palette-open .command-palette-list li:nth-child(1) .command-item,
+.command-palette.is-open .command-palette-list li:nth-child(1) .command-item { animation-delay: 0.02s; }
+.menu-bar.command-palette-open .command-palette-list li:nth-child(2) .command-item,
+.command-palette.is-open .command-palette-list li:nth-child(2) .command-item { animation-delay: 0.04s; }
+.menu-bar.command-palette-open .command-palette-list li:nth-child(3) .command-item,
+.command-palette.is-open .command-palette-list li:nth-child(3) .command-item { animation-delay: 0.06s; }
+.menu-bar.command-palette-open .command-palette-list li:nth-child(4) .command-item,
+.command-palette.is-open .command-palette-list li:nth-child(4) .command-item { animation-delay: 0.08s; }
+.menu-bar.command-palette-open .command-palette-list li:nth-child(5) .command-item,
+.command-palette.is-open .command-palette-list li:nth-child(5) .command-item { animation-delay: 0.1s; }
+.menu-bar.command-palette-open .command-palette-list li:nth-child(6) .command-item,
+.command-palette.is-open .command-palette-list li:nth-child(6) .command-item { animation-delay: 0.12s; }
+.menu-bar.command-palette-open .command-palette-list li:nth-child(7) .command-item,
+.command-palette.is-open .command-palette-list li:nth-child(7) .command-item { animation-delay: 0.14s; }
+.menu-bar.command-palette-open .command-palette-list li:nth-child(8) .command-item,
+.command-palette.is-open .command-palette-list li:nth-child(8) .command-item { animation-delay: 0.16s; }
+.menu-bar.command-palette-open .command-palette-list li:nth-child(9) .command-item,
+.command-palette.is-open .command-palette-list li:nth-child(9) .command-item { animation-delay: 0.18s; }
+.menu-bar.command-palette-open .command-palette-list li:nth-child(10) .command-item,
+.command-palette.is-open .command-palette-list li:nth-child(10) .command-item { animation-delay: 0.2s; }
 
 @keyframes commandPaletteItemIn {
     from {
@@ -2121,7 +2134,8 @@ body.light-theme header.command-palette-open {
     backdrop-filter: none;
 }
 
-body.light-theme .menu-bar.command-palette-open .command-palette {
+body.light-theme .menu-bar.command-palette-open .command-palette,
+body.light-theme .command-palette.is-open {
     border-color: rgba(0, 0, 0, 0.16);
     background-color: rgba(245, 245, 245, 0.86);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.14), inset 0 0 0 1px rgba(255, 255, 255, 0.46);
