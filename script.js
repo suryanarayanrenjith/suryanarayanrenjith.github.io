@@ -538,7 +538,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const MIN_STARS = 1200;
     const MAX_STARS = 7000;
     const FIELD_DEPTH = 2000;
+    const FIELD_SPREAD_DEPTH = 760;
     const FIELD_PADDING = 1.1;
+    const STAR_NEAR_CLIP = 14;
     let starCount = 0;
 
     const stars = new THREE.BufferGeometry();
@@ -547,11 +549,12 @@ document.addEventListener("DOMContentLoaded", () => {
     let starTwinkles = new Float32Array(0);
 
     function getFieldBounds() {
-        const halfDepth = FIELD_DEPTH * 0.5;
         const fovRad = THREE.MathUtils.degToRad(camera.fov);
-        const halfHeight = Math.tan(fovRad * 0.5) * halfDepth * FIELD_PADDING;
+        const halfHeight = Math.tan(fovRad * 0.5) * FIELD_SPREAD_DEPTH * FIELD_PADDING;
         const halfWidth = halfHeight * camera.aspect * FIELD_PADDING;
-        return { halfWidth, halfHeight, halfDepth };
+        const minZ = camera.position.z - FIELD_DEPTH;
+        const maxZ = camera.position.z - STAR_NEAR_CLIP;
+        return { halfWidth, halfHeight, minZ, maxZ };
     }
 
     function getDynamicStarCount() {
@@ -564,11 +567,11 @@ document.addEventListener("DOMContentLoaded", () => {
         starVertices[i] = camera.position.x + (Math.random() * 2 - 1) * bounds.halfWidth;
         starVertices[i + 1] = camera.position.y + (Math.random() * 2 - 1) * bounds.halfHeight;
         starVertices[i + 2] = forceBackPlane
-            ? camera.position.z - bounds.halfDepth - Math.random() * 80
-            : camera.position.z + (Math.random() * 2 - 1) * bounds.halfDepth;
+            ? bounds.minZ
+            : bounds.minZ + Math.random() * (bounds.maxZ - bounds.minZ);
 
         starSpeeds[index] = Math.random() * 0.1 + 0.02;
-        starTwinkles[index] = Math.random() * 0.5 + 0.5;
+        starTwinkles[index] = Math.random() * Math.PI * 2;
     }
 
     function rebuildStarfield() {
@@ -578,8 +581,26 @@ document.addEventListener("DOMContentLoaded", () => {
         starTwinkles = new Float32Array(starCount);
 
         const bounds = getFieldBounds();
+        const minX = camera.position.x - bounds.halfWidth;
+        const minY = camera.position.y - bounds.halfHeight;
+        const minZ = bounds.minZ;
+        const rangeX = bounds.halfWidth * 2;
+        const rangeY = bounds.halfHeight * 2;
+        const rangeZ = bounds.maxZ - bounds.minZ;
+
+        // Jittered grid gives more even density than pure random while keeping a natural look.
+        const gridSize = Math.ceil(Math.cbrt(starCount));
         for (let i = 0; i < starCount; i++) {
-            respawnStar(i, bounds);
+            const i3 = i * 3;
+            const gx = i % gridSize;
+            const gy = Math.floor(i / gridSize) % gridSize;
+            const gz = Math.floor(i / (gridSize * gridSize));
+
+            starVertices[i3] = minX + ((gx + Math.random()) / gridSize) * rangeX;
+            starVertices[i3 + 1] = minY + ((gy + Math.random()) / gridSize) * rangeY;
+            starVertices[i3 + 2] = minZ + ((gz + Math.random()) / gridSize) * rangeZ;
+            starSpeeds[i] = Math.random() * 0.1 + 0.02;
+            starTwinkles[i] = Math.random() * Math.PI * 2;
         }
 
         const positionAttr = new THREE.BufferAttribute(starVertices, 3);
@@ -604,6 +625,12 @@ document.addEventListener("DOMContentLoaded", () => {
     scene.add(starFieldWhite);
 
     camera.position.z = 1000;
+    let dynamicStarBaseSize = starMaterialWhite.size;
+
+    const quickCameraRotateX = gsap.quickTo(camera.rotation, 'x', { duration: 0.5, ease: 'power2.out' });
+    const quickCameraRotateY = gsap.quickTo(camera.rotation, 'y', { duration: 0.5, ease: 'power2.out' });
+    const quickLightX = gsap.quickTo(pointLight.position, 'x', { duration: 0.5, ease: 'power2.out' });
+    const quickLightY = gsap.quickTo(pointLight.position, 'y', { duration: 0.5, ease: 'power2.out' });
 
     window.addEventListener('themeChanged', (e) => {
         if (e.detail && e.detail.light) {
@@ -657,13 +684,23 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    function wrapValueToRange(value, min, max) {
+        const range = max - min;
+        if (range <= 0) return value;
+        if (value < min || value > max) {
+            value = ((value - min) % range + range) % range + min;
+        }
+        return value;
+    }
+
     function applyWarpSpeed() {
         const bounds = getFieldBounds();
         const minX = camera.position.x - bounds.halfWidth;
         const maxX = camera.position.x + bounds.halfWidth;
         const minY = camera.position.y - bounds.halfHeight;
         const maxY = camera.position.y + bounds.halfHeight;
-        const nearZ = camera.position.z + bounds.halfDepth;
+        const minZ = bounds.minZ;
+        const maxZ = bounds.maxZ;
 
         const burstMultiplier = 1 + warpBurstIntensity * (isMotionFxEnabled() ? 62 : 40);
 
@@ -671,28 +708,28 @@ document.addEventListener("DOMContentLoaded", () => {
             const starIndex = i / 3;
             starVertices[i + 2] += starSpeeds[starIndex] * 20 * burstMultiplier;
 
-            if (
-                starVertices[i + 2] > nearZ ||
-                starVertices[i] < minX || starVertices[i] > maxX ||
-                starVertices[i + 1] < minY || starVertices[i + 1] > maxY
-            ) {
-                respawnStar(starIndex, bounds, true);
+            if (starVertices[i + 2] > maxZ) {
+                starVertices[i + 2] = minZ + (starVertices[i + 2] - maxZ);
+            } else if (starVertices[i + 2] < minZ) {
+                starVertices[i + 2] = maxZ - (minZ - starVertices[i + 2]);
             }
+
+            starVertices[i] = wrapValueToRange(starVertices[i], minX, maxX);
+            starVertices[i + 1] = wrapValueToRange(starVertices[i + 1], minY, maxY);
         }
 
         stars.attributes.position.needsUpdate = true;
     }
 
     function applyDynamicStarScaling() {
-        const positions = stars.attributes.position.array;
-        const lastZ = positions[positions.length - 1];
-        const burstSize = warpBurstIntensity * (isMotionFxEnabled() ? 4.8 : 3);
-        starMaterialWhite.size = Math.max(1, 10 / (lastZ / 100 + 1)) + burstSize;
+        const baseSize = isMotionFxEnabled() ? 2.2 : 1.95;
+        const burstSize = warpBurstIntensity * (isMotionFxEnabled() ? 1.45 : 0.9);
+        dynamicStarBaseSize = baseSize + burstSize;
     }
 
     function applyShockwaveEffect() {
         if (shockwaveTime > 0) {
-            const amplitude = isMotionFxEnabled() ? 8 : 5;
+            const amplitude = isMotionFxEnabled() ? 3.4 : 2.2;
             for (let i = 0; i < starVertices.length; i += 3) {
                 const x = starVertices[i], y = starVertices[i + 1];
                 const distSq = x * x + y * y;
@@ -726,21 +763,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function applyTwinkleEffect() {
         const time = performance.now() * 0.001;
+        const twinkleWave =
+            Math.sin(time * 0.45 + 0.8) * 0.04 +
+            Math.sin(time * 1.1 + 2.3) * 0.025;
+        const burstGlow = warpBurstIntensity * (isMotionFxEnabled() ? 0.06 : 0.035);
+        const baseOpacity = isMotionFxEnabled() ? 0.82 : 0.78;
 
-        const baseSineWave = Math.sin(time * 5 + 0.75 * 20);
-        const baseCosineWave = Math.cos(time * 2.5 + 0.75 * 10);
-        const flicker = Math.sin(time * 8 + 0.75 * 40) * 0.3;
-        const noise = (Math.random() - 0.5) * 0.15;
-        const slowBreath = Math.sin(time * 0.3 + 0.75 * 5) * 0.2 + 0.8;
-        const layeredEffect = Math.sin(time * 1.2 + Math.sin(time * 0.7) * 2 + 0.75 * 25) * 0.4 + 0.6;
-        const depthEffect = Math.sin(time * 0.2 + 0.75 * 50) * 0.3 + 0.7;
-
-        const twinkleIntensity =
-            (baseSineWave * 0.3 + baseCosineWave * 0.3 + flicker * 0.2 + noise * 0.1)
-            * slowBreath * layeredEffect * depthEffect;
-
-        starMaterialWhite.opacity = 3.0 + twinkleIntensity * 0.8;
-        starMaterialWhite.size = 2.0 + twinkleIntensity * 4.0;
+        starMaterialWhite.opacity = THREE.MathUtils.clamp(baseOpacity + twinkleWave + burstGlow, 0.64, 0.9);
+        starMaterialWhite.size = THREE.MathUtils.clamp(dynamicStarBaseSize * (1 + twinkleWave * 0.22), 1.6, 3.8);
     }
 
     function animateStars() {
@@ -751,8 +781,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         starFieldWhite.rotation.x += 0.0005 + driftX;
         starFieldWhite.rotation.y += 0.0007 + driftY;
-
-        starFieldWhite.position.z += Math.sin(time * 0.5) * 0.05;
+        starFieldWhite.position.z = Math.sin(time * 0.5) * 2.2;
     }
 
     function applyMouseAcceleration() {
@@ -771,19 +800,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const mouseTiltX = mouseY * maxTiltX;
         const mouseTiltY = -mouseX * maxTiltY;
 
-        gsap.to(camera.rotation, {
-            x: THREE.MathUtils.degToRad(mouseTiltX),
-            y: THREE.MathUtils.degToRad(mouseTiltY),
-            duration: 0.5,
-            ease: "power2.out"
-        });
-
-        gsap.to(pointLight.position, {
-            x: mouseX * 100,
-            y: mouseY * 100,
-            duration: 0.5,
-            ease: "power2.out"
-        });
+        quickCameraRotateX(THREE.MathUtils.degToRad(mouseTiltX));
+        quickCameraRotateY(THREE.MathUtils.degToRad(mouseTiltY));
+        quickLightX(mouseX * 100);
+        quickLightY(mouseY * 100);
     }
 
 function switchCameraPosition() {
