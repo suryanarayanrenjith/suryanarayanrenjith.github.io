@@ -924,15 +924,110 @@ function applyTwinkleEffect() {
         });
     }
 
+    const densityProbe = new THREE.Vector3();
+    const densityGridCols = 4;
+    const densityGridRows = 3;
+
+    function getDensityAwareVelocityDirection() {
+        const posAttr = stars.getAttribute('position');
+        if (!posAttr || !posAttr.array || posAttr.array.length < 3) {
+            const angle = Math.random() * Math.PI * 2;
+            return { x: Math.cos(angle), y: Math.sin(angle), confidence: 0 };
+        }
+
+        camera.updateMatrixWorld();
+
+        const positions = posAttr.array;
+        const bins = new Float32Array(densityGridCols * densityGridRows);
+        const starTotal = positions.length / 3;
+        const maxSamples = 1600;
+        const stride = Math.max(1, Math.ceil(starTotal / maxSamples));
+        let visibleCount = 0;
+
+        for (let starIdx = 0; starIdx < starTotal; starIdx += stride) {
+            const i = starIdx * 3;
+            densityProbe.set(positions[i], positions[i + 1], positions[i + 2]).project(camera);
+
+            const nx = densityProbe.x;
+            const ny = densityProbe.y;
+            const nz = densityProbe.z;
+
+            if (!Number.isFinite(nx) || !Number.isFinite(ny) || !Number.isFinite(nz)) continue;
+            if (nz < -1 || nz > 1 || nx < -1.1 || nx > 1.1 || ny < -1.1 || ny > 1.1) continue;
+
+            const x01 = (nx + 1) * 0.5;
+            const y01 = (1 - ny) * 0.5;
+
+            const col = Math.min(densityGridCols - 1, Math.max(0, Math.floor(x01 * densityGridCols)));
+            const row = Math.min(densityGridRows - 1, Math.max(0, Math.floor(y01 * densityGridRows)));
+
+            bins[row * densityGridCols + col] += 1;
+            visibleCount += 1;
+        }
+
+        const randomAngle = Math.random() * Math.PI * 2;
+        const randomDir = { x: Math.cos(randomAngle), y: Math.sin(randomAngle) };
+
+        if (visibleCount < 25) {
+            return { x: randomDir.x, y: randomDir.y, confidence: 0 };
+        }
+
+        let maxVal = -Infinity;
+        let minVal = Infinity;
+        let maxIdx = 0;
+
+        for (let i = 0; i < bins.length; i++) {
+            const v = bins[i];
+            if (v > maxVal) {
+                maxVal = v;
+                maxIdx = i;
+            }
+            if (v < minVal) minVal = v;
+        }
+
+        const avg = visibleCount / bins.length;
+        let confidence = THREE.MathUtils.clamp(((maxVal - avg) / Math.max(avg, 1)) / 1.2, 0, 1);
+        if (maxVal - minVal <= 1.2) confidence = 0;
+
+        const col = maxIdx % densityGridCols;
+        const row = Math.floor(maxIdx / densityGridCols);
+        let tx = ((col + 0.5) / densityGridCols - 0.5) * 2;
+        let ty = (0.5 - (row + 0.5) / densityGridRows) * 2;
+
+        const tLen = Math.hypot(tx, ty);
+        if (tLen < 0.08 || confidence < 0.08) {
+            return { x: randomDir.x, y: randomDir.y, confidence: 0 };
+        }
+
+        tx /= tLen;
+        ty /= tLen;
+
+        const randomWeight = 0.72 - confidence * 0.52;
+        let bx = tx * (1 - randomWeight) + randomDir.x * randomWeight;
+        let by = ty * (1 - randomWeight) + randomDir.y * randomWeight;
+
+        const blendedLen = Math.hypot(bx, by) || 1;
+        bx /= blendedLen;
+        by /= blendedLen;
+
+        return { x: bx, y: by, confidence };
+    }
+
 function switchCameraPosition() {
     if (starfieldFrozen) return;
 
-    const randomX = (Math.random() - 0.5) * 800;
-    const randomY = (Math.random() - 0.5) * 600;
+    const smartDir = getDensityAwareVelocityDirection();
+    const directionalTravel = 320 + smartDir.confidence * 360;
+    const randomScatterX = (Math.random() - 0.5) * (smartDir.confidence > 0 ? 280 : 520);
+    const randomScatterY = (Math.random() - 0.5) * (smartDir.confidence > 0 ? 220 : 420);
+
+    const randomX = THREE.MathUtils.clamp(smartDir.x * directionalTravel + randomScatterX, -900, 900);
+    const randomY = THREE.MathUtils.clamp(smartDir.y * directionalTravel + randomScatterY, -700, 700);
     const randomZ = Math.random() * 800 + 200;
 
-    const randomRotationX = (Math.random() - 0.5) * Math.PI / 8;
-    const randomRotationY = (Math.random() - 0.5) * Math.PI / 8;
+    const rotationBias = smartDir.confidence * (Math.PI / 20);
+    const randomRotationX = (Math.random() - 0.5) * Math.PI / 8 - smartDir.y * rotationBias;
+    const randomRotationY = (Math.random() - 0.5) * Math.PI / 8 + smartDir.x * rotationBias;
 
     const zoomInFOV = Math.random() * 15 + 55;
     const originalFOV = camera.fov;
