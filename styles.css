@@ -860,10 +860,9 @@ header.command-palette-open {
     border: 1px solid transparent;
     background-color: transparent;
     box-shadow: none;
-    transform: translate(-50%, -8px);
+    transform: translate(-50%, 0);
     transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1),
                 opacity 0.24s ease,
-                transform 0.24s ease,
                 padding 0.24s ease,
                 border-color 0.24s ease,
                 background-color 0.24s ease,
@@ -902,11 +901,11 @@ header.command-palette-open {
 @keyframes commandPaletteItemIn {
     from {
         opacity: 0;
-        transform: translateY(8px);
+        transform: scale(0.985);
     }
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: scale(1);
     }
 }
 
@@ -947,6 +946,7 @@ header.command-palette-open {
     width: 30px;
     height: 30px;
     border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 6px;
     background: rgba(0, 0, 0, 0.35);
     color: rgba(255, 255, 255, 0.78);
     cursor: pointer;

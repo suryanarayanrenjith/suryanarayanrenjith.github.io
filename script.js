@@ -1020,16 +1020,99 @@ function applyTwinkleEffect() {
 function switchCameraPosition() {
     if (starfieldFrozen) return;
 
+    const hyper = isHyperModeEnabled();
+    const profile = hyper
+        ? {
+            travelBase: 320,
+            travelBoost: 520,
+            scatterXConfident: 320,
+            scatterXLoose: 450,
+            scatterYConfident: 250,
+            scatterYLoose: 360,
+            centerPullBase: 0.045,
+            centerPullGuardScale: 0.04,
+            centerPullThresholdX: 390,
+            centerPullThresholdY: 300,
+            maxXBase: 900,
+            maxXBoost: 280,
+            maxYBase: 660,
+            maxYBoost: 230,
+            zBase: 960,
+            zJitter: 560,
+            zBoost: 190,
+            zMin: 680,
+            zMax: 1460,
+            rotationBiasDiv: 13,
+            rotationRandDiv: 5.9,
+            zoomMin: 44,
+            zoomRange: 24,
+            zoomDuration: 0.72,
+            zoomEase: "power3.in",
+            moveDuration: 2.15,
+            moveEase: "power2.inOut",
+            positionWobbleX: 0.22,
+            positionWobbleY: 0.14,
+            rotationDuration: 2.15,
+            rotationEase: "power2.inOut",
+            rotationWobble: 0.0016,
+            starRollRange: 0.58,
+            starRollDuration: 1.95,
+            starRollEase: "power2.inOut",
+            returnDuration: 1.35,
+            returnEase: "power3.out",
+            returnOverlap: "-=1.05"
+        }
+        : {
+            travelBase: 230,
+            travelBoost: 360,
+            scatterXConfident: 200,
+            scatterXLoose: 290,
+            scatterYConfident: 150,
+            scatterYLoose: 220,
+            centerPullBase: 0.05,
+            centerPullGuardScale: 0.05,
+            centerPullThresholdX: 330,
+            centerPullThresholdY: 250,
+            maxXBase: 720,
+            maxXBoost: 190,
+            maxYBase: 540,
+            maxYBoost: 150,
+            zBase: 900,
+            zJitter: 360,
+            zBoost: 90,
+            zMin: 660,
+            zMax: 1280,
+            rotationBiasDiv: 22,
+            rotationRandDiv: 8.6,
+            zoomMin: 52,
+            zoomRange: 12,
+            zoomDuration: 0.95,
+            zoomEase: "sine.inOut",
+            moveDuration: 2.8,
+            moveEase: "sine.inOut",
+            positionWobbleX: 0.08,
+            positionWobbleY: 0.05,
+            rotationDuration: 2.8,
+            rotationEase: "sine.inOut",
+            rotationWobble: 0.0007,
+            starRollRange: 0.26,
+            starRollDuration: 2.45,
+            starRollEase: "sine.inOut",
+            returnDuration: 1.95,
+            returnEase: "sine.out",
+            returnOverlap: "-=1.3"
+        };
+
     const smartDir = getDensityAwareVelocityDirection();
     const visibilityGuard = THREE.MathUtils.clamp((smartDir.visibleRatio - 0.2) / 0.5, 0.6, 1);
-    const directionalTravel = (260 + smartDir.confidence * 410) * visibilityGuard;
-    const randomScatterX = (Math.random() - 0.5) * (smartDir.confidence > 0.3 ? 240 : 340);
-    const randomScatterY = (Math.random() - 0.5) * (smartDir.confidence > 0.3 ? 180 : 270);
+    const directionalTravel = (profile.travelBase + smartDir.confidence * profile.travelBoost) * visibilityGuard;
+    const randomScatterX = (Math.random() - 0.5) * (smartDir.confidence > 0.3 ? profile.scatterXConfident : profile.scatterXLoose);
+    const randomScatterY = (Math.random() - 0.5) * (smartDir.confidence > 0.3 ? profile.scatterYConfident : profile.scatterYLoose);
 
     // Only pull back when we are near the outer safe envelope, so movement doesn't feel like snapping home.
-    const centerPullStrength = 0.06 + (1 - visibilityGuard) * 0.06;
-    const centerPullX = Math.sign(camera.position.x) * Math.max(0, Math.abs(camera.position.x) - 340) * centerPullStrength;
-    const centerPullY = Math.sign(camera.position.y) * Math.max(0, Math.abs(camera.position.y) - 260) * centerPullStrength;
+    const centerPullStrength = profile.centerPullBase + (1 - visibilityGuard) * profile.centerPullGuardScale;
+    const centerPullX = Math.sign(camera.position.x) * Math.max(0, Math.abs(camera.position.x) - profile.centerPullThresholdX) * centerPullStrength;
+    const centerPullY = Math.sign(camera.position.y) * Math.max(0, Math.abs(camera.position.y) - profile.centerPullThresholdY) * centerPullStrength;
     const targetX = camera.position.x
         + smartDir.x * directionalTravel
         + randomScatterX
@@ -1039,21 +1122,21 @@ function switchCameraPosition() {
         + randomScatterY
         - centerPullY;
 
-    const maxX = 760 + smartDir.confidence * 230;
-    const maxY = 560 + smartDir.confidence * 180;
+    const maxX = profile.maxXBase + smartDir.confidence * profile.maxXBoost;
+    const maxY = profile.maxYBase + smartDir.confidence * profile.maxYBoost;
     const randomX = THREE.MathUtils.clamp(targetX, -maxX, maxX);
     const randomY = THREE.MathUtils.clamp(targetY, -maxY, maxY);
     const randomZ = THREE.MathUtils.clamp(
-        920 + (Math.random() - 0.5) * 420 + smartDir.confidence * 120,
-        650,
-        1340
+        profile.zBase + (Math.random() - 0.5) * profile.zJitter + smartDir.confidence * profile.zBoost,
+        profile.zMin,
+        profile.zMax
     );
 
-    const rotationBias = smartDir.confidence * (Math.PI / 18);
-    const randomRotationX = (Math.random() - 0.5) * Math.PI / 7 - smartDir.y * rotationBias;
-    const randomRotationY = (Math.random() - 0.5) * Math.PI / 7 + smartDir.x * rotationBias;
+    const rotationBias = smartDir.confidence * (Math.PI / profile.rotationBiasDiv);
+    const randomRotationX = (Math.random() - 0.5) * Math.PI / profile.rotationRandDiv - smartDir.y * rotationBias;
+    const randomRotationY = (Math.random() - 0.5) * Math.PI / profile.rotationRandDiv + smartDir.x * rotationBias;
 
-    const zoomInFOV = Math.random() * 18 + 48;
+    const zoomInFOV = Math.random() * profile.zoomRange + profile.zoomMin;
     const originalFOV = camera.fov;
 
     triggerWarpBurst();
@@ -1064,8 +1147,8 @@ function switchCameraPosition() {
 
     tl.to(camera, {
         fov: zoomInFOV,
-        duration: 0.68,
-        ease: "power3.in",
+        duration: profile.zoomDuration,
+        ease: profile.zoomEase,
         onUpdate: () => camera.updateProjectionMatrix()
     });
 
@@ -1073,37 +1156,37 @@ function switchCameraPosition() {
         x: randomX,
         y: randomY,
         z: randomZ,
-        duration: 2.05,
-        ease: "power3.inOut",
+        duration: profile.moveDuration,
+        ease: profile.moveEase,
         onUpdate: () => {
-            camera.position.x += Math.sin(performance.now() * 0.002) * 0.35;
-            camera.position.y += Math.cos(performance.now() * 0.0015) * 0.22;
+            camera.position.x += Math.sin(performance.now() * 0.002) * profile.positionWobbleX;
+            camera.position.y += Math.cos(performance.now() * 0.0015) * profile.positionWobbleY;
         }
     }, 0);
 
     tl.to(camera.rotation, {
         x: randomRotationX,
         y: randomRotationY,
-        duration: 2.05,
-        ease: "power3.inOut",
+        duration: profile.rotationDuration,
+        ease: profile.rotationEase,
         onUpdate: () => {
-            camera.rotation.x += Math.sin(performance.now() * 0.001) * 0.002;
-            camera.rotation.y += Math.cos(performance.now() * 0.001) * 0.002;
+            camera.rotation.x += Math.sin(performance.now() * 0.001) * profile.rotationWobble;
+            camera.rotation.y += Math.cos(performance.now() * 0.001) * profile.rotationWobble;
         }
     }, 0);
 
     tl.to(starFieldWhite.rotation, {
-        z: starFieldWhite.rotation.z + (Math.random() - 0.5) * 0.42,
-        duration: 1.85,
-        ease: "power2.inOut"
+        z: starFieldWhite.rotation.z + (Math.random() - 0.5) * profile.starRollRange,
+        duration: profile.starRollDuration,
+        ease: profile.starRollEase
     }, 0);
 
     tl.to(camera, {
         fov: originalFOV,
-        duration: 1.35,
-        ease: "elastic.out(1, 0.6)",
+        duration: profile.returnDuration,
+        ease: profile.returnEase,
         onUpdate: () => camera.updateProjectionMatrix()
-    }, "-=1.0");
+    }, profile.returnOverlap);
 }
 
     window.addEventListener('sectionChanged', () => {
