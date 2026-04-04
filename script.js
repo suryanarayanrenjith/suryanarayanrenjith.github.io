@@ -502,6 +502,9 @@ document.addEventListener("DOMContentLoaded", () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
 
+    let starfieldFrozen = !!(window.__starfieldFreezeState && window.__starfieldFreezeState.frozen === true);
+    let hyperGlowLevel = isHyperModeEnabled() ? 1 : 0;
+
     const pointLight = new THREE.PointLight(0xffffff, 1, 1000);
     pointLight.position.set(0, 0, 500);
     scene.add(pointLight);
@@ -541,6 +544,17 @@ document.addEventListener("DOMContentLoaded", () => {
     scene.add(starFieldWhite);
 
     camera.position.z = 1000;
+
+    window.addEventListener('starfieldFreeze', (event) => {
+        starfieldFrozen = !!(event.detail && event.detail.frozen);
+        if (starfieldFrozen) {
+            gsap.killTweensOf(camera);
+            gsap.killTweensOf(camera.position);
+            gsap.killTweensOf(camera.rotation);
+            gsap.killTweensOf(pointLight.position);
+            gsap.killTweensOf(starFieldWhite.rotation);
+        }
+    });
 
     window.addEventListener('themeChanged', (e) => {
         if (e.detail && e.detail.light) {
@@ -673,6 +687,19 @@ function applyTwinkleEffect() {
     starMaterialWhite.size = 2.0 + twinkleIntensity * 4.0;
 }
 
+    function applyHyperModeStarGlow() {
+        const targetGlow = isHyperModeEnabled() ? 1 : 0;
+        hyperGlowLevel += (targetGlow - hyperGlowLevel) * 0.12;
+
+        starMaterialWhite.size = Math.min(7, starMaterialWhite.size + hyperGlowLevel * 1.4);
+        starMaterialWhite.opacity = Math.min(4.8, starMaterialWhite.opacity + hyperGlowLevel * 0.65);
+
+        const targetIntensity = 1 + hyperGlowLevel * 0.85;
+        const targetDistance = 1000 + hyperGlowLevel * 280;
+        pointLight.intensity += (targetIntensity - pointLight.intensity) * 0.12;
+        pointLight.distance += (targetDistance - pointLight.distance) * 0.12;
+    }
+
     function animateStars() {
         const time = performance.now() * 0.001;
 
@@ -717,6 +744,8 @@ function applyTwinkleEffect() {
     }
 
 function switchCameraPosition() {
+    if (starfieldFrozen) return;
+
     const randomX = (Math.random() - 0.5) * 800;
     const randomY = (Math.random() - 0.5) * 600;
     const randomZ = Math.random() * 800 + 200;
@@ -778,10 +807,13 @@ function switchCameraPosition() {
 }
 
     window.addEventListener('sectionChanged', () => {
-        switchCameraPosition();
+        if (!starfieldFrozen) {
+            switchCameraPosition();
+        }
     });
 
 document.addEventListener('keydown', (event) => {
+    if (starfieldFrozen) return;
     if (event.ctrlKey && event.shiftKey) {
         switch (event.code) {
             case 'Digit5':
@@ -811,20 +843,25 @@ document.addEventListener('keydown', (event) => {
 });
 
     function render() {
-        applyWarpSpeed();
-        applyMouseAcceleration();
-        applyDynamicStarScaling();
-        applyShockwaveEffect();
-        applyBlackHoleEffect();
-        applyTwinkleEffect();
-        animateStars();
+        if (!starfieldFrozen) {
+            applyWarpSpeed();
+            applyMouseAcceleration();
+            applyDynamicStarScaling();
+            applyShockwaveEffect();
+            applyBlackHoleEffect();
+            applyTwinkleEffect();
+            applyHyperModeStarGlow();
+            animateStars();
+        }
 
         renderer.render(scene, camera);
         requestAnimationFrame(render);
     }
 
     setupMouseControl();
-    switchCameraPosition();
+    if (!starfieldFrozen) {
+        switchCameraPosition();
+    }
     render();
 
     }
