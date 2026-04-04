@@ -61,6 +61,10 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    function isHyperModeEnabled() {
+        return document.body.classList.contains('experimental-hyper-mode');
+    }
+
     window.animateContentIn = function() {
         const content = document.getElementById('content');
         if (!content) return;
@@ -83,42 +87,42 @@ document.addEventListener("DOMContentLoaded", () => {
         if (headings.length) {
             tl.fromTo(headings,
                 { opacity: 0, y: 40, clipPath: 'inset(0 0 100% 0)' },
-                { opacity: 1, y: 0, clipPath: 'inset(0 0 0% 0)', duration: 0.8, ease: "power3.out", stagger: 0.12 },
+                { opacity: 1, y: 0, clipPath: 'inset(0 0 0% 0)', duration: 0.8, ease: 'power3.out', stagger: 0.12 },
                 0
             );
         }
         if (paragraphs.length) {
             tl.fromTo(paragraphs,
                 { opacity: 0, y: 25 },
-                { opacity: 1, y: 0, duration: 0.6, ease: "power2.out", stagger: 0.08 },
+                { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out', stagger: 0.08 },
                 0.12
             );
         }
         if (buttons.length) {
             tl.fromTo(buttons,
                 { opacity: 0, y: 20, scale: 0.92 },
-                { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: "back.out(1.4)", stagger: 0.1 },
+                { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: 'back.out(1.4)', stagger: 0.1 },
                 0.2
             );
         }
         if (listItems.length) {
             tl.fromTo(listItems,
                 { opacity: 0, x: -20 },
-                { opacity: 1, x: 0, duration: 0.5, ease: "power2.out", stagger: 0.06 },
+                { opacity: 1, x: 0, duration: 0.5, ease: 'power2.out', stagger: 0.06 },
                 0.15
             );
         }
         if (visuals.length) {
             tl.fromTo(visuals,
                 { opacity: 0, scale: 0.8 },
-                { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.7)", stagger: 0.05 },
+                { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(1.7)', stagger: 0.05 },
                 0.25
             );
         }
         if (dividers.length) {
             tl.fromTo(dividers,
                 { scaleX: 0, transformOrigin: 'left center' },
-                { scaleX: 1, duration: 0.8, ease: "power3.inOut", stagger: 0.1 },
+                { scaleX: 1, duration: 0.8, ease: 'power3.inOut', stagger: 0.1 },
                 0.3
             );
         }
@@ -126,7 +130,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (linkCards.length && typeof anime === 'undefined') {
             tl.fromTo(linkCards,
                 { opacity: 0, y: 20, scale: 0.95 },
-                { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: "back.out(1.4)", stagger: 0.08 },
+                { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: 'back.out(1.4)', stagger: 0.08 },
                 0.2
             );
         }
@@ -147,7 +151,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         duration: 600,
                         delay: anime.stagger(20, { from: 'center' })
                     });
-                } catch(e) { /* skip if letterize fails on complex HTML */ }
+                } catch (e) {
+                    // Skip letterized animation for complex heading markup.
+                }
             });
         }
 
@@ -162,61 +168,65 @@ document.addEventListener("DOMContentLoaded", () => {
                     duration: 700,
                     delay: anime.stagger(80, { start: 200 })
                 });
-
-            function isHyperModeEnabled() {
-                return document.body.classList.contains('experimental-hyper-mode');
-            }
             }
 
             linkCards.forEach(card => {
                 if (card.dataset.animeHover) return;
                 card.dataset.animeHover = 'true';
-                    const hyper = isHyperModeEnabled();
+
                 card.addEventListener('mouseenter', () => {
+                    const hyper = isHyperModeEnabled();
+                    anime.remove(card);
                     anime({
                         targets: card,
-                        scale: [1, 1.03],
-                        boxShadow: ['0 2px 8px rgba(255,255,255,0)', '0 8px 30px rgba(255,255,255,0.08)'],
-                        scale: hyper ? 0.76 : 0.92,
-                        y: isVertical ? dirMult * (hyper ? 150 : 60) : 0,
-                        x: !isVertical ? dirMult * (hyper ? 180 : 80) : 0,
-                        rotationY: !isVertical ? dirMult * (hyper ? -12 : -4) : 0,
-                        rotationX: isVertical ? dirMult * (hyper ? 9 : 3) : 0,
-                        filter: hyper ? 'blur(16px)' : 'blur(8px)',
-                        duration: hyper ? 0.62 : 0.45,
-                        ease: hyper ? "expo.in" : "power3.in"
-                        boxShadow: ['0 8px 30px rgba(255,255,255,0.08)', '0 2px 8px rgba(255,255,255,0)'],
+                        scale: hyper ? 1.05 : 1.03,
+                        translateY: hyper ? -6 : -3,
+                        boxShadow: hyper
+                            ? '0 14px 36px rgba(255,255,255,0.14)'
+                            : '0 8px 30px rgba(255,255,255,0.08)',
                         easing: 'easeOutExpo',
-                        duration: 400
+                        duration: hyper ? 320 : 260
+                    });
+                });
+
+                card.addEventListener('mouseleave', () => {
+                    anime.remove(card);
+                    anime({
+                        targets: card,
+                        scale: 1,
+                        translateY: 0,
+                        boxShadow: '0 2px 8px rgba(255,255,255,0)',
+                        easing: 'easeOutExpo',
+                        duration: 320
                     });
                 });
             });
         }
-                const hyper = isHyperModeEnabled();
     };
 
     window.gsapTransitionOut = function(content, direction) {
         return new Promise(resolve => {
+            const hyper = isHyperModeEnabled();
             const isVertical = direction === 'up' || direction === 'down';
-                    scale: hyper ? 0.7 : 0.88,
-                    y: isVertical ? dirMult * (hyper ? 180 : 80) : 0,
-                    x: !isVertical ? dirMult * (hyper ? 220 : 100) : 0,
-                    rotationY: !isVertical ? dirMult * (hyper ? 14 : 5) : 0,
-                    rotationX: isVertical ? dirMult * (hyper ? -10 : -4) : 0,
-                    filter: hyper ? 'blur(18px)' : 'blur(10px)'
-                scale: 0.92,
-                y: isVertical ? dirMult * 60 : 0,
-                x: !isVertical ? dirMult * 80 : 0,
-                rotationY: !isVertical ? dirMult * -4 : 0,
-                rotationX: isVertical ? dirMult * 3 : 0,
-                filter: 'blur(8px)',
-                duration: 0.45,
-                ease: "power3.in"
+            const dirMult = (direction === 'down' || direction === 'right') ? 1 : -1;
+
+            gsap.to(content, {
+                opacity: 0,
+                scale: hyper ? 0.7 : 0.92,
+                y: isVertical ? dirMult * (hyper ? 180 : 60) : 0,
+                x: !isVertical ? dirMult * (hyper ? 220 : 80) : 0,
+                rotationY: !isVertical ? dirMult * (hyper ? -14 : -4) : 0,
+                rotationX: isVertical ? dirMult * (hyper ? 10 : 3) : 0,
+                filter: hyper ? 'blur(18px)' : 'blur(8px)',
+                duration: hyper ? 0.62 : 0.45,
+                ease: hyper ? 'expo.in' : 'power3.in',
+                onComplete: resolve
             });
         });
     };
 
     window.gsapTransitionIn = function(content, direction) {
+        const hyper = isHyperModeEnabled();
         const isVertical = direction === 'up' || direction === 'down';
         const dirMult = (direction === 'down' || direction === 'right') ? 1 : -1;
 
@@ -224,12 +234,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         gsap.set(content, {
             opacity: 0,
-            scale: 0.88,
-            y: isVertical ? dirMult * 80 : 0,
-            x: !isVertical ? dirMult * 100 : 0,
-            rotationY: !isVertical ? dirMult * 5 : 0,
-            rotationX: isVertical ? dirMult * -4 : 0,
-            filter: 'blur(10px)'
+            scale: hyper ? 0.76 : 0.88,
+            y: isVertical ? dirMult * (hyper ? 120 : 80) : 0,
+            x: !isVertical ? dirMult * (hyper ? 140 : 100) : 0,
+            rotationY: !isVertical ? dirMult * (hyper ? 9 : 5) : 0,
+            rotationX: isVertical ? dirMult * (hyper ? -7 : -4) : 0,
+            filter: hyper ? 'blur(14px)' : 'blur(10px)'
         });
 
         gsap.to(content, {
@@ -241,9 +251,9 @@ document.addEventListener("DOMContentLoaded", () => {
             rotationX: 0,
             filter: 'blur(0px)',
             duration: hyper ? 0.95 : 0.7,
-            ease: hyper ? "expo.out" : "power3.out",
+            ease: hyper ? 'expo.out' : 'power3.out',
             onComplete: () => {
-                gsap.set(content, { clearProps: "all" });
+                gsap.set(content, { clearProps: 'all' });
             }
         });
     };
@@ -257,7 +267,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 y: hyper ? -42 : -15,
                 filter: hyper ? 'blur(12px)' : 'blur(4px)',
                 duration: hyper ? 0.42 : 0.25,
-                ease: hyper ? "expo.in" : "power2.in",
+                ease: hyper ? 'expo.in' : 'power2.in',
                 onComplete: resolve
             });
         });
@@ -280,9 +290,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 y: 0,
                 filter: 'blur(0px)',
                 duration: hyper ? 0.82 : 0.45,
-                ease: hyper ? "expo.out" : "power2.out",
+                ease: hyper ? 'expo.out' : 'power2.out',
                 onComplete: () => {
-                    gsap.set(content, { clearProps: "all" });
+                    gsap.set(content, { clearProps: 'all' });
                 }
             }
         );
