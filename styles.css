@@ -546,6 +546,7 @@ header {
     justify-content: center;
     padding: 0;
     margin: 0;
+    position: relative;
     opacity: 0;
     transition: opacity 1s ease-out, transform 1s ease-out;
     transform: translateY(-20px);
@@ -628,11 +629,6 @@ header.command-palette-open {
     align-items: stretch;
 }
 
-.menu-bar > ul {
-    max-height: 80px;
-    transition: max-height 0.24s ease, opacity 0.24s ease, transform 0.24s ease;
-}
-
 .menu-bar.command-palette-open {
     width: 100%;
     align-items: stretch;
@@ -645,16 +641,21 @@ header.command-palette-open {
     overflow: hidden;
     transform: translateY(-10px);
     pointer-events: none;
+    transition: max-height 0.24s ease, opacity 0.24s ease, transform 0.24s ease;
 }
 
 .command-palette {
-    margin: 0 auto;
+    position: absolute;
+    top: calc(100% + 2px);
+    left: 50%;
+    margin: 0;
     width: min(780px, calc(100vw - 84px));
     max-height: 0;
     opacity: 0;
     overflow: hidden;
+    visibility: hidden;
     pointer-events: none;
-    transform: translateY(-8px);
+    transform: translate(-50%, -8px);
     border-top: 1px solid transparent;
     transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1),
                 opacity 0.24s ease,
@@ -666,8 +667,9 @@ header.command-palette-open {
 .menu-bar.command-palette-open .command-palette {
     max-height: 64vh;
     opacity: 1;
+    visibility: visible;
     pointer-events: auto;
-    transform: translateY(0);
+    transform: translate(-50%, 0);
     border-top-color: rgba(255, 255, 255, 0.14);
     padding-top: 10px;
 }
@@ -796,7 +798,7 @@ header.command-palette-open {
     }
 
     .command-palette {
-        width: 100%;
+        width: calc(100vw - 26px);
     }
 
     .command-palette-search {

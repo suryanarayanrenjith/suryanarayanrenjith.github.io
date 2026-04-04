@@ -1105,6 +1105,14 @@ function isDesktop() {
               });
           
               document.addEventListener('keydown', event => {
+                                const modPressed = isMac ? event.metaKey : event.ctrlKey;
+
+                                if (modPressed && event.shiftKey && event.code === 'KeyP') {
+                                    event.preventDefault();
+                                    toggleCommandPalette();
+                                    return;
+                                }
+
                                 if (commandPaletteVisible) {
                                     if (event.key === 'Escape') {
                                         event.preventDefault();
@@ -1149,7 +1157,6 @@ function isDesktop() {
                       case 'c': if (clientBtn && !isElectron) clientBtn.click(); break;
                     }
                   }
-                const modPressed = isMac ? event.metaKey : event.ctrlKey;
                 if (modPressed && event.shiftKey) {
                   if (['Slash','/','?'].includes(event.key) || event.code === 'Slash') {
                     event.preventDefault();
@@ -1158,7 +1165,6 @@ function isDesktop() {
                     return;
                   }
                   switch (event.code) {
-                                        case 'KeyP':   event.preventDefault(); toggleCommandPalette(); break;
                     case 'Digit5': event.preventDefault(); navigateToSection?.('home', 'none'); break;
                     case 'Digit6': event.preventDefault(); navigateToSection?.('about', 'none'); break;
                     case 'Digit7': event.preventDefault(); navigateToSection?.('projects', 'none'); break;
