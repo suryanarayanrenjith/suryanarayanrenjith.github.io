@@ -80,6 +80,11 @@ document.addEventListener("DOMContentLoaded", () => {
         titleTargets.forEach(title => {
             if (title.dataset.letterHoverBound === 'true') return;
 
+            if (!title.dataset.letterSourceText) {
+                title.dataset.letterSourceText = title.textContent || '';
+            }
+            const sourceText = title.dataset.letterSourceText || '';
+
             let chars = Array.from(title.querySelectorAll('.char'));
             if (!chars.length) {
                 try {
@@ -98,11 +103,24 @@ document.addEventListener("DOMContentLoaded", () => {
                 return raw === ' ' || raw === '\u00A0' || raw.trim() === '';
             };
 
+            const gapAfterIndexes = new Set();
+            let nonSpaceCursor = -1;
+            for (const ch of sourceText) {
+                if (/\s/.test(ch)) {
+                    if (nonSpaceCursor >= 0) gapAfterIndexes.add(nonSpaceCursor);
+                } else {
+                    nonSpaceCursor += 1;
+                }
+            }
+
+            const hasExplicitSpaceChars = chars.some(isSpaceChar);
+
             const animatedChars = [];
 
             chars.forEach(char => {
                 char.style.display = 'inline-block';
                 char.style.willChange = 'transform, filter, text-shadow, opacity';
+                char.style.marginRight = '0';
 
                 if (isSpaceChar(char)) {
                     // Keep a stable visual gap between words after Letterize splitting.
@@ -111,6 +129,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     char.style.willChange = 'auto';
                 } else {
                     char.style.width = 'auto';
+                    if (!hasExplicitSpaceChars && gapAfterIndexes.has(animatedChars.length)) {
+                        // Some Letterize outputs drop space chars entirely; restore word gaps here.
+                        char.style.marginRight = '0.38em';
+                    }
                     animatedChars.push(char);
                 }
             });
@@ -119,8 +141,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const playHoverFx = () => {
                 const hyper = isHyperModeEnabled();
-                const offsetY = hyper ? 16 : 12;
-                const driftX = hyper ? 8 : 6;
+                const offsetY = hyper ? 18 : 10;
+                const driftX = hyper ? 10 : 4;
+                const glowShadow = hyper
+                    ? '0 0 28px rgba(255,255,255,0.5)'
+                    : '0 0 14px rgba(255,255,255,0.28)';
+                const blurPeak = hyper ? 'blur(1.05px)' : 'blur(0.45px)';
+                const rippleY = hyper ? 13 : 3;
+                const rippleX = hyper ? 7 : 1.5;
+                const rippleRot = hyper ? 6 : 1.2;
+                const rippleDuration = hyper ? 185 : 230;
+                const rippleStagger = hyper ? 6 : 10;
 
                 anime.remove(animatedChars);
                 anime.timeline({ loop: false })
@@ -131,21 +162,21 @@ document.addEventListener("DOMContentLoaded", () => {
                         rotateZ: () => anime.random(-9, 9),
                         textShadow: [
                             '0 0 0 rgba(255,255,255,0)',
-                            '0 0 20px rgba(255,255,255,0.42)'
+                            glowShadow
                         ],
-                        filter: ['blur(0px)', 'blur(0.8px)'],
+                        filter: ['blur(0px)', blurPeak],
                         duration: hyper ? 220 : 260,
                         easing: 'easeOutExpo',
                         delay: anime.stagger(14, { from: 'center' })
                     })
                     .add({
                         targets: animatedChars,
-                        translateY: (el, i) => Math.sin((i + 1) * 0.65) * (hyper ? 8 : 6),
-                        translateX: (el, i) => Math.cos((i + 1) * 0.5) * (hyper ? 5 : 3),
-                        rotateZ: (el, i) => Math.sin((i + 1) * 0.7) * (hyper ? 4 : 3),
-                        duration: hyper ? 170 : 210,
+                        translateY: (el, i) => Math.sin((i + 1) * 0.65) * rippleY,
+                        translateX: (el, i) => Math.cos((i + 1) * 0.5) * rippleX,
+                        rotateZ: (el, i) => Math.sin((i + 1) * 0.7) * rippleRot,
+                        duration: rippleDuration,
                         easing: 'easeInOutSine',
-                        delay: anime.stagger(8)
+                        delay: anime.stagger(rippleStagger)
                     }, '-=110')
                     .add({
                         targets: animatedChars,
@@ -310,6 +341,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!hyper && typeof Letterize !== 'undefined' && typeof anime !== 'undefined') {
             headings.forEach(heading => {
                 if (heading.dataset.letterized) return;
+                if (!heading.dataset.letterSourceText) {
+                    heading.dataset.letterSourceText = heading.textContent || '';
+                }
                 heading.dataset.letterized = 'true';
                 try {
                     const letterized = new Letterize({ targets: heading });
