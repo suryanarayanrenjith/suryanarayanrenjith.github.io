@@ -93,20 +93,39 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (!chars.length) return;
 
+            const isSpaceChar = (char) => {
+                const raw = char.textContent || '';
+                return raw === ' ' || raw === '\u00A0' || raw.trim() === '';
+            };
+
+            const animatedChars = [];
+
             chars.forEach(char => {
                 char.style.display = 'inline-block';
                 char.style.willChange = 'transform, filter, text-shadow, opacity';
+
+                if (isSpaceChar(char)) {
+                    // Keep a stable visual gap between words after Letterize splitting.
+                    char.textContent = '\u00A0';
+                    char.style.width = '0.42em';
+                    char.style.willChange = 'auto';
+                } else {
+                    char.style.width = 'auto';
+                    animatedChars.push(char);
+                }
             });
+
+            if (!animatedChars.length) return;
 
             const playHoverFx = () => {
                 const hyper = isHyperModeEnabled();
                 const offsetY = hyper ? 16 : 12;
                 const driftX = hyper ? 8 : 6;
 
-                anime.remove(chars);
+                anime.remove(animatedChars);
                 anime.timeline({ loop: false })
                     .add({
-                        targets: chars,
+                        targets: animatedChars,
                         translateY: (el, i) => (i % 2 === 0 ? -offsetY : offsetY * 0.6),
                         translateX: () => anime.random(-driftX, driftX),
                         rotateZ: () => anime.random(-9, 9),
@@ -120,7 +139,16 @@ document.addEventListener("DOMContentLoaded", () => {
                         delay: anime.stagger(14, { from: 'center' })
                     })
                     .add({
-                        targets: chars,
+                        targets: animatedChars,
+                        translateY: (el, i) => Math.sin((i + 1) * 0.65) * (hyper ? 8 : 6),
+                        translateX: (el, i) => Math.cos((i + 1) * 0.5) * (hyper ? 5 : 3),
+                        rotateZ: (el, i) => Math.sin((i + 1) * 0.7) * (hyper ? 4 : 3),
+                        duration: hyper ? 170 : 210,
+                        easing: 'easeInOutSine',
+                        delay: anime.stagger(8)
+                    }, '-=110')
+                    .add({
+                        targets: animatedChars,
                         translateX: 0,
                         translateY: 0,
                         rotateZ: 0,
@@ -133,9 +161,9 @@ document.addEventListener("DOMContentLoaded", () => {
             };
 
             const resetHoverFx = () => {
-                anime.remove(chars);
+                anime.remove(animatedChars);
                 anime({
-                    targets: chars,
+                    targets: animatedChars,
                     translateX: 0,
                     translateY: 0,
                     rotateZ: 0,
