@@ -631,7 +631,7 @@ function isDesktop() {
                     <li><button type="button" class="command-item" data-command="info" data-search="info help shortcuts modal"><span class="command-item-title">Open Info Section</span><span class="command-item-meta">Ctrl + Shift + /</span></button></li>
                 </ul>
                 <div class="command-palette-empty" id="commandPaletteEmpty">No matching commands.</div>
-                <div class="command-palette-hint">Enter to run • Esc to close • Ctrl + Shift + P to toggle</div>
+                <div class="command-palette-hint">Enter to run • Esc to close • Alt + P to toggle</div>
             </div>
         </nav>
     </header>
@@ -670,7 +670,7 @@ function isDesktop() {
                         <div class="tab-pane" id="keyboard-tab">
                             <ul class="shortcuts-list">
                                 <li data-action="toggle-info"><span class="shortcut-key">Ctrl + Shift + /</span> Open Info Section</li>
-                                <li data-action="open-command-palette"><span class="shortcut-key">Ctrl + Shift + P</span> Open Command Palette</li>
+                                <li data-action="open-command-palette"><span class="shortcut-key">Alt + P</span> Open Command Palette</li>
                                 <li data-action="go-home"><span class="shortcut-key">Ctrl + Shift + 5</span> Go to Home section</li>
                                 <li data-action="go-about"><span class="shortcut-key">Ctrl + Shift + 6</span> Go to About section</li>
                                 <li data-action="go-projects"><span class="shortcut-key">Ctrl + Shift + 7</span> Go to Projects section</li>
@@ -765,6 +765,7 @@ function isDesktop() {
               const ua                = navigator.userAgent.toLowerCase();
               const isMac             = /macintosh|mac os x/i.test(ua) || (navigator.platform && /Mac/i.test(navigator.platform));
               const modKey            = isMac ? '⌘' : 'Ctrl';
+              const altKey            = isMac ? 'Option' : 'Alt';
               const isWindowsClient   = /windows nt|win64|wow64/i.test(ua);
               const isAndroidClient   = /android/i.test(ua);
               const isMobileClient    = /mobile|tablet|iphone|ipad|ipod/i.test(ua);
@@ -772,13 +773,22 @@ function isDesktop() {
               const isAndroidWebView  = /; wv\)/.test(navigator.userAgent);
 
               document.querySelectorAll('.shortcuts-list .shortcut-key').forEach(span => {
-                span.textContent = span.textContent.replace(/Ctrl/g, modKey);
+                span.textContent = span.textContent
+                  .replace(/Ctrl/g, modKey)
+                  .replace(/Alt/g, altKey);
               });
 
-                            if (isMac && commandPaletteHint) {
-                                commandPaletteHint.textContent = commandPaletteHint.textContent.replace(/Ctrl/g, modKey);
+                            if (commandPaletteHint) {
+                                commandPaletteHint.textContent = commandPaletteHint.textContent
+                                    .replace(/Ctrl/g, modKey)
+                                    .replace(/Alt/g, altKey);
+                            }
+
+                            if (isMac) {
                                 document.querySelectorAll('.command-item-meta').forEach(meta => {
-                                    meta.textContent = meta.textContent.replace(/Ctrl/g, modKey);
+                                    meta.textContent = meta.textContent
+                                        .replace(/Ctrl/g, modKey)
+                                        .replace(/Alt/g, altKey);
                                 });
                             }
 
@@ -790,6 +800,15 @@ function isDesktop() {
               let shortcutsVisible = false;
                             let commandPaletteVisible = false;
                             let commandPaletteActiveIndex = -1;
+
+                            window.__commandPaletteActive = false;
+
+                            function setCommandPaletteLockState(locked) {
+                                const shouldLock = !!locked;
+                                window.__commandPaletteActive = shouldLock;
+                                document.documentElement.classList.toggle('command-palette-lock', shouldLock);
+                                document.body.classList.toggle('command-palette-lock', shouldLock);
+                            }
 
                             function getVisibleCommandItems() {
                                 return commandPaletteItems.filter(item => item.parentElement.style.display !== 'none');
@@ -844,6 +863,7 @@ function isDesktop() {
                                 if (!commandPalette || !menuBar) return;
                                 if (shortcutsVisible) hideShortcuts();
                                 commandPaletteVisible = true;
+                                setCommandPaletteLockState(true);
                                 menuBar.classList.add('command-palette-open');
                                 header.classList.add('command-palette-open');
                                 commandPalette.setAttribute('aria-hidden', 'false');
@@ -858,6 +878,7 @@ function isDesktop() {
                             const hideCommandPalette = () => {
                                 if (!commandPalette || !menuBar) return;
                                 commandPaletteVisible = false;
+                                setCommandPaletteLockState(false);
                                 menuBar.classList.remove('command-palette-open');
                                 header.classList.remove('command-palette-open');
                                 commandPalette.setAttribute('aria-hidden', 'true');
@@ -1106,12 +1127,20 @@ function isDesktop() {
           
               window.addEventListener('keydown', event => {
                                 const modPressed = isMac ? event.metaKey : event.ctrlKey;
-                                const isPaletteToggle = modPressed
+                                const isPKey = event.code === 'KeyP' || event.key === 'P' || event.key === 'p';
+                                const isPrimaryPaletteToggle = !event.repeat
+                                    && isPKey
+                                    && event.altKey
+                                    && !event.ctrlKey
+                                    && !event.metaKey
+                                    && !event.shiftKey;
+                                const isLegacyPaletteToggle = !event.repeat
+                                    && isPKey
+                                    && modPressed
                                     && event.shiftKey
-                                    && !event.altKey
-                                    && (event.code === 'KeyP' || event.key === 'P' || event.key === 'p');
+                                    && !event.altKey;
 
-                                if (isPaletteToggle) {
+                                if (isPrimaryPaletteToggle || isLegacyPaletteToggle) {
                                     event.preventDefault();
                                     event.stopPropagation();
                                     event.stopImmediatePropagation();
@@ -1545,6 +1574,7 @@ function isDesktop() {
         });
 
         function switchToNextSection(direction) {
+            if (window.__commandPaletteActive) return;
             if (isThrottled) return;
             isThrottled = true;
             setTimeout(() => { isThrottled = false; }, 1200);
@@ -1578,6 +1608,7 @@ function isDesktop() {
             const WHEEL_THRESHOLD = 60;
             
             window.addEventListener('wheel', event => {
+                            if (window.__commandPaletteActive) return;
               wheelAccumulator += event.deltaY;
               
               clearTimeout(wheelTimer);
@@ -1601,11 +1632,13 @@ function isDesktop() {
         let touchEndY = 0;
         
         window.addEventListener('touchstart', (event) => {
+            if (window.__commandPaletteActive) return;
             touchStartX = event.changedTouches[0].screenX;
             touchStartY = event.changedTouches[0].screenY;
         });
         
         window.addEventListener('touchend', (event) => {
+            if (window.__commandPaletteActive) return;
             touchEndX = event.changedTouches[0].screenX;
             touchEndY = event.changedTouches[0].screenY;
             handleGesture();
