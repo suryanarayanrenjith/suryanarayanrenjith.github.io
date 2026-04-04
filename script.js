@@ -112,10 +112,10 @@ document.addEventListener("DOMContentLoaded", () => {
             tl.fromTo(headings,
                 {
                     opacity: 0,
-                    y: hyper ? 108 : 40,
-                    x: hyper ? (index => (index % 2 === 0 ? -26 : 26)) : 0,
-                    scale: hyper ? 0.64 : 1,
-                    clipPath: hyper ? 'inset(0 0 140% 0)' : 'inset(0 0 100% 0)',
+                    y: hyper ? 0 : 40,
+                    x: 0,
+                    scale: hyper ? 1 : 1,
+                    clipPath: hyper ? 'inset(0 0 0% 0)' : 'inset(0 0 100% 0)',
                     filter: hyper ? 'blur(15px)' : 'blur(0px)'
                 },
                 {
@@ -131,21 +131,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 },
                 0
             );
-            if (hyper) {
-                tl.to(headings, {
-                    x: 'random(-14,14)',
-                    y: 'random(-8,8)',
-                    duration: 0.045,
-                    ease: 'steps(2)',
-                    stagger: 0.02,
-                    yoyo: true,
-                    repeat: 3
-                }, 0.05);
-            }
         }
         if (paragraphs.length) {
             tl.fromTo(paragraphs,
-                { opacity: 0, y: hyper ? 62 : 25, filter: hyper ? 'blur(10px)' : 'blur(0px)' },
+                { opacity: 0, y: hyper ? 0 : 25, filter: hyper ? 'blur(10px)' : 'blur(0px)' },
                 {
                     opacity: 1,
                     y: 0,
@@ -156,16 +145,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 },
                 0.09
             );
-            if (hyper) {
-                tl.to(paragraphs, {
-                    x: 'random(-10,10)',
-                    duration: 0.04,
-                    ease: 'steps(2)',
-                    yoyo: true,
-                    repeat: 1,
-                    stagger: 0.02
-                }, 0.11);
-            }
         }
         if (buttons.length) {
             tl.fromTo(buttons,
@@ -315,8 +294,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const isVertical = direction === 'up' || direction === 'down';
         const dirMult = (direction === 'down' || direction === 'right') ? 1 : -1;
 
-        window.animateContentIn();
-
         gsap.set(content, {
             opacity: 0,
             scale: hyper ? 0.6 : 0.88,
@@ -327,6 +304,8 @@ document.addEventListener("DOMContentLoaded", () => {
             filter: hyper ? 'blur(28px)' : 'blur(10px)',
             force3D: true
         });
+
+        window.animateContentIn();
 
         gsap.to(content, {
             opacity: 1,
@@ -375,7 +354,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     window.gsapFadeIn = function(content) {
         const hyper = isHyperModeEnabled();
-        window.animateContentIn();
 
         gsap.fromTo(content,
             {
@@ -393,6 +371,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 ease: hyper ? 'steps(4)' : 'power2.out',
                 force3D: true,
                 overwrite: 'auto',
+                onStart: () => {
+                    window.animateContentIn();
+                },
                 onComplete: () => {
                     gsap.set(content, { clearProps: 'all' });
                 },

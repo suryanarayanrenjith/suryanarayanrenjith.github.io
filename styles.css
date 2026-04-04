@@ -185,10 +185,10 @@ body.experimental-hyper-mode .tagline {
         text-shadow: 0 0 16px rgba(255, 255, 255, 0.26), 0 0 0 rgba(255, 255, 255, 0);
     }
     35% {
-        text-shadow: -3px 0 rgba(255, 255, 255, 0.38), 3px 0 rgba(255, 255, 255, 0.38), 0 0 34px rgba(255, 255, 255, 0.34);
+        text-shadow: 0 0 20px rgba(255, 255, 255, 0.38), 0 0 34px rgba(255, 255, 255, 0.34);
     }
     70% {
-        text-shadow: -2px 0 rgba(255, 255, 255, 0.26), 2px 0 rgba(255, 255, 255, 0.26), 0 0 28px rgba(255, 255, 255, 0.3);
+        text-shadow: 0 0 18px rgba(255, 255, 255, 0.26), 0 0 28px rgba(255, 255, 255, 0.3);
     }
 }
 
