@@ -25,6 +25,17 @@ body.command-palette-lock {
     overscroll-behavior: none;
 }
 
+html.shortcuts-open,
+body.shortcuts-open {
+    overflow: hidden;
+    overscroll-behavior: none;
+}
+
+body.shortcuts-open .section-indicator,
+body.shortcuts-open .progress-bar {
+    display: none !important;
+}
+
 body.command-palette-lock::before {
     content: '';
     position: fixed;
