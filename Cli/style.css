@@ -180,6 +180,89 @@ input[type="text"] {
     color: rgba(255, 255, 255, 0.4);
 }
 
+/* Projects section fetched from Worker: keep cards/modals stable in terminal view. */
+.html-content--projects .animated-text,
+.html-content--projects .tagline {
+    text-align: center;
+}
+
+.html-content--projects .tagline {
+    max-width: 64ch;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.html-content--projects .p4-project-grid {
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+}
+
+.html-content--projects .p4-project-grid > li {
+    position: static !important;
+    margin: 0 !important;
+}
+
+.html-content--projects .p4-project-grid > li::before {
+    content: none !important;
+}
+
+.html-content--projects .p4-project-grid > .p4-card,
+.html-content--projects .p4-project-grid > .p4-explore-slot {
+    width: calc(50% - 8px) !important;
+    margin-left: 0 !important;
+}
+
+.html-content--projects .p4-project-grid a,
+.html-content--projects #p4-preview-open-project {
+    border-bottom: none;
+    padding-bottom: 0;
+    text-shadow: none;
+}
+
+.cli-project-overlay {
+    z-index: 2147483647 !important;
+}
+
+.cli-project-overlay #p4-preview-panel {
+    width: min(940px, 94vw) !important;
+    max-height: 90dvh !important;
+}
+
+.cli-project-overlay #p4-preview-image {
+    max-height: 62dvh !important;
+}
+
+@media screen and (max-width: 860px) {
+    .html-content--projects .p4-project-grid > .p4-card,
+    .html-content--projects .p4-project-grid > .p4-explore-slot {
+        width: 100% !important;
+    }
+
+    .cli-project-overlay #p4-preview-panel {
+        width: min(96vw, 760px) !important;
+    }
+}
+
+@media screen and (max-width: 560px) {
+    .html-content--projects .tagline {
+        font-size: 14px !important;
+    }
+
+    .cli-project-overlay #p4-preview-panel {
+        width: calc(100vw - 16px) !important;
+        max-height: 92dvh !important;
+    }
+
+    .cli-project-overlay #p4-preview-image {
+        max-height: 50dvh !important;
+    }
+}
+
 .html-content .center-button {
     display: block;
     width: fit-content;
@@ -802,6 +885,28 @@ body.light-theme .html-content li {
 
 body.light-theme .html-content li::before {
     color: rgba(0, 0, 0, 0.3);
+}
+
+body.light-theme .html-content--projects .p4-card {
+    border-color: rgba(0, 0, 0, 0.22) !important;
+}
+
+body.light-theme .html-content--projects .p4-title-link,
+body.light-theme .html-content--projects .p4-explore-link,
+body.light-theme .html-content--projects .p4-icon {
+    color: #111 !important;
+}
+
+body.light-theme .html-content--projects .p4-title-link::after {
+    background: #111 !important;
+}
+
+body.light-theme .html-content--projects .p4-inline-cue {
+    color: rgba(0, 0, 0, 0.62) !important;
+}
+
+body.light-theme .cli-project-overlay {
+    background: rgba(245, 245, 245, 0.92) !important;
 }
 
 body.light-theme .html-content .center-button {

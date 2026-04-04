@@ -219,6 +219,7 @@ function printHTML(html, cls) {
   if (cls) d.className = cls;
   d.innerHTML = html;
   outputEl.appendChild(d);
+  postProcessInjectedHtml(d);
 }
 function printPre(text, cls) {
   if (captureMode) { captureBuffer += (text||'') + '\n'; return; }
@@ -248,7 +249,29 @@ function delay(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 
 function cleanFetchedHTML(html) {
   return html.replace(/style="[^"]*position:\s*absolute[^"]*"/gi,
-    'style="text-align: right; margin-top: 12px;"');
+    'style="text-align: center; margin-top: 12px;"');
+}
+
+function removeProjectPreviewOverlay() {
+  var overlay = document.body.querySelector('#p4-preview-overlay');
+  if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+}
+
+function moveProjectPreviewOverlay(container) {
+  var overlay = container.querySelector('#p4-preview-overlay');
+  if (!overlay) return;
+  removeProjectPreviewOverlay();
+  overlay.style.display = 'none';
+  overlay.classList.remove('is-open');
+  overlay.classList.add('cli-project-overlay');
+  document.body.appendChild(overlay);
+}
+
+function postProcessInjectedHtml(container) {
+  if (!container || !container.querySelector) return;
+  if (!container.querySelector('.p4-project-grid')) return;
+  container.classList.add('html-content--projects');
+  moveProjectPreviewOverlay(container);
 }
 
 function parseFlags(args) {
@@ -813,6 +836,7 @@ commands.ps = function () {
 
 commands.clear = function () {
   outputEl.innerHTML = '';
+  removeProjectPreviewOverlay();
   if (!_headerCleared) {
     _headerCleared = document.createElement('style');
     _headerCleared.textContent = '.header::before{content:none!important}';
