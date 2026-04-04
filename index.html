@@ -610,6 +610,29 @@ function isDesktop() {
                     </button>
                 </li>
             </ul>
+            <div class="command-palette" id="commandPalette" aria-hidden="true">
+                <div class="command-palette-search">
+                    <i class="fa-solid fa-terminal"></i>
+                    <input type="text" id="commandPaletteInput" placeholder="Run a command..." autocomplete="off" spellcheck="false">
+                    <button type="button" class="command-palette-close" id="commandPaletteClose" aria-label="Close command palette">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <ul class="command-palette-list" id="commandPaletteList">
+                    <li><button type="button" class="command-item" data-command="home" data-search="home go to home section"><span class="command-item-title">Go to Home</span><span class="command-item-meta">Section</span></button></li>
+                    <li><button type="button" class="command-item" data-command="about" data-search="about go to about section"><span class="command-item-title">Go to About</span><span class="command-item-meta">Section</span></button></li>
+                    <li><button type="button" class="command-item" data-command="projects" data-search="projects go to projects section"><span class="command-item-title">Go to Projects</span><span class="command-item-meta">Section</span></button></li>
+                    <li><button type="button" class="command-item" data-command="resume" data-search="resume go to resume section"><span class="command-item-title">Go to Resume</span><span class="command-item-meta">Section</span></button></li>
+                    <li><button type="button" class="command-item" data-command="terminal" data-search="terminal cli open terminal"><span class="command-item-title">Open Terminal</span><span class="command-item-meta">/Cli</span></button></li>
+                    <li><button type="button" class="command-item" data-command="links" data-search="links open links section"><span class="command-item-title">Open Links</span><span class="command-item-meta">/?section=links</span></button></li>
+                    <li><button type="button" class="command-item" data-command="toggle-stars" data-search="disable enable starfield animation webgl fallback"><span class="command-item-title">Toggle Star Field</span><span class="command-item-meta" data-starfield-status>On</span></button></li>
+                    <li><button type="button" class="command-item" data-command="matrix" data-search="matrix popup experimental"><span class="command-item-title">Open Matrix Modal</span><span class="command-item-meta">Experimental</span></button></li>
+                    <li><button type="button" class="command-item" data-command="light" data-search="surya light mode theme toggle"><span class="command-item-title">Toggle Light Mode</span><span class="command-item-meta">SURYA</span></button></li>
+                    <li><button type="button" class="command-item" data-command="info" data-search="info help shortcuts modal"><span class="command-item-title">Open Info Section</span><span class="command-item-meta">Ctrl + Shift + /</span></button></li>
+                </ul>
+                <div class="command-palette-empty" id="commandPaletteEmpty">No matching commands.</div>
+                <div class="command-palette-hint">Enter to run • Esc to close • Ctrl + Shift + P to toggle</div>
+            </div>
         </nav>
     </header>
 
@@ -647,6 +670,7 @@ function isDesktop() {
                         <div class="tab-pane" id="keyboard-tab">
                             <ul class="shortcuts-list">
                                 <li data-action="toggle-info"><span class="shortcut-key">Ctrl + Shift + /</span> Open Info Section</li>
+                                <li data-action="open-command-palette"><span class="shortcut-key">Ctrl + Shift + P</span> Open Command Palette</li>
                                 <li data-action="go-home"><span class="shortcut-key">Ctrl + Shift + 5</span> Go to Home section</li>
                                 <li data-action="go-about"><span class="shortcut-key">Ctrl + Shift + 6</span> Go to About section</li>
                                 <li data-action="go-projects"><span class="shortcut-key">Ctrl + Shift + 7</span> Go to Projects section</li>
@@ -726,6 +750,17 @@ function isDesktop() {
               const keyboardBtn       = document.querySelector('.tab-button[data-tab="keyboard"]');
               const terminalTabBtn    = document.querySelector('.tab-button[data-tab="terminal"]');
               const clientBtn         = document.querySelector('.tab-button[data-tab="client"]');
+                            const menuBar           = document.querySelector('.menu-bar');
+                            const commandPalette    = document.getElementById('commandPalette');
+                            const commandPaletteInput = document.getElementById('commandPaletteInput');
+                            const commandPaletteList  = document.getElementById('commandPaletteList');
+                            const commandPaletteClose = document.getElementById('commandPaletteClose');
+                            const commandPaletteEmpty = document.getElementById('commandPaletteEmpty');
+                            const commandPaletteHint  = document.querySelector('.command-palette-hint');
+                            const starfieldStatus     = document.querySelector('[data-starfield-status]');
+                            const commandPaletteItems = commandPaletteList
+                                ? Array.from(commandPaletteList.querySelectorAll('.command-item'))
+                                : [];
           
               const ua                = navigator.userAgent.toLowerCase();
               const isMac             = /macintosh|mac os x/i.test(ua) || (navigator.platform && /Mac/i.test(navigator.platform));
@@ -740,12 +775,177 @@ function isDesktop() {
                 span.textContent = span.textContent.replace(/Ctrl/g, modKey);
               });
 
+                            if (isMac && commandPaletteHint) {
+                                commandPaletteHint.textContent = commandPaletteHint.textContent.replace(/Ctrl/g, modKey);
+                                document.querySelectorAll('.command-item-meta').forEach(meta => {
+                                    meta.textContent = meta.textContent.replace(/Ctrl/g, modKey);
+                                });
+                            }
+
               if (isElectron || isAndroidWebView) {
                 document.querySelector('.tab-button[data-tab="client"]')?.remove();
                 document.getElementById('client-tab')?.remove();
                }
           
               let shortcutsVisible = false;
+                            let commandPaletteVisible = false;
+                            let commandPaletteActiveIndex = -1;
+
+                            function getVisibleCommandItems() {
+                                return commandPaletteItems.filter(item => item.parentElement.style.display !== 'none');
+                            }
+
+                            function setActiveCommand(item) {
+                                commandPaletteItems.forEach(btn => btn.classList.remove('is-active'));
+                                if (!item) {
+                                    commandPaletteActiveIndex = -1;
+                                    return;
+                                }
+                                item.classList.add('is-active');
+                                commandPaletteActiveIndex = commandPaletteItems.indexOf(item);
+                                item.scrollIntoView({ block: 'nearest' });
+                            }
+
+                            function isStarfieldEnabled() {
+                                return !(window.__starfieldState && window.__starfieldState.enabled === false);
+                            }
+
+                            function syncStarfieldLabel(forceEnabled) {
+                                const enabled = typeof forceEnabled === 'boolean' ? forceEnabled : isStarfieldEnabled();
+                                if (starfieldStatus) starfieldStatus.textContent = enabled ? 'On' : 'Off';
+                            }
+
+                            function filterCommandPalette(query) {
+                                const needle = String(query || '').trim().toLowerCase();
+                                let firstVisible = null;
+
+                                commandPaletteItems.forEach(item => {
+                                    const hay = String(item.dataset.search || item.textContent || '').toLowerCase();
+                                    const visible = !needle || hay.includes(needle);
+                                    item.parentElement.style.display = visible ? '' : 'none';
+                                    if (visible && !firstVisible) firstVisible = item;
+                                });
+
+                                if (commandPaletteEmpty) {
+                                    commandPaletteEmpty.style.display = firstVisible ? 'none' : 'block';
+                                }
+                                setActiveCommand(firstVisible);
+                            }
+
+                            const openLinksSameTab = () => {
+                                setTimeout(() => window.open('/?section=links', '_self'), 100);
+                            };
+
+                            const openResumeNewTab = () => {
+                                setTimeout(() => window.open('/Resume', '_blank'), 100);
+                            };
+
+                            const showCommandPalette = () => {
+                                if (!commandPalette || !menuBar) return;
+                                if (shortcutsVisible) hideShortcuts();
+                                commandPaletteVisible = true;
+                                menuBar.classList.add('command-palette-open');
+                                header.classList.add('command-palette-open');
+                                commandPalette.setAttribute('aria-hidden', 'false');
+                                syncStarfieldLabel();
+                                filterCommandPalette(commandPaletteInput ? commandPaletteInput.value : '');
+                                if (commandPaletteInput) {
+                                    commandPaletteInput.focus();
+                                    commandPaletteInput.select();
+                                }
+                            };
+
+                            const hideCommandPalette = () => {
+                                if (!commandPalette || !menuBar) return;
+                                commandPaletteVisible = false;
+                                menuBar.classList.remove('command-palette-open');
+                                header.classList.remove('command-palette-open');
+                                commandPalette.setAttribute('aria-hidden', 'true');
+                                if (commandPaletteInput) commandPaletteInput.value = '';
+                                filterCommandPalette('');
+                            };
+
+                            const toggleCommandPalette = () => {
+                                commandPaletteVisible ? hideCommandPalette() : showCommandPalette();
+                            };
+
+                            const executePaletteCommand = (command) => {
+                                switch (command) {
+                                    case 'home':
+                                        navigateToSection?.('home', 'none');
+                                        hideCommandPalette();
+                                        break;
+                                    case 'about':
+                                        navigateToSection?.('about', 'none');
+                                        hideCommandPalette();
+                                        break;
+                                    case 'projects':
+                                        navigateToSection?.('projects', 'none');
+                                        hideCommandPalette();
+                                        break;
+                                    case 'resume':
+                                        navigateToSection?.('resume', 'none');
+                                        hideCommandPalette();
+                                        break;
+                                    case 'terminal':
+                                        window.location.href = '/Cli';
+                                        hideCommandPalette();
+                                        break;
+                                    case 'links':
+                                        openLinksSameTab();
+                                        hideCommandPalette();
+                                        break;
+                                    case 'toggle-stars': {
+                                        const next = window.toggleStarFieldAnimation ? window.toggleStarFieldAnimation() : !isStarfieldEnabled();
+                                        syncStarfieldLabel(next);
+                                        hideCommandPalette();
+                                        break;
+                                    }
+                                    case 'matrix':
+                                        if (typeof window.showMatrixPopup === 'function') {
+                                            window.showMatrixPopup();
+                                        }
+                                        hideCommandPalette();
+                                        break;
+                                    case 'light':
+                                        if (typeof window.toggleLightTheme === 'function') {
+                                            window.toggleLightTheme();
+                                        }
+                                        hideCommandPalette();
+                                        break;
+                                    case 'info':
+                                        showShortcuts();
+                                        hideCommandPalette();
+                                        break;
+                                }
+                            };
+
+                            commandPaletteInput?.addEventListener('input', () => {
+                                filterCommandPalette(commandPaletteInput.value);
+                            });
+
+                            commandPaletteClose?.addEventListener('click', hideCommandPalette);
+
+                            commandPaletteList?.addEventListener('click', (event) => {
+                                const btn = event.target.closest('.command-item');
+                                if (!btn) return;
+                                executePaletteCommand(btn.dataset.command || '');
+                            });
+
+                            window.addEventListener('starfieldToggle', (event) => {
+                                syncStarfieldLabel(!!(event.detail && event.detail.enabled));
+                            });
+
+                            document.querySelectorAll('.menu-bar > ul a').forEach(link => {
+                                link.addEventListener('click', hideCommandPalette);
+                            });
+
+                            document.addEventListener('mousedown', (event) => {
+                                if (!commandPaletteVisible) return;
+                                if (header && !header.contains(event.target)) {
+                                    hideCommandPalette();
+                                }
+                            });
               const showShortcuts = () => {
                 modalOverlay.classList.add('active');
                 shortcutsModal.style.display = 'block';
@@ -892,18 +1092,55 @@ function isDesktop() {
                 li.addEventListener('click', () => {
                   switch (action) {
                     case 'toggle-info':   toggleShortcuts(); break;
+                                        case 'open-command-palette': showCommandPalette(); break;
                     case 'go-home':       navigateToSection?.('home', 'none'); break;
                     case 'go-about':      navigateToSection?.('about', 'none'); break;
                     case 'go-projects':   navigateToSection?.('projects', 'none'); break;
                     case 'go-resume':     navigateToSection?.('resume', 'none'); break;
                     case 'open-terminal': launchTerminal(); break;
-                    case 'open-links':    setTimeout(() => window.open('/?section=links','_self'), 100); break;
-                    case 'open-resume':   setTimeout(() => window.open('/Resume','_blank'), 100); break;
+                                        case 'open-links':    openLinksSameTab(); break;
+                                        case 'open-resume':   openResumeNewTab(); break;
                   }
                 });
               });
           
               document.addEventListener('keydown', event => {
+                                if (commandPaletteVisible) {
+                                    if (event.key === 'Escape') {
+                                        event.preventDefault();
+                                        hideCommandPalette();
+                                        return;
+                                    }
+
+                                    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                                        event.preventDefault();
+                                        const visibleItems = getVisibleCommandItems();
+                                        if (!visibleItems.length) return;
+
+                                        const current = commandPaletteItems.find(btn => btn.classList.contains('is-active'));
+                                        let visibleIndex = current ? visibleItems.indexOf(current) : -1;
+                                        if (visibleIndex < 0) visibleIndex = 0;
+
+                                        if (event.key === 'ArrowDown') {
+                                            visibleIndex = (visibleIndex + 1) % visibleItems.length;
+                                        } else {
+                                            visibleIndex = (visibleIndex - 1 + visibleItems.length) % visibleItems.length;
+                                        }
+                                        setActiveCommand(visibleItems[visibleIndex]);
+                                        return;
+                                    }
+
+                                    if (event.key === 'Enter') {
+                                        event.preventDefault();
+                                        const activeItem = commandPaletteItems[commandPaletteActiveIndex]
+                                            || getVisibleCommandItems()[0];
+                                        if (activeItem) {
+                                            executePaletteCommand(activeItem.dataset.command || '');
+                                        }
+                                        return;
+                                    }
+                                }
+
                 if (shortcutsVisible && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
                     switch (event.key.toLowerCase()) {
                       case 'a': aboutBtn?.click();      break;
@@ -916,17 +1153,19 @@ function isDesktop() {
                 if (modPressed && event.shiftKey) {
                   if (['Slash','/','?'].includes(event.key) || event.code === 'Slash') {
                     event.preventDefault();
+                                        hideCommandPalette();
                     toggleShortcuts();
                     return;
                   }
                   switch (event.code) {
+                                        case 'KeyP':   event.preventDefault(); toggleCommandPalette(); break;
                     case 'Digit5': event.preventDefault(); navigateToSection?.('home', 'none'); break;
                     case 'Digit6': event.preventDefault(); navigateToSection?.('about', 'none'); break;
                     case 'Digit7': event.preventDefault(); navigateToSection?.('projects', 'none'); break;
                     case 'Digit8': event.preventDefault(); navigateToSection?.('resume', 'none'); break;
                     case 'KeyK':   event.preventDefault(); launchTerminal(); break;
-                    case 'KeyL':   event.preventDefault(); setTimeout(()=>window.open('/?section=links','_self'),100); break;
-                    case 'KeyV':   event.preventDefault(); setTimeout(()=>window.open('/Resume','_blank'),100); break;
+                                        case 'KeyL':   event.preventDefault(); openLinksSameTab(); break;
+                                        case 'KeyV':   event.preventDefault(); openResumeNewTab(); break;
                   }
                 }
               });
@@ -1716,6 +1955,8 @@ function isDesktop() {
         }, 2000);
     }
 
+    window.showMatrixPopup = showMatrixPopup;
+
     window.closePopup = function() {
         const overlay = document.getElementById('matrixOverlay');
         if (overlay) overlay.style.display = 'none';
@@ -2109,6 +2350,25 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
     <script>
+    window.__starfieldState = window.__starfieldState || { enabled: true };
+    window.toggleStarFieldAnimation = function(forceEnabled) {
+        const state = window.__starfieldState || (window.__starfieldState = { enabled: true });
+        const nextEnabled = typeof forceEnabled === 'boolean' ? forceEnabled : !state.enabled;
+        state.enabled = nextEnabled;
+
+        const canvas = document.getElementById('animationCanvas');
+        if (canvas) canvas.style.opacity = nextEnabled ? '1' : '0';
+
+        const fallbackOverlay = document.getElementById('fallback-particles');
+        if (fallbackOverlay) fallbackOverlay.style.display = nextEnabled ? 'block' : 'none';
+
+        window.dispatchEvent(new CustomEvent('starfieldToggle', {
+            detail: { enabled: nextEnabled }
+        }));
+
+        return nextEnabled;
+    };
+
     function isWebGLAvailable() {
             try {
                 const canvas = document.createElement('canvas');
@@ -2139,6 +2399,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+
+    let fallbackEnabled = !(window.__starfieldState && window.__starfieldState.enabled === false);
+    let fallbackOverlay = null;
+    canvas.style.opacity = fallbackEnabled ? '1' : '0';
+
+    window.addEventListener('starfieldToggle', (event) => {
+        fallbackEnabled = !!(event.detail && event.detail.enabled);
+        canvas.style.opacity = fallbackEnabled ? '1' : '0';
+        if (fallbackOverlay) {
+            fallbackOverlay.style.display = fallbackEnabled ? 'block' : 'none';
+        }
+    });
 
     window.addEventListener('resize', () => {
         canvas.width = window.innerWidth;
@@ -2270,6 +2542,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function draw() {
+        if (!fallbackEnabled) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            requestAnimationFrame(draw);
+            return;
+        }
+
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         while (stars.length < minStars) {
@@ -2311,9 +2589,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     if (typeof anime !== 'undefined') {
-        const fallbackOverlay = document.createElement('div');
+        fallbackOverlay = document.createElement('div');
         fallbackOverlay.id = 'fallback-particles';
         fallbackOverlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:hidden;';
+        fallbackOverlay.style.display = fallbackEnabled ? 'block' : 'none';
         document.body.appendChild(fallbackOverlay);
 
         const isLight = document.body.classList.contains('light-theme');
@@ -2466,6 +2745,8 @@ function isOldBrowser() {
             detail: { light: isLight }
         }));
     }
+
+    window.toggleLightTheme = toggleLightTheme;
 
     if (window.__lightThemeOnLoad) {
         window.addEventListener('DOMContentLoaded', () => {

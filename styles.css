@@ -621,6 +621,216 @@ header {
     transform-origin: left;
 }
 
+header.command-palette-open {
+    width: min(920px, calc(100vw - 30px));
+    padding: 10px 16px 14px;
+    white-space: normal;
+    align-items: stretch;
+}
+
+.menu-bar > ul {
+    max-height: 80px;
+    transition: max-height 0.24s ease, opacity 0.24s ease, transform 0.24s ease;
+}
+
+.menu-bar.command-palette-open {
+    width: 100%;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.menu-bar.command-palette-open > ul {
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transform: translateY(-10px);
+    pointer-events: none;
+}
+
+.command-palette {
+    margin: 0 auto;
+    width: min(780px, calc(100vw - 84px));
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+    transform: translateY(-8px);
+    border-top: 1px solid transparent;
+    transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.24s ease,
+                transform 0.24s ease,
+                border-color 0.24s ease,
+                padding-top 0.24s ease;
+}
+
+.menu-bar.command-palette-open .command-palette {
+    max-height: 64vh;
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+    border-top-color: rgba(255, 255, 255, 0.14);
+    padding-top: 10px;
+}
+
+.command-palette-search {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr) 34px;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.3));
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.command-palette-search i {
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 14px;
+    text-align: center;
+}
+
+#commandPaletteInput {
+    border: none;
+    background: transparent;
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    letter-spacing: 0.35px;
+    outline: none;
+}
+
+#commandPaletteInput::placeholder {
+    color: rgba(255, 255, 255, 0.46);
+}
+
+.command-palette-close {
+    width: 30px;
+    height: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(0, 0, 0, 0.35);
+    color: rgba(255, 255, 255, 0.78);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.command-palette-close:hover {
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.35);
+    transform: translateY(-1px);
+}
+
+.command-palette-list {
+    list-style: none;
+    margin: 10px 0 0;
+    padding: 0;
+    display: grid;
+    gap: 8px;
+    max-height: 42vh;
+    overflow-y: auto;
+}
+
+.command-palette-list::-webkit-scrollbar {
+    width: 5px;
+}
+
+.command-palette-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.18);
+}
+
+.command-item {
+    width: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    color: #fff;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
+}
+
+.command-item:hover,
+.command-item.is-active {
+    border-color: rgba(255, 255, 255, 0.34);
+    background: rgba(255, 255, 255, 0.12);
+    transform: translateX(3px);
+}
+
+.command-item-title {
+    font-size: 14px;
+    letter-spacing: 0.2px;
+}
+
+.command-item-meta {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.58);
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+
+.command-palette-empty {
+    display: none;
+    margin-top: 10px;
+    padding: 10px 12px;
+    border: 1px dashed rgba(255, 255, 255, 0.18);
+    color: rgba(255, 255, 255, 0.58);
+    font-size: 12px;
+    letter-spacing: 0.5px;
+}
+
+.command-palette-hint {
+    margin-top: 8px;
+    color: rgba(255, 255, 255, 0.48);
+    font-size: 11px;
+    letter-spacing: 0.7px;
+    text-transform: uppercase;
+}
+
+@media (max-width: 768px) {
+    header.command-palette-open {
+        width: calc(100vw - 18px);
+        padding: 8px 10px 10px;
+    }
+
+    .command-palette {
+        width: 100%;
+    }
+
+    .command-palette-search {
+        grid-template-columns: 20px minmax(0, 1fr) 30px;
+        padding: 8px 10px;
+    }
+
+    #commandPaletteInput {
+        font-size: 13px;
+    }
+
+    .command-item {
+        padding: 9px 10px;
+    }
+
+    .command-item-title {
+        font-size: 13px;
+    }
+
+    .command-item-meta {
+        font-size: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .command-item-meta {
+        display: none;
+    }
+
+    .command-palette-hint {
+        font-size: 10px;
+    }
+}
+
 .music-button-container {
     position: relative;
     display: flex;
@@ -1656,6 +1866,65 @@ body.light-theme .menu-bar ul li a:hover {
 
 body.light-theme .menu-bar ul li a:hover::after {
     background-color: #555;
+}
+
+body.light-theme header.command-palette-open {
+    background-color: rgba(245, 245, 245, 0.82);
+}
+
+body.light-theme .menu-bar.command-palette-open .command-palette {
+    border-top-color: rgba(0, 0, 0, 0.14);
+}
+
+body.light-theme .command-palette-search {
+    border-color: rgba(0, 0, 0, 0.14);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(235, 235, 235, 0.78));
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+}
+
+body.light-theme .command-palette-search i {
+    color: rgba(0, 0, 0, 0.75);
+}
+
+body.light-theme #commandPaletteInput {
+    color: #111;
+}
+
+body.light-theme #commandPaletteInput::placeholder {
+    color: rgba(0, 0, 0, 0.46);
+}
+
+body.light-theme .command-palette-close {
+    border-color: rgba(0, 0, 0, 0.14);
+    background: rgba(255, 255, 255, 0.75);
+    color: rgba(0, 0, 0, 0.65);
+}
+
+body.light-theme .command-palette-close:hover {
+    border-color: rgba(0, 0, 0, 0.3);
+    color: #000;
+}
+
+body.light-theme .command-item {
+    border-color: rgba(0, 0, 0, 0.1);
+    background: rgba(0, 0, 0, 0.03);
+    color: #111;
+}
+
+body.light-theme .command-item:hover,
+body.light-theme .command-item.is-active {
+    border-color: rgba(0, 0, 0, 0.26);
+    background: rgba(0, 0, 0, 0.09);
+}
+
+body.light-theme .command-item-meta,
+body.light-theme .command-palette-hint,
+body.light-theme .command-palette-empty {
+    color: rgba(0, 0, 0, 0.56);
+}
+
+body.light-theme .command-palette-empty {
+    border-color: rgba(0, 0, 0, 0.16);
 }
 
 body.light-theme .music-button {

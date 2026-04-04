@@ -423,6 +423,17 @@ document.addEventListener("DOMContentLoaded", () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
 
+    let starfieldEnabled = !(window.__starfieldState && window.__starfieldState.enabled === false);
+    canvas.style.opacity = starfieldEnabled ? '1' : '0';
+
+    window.addEventListener('starfieldToggle', (event) => {
+        starfieldEnabled = !!(event.detail && event.detail.enabled);
+        canvas.style.opacity = starfieldEnabled ? '1' : '0';
+        if (!starfieldEnabled) {
+            renderer.clear();
+        }
+    });
+
     const pointLight = new THREE.PointLight(0xffffff, 1, 1000);
     pointLight.position.set(0, 0, 500);
     scene.add(pointLight);
@@ -699,7 +710,9 @@ function switchCameraPosition() {
 }
 
     window.addEventListener('sectionChanged', () => {
-        switchCameraPosition();
+        if (starfieldEnabled) {
+            switchCameraPosition();
+        }
     });
 
 document.addEventListener('keydown', (event) => {
@@ -732,6 +745,12 @@ document.addEventListener('keydown', (event) => {
 });
 
     function render() {
+        if (!starfieldEnabled) {
+            renderer.clear();
+            requestAnimationFrame(render);
+            return;
+        }
+
         applyWarpSpeed();
         applyMouseAcceleration();
         applyDynamicStarScaling();
