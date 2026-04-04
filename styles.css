@@ -558,15 +558,17 @@ header {
     transform: translateY(0);
 }
 
-.menu-bar ul {
+.menu-bar > ul {
     list-style: none;
     display: flex;
     justify-content: center;
     margin: 0;
     padding: 0;
+    max-height: 80px;
+    transition: max-height 0.24s ease, opacity 0.24s ease, transform 0.24s ease;
 }
 
-.menu-bar ul li {
+.menu-bar > ul > li {
     position: relative;
     opacity: 0;
     transform: translateY(-20px);
@@ -574,16 +576,16 @@ header {
     transition: opacity 0.6s ease-out, transform 0.6s ease-out, margin 0.45s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.menu-bar ul li.animate-menu-item {
+.menu-bar > ul > li.animate-menu-item {
     opacity: 1;
     transform: translateY(0);
 }
 
-.menu-bar ul li:last-child {
+.menu-bar > ul > li:last-child {
     margin-right: 0;
 }
 
-.menu-bar ul li a {
+.menu-bar > ul > li > a {
     text-decoration: none;
     color: #fff;
     font-size: 1.2em;
@@ -592,12 +594,12 @@ header {
     transition: color 0.3s ease, text-shadow 0.3s ease, transform 0.3s ease;
 }
 
-.menu-bar ul li a:focus, .menu-bar ul li a:active {
+.menu-bar > ul > li > a:focus, .menu-bar > ul > li > a:active {
     outline: none;
     -webkit-tap-highlight-color: transparent;
 }
 
-.menu-bar ul li a::after {
+.menu-bar > ul > li > a::after {
     content: '';
     position: absolute;
     bottom: -2px;
@@ -611,13 +613,13 @@ header {
     box-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
 }
 
-.menu-bar ul li a:hover {
+.menu-bar > ul > li > a:hover {
     color: #fff;
     text-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
     transform: translateY(-1px);
 }
 
-.menu-bar ul li a:hover::after {
+.menu-bar > ul > li > a:hover::after {
     transform: scaleX(1);
     transform-origin: left;
 }
@@ -650,6 +652,8 @@ header.command-palette-open {
     left: 50%;
     margin: 0;
     width: min(780px, calc(100vw - 84px));
+    max-width: calc(100vw - 24px);
+    z-index: 110;
     max-height: 0;
     opacity: 0;
     overflow: hidden;
@@ -672,6 +676,32 @@ header.command-palette-open {
     transform: translate(-50%, 0);
     border-top-color: rgba(255, 255, 255, 0.14);
     padding-top: 10px;
+}
+
+.menu-bar.command-palette-open .command-item {
+    animation: commandPaletteItemIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.menu-bar.command-palette-open .command-palette-list li:nth-child(1) .command-item { animation-delay: 0.02s; }
+.menu-bar.command-palette-open .command-palette-list li:nth-child(2) .command-item { animation-delay: 0.04s; }
+.menu-bar.command-palette-open .command-palette-list li:nth-child(3) .command-item { animation-delay: 0.06s; }
+.menu-bar.command-palette-open .command-palette-list li:nth-child(4) .command-item { animation-delay: 0.08s; }
+.menu-bar.command-palette-open .command-palette-list li:nth-child(5) .command-item { animation-delay: 0.1s; }
+.menu-bar.command-palette-open .command-palette-list li:nth-child(6) .command-item { animation-delay: 0.12s; }
+.menu-bar.command-palette-open .command-palette-list li:nth-child(7) .command-item { animation-delay: 0.14s; }
+.menu-bar.command-palette-open .command-palette-list li:nth-child(8) .command-item { animation-delay: 0.16s; }
+.menu-bar.command-palette-open .command-palette-list li:nth-child(9) .command-item { animation-delay: 0.18s; }
+.menu-bar.command-palette-open .command-palette-list li:nth-child(10) .command-item { animation-delay: 0.2s; }
+
+@keyframes commandPaletteItemIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .command-palette-search {
@@ -871,12 +901,12 @@ header.command-palette-open {
         padding: 8px 18px;
     }
 
-    .menu-bar ul li a::after {
+    .menu-bar > ul > li > a::after {
         bottom: -1px;
         height: 1px;
     }
 
-    .menu-bar ul li a {
+    .menu-bar > ul > li > a {
         font-size: small !important;
     }
 
@@ -1854,19 +1884,19 @@ body.light-theme header {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
-body.light-theme .menu-bar ul li a {
+body.light-theme .menu-bar > ul > li > a {
     color: #111;
 }
 
-body.light-theme .menu-bar ul li a::after {
+body.light-theme .menu-bar > ul > li > a::after {
     background-color: #111;
 }
 
-body.light-theme .menu-bar ul li a:hover {
+body.light-theme .menu-bar > ul > li > a:hover {
     color: #555;
 }
 
-body.light-theme .menu-bar ul li a:hover::after {
+body.light-theme .menu-bar > ul > li > a:hover::after {
     background-color: #555;
 }
 
@@ -2387,11 +2417,11 @@ body.light-theme .animated-text {
     text-shadow: 0 0 20px rgba(0,0,0,0.08);
 }
 
-body.light-theme .menu-bar ul li a:hover {
+body.light-theme .menu-bar > ul > li > a:hover {
     color: #000;
     text-shadow: 0 0 10px rgba(0,0,0,0.12);
 }
-body.light-theme .menu-bar ul li a::after {
+body.light-theme .menu-bar > ul > li > a::after {
     box-shadow: none;
 }
 

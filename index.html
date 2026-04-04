@@ -1104,11 +1104,17 @@ function isDesktop() {
                 });
               });
           
-              document.addEventListener('keydown', event => {
+              window.addEventListener('keydown', event => {
                                 const modPressed = isMac ? event.metaKey : event.ctrlKey;
+                                const isPaletteToggle = modPressed
+                                    && event.shiftKey
+                                    && !event.altKey
+                                    && (event.code === 'KeyP' || event.key === 'P' || event.key === 'p');
 
-                                if (modPressed && event.shiftKey && event.code === 'KeyP') {
+                                if (isPaletteToggle) {
                                     event.preventDefault();
+                                    event.stopPropagation();
+                                    event.stopImmediatePropagation();
                                     toggleCommandPalette();
                                     return;
                                 }
@@ -1174,7 +1180,7 @@ function isDesktop() {
                                         case 'KeyV':   event.preventDefault(); openResumeNewTab(); break;
                   }
                 }
-              });
+                            }, true);
             });
           </script>
     
@@ -1767,7 +1773,7 @@ function isDesktop() {
         } else {
             var menuBar = document.querySelector('.menu-bar');
             menuBar.classList.add('animate-menu-bar');
-            var menuItems = document.querySelectorAll('.menu-bar ul li');
+            var menuItems = document.querySelectorAll('.menu-bar > ul > li');
             menuItems.forEach(function(item, index) {
                 setTimeout(function() {
                     item.classList.add('animate-menu-item');

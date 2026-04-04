@@ -277,7 +277,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     initMagneticButtons();
 
-    const navLinks = document.querySelectorAll('.menu-bar ul li a');
+    const navLinks = document.querySelectorAll('.menu-bar > ul > li > a');
     navLinks.forEach(link => {
         link.addEventListener('mouseenter', () => {
             if (typeof anime !== 'undefined') {
@@ -319,7 +319,7 @@ document.addEventListener("DOMContentLoaded", () => {
     window.gsapHeaderEntrance = function() {
         const header = document.querySelector('header');
         const menuBar = document.querySelector('.menu-bar');
-        const menuItems = document.querySelectorAll('.menu-bar ul li');
+        const menuItems = document.querySelectorAll('.menu-bar > ul > li');
 
         if (!header) return;
 
