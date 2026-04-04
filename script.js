@@ -922,19 +922,19 @@ function applyTwinkleEffect() {
         const mouseTiltX = mouseY * maxTiltX;
         const mouseTiltY = -mouseX * maxTiltY;
 
-        gsap.to(camera.rotation, {
-            x: THREE.MathUtils.degToRad(mouseTiltX),
-            y: THREE.MathUtils.degToRad(mouseTiltY),
-            duration: 0.5,
-            ease: "power2.out"
-        });
+        const targetRotX = THREE.MathUtils.degToRad(mouseTiltX);
+        const targetRotY = THREE.MathUtils.degToRad(mouseTiltY);
+        const targetLightX = mouseX * 100;
+        const targetLightY = mouseY * 100;
 
-        gsap.to(pointLight.position, {
-            x: mouseX * 100,
-            y: mouseY * 100,
-            duration: 0.5,
-            ease: "power2.out"
-        });
+        // Avoid tug-of-war with section-switch camera timelines.
+        if (!activeCameraTimeline) {
+            camera.rotation.x += (targetRotX - camera.rotation.x) * 0.16;
+            camera.rotation.y += (targetRotY - camera.rotation.y) * 0.16;
+        }
+
+        pointLight.position.x += (targetLightX - pointLight.position.x) * 0.12;
+        pointLight.position.y += (targetLightY - pointLight.position.y) * 0.12;
     }
 
     const densityProbe = new THREE.Vector3();
@@ -1216,7 +1216,7 @@ function applyTwinkleEffect() {
     let activeCameraTimeline = null;
     let lastCameraMoveAt = -Infinity;
     let lastCameraSectionKey = '';
-    const cameraMoveCooldownMs = 920;
+    const cameraMoveCooldownMs = 460;
 
 function switchCameraPosition(options = {}) {
     if (starfieldFrozen) return;
@@ -1227,7 +1227,6 @@ function switchCameraPosition(options = {}) {
     const now = performance.now();
 
     if (!force) {
-        if (activeCameraTimeline) return;
         if (now - lastCameraMoveAt < cameraMoveCooldownMs) return;
     }
 
@@ -1239,6 +1238,8 @@ function switchCameraPosition(options = {}) {
     if (activeCameraTimeline) {
         activeCameraTimeline.kill();
         activeCameraTimeline = null;
+        camera.fov = 75;
+        camera.updateProjectionMatrix();
     }
 
     const smartDir = getDensityAwareVelocityDirection();
@@ -1260,7 +1261,7 @@ function switchCameraPosition(options = {}) {
     const randomRotationX = (Math.random() - 0.5) * Math.PI / 16 - smartDir.y * rotationBias;
     const randomRotationY = (Math.random() - 0.5) * Math.PI / 16 + smartDir.x * rotationBias;
 
-    const originalFOV = camera.fov;
+    const originalFOV = 75;
     const fovDive = suppressZoom ? 0 : (0.6 + smartDir.confidence * 1.6);
     const zoomInFOV = THREE.MathUtils.clamp(originalFOV - fovDive + (Math.random() - 0.5) * 0.6, 71.5, 76);
 
