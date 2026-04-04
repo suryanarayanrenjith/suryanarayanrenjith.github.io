@@ -692,6 +692,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const starDensity = 0.002;
     let starCount = Math.floor(window.innerWidth * window.innerHeight * starDensity);
+    let baseStarCount = starCount;
+    let dynamicStarMax = Math.floor(baseStarCount * 1.28);
+
+    const lazySpawnConfig = {
+        intervalFrames: 26,
+        maxRebalanceMoves: 3,
+        sparseThresholdRatio: 0.76,
+        minVisibleForAction: 80,
+        sampleBudget: 1300
+    };
+    let lazySpawnTick = 0;
 
 
     const stars = new THREE.BufferGeometry();
@@ -756,6 +767,8 @@ document.addEventListener("DOMContentLoaded", () => {
         camera.updateProjectionMatrix();
 
         starCount = Math.floor(window.innerWidth * window.innerHeight * starDensity);
+        baseStarCount = starCount;
+        dynamicStarMax = Math.floor(baseStarCount * 1.28);
         starVertices = new Float32Array(starCount * 3);
         starSpeeds = new Float32Array(starCount);
         starTwinkles = new Float32Array(starCount);
@@ -925,26 +938,32 @@ function applyTwinkleEffect() {
     }
 
     const densityProbe = new THREE.Vector3();
+    const densityRayDir = new THREE.Vector3();
+    const densitySpawnPoint = new THREE.Vector3();
     const densityGridCols = 4;
     const densityGridRows = 3;
 
-    function getDensityAwareVelocityDirection() {
+    function sampleStarDensitySnapshot(options = {}) {
         const posAttr = stars.getAttribute('position');
-        if (!posAttr || !posAttr.array || posAttr.array.length < 3) {
-            const angle = Math.random() * Math.PI * 2;
-            return { x: Math.cos(angle), y: Math.sin(angle), confidence: 0 };
-        }
+        if (!posAttr || !posAttr.array || posAttr.array.length < 3) return null;
+
+        const collectSparse = options.collectSparse === true;
+        const collectOffscreen = options.collectOffscreen === true;
+        const sampleBudget = options.sampleBudget || 1600;
 
         camera.updateMatrixWorld();
 
         const positions = posAttr.array;
         const bins = new Float32Array(densityGridCols * densityGridRows);
         const starTotal = positions.length / 3;
-        const maxSamples = 1600;
-        const stride = Math.max(1, Math.ceil(starTotal / maxSamples));
+        const stride = Math.max(1, Math.ceil(starTotal / sampleBudget));
+        const offscreenIndices = collectOffscreen ? [] : null;
+
         let visibleCount = 0;
+        let sampledCount = 0;
 
         for (let starIdx = 0; starIdx < starTotal; starIdx += stride) {
+            sampledCount += 1;
             const i = starIdx * 3;
             densityProbe.set(positions[i], positions[i + 1], positions[i + 2]).project(camera);
 
@@ -952,24 +971,21 @@ function applyTwinkleEffect() {
             const ny = densityProbe.y;
             const nz = densityProbe.z;
 
-            if (!Number.isFinite(nx) || !Number.isFinite(ny) || !Number.isFinite(nz)) continue;
-            if (nz < -1 || nz > 1 || nx < -1.1 || nx > 1.1 || ny < -1.1 || ny > 1.1) continue;
+            if (!Number.isFinite(nx) || !Number.isFinite(ny) || !Number.isFinite(nz)
+                || nz < -1 || nz > 1 || nx < -1.1 || nx > 1.1 || ny < -1.1 || ny > 1.1) {
+                if (offscreenIndices && offscreenIndices.length < 180) {
+                    offscreenIndices.push(starIdx);
+                }
+                continue;
+            }
 
             const x01 = (nx + 1) * 0.5;
             const y01 = (1 - ny) * 0.5;
-
             const col = Math.min(densityGridCols - 1, Math.max(0, Math.floor(x01 * densityGridCols)));
             const row = Math.min(densityGridRows - 1, Math.max(0, Math.floor(y01 * densityGridRows)));
 
             bins[row * densityGridCols + col] += 1;
             visibleCount += 1;
-        }
-
-        const randomAngle = Math.random() * Math.PI * 2;
-        const randomDir = { x: Math.cos(randomAngle), y: Math.sin(randomAngle) };
-
-        if (visibleCount < 25) {
-            return { x: randomDir.x, y: randomDir.y, confidence: 0 };
         }
 
         let maxVal = -Infinity;
@@ -985,7 +1001,191 @@ function applyTwinkleEffect() {
             if (v < minVal) minVal = v;
         }
 
+        if (!Number.isFinite(maxVal)) {
+            maxVal = 0;
+            minVal = 0;
+            maxIdx = 0;
+        }
+
         const avg = visibleCount / bins.length;
+        const visibleRatio = visibleCount / Math.max(1, sampledCount);
+        const sparseBins = [];
+
+        if (collectSparse && visibleCount > 0) {
+            const sparseThreshold = avg * lazySpawnConfig.sparseThresholdRatio;
+            for (let i = 0; i < bins.length; i++) {
+                const count = bins[i];
+                if (count < sparseThreshold) {
+                    sparseBins.push({ index: i, count, deficit: sparseThreshold - count });
+                }
+            }
+        }
+
+        return {
+            bins,
+            offscreenIndices,
+            sparseBins,
+            visibleCount,
+            sampledCount,
+            visibleRatio,
+            avg,
+            maxVal,
+            minVal,
+            maxIdx
+        };
+    }
+
+    function pickSparseBinWeighted(sparseBins) {
+        if (!sparseBins || !sparseBins.length) return null;
+        let totalWeight = 0;
+
+        for (let i = 0; i < sparseBins.length; i++) {
+            totalWeight += Math.max(0.01, sparseBins[i].deficit);
+        }
+
+        if (totalWeight <= 0) return sparseBins[(Math.random() * sparseBins.length) | 0];
+
+        let threshold = Math.random() * totalWeight;
+        for (let i = 0; i < sparseBins.length; i++) {
+            threshold -= Math.max(0.01, sparseBins[i].deficit);
+            if (threshold <= 0) return sparseBins[i];
+        }
+
+        return sparseBins[sparseBins.length - 1];
+    }
+
+    function placeStarInDensityBin(starIndex, binIndex, minDistance = 820, maxDistance = 1550) {
+        const col = binIndex % densityGridCols;
+        const row = Math.floor(binIndex / densityGridCols);
+
+        const cellW = 2 / densityGridCols;
+        const cellH = 2 / densityGridRows;
+        const ndcX = -1 + (col + 0.5) * cellW + (Math.random() - 0.5) * cellW * 0.72;
+        const ndcY = 1 - (row + 0.5) * cellH + (Math.random() - 0.5) * cellH * 0.72;
+        const ndcZ = THREE.MathUtils.lerp(-0.35, 0.35, Math.random());
+
+        densityProbe.set(ndcX, ndcY, ndcZ).unproject(camera);
+        densityRayDir.copy(densityProbe).sub(camera.position).normalize();
+
+        const distance = minDistance + Math.random() * (maxDistance - minDistance);
+        densitySpawnPoint.copy(camera.position).addScaledVector(densityRayDir, distance);
+
+        const base = starIndex * 3;
+        starVertices[base] = densitySpawnPoint.x;
+        starVertices[base + 1] = densitySpawnPoint.y;
+        starVertices[base + 2] = densitySpawnPoint.z;
+    }
+
+    function pickRecyclableStarIndex(offscreenIndices) {
+        if (offscreenIndices && offscreenIndices.length) {
+            return offscreenIndices[(Math.random() * offscreenIndices.length) | 0];
+        }
+
+        for (let attempt = 0; attempt < 18; attempt++) {
+            const idx = (Math.random() * starCount) | 0;
+            const z = starVertices[idx * 3 + 2];
+            if (z > 850 || z < -900) return idx;
+        }
+
+        return (Math.random() * starCount) | 0;
+    }
+
+    function appendStarsToSparseAreas(addCount, sparseBins) {
+        const targetCount = Math.min(dynamicStarMax, starCount + addCount);
+        const actualAdd = targetCount - starCount;
+        if (actualAdd <= 0) return;
+
+        const previousCount = starCount;
+        const nextVertices = new Float32Array(targetCount * 3);
+        const nextSpeeds = new Float32Array(targetCount);
+        const nextTwinkles = new Float32Array(targetCount);
+
+        nextVertices.set(starVertices);
+        nextSpeeds.set(starSpeeds);
+        nextTwinkles.set(starTwinkles);
+
+        starCount = targetCount;
+        starVertices = nextVertices;
+        starSpeeds = nextSpeeds;
+        starTwinkles = nextTwinkles;
+
+        camera.updateMatrixWorld();
+
+        for (let i = previousCount; i < starCount; i++) {
+            const targetBin = pickSparseBinWeighted(sparseBins);
+            if (targetBin) {
+                placeStarInDensityBin(i, targetBin.index, 920, 1650);
+            } else {
+                const base = i * 3;
+                starVertices[base] = (Math.random() - 0.5) * 2000;
+                starVertices[base + 1] = (Math.random() - 0.5) * 2000;
+                starVertices[base + 2] = (Math.random() - 0.5) * 2000;
+            }
+            starSpeeds[i] = Math.random() * 0.1 + 0.02;
+            starTwinkles[i] = Math.random() * 0.5 + 0.5;
+        }
+
+        stars.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+        stars.attributes.position.needsUpdate = true;
+    }
+
+    function rebalanceSparseStarfieldLazily() {
+        lazySpawnTick += 1;
+        if (lazySpawnTick % lazySpawnConfig.intervalFrames !== 0) return;
+
+        const snapshot = sampleStarDensitySnapshot({
+            collectSparse: true,
+            collectOffscreen: true,
+            sampleBudget: lazySpawnConfig.sampleBudget
+        });
+
+        if (!snapshot
+            || snapshot.visibleCount < lazySpawnConfig.minVisibleForAction
+            || !snapshot.sparseBins.length) {
+            return;
+        }
+
+        const sparseSeverity = snapshot.sparseBins.reduce((sum, bin) => sum + bin.deficit, 0);
+
+        if (sparseSeverity > snapshot.avg * 1.4
+            && starCount < dynamicStarMax
+            && Math.random() < 0.65) {
+            const addCount = sparseSeverity > snapshot.avg * 2.2 ? 2 : 1;
+            appendStarsToSparseAreas(addCount, snapshot.sparseBins);
+        }
+
+        camera.updateMatrixWorld();
+
+        const moveCount = Math.min(lazySpawnConfig.maxRebalanceMoves, snapshot.sparseBins.length);
+        let changed = false;
+
+        for (let i = 0; i < moveCount; i++) {
+            const targetBin = pickSparseBinWeighted(snapshot.sparseBins);
+            if (!targetBin) break;
+
+            const donorIdx = pickRecyclableStarIndex(snapshot.offscreenIndices);
+            placeStarInDensityBin(donorIdx, targetBin.index, 820, 1550);
+
+            targetBin.count += 1;
+            targetBin.deficit = Math.max(0, targetBin.deficit - 1);
+            changed = true;
+        }
+
+        if (changed) {
+            stars.attributes.position.needsUpdate = true;
+        }
+    }
+
+    function getDensityAwareVelocityDirection() {
+        const snapshot = sampleStarDensitySnapshot({ sampleBudget: 1600 });
+        const randomAngle = Math.random() * Math.PI * 2;
+        const randomDir = { x: Math.cos(randomAngle), y: Math.sin(randomAngle) };
+
+        if (!snapshot || snapshot.visibleCount < 25) {
+            return { x: randomDir.x, y: randomDir.y, confidence: 0, visibleRatio: 0 };
+        }
+
+        const { maxVal, minVal, maxIdx, avg, visibleRatio } = snapshot;
         let confidence = THREE.MathUtils.clamp(((maxVal - avg) / Math.max(avg, 1)) / 1.2, 0, 1);
         if (maxVal - minVal <= 1.2) confidence = 0;
 
@@ -996,13 +1196,13 @@ function applyTwinkleEffect() {
 
         const tLen = Math.hypot(tx, ty);
         if (tLen < 0.08 || confidence < 0.08) {
-            return { x: randomDir.x, y: randomDir.y, confidence: 0 };
+            return { x: randomDir.x, y: randomDir.y, confidence: 0, visibleRatio };
         }
 
         tx /= tLen;
         ty /= tLen;
 
-        const randomWeight = 0.72 - confidence * 0.52;
+        const randomWeight = 0.78 - confidence * 0.56;
         let bx = tx * (1 - randomWeight) + randomDir.x * randomWeight;
         let by = ty * (1 - randomWeight) + randomDir.y * randomWeight;
 
@@ -1010,24 +1210,30 @@ function applyTwinkleEffect() {
         bx /= blendedLen;
         by /= blendedLen;
 
-        return { x: bx, y: by, confidence };
+        return { x: bx, y: by, confidence, visibleRatio };
     }
 
 function switchCameraPosition() {
     if (starfieldFrozen) return;
 
     const smartDir = getDensityAwareVelocityDirection();
-    const directionalTravel = 320 + smartDir.confidence * 360;
-    const randomScatterX = (Math.random() - 0.5) * (smartDir.confidence > 0 ? 280 : 520);
-    const randomScatterY = (Math.random() - 0.5) * (smartDir.confidence > 0 ? 220 : 420);
+    const coverageFactor = THREE.MathUtils.clamp((smartDir.visibleRatio - 0.15) / 0.55, 0.58, 1);
+    const directionalTravel = (95 + smartDir.confidence * 170) * coverageFactor;
+    const randomScatterX = (Math.random() - 0.5) * (smartDir.confidence > 0.45 ? 120 : 180);
+    const randomScatterY = (Math.random() - 0.5) * (smartDir.confidence > 0.45 ? 95 : 150);
 
-    const randomX = THREE.MathUtils.clamp(smartDir.x * directionalTravel + randomScatterX, -900, 900);
-    const randomY = THREE.MathUtils.clamp(smartDir.y * directionalTravel + randomScatterY, -700, 700);
-    const randomZ = Math.random() * 800 + 200;
+    const centerPullX = -camera.position.x * (0.24 + smartDir.confidence * 0.12);
+    const centerPullY = -camera.position.y * (0.24 + smartDir.confidence * 0.12);
+    const targetX = camera.position.x + smartDir.x * directionalTravel + randomScatterX + centerPullX;
+    const targetY = camera.position.y + smartDir.y * directionalTravel + randomScatterY + centerPullY;
 
-    const rotationBias = smartDir.confidence * (Math.PI / 20);
-    const randomRotationX = (Math.random() - 0.5) * Math.PI / 8 - smartDir.y * rotationBias;
-    const randomRotationY = (Math.random() - 0.5) * Math.PI / 8 + smartDir.x * rotationBias;
+    const randomX = THREE.MathUtils.clamp(targetX, -520, 520);
+    const randomY = THREE.MathUtils.clamp(targetY, -380, 380);
+    const randomZ = THREE.MathUtils.clamp(camera.position.z + (Math.random() * 260 - 130), 760, 1260);
+
+    const rotationBias = smartDir.confidence * (Math.PI / 30);
+    const randomRotationX = (Math.random() - 0.5) * Math.PI / 12 - smartDir.y * rotationBias;
+    const randomRotationY = (Math.random() - 0.5) * Math.PI / 12 + smartDir.x * rotationBias;
 
     const zoomInFOV = Math.random() * 15 + 55;
     const originalFOV = camera.fov;
@@ -1121,6 +1327,7 @@ document.addEventListener('keydown', (event) => {
     function render() {
         if (!starfieldFrozen) {
             applyWarpSpeed();
+            rebalanceSparseStarfieldLazily();
             applyMouseAcceleration();
             applyDynamicStarScaling();
             applyShockwaveEffect();
