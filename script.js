@@ -68,6 +68,93 @@ document.addEventListener("DOMContentLoaded", () => {
         return document.body.classList.contains('experimental-motion-fx');
     }
 
+    function initSectionTitleHoverFx(content) {
+        if (!content || typeof Letterize === 'undefined' || typeof anime === 'undefined') return;
+
+        const titleTargets = Array.from(content.querySelectorAll('.animated-text'));
+        if (!titleTargets.length) {
+            const fallbackTitle = content.querySelector('h1');
+            if (fallbackTitle) titleTargets.push(fallbackTitle);
+        }
+
+        titleTargets.forEach(title => {
+            if (title.dataset.letterHoverBound === 'true') return;
+
+            let chars = Array.from(title.querySelectorAll('.char'));
+            if (!chars.length) {
+                try {
+                    const letterized = new Letterize({ targets: title });
+                    chars = Array.from(letterized.listAll || []);
+                    title.dataset.letterized = 'true';
+                } catch (error) {
+                    return;
+                }
+            }
+
+            if (!chars.length) return;
+
+            chars.forEach(char => {
+                char.style.display = 'inline-block';
+                char.style.willChange = 'transform, filter, text-shadow, opacity';
+            });
+
+            const playHoverFx = () => {
+                const hyper = isHyperModeEnabled();
+                const offsetY = hyper ? 16 : 12;
+                const driftX = hyper ? 8 : 6;
+
+                anime.remove(chars);
+                anime.timeline({ loop: false })
+                    .add({
+                        targets: chars,
+                        translateY: (el, i) => (i % 2 === 0 ? -offsetY : offsetY * 0.6),
+                        translateX: () => anime.random(-driftX, driftX),
+                        rotateZ: () => anime.random(-9, 9),
+                        textShadow: [
+                            '0 0 0 rgba(255,255,255,0)',
+                            '0 0 20px rgba(255,255,255,0.42)'
+                        ],
+                        filter: ['blur(0px)', 'blur(0.8px)'],
+                        duration: hyper ? 220 : 260,
+                        easing: 'easeOutExpo',
+                        delay: anime.stagger(14, { from: 'center' })
+                    })
+                    .add({
+                        targets: chars,
+                        translateX: 0,
+                        translateY: 0,
+                        rotateZ: 0,
+                        filter: 'blur(0px)',
+                        textShadow: '0 0 0 rgba(255,255,255,0)',
+                        duration: hyper ? 560 : 620,
+                        easing: 'easeOutElastic(1, 0.65)',
+                        delay: anime.stagger(10, { from: 'center' })
+                    }, '-=70');
+            };
+
+            const resetHoverFx = () => {
+                anime.remove(chars);
+                anime({
+                    targets: chars,
+                    translateX: 0,
+                    translateY: 0,
+                    rotateZ: 0,
+                    filter: 'blur(0px)',
+                    textShadow: '0 0 0 rgba(255,255,255,0)',
+                    duration: 240,
+                    easing: 'easeOutQuad'
+                });
+            };
+
+            title.addEventListener('mouseenter', playHoverFx);
+            title.addEventListener('focusin', playHoverFx);
+            title.addEventListener('mouseleave', resetHoverFx);
+            title.addEventListener('focusout', resetHoverFx);
+
+            title.dataset.letterHoverBound = 'true';
+        });
+    }
+
     window.animateContentIn = function() {
         const content = document.getElementById('content');
         if (!content) return;
@@ -225,6 +312,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
             }
 
+
+        initSectionTitleHoverFx(content);
             linkCards.forEach(card => {
                 if (card.dataset.animeHover) return;
                 card.dataset.animeHover = 'true';

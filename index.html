@@ -2718,7 +2718,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
       const fullnameLetterize = new Letterize({ targets: '.preloader-fullname' });
 
-      // Retro hacking decode: each letter cycles random glyphs before resolving
       var glyphChars = '01@#$%&*!?<>{}[]=/\\|~^_:;ABCDEFGHIJKLMNOPQRSTUVWXYZ';
       var decodeIntervals = [];
       function startDecode(spans, staggerMs, cycleMs, resolveMs) {
@@ -2839,7 +2838,6 @@ document.addEventListener('DOMContentLoaded', function() {
           easing: 'easeOutExpo', duration: 500
       }, 1200);
 
-      // Retro hacking percentage counter
       (function() {
           var scrambleChars = '!@#$%^&*01';
           var counterDuration = 2400;
