@@ -92,11 +92,11 @@ document.addEventListener("DOMContentLoaded", () => {
             tl.fromTo(headings,
                 {
                     opacity: 0,
-                    y: hyper ? 82 : 40,
-                    x: hyper ? (index => (index % 2 === 0 ? -18 : 18)) : 0,
-                    scale: hyper ? 0.72 : 1,
-                    clipPath: hyper ? 'inset(0 0 120% 0)' : 'inset(0 0 100% 0)',
-                    filter: hyper ? 'blur(12px)' : 'blur(0px)'
+                    y: hyper ? 108 : 40,
+                    x: hyper ? (index => (index % 2 === 0 ? -26 : 26)) : 0,
+                    scale: hyper ? 0.64 : 1,
+                    clipPath: hyper ? 'inset(0 0 140% 0)' : 'inset(0 0 100% 0)',
+                    filter: hyper ? 'blur(15px)' : 'blur(0px)'
                 },
                 {
                     opacity: 1,
@@ -105,60 +105,60 @@ document.addEventListener("DOMContentLoaded", () => {
                     scale: 1,
                     clipPath: 'inset(0 0 0% 0)',
                     filter: 'blur(0px)',
-                    duration: hyper ? 0.28 : 0.8,
-                    ease: hyper ? 'steps(3)' : 'power3.out',
-                    stagger: hyper ? 0.045 : 0.12
+                    duration: hyper ? 0.2 : 0.8,
+                    ease: hyper ? 'steps(4)' : 'power3.out',
+                    stagger: hyper ? 0.03 : 0.12
                 },
                 0
             );
             if (hyper) {
                 tl.to(headings, {
-                    x: 'random(-10,10)',
-                    y: 'random(-5,5)',
-                    duration: 0.055,
+                    x: 'random(-14,14)',
+                    y: 'random(-8,8)',
+                    duration: 0.045,
                     ease: 'steps(2)',
                     stagger: 0.02,
                     yoyo: true,
-                    repeat: 2
-                }, 0.08);
+                    repeat: 3
+                }, 0.05);
             }
         }
         if (paragraphs.length) {
             tl.fromTo(paragraphs,
-                { opacity: 0, y: hyper ? 48 : 25, filter: hyper ? 'blur(8px)' : 'blur(0px)' },
+                { opacity: 0, y: hyper ? 62 : 25, filter: hyper ? 'blur(10px)' : 'blur(0px)' },
                 {
                     opacity: 1,
                     y: 0,
                     filter: 'blur(0px)',
-                    duration: hyper ? 0.25 : 0.6,
+                    duration: hyper ? 0.18 : 0.6,
                     ease: hyper ? 'steps(2)' : 'power2.out',
-                    stagger: hyper ? 0.035 : 0.08
+                    stagger: hyper ? 0.025 : 0.08
                 },
-                0.12
+                0.09
             );
             if (hyper) {
                 tl.to(paragraphs, {
-                    x: 'random(-6,6)',
-                    duration: 0.05,
+                    x: 'random(-10,10)',
+                    duration: 0.04,
                     ease: 'steps(2)',
                     yoyo: true,
-                    repeat: 1,
+                    repeat: 2,
                     stagger: 0.02
-                }, 0.14);
+                }, 0.11);
             }
         }
         if (buttons.length) {
             tl.fromTo(buttons,
-                { opacity: 0, y: hyper ? 34 : 20, scale: hyper ? 0.84 : 0.92 },
+                { opacity: 0, y: hyper ? 46 : 20, scale: hyper ? 0.78 : 0.92 },
                 {
                     opacity: 1,
                     y: 0,
                     scale: 1,
-                    duration: hyper ? 0.24 : 0.6,
+                    duration: hyper ? 0.18 : 0.6,
                     ease: hyper ? 'steps(2)' : 'back.out(1.4)',
-                    stagger: hyper ? 0.05 : 0.1
+                    stagger: hyper ? 0.03 : 0.1
                 },
-                0.2
+                0.14
             );
         }
         if (listItems.length) {
@@ -264,18 +264,20 @@ document.addEventListener("DOMContentLoaded", () => {
         return new Promise(resolve => {
             const hyper = isHyperModeEnabled();
             const isVertical = direction === 'up' || direction === 'down';
-            const dirMult = (direction === 'down' || direction === 'right') ? 1 : -1;
+            const dirMult = (direction === 'down' || direction === 'right') ? -1 : 1;
 
             gsap.to(content, {
                 opacity: 0,
-                scale: hyper ? 0.7 : 0.92,
-                y: isVertical ? dirMult * (hyper ? 180 : 60) : 0,
-                x: !isVertical ? dirMult * (hyper ? 220 : 80) : 0,
-                rotationY: !isVertical ? dirMult * (hyper ? -14 : -4) : 0,
-                rotationX: isVertical ? dirMult * (hyper ? 10 : 3) : 0,
-                filter: hyper ? 'blur(22px)' : 'blur(8px)',
-                duration: hyper ? 0.34 : 0.45,
-                ease: hyper ? 'steps(3)' : 'power3.in',
+                scale: hyper ? 0.62 : 0.92,
+                y: isVertical ? dirMult * (hyper ? 240 : 60) : 0,
+                x: !isVertical ? dirMult * (hyper ? 300 : 80) : 0,
+                rotationY: !isVertical ? dirMult * (hyper ? -20 : -4) : 0,
+                rotationX: isVertical ? dirMult * (hyper ? 14 : 3) : 0,
+                filter: hyper ? 'blur(30px)' : 'blur(8px)',
+                duration: hyper ? 0.26 : 0.45,
+                ease: hyper ? 'steps(4)' : 'power3.in',
+                force3D: true,
+                overwrite: 'auto',
                 onComplete: resolve
             });
         });
@@ -290,12 +292,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
         gsap.set(content, {
             opacity: 0,
-            scale: hyper ? 0.68 : 0.88,
-            y: isVertical ? dirMult * (hyper ? 176 : 80) : 0,
-            x: !isVertical ? dirMult * (hyper ? 186 : 100) : 0,
-            rotationY: !isVertical ? dirMult * (hyper ? 14 : 5) : 0,
-            rotationX: isVertical ? dirMult * (hyper ? -10 : -4) : 0,
-            filter: hyper ? 'blur(20px)' : 'blur(10px)'
+            scale: hyper ? 0.6 : 0.88,
+            y: isVertical ? dirMult * (hyper ? 228 : 80) : 0,
+            x: !isVertical ? dirMult * (hyper ? 260 : 100) : 0,
+            rotationY: !isVertical ? dirMult * (hyper ? 20 : 5) : 0,
+            rotationX: isVertical ? dirMult * (hyper ? -14 : -4) : 0,
+            filter: hyper ? 'blur(28px)' : 'blur(10px)',
+            force3D: true
         });
 
         gsap.to(content, {
@@ -306,8 +309,10 @@ document.addEventListener("DOMContentLoaded", () => {
             rotationY: 0,
             rotationX: 0,
             filter: 'blur(0px)',
-            duration: hyper ? 0.36 : 0.7,
-            ease: hyper ? 'steps(3)' : 'power3.out',
+            duration: hyper ? 0.28 : 0.7,
+            ease: hyper ? 'steps(4)' : 'power3.out',
+            force3D: true,
+            overwrite: 'auto',
             onComplete: () => {
                 gsap.set(content, { clearProps: 'all' });
             }
@@ -319,11 +324,13 @@ document.addEventListener("DOMContentLoaded", () => {
             const hyper = isHyperModeEnabled();
             gsap.to(content, {
                 opacity: 0,
-                scale: hyper ? 0.84 : 0.96,
-                y: hyper ? -42 : -15,
-                filter: hyper ? 'blur(12px)' : 'blur(4px)',
-                duration: hyper ? 0.22 : 0.25,
+                scale: hyper ? 0.76 : 0.96,
+                y: hyper ? -70 : -15,
+                filter: hyper ? 'blur(16px)' : 'blur(4px)',
+                duration: hyper ? 0.16 : 0.25,
                 ease: hyper ? 'steps(2)' : 'power2.in',
+                force3D: true,
+                overwrite: 'auto',
                 onComplete: resolve
             });
         });
@@ -336,17 +343,19 @@ document.addEventListener("DOMContentLoaded", () => {
         gsap.fromTo(content,
             {
                 opacity: 0,
-                scale: hyper ? 0.8 : 0.96,
-                y: hyper ? 65 : 15,
-                filter: hyper ? 'blur(14px)' : 'blur(4px)'
+                scale: hyper ? 0.72 : 0.96,
+                y: hyper ? 95 : 15,
+                filter: hyper ? 'blur(18px)' : 'blur(4px)'
             },
             {
                 opacity: 1,
                 scale: 1,
                 y: 0,
                 filter: 'blur(0px)',
-                duration: hyper ? 0.32 : 0.45,
-                ease: hyper ? 'steps(3)' : 'power2.out',
+                duration: hyper ? 0.24 : 0.45,
+                ease: hyper ? 'steps(4)' : 'power2.out',
+                force3D: true,
+                overwrite: 'auto',
                 onComplete: () => {
                     gsap.set(content, { clearProps: 'all' });
                 }
