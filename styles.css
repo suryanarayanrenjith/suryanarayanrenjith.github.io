@@ -203,15 +203,26 @@ body.experimental-motion-fx .section-indicator {
 body.experimental-motion-fx header,
 body.experimental-motion-fx .menu-bar {
     animation: none !important;
-    transform: none !important;
+}
+
+body.experimental-motion-fx header {
+    transform: translateX(-50%) !important;
+}
+
+body.experimental-motion-fx .menu-bar {
+    transform: translateY(0) !important;
 }
 
 body.experimental-motion-fx header.command-palette-open,
 body.experimental-motion-fx .menu-bar.command-palette-open,
-body.experimental-motion-fx .menu-bar.command-palette-open .command-palette,
 body.experimental-motion-fx .menu-bar.command-palette-open .command-item {
     animation: none !important;
     transform: none !important;
+}
+
+body.experimental-motion-fx .menu-bar.command-palette-open .command-palette {
+    animation: none !important;
+    transform: translate(-50%, 0) !important;
 }
 
 body.experimental-motion-fx .animated-text,
