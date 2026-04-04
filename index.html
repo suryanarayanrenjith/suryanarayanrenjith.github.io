@@ -1433,7 +1433,9 @@ function isDesktop() {
 
                             document.addEventListener('mousedown', (event) => {
                                 if (!commandPaletteVisible) return;
-                                if (header && !header.contains(event.target)) {
+                                const clickedInsideHeader = !!(header && header.contains(event.target));
+                                const clickedInsidePalette = !!(commandPalette && commandPalette.contains(event.target));
+                                if (!clickedInsideHeader && !clickedInsidePalette) {
                                     hideCommandPalette();
                                 }
                             });
