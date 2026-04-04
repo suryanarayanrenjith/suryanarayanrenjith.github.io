@@ -178,7 +178,7 @@ function initFS() {
   _mkfile(HOME+'/.bashrc','# ~/.bashrc\nexport PATH="/usr/local/bin:/usr/bin:/bin"\nexport EDITOR="vim"\nalias ll="ls -la"\nalias la="ls -a"\n');
   _mkfile(HOME+'/.profile','# ~/.profile\n# Executed on login.\n');
   _mkfile(HOME+'/.bash_history','');
-  _mkfile(HOME+'/README.txt','Run ./about, ./project, ./projects, or ./resume to browse portfolio sections.\nRun help to see available commands and current open targets.\nUse vim <file> to edit local files in your home directory.\n');
+  _mkfile(HOME+'/README.txt','Run ./about, ./projects, or ./resume to browse portfolio sections.\nRun help to see available commands and current open targets.\nUse vim <file> to edit local files in your home directory.\n');
   _mkfile('/etc/hostname', HOST + '\n', { readOnly:true });
   _mkfile('/etc/os-release','NAME="SuryaOS"\nVERSION="3.1"\nID=suryaos\nPRETTY_NAME="SuryaOS 3.1 (Terminal)"\n', { readOnly:true });
   _mkfile('/etc/passwd','root:x:0:0:root:/root:/bin/bash\nsurya:x:1000:1000:Suryanarayan Renjith:'+HOME+':/bin/bash\n', { readOnly:true });
@@ -187,7 +187,6 @@ function initFS() {
   _mkfile('/bin/bash','#!/usr/bin/env surya-shell\necho "A shell is already running in this page."\n', { executable:true, readOnly:true });
   _mkfile('/bin/sh','#!/usr/bin/env surya-shell\necho "A POSIX shell is already running in this page."\n', { executable:true, readOnly:true });
   _mkfile(HOME+'/about','#!/usr/bin/env surya-shell\nsection about\n', { executable:true });
-  _mkfile(HOME+'/project','#!/usr/bin/env surya-shell\nsection projects\n', { executable:true });
   _mkfile(HOME+'/projects','#!/usr/bin/env surya-shell\nsection projects\n', { executable:true });
   _mkfile(HOME+'/resume','#!/usr/bin/env surya-shell\nsection resume\n', { executable:true });
 }
@@ -949,24 +948,52 @@ commands.help = function () {
     ['Editor', 'vim'],
     ['Fun', 'neofetch  cowsay  fortune  cal  factor  sudo']
   ];
+  var labels = sections.map(function (section) { return section[0]; });
+  labels = labels.concat(['Chaining', 'Piping', 'History', 'Open targets', 'Vim']);
+
+  var labelWidth = 0;
+  for (var li = 0; li < labels.length; li++) {
+    var width = labels[li].length + 1;
+    if (width > labelWidth) labelWidth = width;
+  }
+
+  function row(label, value) {
+    return '  ' + rpad(label + ':', labelWidth) + '  ' + value;
+  }
+
+  function shortcutCell(key, action) {
+    return rpad(key, 8) + ' ' + rpad(action, 12);
+  }
+
   var lines = ['', '  Available commands:', ''];
   for (var i = 0; i < sections.length; i++) {
-    lines.push('  ' + sections[i][0] + ':');
-    lines.push('    ' + sections[i][1]);
-    lines.push('');
+    lines.push(row(sections[i][0], sections[i][1]));
   }
-  lines.push('  Shortcuts:');
-  lines.push('    Ctrl+C  Interrupt    Ctrl+L  Clear screen    Ctrl+U  Clear line');
-  lines.push('    Ctrl+W  Delete word  Ctrl+A  Cursor start    Ctrl+E  Cursor end');
-  lines.push('    Ctrl+D  Exit         Tab     Autocomplete    Up/Down  History');
+
   lines.push('');
-  lines.push('  Chaining:   cmd1 ; cmd2    cmd1 && cmd2    cmd1 || cmd2');
-  lines.push('  Piping:     cmd1 | cmd2');
-  lines.push('  History:    !!  (repeat last)    !n  (repeat nth)');
-  lines.push('  Open targets:');
-  lines.push('    ' + getOpenOptionsSummary());
-  lines.push('  Vim:        i insert, Esc normal, :w save, :q quit, dd delete line');
-  lines.push('  Use \'man <command>\' for detailed usage.');
+  lines.push('  Shortcuts:');
+  lines.push('    ' + shortcutCell('Ctrl+C', 'Interrupt') + '  ' + shortcutCell('Ctrl+L', 'Clear screen') + '  ' + shortcutCell('Ctrl+U', 'Clear line'));
+  lines.push('    ' + shortcutCell('Ctrl+W', 'Delete word') + '  ' + shortcutCell('Ctrl+A', 'Cursor start') + '  ' + shortcutCell('Ctrl+E', 'Cursor end'));
+  lines.push('    ' + shortcutCell('Ctrl+D', 'Exit') + '  ' + shortcutCell('Tab', 'Autocomplete') + '  ' + shortcutCell('Up/Down', 'History'));
+
+  lines.push('');
+  lines.push(row('Chaining', 'cmd1 ; cmd2    cmd1 && cmd2    cmd1 || cmd2'));
+  lines.push(row('Piping', 'cmd1 | cmd2'));
+  lines.push(row('History', '!! (repeat last)    !n (repeat nth)'));
+
+  var targets = getOpenOptionNames();
+  if (targets.length) {
+    var chunkSize = 6;
+    lines.push(row('Open targets', targets.slice(0, chunkSize).join(', ')));
+    for (var t = chunkSize; t < targets.length; t += chunkSize) {
+      lines.push('  ' + rpad('', labelWidth) + '  ' + targets.slice(t, t + chunkSize).join(', '));
+    }
+  } else {
+    lines.push(row('Open targets', 'none'));
+  }
+
+  lines.push(row('Vim', 'i insert, Esc normal, :w save, :q quit, dd delete line'));
+  lines.push("  Use 'man <command>' for detailed usage.");
   lines.push('');
   return lines.join('\n');
 };
