@@ -2061,7 +2061,9 @@ function isDesktop() {
                     window.history.replaceState({}, '', url.pathname || '/');
                 }
             }
-            window.dispatchEvent(new CustomEvent('sectionChanged'));
+            window.dispatchEvent(new CustomEvent('sectionChanged', {
+                detail: { section: section, direction: direction, source: 'navigateToSection' }
+            }));
         }
 
         document.querySelectorAll('.menu-bar a').forEach(link => {
@@ -2099,7 +2101,9 @@ function isDesktop() {
                 url.searchParams.delete('section');
                 window.history.replaceState({}, '', url.pathname || '/');
             }
-            window.dispatchEvent(new CustomEvent('sectionChanged'));
+            window.dispatchEvent(new CustomEvent('sectionChanged', {
+                detail: { section: nextSection, direction: direction, source: 'switchToNextSection' }
+            }));
         }
         
             let wheelAccumulator = 0;

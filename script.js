@@ -790,8 +790,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let warpBurstIntensity = 0;
 
-    function triggerWarpBurst() {
-        warpBurstIntensity = 1.0;
+    function triggerWarpBurst(intensity = 1.0) {
+        warpBurstIntensity = Math.max(warpBurstIntensity, intensity);
         const decay = () => {
             warpBurstIntensity *= 0.94;
             if (warpBurstIntensity < 0.01) {
@@ -811,7 +811,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function applyWarpSpeed() {
-        const burstMultiplier = 1 + warpBurstIntensity * 40;
+        const burstMultiplier = 1 + warpBurstIntensity * 18;
         for (let i = 0; i < starVertices.length; i += 3) {
             starVertices[i + 2] += starSpeeds[i / 3] * 20 * burstMultiplier;
 
@@ -1213,84 +1213,118 @@ function applyTwinkleEffect() {
         return { x: bx, y: by, confidence, visibleRatio };
     }
 
-function switchCameraPosition() {
+    let activeCameraTimeline = null;
+    let lastCameraMoveAt = -Infinity;
+    let lastCameraSectionKey = '';
+    const cameraMoveCooldownMs = 920;
+
+function switchCameraPosition(options = {}) {
     if (starfieldFrozen) return;
+
+    const force = !!options.force;
+    const suppressZoom = !!options.suppressZoom;
+    const sectionKey = typeof options.sectionKey === 'string' ? options.sectionKey : '';
+    const now = performance.now();
+
+    if (!force) {
+        if (activeCameraTimeline) return;
+        if (now - lastCameraMoveAt < cameraMoveCooldownMs) return;
+    }
+
+    if (sectionKey && sectionKey === lastCameraSectionKey && !force) return;
+    if (sectionKey) lastCameraSectionKey = sectionKey;
+
+    lastCameraMoveAt = now;
+
+    if (activeCameraTimeline) {
+        activeCameraTimeline.kill();
+        activeCameraTimeline = null;
+    }
 
     const smartDir = getDensityAwareVelocityDirection();
     const coverageFactor = THREE.MathUtils.clamp((smartDir.visibleRatio - 0.15) / 0.55, 0.58, 1);
-    const directionalTravel = (95 + smartDir.confidence * 170) * coverageFactor;
-    const randomScatterX = (Math.random() - 0.5) * (smartDir.confidence > 0.45 ? 120 : 180);
-    const randomScatterY = (Math.random() - 0.5) * (smartDir.confidence > 0.45 ? 95 : 150);
+    const directionalTravel = (70 + smartDir.confidence * 120) * coverageFactor;
+    const randomScatterX = (Math.random() - 0.5) * (smartDir.confidence > 0.45 ? 85 : 140);
+    const randomScatterY = (Math.random() - 0.5) * (smartDir.confidence > 0.45 ? 70 : 118);
 
     const centerPullX = -camera.position.x * (0.24 + smartDir.confidence * 0.12);
     const centerPullY = -camera.position.y * (0.24 + smartDir.confidence * 0.12);
     const targetX = camera.position.x + smartDir.x * directionalTravel + randomScatterX + centerPullX;
     const targetY = camera.position.y + smartDir.y * directionalTravel + randomScatterY + centerPullY;
 
-    const randomX = THREE.MathUtils.clamp(targetX, -520, 520);
-    const randomY = THREE.MathUtils.clamp(targetY, -380, 380);
-    const randomZ = THREE.MathUtils.clamp(camera.position.z + (Math.random() * 260 - 130), 760, 1260);
+    const randomX = THREE.MathUtils.clamp(targetX, -430, 430);
+    const randomY = THREE.MathUtils.clamp(targetY, -320, 320);
+    const randomZ = THREE.MathUtils.clamp(camera.position.z + (Math.random() * 120 - 60), 860, 1120);
 
     const rotationBias = smartDir.confidence * (Math.PI / 30);
-    const randomRotationX = (Math.random() - 0.5) * Math.PI / 12 - smartDir.y * rotationBias;
-    const randomRotationY = (Math.random() - 0.5) * Math.PI / 12 + smartDir.x * rotationBias;
+    const randomRotationX = (Math.random() - 0.5) * Math.PI / 16 - smartDir.y * rotationBias;
+    const randomRotationY = (Math.random() - 0.5) * Math.PI / 16 + smartDir.x * rotationBias;
 
-    const zoomInFOV = Math.random() * 15 + 55;
     const originalFOV = camera.fov;
+    const fovDive = suppressZoom ? 0 : (0.6 + smartDir.confidence * 1.6);
+    const zoomInFOV = THREE.MathUtils.clamp(originalFOV - fovDive + (Math.random() - 0.5) * 0.6, 71.5, 76);
 
-    triggerWarpBurst();
+    triggerWarpBurst(suppressZoom ? 0.12 : (0.22 + smartDir.confidence * 0.28));
 
-    shockwaveTime = 1.0;
+    shockwaveTime = suppressZoom ? 0.35 : 0.65;
 
-    const tl = gsap.timeline();
-
-    tl.to(camera, {
-        fov: zoomInFOV,
-        duration: 0.6,
-        ease: "power3.in",
-        onUpdate: () => camera.updateProjectionMatrix()
+    const tl = gsap.timeline({
+        defaults: { overwrite: 'auto' },
+        onComplete: () => {
+            activeCameraTimeline = null;
+        },
+        onInterrupt: () => {
+            activeCameraTimeline = null;
+        }
     });
+    activeCameraTimeline = tl;
+
+    if (!suppressZoom) {
+        tl.to(camera, {
+            fov: zoomInFOV,
+            duration: 0.28,
+            ease: "power2.out",
+            onUpdate: () => camera.updateProjectionMatrix()
+        });
+    }
 
     tl.to(camera.position, {
         x: randomX,
         y: randomY,
         z: randomZ,
-        duration: 1.8,
-        ease: "power3.inOut",
-        onUpdate: () => {
-            camera.position.x += Math.sin(performance.now() * 0.002) * 0.5;
-            camera.position.y += Math.cos(performance.now() * 0.0015) * 0.3;
-        }
+        duration: 1.35,
+        ease: "sine.inOut"
     }, 0);
 
     tl.to(camera.rotation, {
         x: randomRotationX,
         y: randomRotationY,
-        duration: 1.8,
-        ease: "power3.inOut",
-        onUpdate: () => {
-            camera.rotation.x += Math.sin(performance.now() * 0.001) * 0.002;
-            camera.rotation.y += Math.cos(performance.now() * 0.001) * 0.002;
-        }
+        duration: 1.35,
+        ease: "sine.inOut"
     }, 0);
 
     tl.to(starFieldWhite.rotation, {
-        z: starFieldWhite.rotation.z + (Math.random() - 0.5) * 0.3,
-        duration: 1.5,
-        ease: "power2.inOut"
+        z: starFieldWhite.rotation.z + (Math.random() - 0.5) * (0.16 + smartDir.confidence * 0.12),
+        duration: 1.1,
+        ease: "sine.inOut"
     }, 0);
 
-    tl.to(camera, {
-        fov: originalFOV,
-        duration: 1.2,
-        ease: "elastic.out(1, 0.6)",
-        onUpdate: () => camera.updateProjectionMatrix()
-    }, "-=1.0");
+    if (!suppressZoom) {
+        tl.to(camera, {
+            fov: originalFOV,
+            duration: 0.72,
+            ease: "power2.out",
+            onUpdate: () => camera.updateProjectionMatrix()
+        }, "-=0.62");
+    }
 }
 
-    window.addEventListener('sectionChanged', () => {
+    window.addEventListener('sectionChanged', (event) => {
         if (!starfieldFrozen) {
-            switchCameraPosition();
+            const sectionKey = event && event.detail && typeof event.detail.section === 'string'
+                ? event.detail.section
+                : '';
+            switchCameraPosition({ sectionKey });
         }
     });
 
@@ -1300,22 +1334,22 @@ document.addEventListener('keydown', (event) => {
         switch (event.code) {
             case 'Digit5':
                 event.preventDefault();
-                switchCameraPosition();
+                switchCameraPosition({ force: true });
                 break;
 
             case 'Digit6':
                 event.preventDefault();
-                switchCameraPosition();
+                switchCameraPosition({ force: true });
                 break;
 
             case 'Digit7':
                 event.preventDefault();
-                switchCameraPosition();
+                switchCameraPosition({ force: true });
                 break;
 
             case 'Digit8':
                 event.preventDefault();
-                switchCameraPosition();
+                switchCameraPosition({ force: true });
                 break;
 
             default:
@@ -1343,7 +1377,7 @@ document.addEventListener('keydown', (event) => {
 
     setupMouseControl();
     if (!starfieldFrozen) {
-        switchCameraPosition();
+        switchCameraPosition({ force: true, suppressZoom: true });
     }
     render();
 
