@@ -696,13 +696,14 @@ document.addEventListener("DOMContentLoaded", () => {
     let dynamicStarMax = Math.floor(baseStarCount * 1.28);
 
     const lazySpawnConfig = {
-        intervalFrames: 26,
-        maxRebalanceMoves: 3,
+        intervalFrames: 40,
+        maxRebalanceMoves: 1,
         sparseThresholdRatio: 0.76,
         minVisibleForAction: 80,
-        sampleBudget: 1300
+        sampleBudget: 1000
     };
     let lazySpawnTick = 0;
+    let lastMouseActivityAt = performance.now();
 
 
     const stars = new THREE.BufferGeometry();
@@ -807,6 +808,7 @@ document.addEventListener("DOMContentLoaded", () => {
         window.addEventListener('mousemove', (event) => {
             targetMouseX = (event.clientX / window.innerWidth) * 2 - 1;
             targetMouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+            lastMouseActivityAt = performance.now();
         });
     }
 
@@ -1054,7 +1056,7 @@ function applyTwinkleEffect() {
         return sparseBins[sparseBins.length - 1];
     }
 
-    function placeStarInDensityBin(starIndex, binIndex, minDistance = 820, maxDistance = 1550) {
+    function placeStarInDensityBin(starIndex, binIndex, minDistance = 1180, maxDistance = 2050) {
         const col = binIndex % densityGridCols;
         const row = Math.floor(binIndex / densityGridCols);
 
@@ -1114,7 +1116,7 @@ function applyTwinkleEffect() {
         for (let i = previousCount; i < starCount; i++) {
             const targetBin = pickSparseBinWeighted(sparseBins);
             if (targetBin) {
-                placeStarInDensityBin(i, targetBin.index, 920, 1650);
+                placeStarInDensityBin(i, targetBin.index, 1260, 2100);
             } else {
                 const base = i * 3;
                 starVertices[base] = (Math.random() - 0.5) * 2000;
@@ -1132,6 +1134,8 @@ function applyTwinkleEffect() {
     function rebalanceSparseStarfieldLazily() {
         lazySpawnTick += 1;
         if (lazySpawnTick % lazySpawnConfig.intervalFrames !== 0) return;
+        if (activeCameraTimeline) return;
+        if (performance.now() - lastMouseActivityAt < 460) return;
 
         const snapshot = sampleStarDensitySnapshot({
             collectSparse: true,
@@ -1147,11 +1151,10 @@ function applyTwinkleEffect() {
 
         const sparseSeverity = snapshot.sparseBins.reduce((sum, bin) => sum + bin.deficit, 0);
 
-        if (sparseSeverity > snapshot.avg * 1.4
+        if (sparseSeverity > snapshot.avg * 1.9
             && starCount < dynamicStarMax
-            && Math.random() < 0.65) {
-            const addCount = sparseSeverity > snapshot.avg * 2.2 ? 2 : 1;
-            appendStarsToSparseAreas(addCount, snapshot.sparseBins);
+            && Math.random() < 0.28) {
+            appendStarsToSparseAreas(1, snapshot.sparseBins);
         }
 
         camera.updateMatrixWorld();
@@ -1164,7 +1167,7 @@ function applyTwinkleEffect() {
             if (!targetBin) break;
 
             const donorIdx = pickRecyclableStarIndex(snapshot.offscreenIndices);
-            placeStarInDensityBin(donorIdx, targetBin.index, 820, 1550);
+            placeStarInDensityBin(donorIdx, targetBin.index, 1180, 2050);
 
             targetBin.count += 1;
             targetBin.deficit = Math.max(0, targetBin.deficit - 1);
@@ -1216,7 +1219,7 @@ function applyTwinkleEffect() {
     let activeCameraTimeline = null;
     let lastCameraMoveAt = -Infinity;
     let lastCameraSectionKey = '';
-    const cameraMoveCooldownMs = 460;
+    const cameraMoveCooldownMs = 260;
 
 function switchCameraPosition(options = {}) {
     if (starfieldFrozen) return;
@@ -1224,14 +1227,21 @@ function switchCameraPosition(options = {}) {
     const force = !!options.force;
     const suppressZoom = !!options.suppressZoom;
     const sectionKey = typeof options.sectionKey === 'string' ? options.sectionKey : '';
+    const isSectionEvent = !!sectionKey;
     const now = performance.now();
 
     if (!force) {
-        if (now - lastCameraMoveAt < cameraMoveCooldownMs) return;
+        if (isSectionEvent) {
+            if (sectionKey === lastCameraSectionKey
+                && now - lastCameraMoveAt < cameraMoveCooldownMs) {
+                return;
+            }
+        } else if (now - lastCameraMoveAt < cameraMoveCooldownMs) {
+            return;
+        }
     }
 
-    if (sectionKey && sectionKey === lastCameraSectionKey && !force) return;
-    if (sectionKey) lastCameraSectionKey = sectionKey;
+    if (isSectionEvent) lastCameraSectionKey = sectionKey;
 
     lastCameraMoveAt = now;
 
