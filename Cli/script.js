@@ -178,7 +178,7 @@ function initFS() {
   _mkfile(HOME+'/.bashrc','# ~/.bashrc\nexport PATH="/usr/local/bin:/usr/bin:/bin"\nexport EDITOR="vim"\nalias ll="ls -la"\nalias la="ls -a"\n');
   _mkfile(HOME+'/.profile','# ~/.profile\n# Executed on login.\n');
   _mkfile(HOME+'/.bash_history','');
-  _mkfile(HOME+'/README.txt','Run ./about, ./projects, or ./resume to browse portfolio sections.\nRun help to see available commands and current open targets.\nUse vim <file> to edit local files in your home directory.\n');
+  _mkfile(HOME+'/README.txt','Run ./about, ./project, ./projects, or ./resume to browse portfolio sections.\nRun help to see available commands and current open targets.\nUse vim <file> to edit local files in your home directory.\n');
   _mkfile('/etc/hostname', HOST + '\n', { readOnly:true });
   _mkfile('/etc/os-release','NAME="SuryaOS"\nVERSION="3.1"\nID=suryaos\nPRETTY_NAME="SuryaOS 3.1 (Terminal)"\n', { readOnly:true });
   _mkfile('/etc/passwd','root:x:0:0:root:/root:/bin/bash\nsurya:x:1000:1000:Suryanarayan Renjith:'+HOME+':/bin/bash\n', { readOnly:true });
@@ -187,6 +187,7 @@ function initFS() {
   _mkfile('/bin/bash','#!/usr/bin/env surya-shell\necho "A shell is already running in this page."\n', { executable:true, readOnly:true });
   _mkfile('/bin/sh','#!/usr/bin/env surya-shell\necho "A POSIX shell is already running in this page."\n', { executable:true, readOnly:true });
   _mkfile(HOME+'/about','#!/usr/bin/env surya-shell\nsection about\n', { executable:true });
+  _mkfile(HOME+'/project','#!/usr/bin/env surya-shell\nsection projects\n', { executable:true });
   _mkfile(HOME+'/projects','#!/usr/bin/env surya-shell\nsection projects\n', { executable:true });
   _mkfile(HOME+'/resume','#!/usr/bin/env surya-shell\nsection resume\n', { executable:true });
 }
@@ -269,9 +270,15 @@ function moveProjectPreviewOverlay(container) {
 
 function postProcessInjectedHtml(container) {
   if (!container || !container.querySelector) return;
-  if (!container.querySelector('.p4-project-grid')) return;
-  container.classList.add('html-content--projects');
-  moveProjectPreviewOverlay(container);
+
+  if (container.querySelector('.p4-project-grid')) {
+    container.classList.add('html-content--projects');
+    moveProjectPreviewOverlay(container);
+  }
+
+  if (container.querySelector('.center-button a[href="/Resume"], .center-button a[href="/Resume/"]')) {
+    container.classList.add('html-content--resume');
+  }
 }
 
 function parseFlags(args) {
@@ -1376,9 +1383,11 @@ function tabComplete() {
   var tokens = before.split(/\s+/);
   var completing = tokens[tokens.length - 1] || '';
   var isCmd = tokens.length === 1 && !before.endsWith(' ');
+  var pathLikeToken = /^(?:\.{1,2}(?:\/|$)|~(?:\/|$)|\/)/.test(completing);
+  var completeAsCommand = !pathLikeToken && (isCmd || (tokens.length === 1 && completing && !before.includes(' ')));
   var matches;
 
-  if (isCmd || (tokens.length === 1 && completing && !before.includes(' '))) {
+  if (completeAsCommand) {
     var prefix = completing.toLowerCase();
     matches = availableCommandNames().filter(function (c) { return c.indexOf(prefix) === 0; });
     Object.keys(aliases).forEach(function (a) {
@@ -1393,7 +1402,7 @@ function tabComplete() {
 
   if (matches.length === 1) {
     var completion = matches[0];
-    if (isCmd) {
+    if (completeAsCommand) {
       tokens[tokens.length - 1] = completion;
       var newVal = tokens.join(' ') + ' ';
       inputEl.value = newVal + after;
@@ -1412,7 +1421,7 @@ function tabComplete() {
     matches.forEach(function (m) {
       var span = document.createElement('span');
       span.textContent = m;
-      if (!isCmd) {
+      if (!completeAsCommand) {
         var rp = _resolve(m);
         if (_isDir(rp)) { span.textContent += '/'; span.classList.add('ls-dir'); }
         else if (_isFile(rp) && _isExecutable(vfs[rp])) { span.classList.add('ls-exec'); }
