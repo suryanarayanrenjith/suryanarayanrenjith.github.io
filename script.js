@@ -498,118 +498,35 @@ document.addEventListener("DOMContentLoaded", () => {
     const canvas = document.getElementById('animationCanvas');
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
-    const renderer = new THREE.WebGLRenderer({
-        canvas: canvas,
-        alpha: true,
-        antialias: true,
-        powerPreference: 'high-performance'
-    });
+    const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.6));
-
-    let starfieldEnabled = !(window.__starfieldState && window.__starfieldState.enabled === false);
-    let starfieldFrozen = !!(window.__starfieldFreezeState && window.__starfieldFreezeState.frozen === true);
-    canvas.style.opacity = starfieldEnabled ? '1' : '0';
-
-    window.addEventListener('starfieldToggle', (event) => {
-        starfieldEnabled = !!(event.detail && event.detail.enabled);
-        canvas.style.opacity = starfieldEnabled ? '1' : '0';
-        if (!starfieldEnabled) {
-            renderer.clear();
-        }
-    });
-
-    window.addEventListener('starfieldFreeze', (event) => {
-        starfieldFrozen = !!(event.detail && event.detail.frozen);
-        if (starfieldFrozen) {
-            gsap.killTweensOf(camera);
-            gsap.killTweensOf(camera.position);
-            gsap.killTweensOf(camera.rotation);
-            gsap.killTweensOf(pointLight.position);
-            gsap.killTweensOf(starFieldWhite.rotation);
-        }
-    });
+    renderer.setPixelRatio(window.devicePixelRatio);
 
     const pointLight = new THREE.PointLight(0xffffff, 1, 1000);
     pointLight.position.set(0, 0, 500);
     scene.add(pointLight);
 
-    const STAR_DENSITY = 0.002;
-    const MIN_STARS = 1200;
-    const MAX_STARS = 7000;
-    const FIELD_DEPTH = 2000;
-    const FIELD_SPREAD_DEPTH = 900;
-    const FIELD_PADDING = 1.1;
-    const STAR_NEAR_CLIP = 14;
-    let starCount = 0;
+    const starDensity = 0.002;
+    let starCount = Math.floor(window.innerWidth * window.innerHeight * starDensity);
+
 
     const stars = new THREE.BufferGeometry();
-    let starVertices = new Float32Array(0);
-    let starSpeeds = new Float32Array(0);
-    let starTwinkles = new Float32Array(0);
+    let starVertices = new Float32Array(starCount * 3);
+    let starSpeeds = new Float32Array(starCount);
+    let starTwinkles = new Float32Array(starCount);
 
-    function getFieldBounds() {
-        const fovRad = THREE.MathUtils.degToRad(camera.fov);
-        const spreadDepth = Math.max(FIELD_SPREAD_DEPTH, FIELD_DEPTH * 0.75);
-        const halfHeight = Math.tan(fovRad * 0.5) * spreadDepth * FIELD_PADDING;
-        const halfWidth = halfHeight * camera.aspect * FIELD_PADDING;
-        const minZ = -FIELD_DEPTH;
-        const maxZ = -STAR_NEAR_CLIP;
-        return { halfWidth, halfHeight, minZ, maxZ };
-    }
-
-    function getDynamicStarCount() {
-        const area = window.innerWidth * window.innerHeight;
-        return Math.min(MAX_STARS, Math.max(MIN_STARS, Math.floor(area * STAR_DENSITY)));
-    }
-
-    function respawnStar(index, bounds, forceBackPlane = false) {
-        const i = index * 3;
-        starVertices[i] = (Math.random() * 2 - 1) * bounds.halfWidth;
-        starVertices[i + 1] = (Math.random() * 2 - 1) * bounds.halfHeight;
-        starVertices[i + 2] = forceBackPlane
-            ? bounds.minZ
-            : bounds.minZ + Math.random() * (bounds.maxZ - bounds.minZ);
-
-        starSpeeds[index] = Math.random() * 0.1 + 0.02;
-        starTwinkles[index] = Math.random() * Math.PI * 2;
-    }
-
-    function rebuildStarfield() {
-        starCount = getDynamicStarCount();
-        starVertices = new Float32Array(starCount * 3);
-        starSpeeds = new Float32Array(starCount);
-        starTwinkles = new Float32Array(starCount);
-
-        const bounds = getFieldBounds();
-        const minX = -bounds.halfWidth;
-        const minY = -bounds.halfHeight;
-        const minZ = bounds.minZ;
-        const rangeX = bounds.halfWidth * 2;
-        const rangeY = bounds.halfHeight * 2;
-        const rangeZ = bounds.maxZ - bounds.minZ;
-
-        // Jittered grid gives more even density than pure random while keeping a natural look.
-        const gridSize = Math.ceil(Math.cbrt(starCount));
-        for (let i = 0; i < starCount; i++) {
-            const i3 = i * 3;
-            const gx = i % gridSize;
-            const gy = Math.floor(i / gridSize) % gridSize;
-            const gz = Math.floor(i / (gridSize * gridSize));
-
-            starVertices[i3] = minX + ((gx + Math.random()) / gridSize) * rangeX;
-            starVertices[i3 + 1] = minY + ((gy + Math.random()) / gridSize) * rangeY;
-            starVertices[i3 + 2] = minZ + ((gz + Math.random()) / gridSize) * rangeZ;
-            starSpeeds[i] = Math.random() * 0.1 + 0.02;
-            starTwinkles[i] = Math.random() * Math.PI * 2;
+    function generateStars() {
+        for (let i = 0; i < starCount * 3; i += 3) {
+            starVertices[i] = (Math.random() - 0.5) * 2000;
+            starVertices[i + 1] = (Math.random() - 0.5) * 2000;
+            starVertices[i + 2] = (Math.random() - 0.5) * 2000;
+            starSpeeds[i / 3] = Math.random() * 0.1 + 0.02;
+            starTwinkles[i / 3] = Math.random() * 0.5 + 0.5;
         }
-
-        const positionAttr = new THREE.BufferAttribute(starVertices, 3);
-        positionAttr.setUsage(THREE.DynamicDrawUsage);
-        stars.setAttribute('position', positionAttr);
+        stars.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
     }
 
-    rebuildStarfield();
+    generateStars();
 
     const starMaterialWhite = new THREE.PointsMaterial({
         color: 0xffffff,
@@ -618,22 +535,12 @@ document.addEventListener("DOMContentLoaded", () => {
         opacity: 0.8,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
-        sizeAttenuation: true
     });
 
     const starFieldWhite = new THREE.Points(stars, starMaterialWhite);
-    starFieldWhite.frustumCulled = false;
-    const starfieldRig = new THREE.Group();
-    starfieldRig.add(starFieldWhite);
-    scene.add(starfieldRig);
+    scene.add(starFieldWhite);
 
     camera.position.z = 1000;
-    let dynamicStarBaseSize = starMaterialWhite.size;
-
-    const quickCameraRotateX = gsap.quickTo(camera.rotation, 'x', { duration: 0.5, ease: 'power2.out' });
-    const quickCameraRotateY = gsap.quickTo(camera.rotation, 'y', { duration: 0.5, ease: 'power2.out' });
-    const quickLightX = gsap.quickTo(pointLight.position, 'x', { duration: 0.5, ease: 'power2.out' });
-    const quickLightY = gsap.quickTo(pointLight.position, 'y', { duration: 0.5, ease: 'power2.out' });
 
     window.addEventListener('themeChanged', (e) => {
         if (e.detail && e.detail.light) {
@@ -650,28 +557,35 @@ document.addEventListener("DOMContentLoaded", () => {
 
     window.addEventListener('resize', () => {
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.6));
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
 
-        rebuildStarfield();
+        starCount = Math.floor(window.innerWidth * window.innerHeight * starDensity);
+        starVertices = new Float32Array(starCount * 3);
+        starSpeeds = new Float32Array(starCount);
+        starTwinkles = new Float32Array(starCount);
+        generateStars();
     });
 
     let mouseX = 0, mouseY = 0;
     let targetMouseX = 0, targetMouseY = 0;
     let velocityX = 0, velocityY = 0;
+    const mouseRotationEasing = 0.1;
     const acceleration = 0.002;
+
+    let alpha = 0, beta = 0, gamma = 0;
+    let targetRotationX = 0, targetRotationY = 0;
+    const rotationEasing = 0.05;
 
     let shockwaveTime = 0;
     let blackHoleEffect = false;
 
     let warpBurstIntensity = 0;
-    const shockwaveTargetScale = new THREE.Vector3(1, 1, 1);
 
     function triggerWarpBurst() {
-        warpBurstIntensity = isMotionFxEnabled() ? 1.85 : 1.0;
+        warpBurstIntensity = 1.0;
         const decay = () => {
-            warpBurstIntensity *= isMotionFxEnabled() ? 0.91 : 0.94;
+            warpBurstIntensity *= 0.94;
             if (warpBurstIntensity < 0.01) {
                 warpBurstIntensity = 0;
                 return;
@@ -689,54 +603,39 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function applyWarpSpeed() {
-        const bounds = getFieldBounds();
-        const minX = -bounds.halfWidth;
-        const maxX = bounds.halfWidth;
-        const minY = -bounds.halfHeight;
-        const maxY = bounds.halfHeight;
-        const minZ = bounds.minZ;
-        const maxZ = bounds.maxZ;
-
-        const burstMultiplier = 1 + warpBurstIntensity * (isMotionFxEnabled() ? 62 : 40);
-
+        const burstMultiplier = 1 + warpBurstIntensity * 40;
         for (let i = 0; i < starVertices.length; i += 3) {
-            const starIndex = i / 3;
-            starVertices[i + 2] += starSpeeds[starIndex] * 20 * burstMultiplier;
+            starVertices[i + 2] += starSpeeds[i / 3] * 20 * burstMultiplier;
 
-            if (starVertices[i + 2] > maxZ) {
-                starVertices[i + 2] = minZ + (starVertices[i + 2] - maxZ);
-            } else if (starVertices[i + 2] < minZ) {
-                starVertices[i + 2] = maxZ - (minZ - starVertices[i + 2]);
+            if (starVertices[i + 2] > 1000) {
+                starVertices[i + 2] = -1000;
             }
-
-            // Soft toroidal wrapping in x/y prevents edge thinning without visible popping.
-            if (starVertices[i] > maxX) starVertices[i] = minX + (starVertices[i] - maxX);
-            else if (starVertices[i] < minX) starVertices[i] = maxX - (minX - starVertices[i]);
-
-            if (starVertices[i + 1] > maxY) starVertices[i + 1] = minY + (starVertices[i + 1] - maxY);
-            else if (starVertices[i + 1] < minY) starVertices[i + 1] = maxY - (minY - starVertices[i + 1]);
         }
-
         stars.attributes.position.needsUpdate = true;
     }
 
     function applyDynamicStarScaling() {
-        const baseSize = isMotionFxEnabled() ? 2.2 : 1.95;
-        const burstSize = warpBurstIntensity * (isMotionFxEnabled() ? 1.45 : 0.9);
-        dynamicStarBaseSize = baseSize + burstSize;
+        const positions = stars.attributes.position.array;
+        const lastZ = positions[positions.length - 1];
+        const burstSize = warpBurstIntensity * 3;
+        starMaterialWhite.size = Math.max(1, 10 / (lastZ / 100 + 1)) + burstSize;
     }
 
     function applyShockwaveEffect() {
         if (shockwaveTime > 0) {
-            const amp = isMotionFxEnabled() ? 0.09 : 0.055;
-            const pulse = 1 + Math.sin(shockwaveTime * 11) * amp;
-            shockwaveTargetScale.set(pulse, pulse, 1);
-            shockwaveTime -= isMotionFxEnabled() ? 0.028 : 0.02;
-        } else {
-            shockwaveTargetScale.set(1, 1, 1);
+            for (let i = 0; i < starVertices.length; i += 3) {
+                const x = starVertices[i], y = starVertices[i + 1];
+                const distSq = x * x + y * y;
+                if (distSq < 250000) {
+                    const dist = Math.sqrt(distSq);
+                    const wave = Math.sin(shockwaveTime * 10 + dist * 0.05) * 5;
+                    starVertices[i] += wave;
+                    starVertices[i + 1] += wave;
+                }
+            }
+            shockwaveTime -= 0.02;
+            stars.attributes.position.needsUpdate = true;
         }
-
-        starFieldWhite.scale.lerp(shockwaveTargetScale, 0.2);
     }
 
     function applyBlackHoleEffect() {
@@ -755,17 +654,24 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    function applyTwinkleEffect() {
-        const time = performance.now() * 0.001;
-        const twinkleWave =
-            Math.sin(time * 0.45 + 0.8) * 0.04 +
-            Math.sin(time * 1.1 + 2.3) * 0.025;
-        const burstGlow = warpBurstIntensity * (isMotionFxEnabled() ? 0.06 : 0.035);
-        const baseOpacity = isMotionFxEnabled() ? 0.82 : 0.78;
+function applyTwinkleEffect() {
+    const time = performance.now() * 0.001;
 
-        starMaterialWhite.opacity = THREE.MathUtils.clamp(baseOpacity + twinkleWave + burstGlow, 0.64, 0.9);
-        starMaterialWhite.size = THREE.MathUtils.clamp(dynamicStarBaseSize * (1 + twinkleWave * 0.22), 1.6, 3.8);
-    }
+    const baseSineWave = Math.sin(time * 5 + 0.75 * 20);
+    const baseCosineWave = Math.cos(time * 2.5 + 0.75 * 10);
+    const flicker = Math.sin(time * 8 + 0.75 * 40) * 0.3;
+    const noise = (Math.random() - 0.5) * 0.15;
+    const slowBreath = Math.sin(time * 0.3 + 0.75 * 5) * 0.2 + 0.8;
+    const layeredEffect = Math.sin(time * 1.2 + Math.sin(time * 0.7) * 2 + 0.75 * 25) * 0.4 + 0.6;
+    const depthEffect = Math.sin(time * 0.2 + 0.75 * 50) * 0.3 + 0.7;
+
+    const twinkleIntensity =
+        (baseSineWave * 0.3 + baseCosineWave * 0.3 + flicker * 0.2 + noise * 0.1)
+        * slowBreath * layeredEffect * depthEffect;
+
+    starMaterialWhite.opacity = 3.0 + twinkleIntensity * 0.8;
+    starMaterialWhite.size = 2.0 + twinkleIntensity * 4.0;
+}
 
     function animateStars() {
         const time = performance.now() * 0.001;
@@ -775,7 +681,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         starFieldWhite.rotation.x += 0.0005 + driftX;
         starFieldWhite.rotation.y += 0.0007 + driftY;
-        starFieldWhite.position.z = Math.sin(time * 0.5) * 1.1;
+
+        starFieldWhite.position.z += Math.sin(time * 0.5) * 0.05;
     }
 
     function applyMouseAcceleration() {
@@ -794,35 +701,41 @@ document.addEventListener("DOMContentLoaded", () => {
         const mouseTiltX = mouseY * maxTiltX;
         const mouseTiltY = -mouseX * maxTiltY;
 
-        quickCameraRotateX(THREE.MathUtils.degToRad(mouseTiltX));
-        quickCameraRotateY(THREE.MathUtils.degToRad(mouseTiltY));
-        quickLightX(mouseX * 100);
-        quickLightY(mouseY * 100);
+        gsap.to(camera.rotation, {
+            x: THREE.MathUtils.degToRad(mouseTiltX),
+            y: THREE.MathUtils.degToRad(mouseTiltY),
+            duration: 0.5,
+            ease: "power2.out"
+        });
+
+        gsap.to(pointLight.position, {
+            x: mouseX * 100,
+            y: mouseY * 100,
+            duration: 0.5,
+            ease: "power2.out"
+        });
     }
 
 function switchCameraPosition() {
-    if (starfieldFrozen) return;
+    const randomX = (Math.random() - 0.5) * 800;
+    const randomY = (Math.random() - 0.5) * 600;
+    const randomZ = Math.random() * 800 + 200;
 
-    const motionFxBoost = isMotionFxEnabled() ? 1.85 : 1;
-    const randomX = (Math.random() - 0.5) * 800 * motionFxBoost;
-    const randomY = (Math.random() - 0.5) * 600 * motionFxBoost;
-    const randomZ = Math.random() * (isMotionFxEnabled() ? 1050 : 800) + 200;
+    const randomRotationX = (Math.random() - 0.5) * Math.PI / 8;
+    const randomRotationY = (Math.random() - 0.5) * Math.PI / 8;
 
-    const randomRotationX = (Math.random() - 0.5) * (Math.PI / 8) * motionFxBoost;
-    const randomRotationY = (Math.random() - 0.5) * (Math.PI / 8) * motionFxBoost;
-
-    const zoomInFOV = Math.random() * (isMotionFxEnabled() ? 24 : 15) + (isMotionFxEnabled() ? 46 : 55);
+    const zoomInFOV = Math.random() * 15 + 55;
     const originalFOV = camera.fov;
 
     triggerWarpBurst();
 
-    shockwaveTime = isMotionFxEnabled() ? 1.7 : 1.0;
+    shockwaveTime = 1.0;
 
     const tl = gsap.timeline();
 
     tl.to(camera, {
         fov: zoomInFOV,
-        duration: isMotionFxEnabled() ? 0.4 : 0.6,
+        duration: 0.6,
         ease: "power3.in",
         onUpdate: () => camera.updateProjectionMatrix()
     });
@@ -831,19 +744,18 @@ function switchCameraPosition() {
         x: randomX,
         y: randomY,
         z: randomZ,
-        duration: isMotionFxEnabled() ? 1.05 : 1.8,
+        duration: 1.8,
         ease: "power3.inOut",
         onUpdate: () => {
-            const micro = isMotionFxEnabled() ? 1.4 : 1;
-            camera.position.x += Math.sin(performance.now() * 0.002) * 0.5 * micro;
-            camera.position.y += Math.cos(performance.now() * 0.0015) * 0.3 * micro;
+            camera.position.x += Math.sin(performance.now() * 0.002) * 0.5;
+            camera.position.y += Math.cos(performance.now() * 0.0015) * 0.3;
         }
     }, 0);
 
     tl.to(camera.rotation, {
         x: randomRotationX,
         y: randomRotationY,
-        duration: isMotionFxEnabled() ? 1.05 : 1.8,
+        duration: 1.8,
         ease: "power3.inOut",
         onUpdate: () => {
             camera.rotation.x += Math.sin(performance.now() * 0.001) * 0.002;
@@ -852,34 +764,24 @@ function switchCameraPosition() {
     }, 0);
 
     tl.to(starFieldWhite.rotation, {
-        z: starFieldWhite.rotation.z + (Math.random() - 0.5) * (isMotionFxEnabled() ? 0.75 : 0.3),
-        duration: isMotionFxEnabled() ? 0.75 : 1.5,
+        z: starFieldWhite.rotation.z + (Math.random() - 0.5) * 0.3,
+        duration: 1.5,
         ease: "power2.inOut"
     }, 0);
 
     tl.to(camera, {
         fov: originalFOV,
-        duration: isMotionFxEnabled() ? 0.55 : 1.2,
+        duration: 1.2,
         ease: "elastic.out(1, 0.6)",
         onUpdate: () => camera.updateProjectionMatrix()
-    }, isMotionFxEnabled() ? "-=0.4" : "-=1.0");
+    }, "-=1.0");
 }
 
     window.addEventListener('sectionChanged', () => {
-        if (starfieldEnabled && !starfieldFrozen) {
-            switchCameraPosition();
-            if (isMotionFxEnabled()) {
-                setTimeout(() => {
-                    if (starfieldEnabled && !starfieldFrozen) {
-                        switchCameraPosition();
-                    }
-                }, 140);
-            }
-        }
+        switchCameraPosition();
     });
 
 document.addEventListener('keydown', (event) => {
-    if (starfieldFrozen) return;
     if (event.ctrlKey && event.shiftKey) {
         switch (event.code) {
             case 'Digit5':
@@ -909,39 +811,20 @@ document.addEventListener('keydown', (event) => {
 });
 
     function render() {
-        if (!starfieldEnabled) {
-            renderer.clear();
-            requestAnimationFrame(render);
-            return;
-        }
-
-        if (!starfieldFrozen) {
-            applyWarpSpeed();
-            applyMouseAcceleration();
-            applyDynamicStarScaling();
-            applyShockwaveEffect();
-            applyBlackHoleEffect();
-            applyTwinkleEffect();
-            animateStars();
-            if (isMotionFxEnabled()) {
-                const pulse = Math.sin(performance.now() * 0.017);
-                camera.position.x += pulse * 0.05;
-                camera.position.y += Math.cos(performance.now() * 0.015) * 0.03;
-            }
-        }
-
-        // Keep starfield camera-relative so GSAP camera moves cannot clip one side of the field.
-        starfieldRig.position.copy(camera.position);
-        starfieldRig.quaternion.copy(camera.quaternion);
+        applyWarpSpeed();
+        applyMouseAcceleration();
+        applyDynamicStarScaling();
+        applyShockwaveEffect();
+        applyBlackHoleEffect();
+        applyTwinkleEffect();
+        animateStars();
 
         renderer.render(scene, camera);
         requestAnimationFrame(render);
     }
 
     setupMouseControl();
-    if (!starfieldFrozen) {
-        switchCameraPosition();
-    }
+    switchCameraPosition();
     render();
 
     }
