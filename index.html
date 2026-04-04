@@ -528,6 +528,60 @@ function isDesktop() {
     cursorOutline.classList.add("cursor-dot-outline");
     document.body.appendChild(cursorOutline);
 
+        const vortexLayer = document.createElement("div");
+        vortexLayer.classList.add("vortex-cube-layer");
+        document.body.appendChild(vortexLayer);
+
+        const vortexCubes = Array.from({ length: 10 }, (_, idx) => {
+            const cube = document.createElement("div");
+            cube.classList.add("vortex-cube");
+            cube.style.opacity = "0";
+            vortexLayer.appendChild(cube);
+            return {
+                el: cube,
+                x: window.innerWidth * 0.5,
+                y: window.innerHeight * 0.5,
+                vx: 0,
+                vy: 0,
+                phase: (idx / 10) * Math.PI * 2 + Math.random()
+            };
+        });
+
+        const vortexPhysics = {
+            gravity: 0.04,
+            swirl: 0.018,
+            drag: 0.86
+        };
+
+        function bootVortexAnime() {
+            if (!window.anime || vortexLayer.dataset.animeReady === '1') return;
+            vortexLayer.dataset.animeReady = '1';
+
+            window.anime({
+                targets: vortexPhysics,
+                gravity: [0.035, 0.13],
+                swirl: [0.012, 0.052],
+                duration: 920,
+                easing: 'easeInOutSine',
+                direction: 'alternate',
+                loop: true
+            });
+
+            window.anime({
+                targets: vortexCubes.map(cube => cube.el),
+                scale: [0.7, 1.35],
+                opacity: [0.28, 0.95],
+                delay: window.anime.stagger(55),
+                duration: 460,
+                easing: 'easeInOutSine',
+                direction: 'alternate',
+                loop: true
+            });
+        }
+
+        bootVortexAnime();
+        window.addEventListener('load', bootVortexAnime, { once: true });
+
     let mouseX = 0;
     let mouseY = 0;
     let outlineX = 0;
@@ -540,6 +594,42 @@ function isDesktop() {
       mouseY = e.clientY;
     });
 
+        function updateVortexCubes(time) {
+            const active = document.body.classList.contains('experimental-vortex-cursor');
+            vortexLayer.style.opacity = active ? '1' : '0';
+            if (!active) return;
+
+            const t = time * 0.001;
+            const cx = dotX;
+            const cy = dotY;
+
+            vortexCubes.forEach((cube, idx) => {
+                const orbitRadius = 18 + idx * 4.2;
+                const orbitSpeed = 2.4 + idx * 0.18;
+                const swirlAngle = cube.phase + t * orbitSpeed;
+
+                const orbitTargetX = cx + Math.cos(swirlAngle) * orbitRadius;
+                const orbitTargetY = cy + Math.sin(swirlAngle) * orbitRadius;
+
+                const dx = orbitTargetX - cube.x;
+                const dy = orbitTargetY - cube.y;
+                const distance = Math.max(12, Math.hypot(dx, dy));
+                const pull = vortexPhysics.gravity + (3.8 / distance) * 0.015;
+
+                cube.vx += dx * pull + Math.cos(swirlAngle + Math.PI * 0.5) * vortexPhysics.swirl * 12;
+                cube.vy += dy * pull + Math.sin(swirlAngle + Math.PI * 0.5) * vortexPhysics.swirl * 12;
+
+                cube.vx *= vortexPhysics.drag;
+                cube.vy *= vortexPhysics.drag;
+
+                cube.x += cube.vx;
+                cube.y += cube.vy;
+
+                const rot = ((swirlAngle * 57.2958) + idx * 14) % 360;
+                cube.el.style.transform = `translate3d(${cube.x - 4}px, ${cube.y - 4}px, 0) rotate(${rot.toFixed(2)}deg)`;
+            });
+        }
+
     function animateCursor() {
       outlineX += (mouseX - outlineX) * 0.15;
       outlineY += (mouseY - outlineY) * 0.15;
@@ -551,6 +641,8 @@ function isDesktop() {
       cursorOutline.style.top = `${outlineY}px`;
       cursorDot.style.left = `${dotX}px`;
       cursorDot.style.top = `${dotY}px`;
+
+            updateVortexCubes(performance.now());
 
       requestAnimationFrame(animateCursor);
     }
@@ -845,9 +937,7 @@ function isDesktop() {
                                 if (starfieldStatus) starfieldStatus.textContent = enabled ? 'On' : 'Off';
                             }
 
-                            window.__motionFreezeContext = window.__motionFreezeContext || {
-                                hadStarfieldBeforeFreeze: null
-                            };
+                            window.__motionFreezeContext = window.__motionFreezeContext || {};
 
                             const experimentalToggleConfig = {
                                 hyperMode: {
@@ -905,20 +995,8 @@ function isDesktop() {
                                     : !document.body.classList.contains(config.className);
 
                                 if (name === 'motionFreeze') {
-                                    const state = window.__motionFreezeContext || (window.__motionFreezeContext = {
-                                        hadStarfieldBeforeFreeze: null
-                                    });
-
-                                    if (enabled) {
-                                        state.hadStarfieldBeforeFreeze = isStarfieldEnabled();
-                                        if (window.toggleStarFieldAnimation) {
-                                            window.toggleStarFieldAnimation(false);
-                                        }
-                                    } else {
-                                        if (state.hadStarfieldBeforeFreeze && window.toggleStarFieldAnimation) {
-                                            window.toggleStarFieldAnimation(true);
-                                        }
-                                        state.hadStarfieldBeforeFreeze = null;
+                                    if (window.setStarFieldFrozen) {
+                                        window.setStarFieldFrozen(enabled);
                                     }
                                 }
 
@@ -1034,14 +1112,6 @@ function isDesktop() {
                                         hideCommandPalette();
                                         break;
                                     case 'toggle-stars': {
-                                        if (document.body.classList.contains('experimental-motion-freeze')) {
-                                            if (window.toggleStarFieldAnimation) {
-                                                window.toggleStarFieldAnimation(false);
-                                            }
-                                            syncStarfieldLabel(false);
-                                            hideCommandPalette();
-                                            break;
-                                        }
                                         const next = window.toggleStarFieldAnimation ? window.toggleStarFieldAnimation() : !isStarfieldEnabled();
                                         syncStarfieldLabel(next);
                                         hideCommandPalette();
@@ -2656,6 +2726,23 @@ document.addEventListener('DOMContentLoaded', function() {
         return nextEnabled;
     };
 
+    window.__starfieldFreezeState = window.__starfieldFreezeState || { frozen: false };
+    window.setStarFieldFrozen = function(forceFrozen) {
+        const state = window.__starfieldFreezeState || (window.__starfieldFreezeState = { frozen: false });
+        const nextFrozen = typeof forceFrozen === 'boolean' ? forceFrozen : !state.frozen;
+        state.frozen = nextFrozen;
+
+        window.dispatchEvent(new CustomEvent('starfieldFreeze', {
+            detail: { frozen: nextFrozen }
+        }));
+
+        return nextFrozen;
+    };
+
+    if (document.body.classList.contains('experimental-motion-freeze')) {
+        window.setStarFieldFrozen(true);
+    }
+
     function isWebGLAvailable() {
             try {
                 const canvas = document.createElement('canvas');
@@ -2688,6 +2775,8 @@ document.addEventListener('DOMContentLoaded', function() {
     canvas.height = window.innerHeight;
 
     let fallbackEnabled = !(window.__starfieldState && window.__starfieldState.enabled === false);
+    let fallbackFrozen = !!(window.__starfieldFreezeState && window.__starfieldFreezeState.frozen === true);
+    let hasFallbackFrame = false;
     let fallbackOverlay = null;
     canvas.style.opacity = fallbackEnabled ? '1' : '0';
 
@@ -2697,6 +2786,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (fallbackOverlay) {
             fallbackOverlay.style.display = fallbackEnabled ? 'block' : 'none';
         }
+    });
+
+    window.addEventListener('starfieldFreeze', (event) => {
+        fallbackFrozen = !!(event.detail && event.detail.frozen);
     });
 
     window.addEventListener('resize', () => {
@@ -2835,6 +2928,11 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        if (fallbackFrozen && hasFallbackFrame) {
+            requestAnimationFrame(draw);
+            return;
+        }
+
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         while (stars.length < minStars) {
@@ -2869,6 +2967,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         handleCollisions();
         removeOffScreenStars();
+        hasFallbackFrame = true;
         requestAnimationFrame(draw);
     }
 

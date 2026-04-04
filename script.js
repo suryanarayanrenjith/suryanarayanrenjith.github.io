@@ -1,5 +1,4 @@
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.168.0/three.module.js';
-// GSAP is loaded globally via <script> tag in index.html
 
 document.addEventListener("DOMContentLoaded", () => {
     const text = document.querySelector('.animated-text');
@@ -65,9 +64,14 @@ document.addEventListener("DOMContentLoaded", () => {
         return document.body.classList.contains('experimental-hyper-mode');
     }
 
+    function isMotionFxEnabled() {
+        return document.body.classList.contains('experimental-motion-fx');
+    }
+
     window.animateContentIn = function() {
         const content = document.getElementById('content');
         if (!content) return;
+        const hyper = isHyperModeEnabled();
 
         const headings = content.querySelectorAll('h1, h2, h3, .animated-text');
         const paragraphs = content.querySelectorAll('p, .tagline');
@@ -82,26 +86,78 @@ document.addEventListener("DOMContentLoaded", () => {
             if (group.length) gsap.set(group, { opacity: 0 });
         });
 
-        const tl = gsap.timeline({ delay: 0.05 });
+        const tl = gsap.timeline({ delay: hyper ? 0 : 0.05 });
 
         if (headings.length) {
             tl.fromTo(headings,
-                { opacity: 0, y: 40, clipPath: 'inset(0 0 100% 0)' },
-                { opacity: 1, y: 0, clipPath: 'inset(0 0 0% 0)', duration: 0.8, ease: 'power3.out', stagger: 0.12 },
+                {
+                    opacity: 0,
+                    y: hyper ? 82 : 40,
+                    x: hyper ? (index => (index % 2 === 0 ? -18 : 18)) : 0,
+                    scale: hyper ? 0.72 : 1,
+                    clipPath: hyper ? 'inset(0 0 120% 0)' : 'inset(0 0 100% 0)',
+                    filter: hyper ? 'blur(12px)' : 'blur(0px)'
+                },
+                {
+                    opacity: 1,
+                    y: 0,
+                    x: 0,
+                    scale: 1,
+                    clipPath: 'inset(0 0 0% 0)',
+                    filter: 'blur(0px)',
+                    duration: hyper ? 0.28 : 0.8,
+                    ease: hyper ? 'steps(3)' : 'power3.out',
+                    stagger: hyper ? 0.045 : 0.12
+                },
                 0
             );
+            if (hyper) {
+                tl.to(headings, {
+                    x: 'random(-10,10)',
+                    y: 'random(-5,5)',
+                    duration: 0.055,
+                    ease: 'steps(2)',
+                    stagger: 0.02,
+                    yoyo: true,
+                    repeat: 2
+                }, 0.08);
+            }
         }
         if (paragraphs.length) {
             tl.fromTo(paragraphs,
-                { opacity: 0, y: 25 },
-                { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out', stagger: 0.08 },
+                { opacity: 0, y: hyper ? 48 : 25, filter: hyper ? 'blur(8px)' : 'blur(0px)' },
+                {
+                    opacity: 1,
+                    y: 0,
+                    filter: 'blur(0px)',
+                    duration: hyper ? 0.25 : 0.6,
+                    ease: hyper ? 'steps(2)' : 'power2.out',
+                    stagger: hyper ? 0.035 : 0.08
+                },
                 0.12
             );
+            if (hyper) {
+                tl.to(paragraphs, {
+                    x: 'random(-6,6)',
+                    duration: 0.05,
+                    ease: 'steps(2)',
+                    yoyo: true,
+                    repeat: 1,
+                    stagger: 0.02
+                }, 0.14);
+            }
         }
         if (buttons.length) {
             tl.fromTo(buttons,
-                { opacity: 0, y: 20, scale: 0.92 },
-                { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: 'back.out(1.4)', stagger: 0.1 },
+                { opacity: 0, y: hyper ? 34 : 20, scale: hyper ? 0.84 : 0.92 },
+                {
+                    opacity: 1,
+                    y: 0,
+                    scale: 1,
+                    duration: hyper ? 0.24 : 0.6,
+                    ease: hyper ? 'steps(2)' : 'back.out(1.4)',
+                    stagger: hyper ? 0.05 : 0.1
+                },
                 0.2
             );
         }
@@ -137,7 +193,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         initMagneticButtons();
 
-        if (typeof Letterize !== 'undefined' && typeof anime !== 'undefined') {
+        if (!hyper && typeof Letterize !== 'undefined' && typeof anime !== 'undefined') {
             headings.forEach(heading => {
                 if (heading.dataset.letterized) return;
                 heading.dataset.letterized = 'true';
@@ -217,9 +273,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 x: !isVertical ? dirMult * (hyper ? 220 : 80) : 0,
                 rotationY: !isVertical ? dirMult * (hyper ? -14 : -4) : 0,
                 rotationX: isVertical ? dirMult * (hyper ? 10 : 3) : 0,
-                filter: hyper ? 'blur(18px)' : 'blur(8px)',
-                duration: hyper ? 0.62 : 0.45,
-                ease: hyper ? 'expo.in' : 'power3.in',
+                filter: hyper ? 'blur(22px)' : 'blur(8px)',
+                duration: hyper ? 0.34 : 0.45,
+                ease: hyper ? 'steps(3)' : 'power3.in',
                 onComplete: resolve
             });
         });
@@ -234,12 +290,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         gsap.set(content, {
             opacity: 0,
-            scale: hyper ? 0.76 : 0.88,
-            y: isVertical ? dirMult * (hyper ? 120 : 80) : 0,
-            x: !isVertical ? dirMult * (hyper ? 140 : 100) : 0,
-            rotationY: !isVertical ? dirMult * (hyper ? 9 : 5) : 0,
-            rotationX: isVertical ? dirMult * (hyper ? -7 : -4) : 0,
-            filter: hyper ? 'blur(14px)' : 'blur(10px)'
+            scale: hyper ? 0.68 : 0.88,
+            y: isVertical ? dirMult * (hyper ? 176 : 80) : 0,
+            x: !isVertical ? dirMult * (hyper ? 186 : 100) : 0,
+            rotationY: !isVertical ? dirMult * (hyper ? 14 : 5) : 0,
+            rotationX: isVertical ? dirMult * (hyper ? -10 : -4) : 0,
+            filter: hyper ? 'blur(20px)' : 'blur(10px)'
         });
 
         gsap.to(content, {
@@ -250,8 +306,8 @@ document.addEventListener("DOMContentLoaded", () => {
             rotationY: 0,
             rotationX: 0,
             filter: 'blur(0px)',
-            duration: hyper ? 0.95 : 0.7,
-            ease: hyper ? 'expo.out' : 'power3.out',
+            duration: hyper ? 0.36 : 0.7,
+            ease: hyper ? 'steps(3)' : 'power3.out',
             onComplete: () => {
                 gsap.set(content, { clearProps: 'all' });
             }
@@ -266,8 +322,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 scale: hyper ? 0.84 : 0.96,
                 y: hyper ? -42 : -15,
                 filter: hyper ? 'blur(12px)' : 'blur(4px)',
-                duration: hyper ? 0.42 : 0.25,
-                ease: hyper ? 'expo.in' : 'power2.in',
+                duration: hyper ? 0.22 : 0.25,
+                ease: hyper ? 'steps(2)' : 'power2.in',
                 onComplete: resolve
             });
         });
@@ -289,8 +345,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 scale: 1,
                 y: 0,
                 filter: 'blur(0px)',
-                duration: hyper ? 0.82 : 0.45,
-                ease: hyper ? 'expo.out' : 'power2.out',
+                duration: hyper ? 0.32 : 0.45,
+                ease: hyper ? 'steps(3)' : 'power2.out',
                 onComplete: () => {
                     gsap.set(content, { clearProps: 'all' });
                 }
@@ -447,6 +503,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderer.setPixelRatio(window.devicePixelRatio);
 
     let starfieldEnabled = !(window.__starfieldState && window.__starfieldState.enabled === false);
+    let starfieldFrozen = !!(window.__starfieldFreezeState && window.__starfieldFreezeState.frozen === true);
     canvas.style.opacity = starfieldEnabled ? '1' : '0';
 
     window.addEventListener('starfieldToggle', (event) => {
@@ -454,6 +511,17 @@ document.addEventListener("DOMContentLoaded", () => {
         canvas.style.opacity = starfieldEnabled ? '1' : '0';
         if (!starfieldEnabled) {
             renderer.clear();
+        }
+    });
+
+    window.addEventListener('starfieldFreeze', (event) => {
+        starfieldFrozen = !!(event.detail && event.detail.frozen);
+        if (starfieldFrozen) {
+            gsap.killTweensOf(camera);
+            gsap.killTweensOf(camera.position);
+            gsap.killTweensOf(camera.rotation);
+            gsap.killTweensOf(pointLight.position);
+            gsap.killTweensOf(starFieldWhite.rotation);
         }
     });
 
@@ -538,9 +606,9 @@ document.addEventListener("DOMContentLoaded", () => {
     let warpBurstIntensity = 0;
 
     function triggerWarpBurst() {
-        warpBurstIntensity = 1.0;
+        warpBurstIntensity = isMotionFxEnabled() ? 1.85 : 1.0;
         const decay = () => {
-            warpBurstIntensity *= 0.94;
+            warpBurstIntensity *= isMotionFxEnabled() ? 0.91 : 0.94;
             if (warpBurstIntensity < 0.01) {
                 warpBurstIntensity = 0;
                 return;
@@ -558,7 +626,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function applyWarpSpeed() {
-        const burstMultiplier = 1 + warpBurstIntensity * 40;
+        const burstMultiplier = 1 + warpBurstIntensity * (isMotionFxEnabled() ? 62 : 40);
         for (let i = 0; i < starVertices.length; i += 3) {
             starVertices[i + 2] += starSpeeds[i / 3] * 20 * burstMultiplier;
 
@@ -572,23 +640,24 @@ document.addEventListener("DOMContentLoaded", () => {
     function applyDynamicStarScaling() {
         const positions = stars.attributes.position.array;
         const lastZ = positions[positions.length - 1];
-        const burstSize = warpBurstIntensity * 3;
+        const burstSize = warpBurstIntensity * (isMotionFxEnabled() ? 4.8 : 3);
         starMaterialWhite.size = Math.max(1, 10 / (lastZ / 100 + 1)) + burstSize;
     }
 
     function applyShockwaveEffect() {
         if (shockwaveTime > 0) {
+            const amplitude = isMotionFxEnabled() ? 8 : 5;
             for (let i = 0; i < starVertices.length; i += 3) {
                 const x = starVertices[i], y = starVertices[i + 1];
                 const distSq = x * x + y * y;
                 if (distSq < 250000) {
                     const dist = Math.sqrt(distSq);
-                    const wave = Math.sin(shockwaveTime * 10 + dist * 0.05) * 5;
+                    const wave = Math.sin(shockwaveTime * 10 + dist * 0.05) * amplitude;
                     starVertices[i] += wave;
                     starVertices[i + 1] += wave;
                 }
             }
-            shockwaveTime -= 0.02;
+            shockwaveTime -= isMotionFxEnabled() ? 0.028 : 0.02;
             stars.attributes.position.needsUpdate = true;
         }
     }
@@ -672,25 +741,28 @@ function applyTwinkleEffect() {
     }
 
 function switchCameraPosition() {
-    const randomX = (Math.random() - 0.5) * 800;
-    const randomY = (Math.random() - 0.5) * 600;
-    const randomZ = Math.random() * 800 + 200;
+    if (starfieldFrozen) return;
 
-    const randomRotationX = (Math.random() - 0.5) * Math.PI / 8;
-    const randomRotationY = (Math.random() - 0.5) * Math.PI / 8;
+    const motionFxBoost = isMotionFxEnabled() ? 1.85 : 1;
+    const randomX = (Math.random() - 0.5) * 800 * motionFxBoost;
+    const randomY = (Math.random() - 0.5) * 600 * motionFxBoost;
+    const randomZ = Math.random() * (isMotionFxEnabled() ? 1050 : 800) + 200;
 
-    const zoomInFOV = Math.random() * 15 + 55;
+    const randomRotationX = (Math.random() - 0.5) * (Math.PI / 8) * motionFxBoost;
+    const randomRotationY = (Math.random() - 0.5) * (Math.PI / 8) * motionFxBoost;
+
+    const zoomInFOV = Math.random() * (isMotionFxEnabled() ? 24 : 15) + (isMotionFxEnabled() ? 46 : 55);
     const originalFOV = camera.fov;
 
     triggerWarpBurst();
 
-    shockwaveTime = 1.0;
+    shockwaveTime = isMotionFxEnabled() ? 1.7 : 1.0;
 
     const tl = gsap.timeline();
 
     tl.to(camera, {
         fov: zoomInFOV,
-        duration: 0.6,
+        duration: isMotionFxEnabled() ? 0.4 : 0.6,
         ease: "power3.in",
         onUpdate: () => camera.updateProjectionMatrix()
     });
@@ -699,18 +771,19 @@ function switchCameraPosition() {
         x: randomX,
         y: randomY,
         z: randomZ,
-        duration: 1.8,
+        duration: isMotionFxEnabled() ? 1.05 : 1.8,
         ease: "power3.inOut",
         onUpdate: () => {
-            camera.position.x += Math.sin(performance.now() * 0.002) * 0.5;
-            camera.position.y += Math.cos(performance.now() * 0.0015) * 0.3;
+            const micro = isMotionFxEnabled() ? 1.4 : 1;
+            camera.position.x += Math.sin(performance.now() * 0.002) * 0.5 * micro;
+            camera.position.y += Math.cos(performance.now() * 0.0015) * 0.3 * micro;
         }
     }, 0);
 
     tl.to(camera.rotation, {
         x: randomRotationX,
         y: randomRotationY,
-        duration: 1.8,
+        duration: isMotionFxEnabled() ? 1.05 : 1.8,
         ease: "power3.inOut",
         onUpdate: () => {
             camera.rotation.x += Math.sin(performance.now() * 0.001) * 0.002;
@@ -719,26 +792,34 @@ function switchCameraPosition() {
     }, 0);
 
     tl.to(starFieldWhite.rotation, {
-        z: starFieldWhite.rotation.z + (Math.random() - 0.5) * 0.3,
-        duration: 1.5,
+        z: starFieldWhite.rotation.z + (Math.random() - 0.5) * (isMotionFxEnabled() ? 0.75 : 0.3),
+        duration: isMotionFxEnabled() ? 0.75 : 1.5,
         ease: "power2.inOut"
     }, 0);
 
     tl.to(camera, {
         fov: originalFOV,
-        duration: 1.2,
+        duration: isMotionFxEnabled() ? 0.55 : 1.2,
         ease: "elastic.out(1, 0.6)",
         onUpdate: () => camera.updateProjectionMatrix()
-    }, "-=1.0");
+    }, isMotionFxEnabled() ? "-=0.4" : "-=1.0");
 }
 
     window.addEventListener('sectionChanged', () => {
-        if (starfieldEnabled) {
+        if (starfieldEnabled && !starfieldFrozen) {
             switchCameraPosition();
+            if (isMotionFxEnabled()) {
+                setTimeout(() => {
+                    if (starfieldEnabled && !starfieldFrozen) {
+                        switchCameraPosition();
+                    }
+                }, 140);
+            }
         }
     });
 
 document.addEventListener('keydown', (event) => {
+    if (starfieldFrozen) return;
     if (event.ctrlKey && event.shiftKey) {
         switch (event.code) {
             case 'Digit5':
@@ -774,20 +855,29 @@ document.addEventListener('keydown', (event) => {
             return;
         }
 
-        applyWarpSpeed();
-        applyMouseAcceleration();
-        applyDynamicStarScaling();
-        applyShockwaveEffect();
-        applyBlackHoleEffect();
-        applyTwinkleEffect();
-        animateStars();
+        if (!starfieldFrozen) {
+            applyWarpSpeed();
+            applyMouseAcceleration();
+            applyDynamicStarScaling();
+            applyShockwaveEffect();
+            applyBlackHoleEffect();
+            applyTwinkleEffect();
+            animateStars();
+            if (isMotionFxEnabled()) {
+                const pulse = Math.sin(performance.now() * 0.017);
+                camera.position.x += pulse * 0.05;
+                camera.position.y += Math.cos(performance.now() * 0.015) * 0.03;
+            }
+        }
 
         renderer.render(scene, camera);
         requestAnimationFrame(render);
     }
 
     setupMouseControl();
-    switchCameraPosition();
+    if (!starfieldFrozen) {
+        switchCameraPosition();
+    }
     render();
 
     }
