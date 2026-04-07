@@ -68,6 +68,65 @@ document.addEventListener("DOMContentLoaded", () => {
         return document.body.classList.contains('experimental-motion-fx');
     }
 
+    const playedSectionTitleIntros = new Set();
+    const playedSectionTitleIntrosStorageKey = 'sr.playedSectionTitleIntros.v1';
+
+    function restorePlayedSectionTitleIntros() {
+        try {
+            const raw = sessionStorage.getItem(playedSectionTitleIntrosStorageKey);
+            if (!raw) return;
+
+            const parsed = JSON.parse(raw);
+            if (!Array.isArray(parsed)) return;
+
+            parsed.forEach((value) => {
+                if (typeof value !== 'string') return;
+                const key = value.trim().toLowerCase();
+                if (key) playedSectionTitleIntros.add(key);
+            });
+        } catch (error) {
+            // Ignore malformed data or blocked storage access.
+        }
+    }
+
+    function persistPlayedSectionTitleIntros() {
+        try {
+            const serialized = JSON.stringify(Array.from(playedSectionTitleIntros));
+            sessionStorage.setItem(playedSectionTitleIntrosStorageKey, serialized);
+        } catch (error) {
+            // Ignore storage access issues in privacy-restricted contexts.
+        }
+    }
+
+    function markSectionTitleIntroPlayed(sectionKey) {
+        if (!sectionKey || playedSectionTitleIntros.has(sectionKey)) return;
+        playedSectionTitleIntros.add(sectionKey);
+        persistPlayedSectionTitleIntros();
+    }
+
+    restorePlayedSectionTitleIntros();
+
+    function getSectionAnimationKey(content, sectionHint) {
+        if (typeof sectionHint === 'string' && sectionHint.trim()) {
+            return sectionHint.trim().toLowerCase();
+        }
+
+        const dataSection = content && content.dataset ? content.dataset.section : '';
+        if (dataSection) {
+            return dataSection.toLowerCase();
+        }
+
+        try {
+            const stored = sessionStorage.getItem('lastSection');
+            if (stored) return stored.toLowerCase();
+        } catch (error) {
+            // Ignore storage access issues in privacy-restricted contexts.
+        }
+
+        const querySection = new URLSearchParams(window.location.search).get('section');
+        return (querySection || 'home').toLowerCase();
+    }
+
     function initSectionTitleHoverFx(content) {
         if (!content || typeof Letterize === 'undefined' || typeof anime === 'undefined') return;
 
@@ -214,14 +273,30 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    window.animateContentIn = function() {
+    window.animateContentIn = function(sectionHint) {
         const content = document.getElementById('content');
         if (!content) return;
         const hyper = isHyperModeEnabled();
+        const sectionKey = getSectionAnimationKey(content, sectionHint);
+        const shouldPlayTitleIntro = !playedSectionTitleIntros.has(sectionKey);
+
+        if (shouldPlayTitleIntro) {
+            markSectionTitleIntroPlayed(sectionKey);
+        }
 
         const canAnimateText = (el) => !hyper || !el.closest('.link-card');
 
-        const headings = Array.from(content.querySelectorAll('h1, h2, h3, .animated-text')).filter(canAnimateText);
+        const headingCandidates = Array.from(content.querySelectorAll('h1, h2, h3, .animated-text')).filter(canAnimateText);
+        const titleEls = [];
+        const titleSeen = new Set();
+
+        Array.from(content.querySelectorAll('.animated-text, h1')).filter(canAnimateText).forEach(el => {
+            if (titleSeen.has(el)) return;
+            titleSeen.add(el);
+            titleEls.push(el);
+        });
+
+        const headings = headingCandidates.filter(el => !titleSeen.has(el));
         const paragraphs = Array.from(content.querySelectorAll('p, .tagline')).filter(canAnimateText);
         const buttons = Array.from(content.querySelectorAll('.center-button, button, a[class]:not(.link-card)')).filter(canAnimateText);
         const listItems = Array.from(content.querySelectorAll('li:not(.link-card)')).filter(canAnimateText);
@@ -229,7 +304,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const visuals = Array.from(content.querySelectorAll('img, svg'));
         const dividers = Array.from(content.querySelectorAll('hr, .divider'));
 
-        const allEls = [headings, paragraphs, buttons, listItems, linkCards, visuals, dividers];
+        const allEls = [titleEls, headings, paragraphs, buttons, listItems, linkCards, visuals, dividers];
         const animatedTargets = allEls.flat();
 
         const resetAnimatedTextState = () => {
@@ -253,6 +328,42 @@ document.addEventListener("DOMContentLoaded", () => {
             onComplete: resetAnimatedTextState,
             onInterrupt: resetAnimatedTextState
         });
+
+        if (titleEls.length) {
+            if (shouldPlayTitleIntro) {
+                tl.fromTo(titleEls,
+                    {
+                        opacity: 0,
+                        y: hyper ? 0 : 40,
+                        x: 0,
+                        scale: hyper ? 1 : 1,
+                        clipPath: hyper ? 'inset(0 0 0% 0)' : 'inset(0 0 100% 0)',
+                        filter: hyper ? 'blur(15px)' : 'blur(0px)'
+                    },
+                    {
+                        opacity: 1,
+                        y: 0,
+                        x: 0,
+                        scale: 1,
+                        clipPath: 'inset(0 0 0% 0)',
+                        filter: 'blur(0px)',
+                        duration: hyper ? 0.2 : 0.8,
+                        ease: hyper ? 'steps(4)' : 'power3.out',
+                        stagger: hyper ? 0.03 : 0.12
+                    },
+                    0
+                );
+            } else {
+                gsap.set(titleEls, {
+                    opacity: 1,
+                    y: 0,
+                    x: 0,
+                    scale: 1,
+                    clipPath: 'inset(0 0 0% 0)',
+                    filter: 'blur(0px)'
+                });
+            }
+        }
 
         if (headings.length) {
             tl.fromTo(headings,
@@ -338,8 +449,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         initMagneticButtons();
 
-        if (!hyper && typeof Letterize !== 'undefined' && typeof anime !== 'undefined') {
-            headings.forEach(heading => {
+        if (shouldPlayTitleIntro && !hyper && typeof Letterize !== 'undefined' && typeof anime !== 'undefined') {
+            const introHeadingTargets = titleEls.length ? titleEls : headings;
+            introHeadingTargets.forEach(heading => {
                 if (heading.dataset.letterized) return;
                 if (!heading.dataset.letterSourceText) {
                     heading.dataset.letterSourceText = heading.textContent || '';
@@ -1019,16 +1131,6 @@ function applyTwinkleEffect() {
         const blendedLen = Math.hypot(bx, by) || 1;
         bx /= blendedLen;
         by /= blendedLen;
-
-        window.__densitySteerDebug = {
-            confidence,
-            visibleRatio,
-            maxVal,
-            minVal,
-            bestBin: { col, row },
-            target: { x: tx, y: ty },
-            blended: { x: bx, y: by }
-        };
 
         return { x: bx, y: by, confidence, visibleRatio };
     }
