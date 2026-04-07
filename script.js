@@ -166,6 +166,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
                 title.dataset.hoverFxPlayed = 'true';
+                title.dataset.hoverFxAnimating = 'true';
                 playedTitleHoverFxKeys.add(hoverFxKey);
 
                 const hyper = isHyperModeEnabled();
@@ -215,11 +216,17 @@ document.addEventListener("DOMContentLoaded", () => {
                         textShadow: '0 0 0 rgba(255,255,255,0)',
                         duration: hyper ? 560 : 620,
                         easing: 'easeOutElastic(1, 0.65)',
-                        delay: anime.stagger(10, { from: 'center' })
+                        delay: anime.stagger(10, { from: 'center' }),
+                        complete: () => {
+                            title.dataset.hoverFxAnimating = 'false';
+                        }
                     }, '-=70');
             };
 
             const resetHoverFx = () => {
+                if (title.dataset.hoverFxAnimating === 'true') {
+                    return;
+                }
                 anime.remove(animatedChars);
                 anime({
                     targets: animatedChars,
