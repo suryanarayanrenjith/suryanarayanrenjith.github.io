@@ -1861,7 +1861,6 @@ function isDesktop() {
         function showContent(section, direction = 'none') {
             const content = document.getElementById('content');
             if (!content) return;
-            content.dataset.section = section;
             const isCached = !!sectionCache[section];
 
             if (typeof gsap !== 'undefined' && window.gsap) {
