@@ -794,15 +794,9 @@ document.addEventListener("DOMContentLoaded", () => {
     let mouseX = 0, mouseY = 0;
     let targetMouseX = 0, targetMouseY = 0;
     let velocityX = 0, velocityY = 0;
-    const mouseRotationEasing = 0.1;
     const acceleration = 0.002;
 
-    let alpha = 0, beta = 0, gamma = 0;
-    let targetRotationX = 0, targetRotationY = 0;
-    const rotationEasing = 0.05;
-
     let shockwaveTime = 0;
-    let blackHoleEffect = false;
 
     let warpBurstIntensity = 0;
 
@@ -862,21 +856,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    function applyBlackHoleEffect() {
-        if (blackHoleEffect) {
-            for (let i = 0; i < starVertices.length; i += 3) {
-                const x = starVertices[i], y = starVertices[i + 1], z = starVertices[i + 2];
-                const distSq = x * x + y * y + z * z;
-                if (distSq < 90000) {
-                    const distance = Math.sqrt(distSq);
-                    const pull = (300 - distance) * 0.01;
-                    starVertices[i] -= x * pull;
-                    starVertices[i + 1] -= y * pull;
-                }
-            }
-            stars.attributes.position.needsUpdate = true;
-        }
-    }
+
 
 function applyTwinkleEffect() {
     const time = performance.now() * 0.001;
@@ -922,6 +902,9 @@ function applyTwinkleEffect() {
         starFieldWhite.position.z += Math.sin(time * 0.5) * 0.05;
     }
 
+    let lastMouseTweenTime = 0;
+    const mouseTweenThrottle = 50;
+
     function applyMouseAcceleration() {
         const maxTiltX = 15;
         const maxTiltY = 15;
@@ -938,19 +921,25 @@ function applyTwinkleEffect() {
         const mouseTiltX = mouseY * maxTiltX;
         const mouseTiltY = -mouseX * maxTiltY;
 
-        gsap.to(camera.rotation, {
-            x: THREE.MathUtils.degToRad(mouseTiltX),
-            y: THREE.MathUtils.degToRad(mouseTiltY),
-            duration: 0.5,
-            ease: "power2.out"
-        });
+        const now = performance.now();
+        if (now - lastMouseTweenTime > mouseTweenThrottle) {
+            lastMouseTweenTime = now;
+            gsap.to(camera.rotation, {
+                x: THREE.MathUtils.degToRad(mouseTiltX),
+                y: THREE.MathUtils.degToRad(mouseTiltY),
+                duration: 0.5,
+                ease: "power2.out",
+                overwrite: "auto"
+            });
 
-        gsap.to(pointLight.position, {
-            x: mouseX * 100,
-            y: mouseY * 100,
-            duration: 0.5,
-            ease: "power2.out"
-        });
+            gsap.to(pointLight.position, {
+                x: mouseX * 100,
+                y: mouseY * 100,
+                duration: 0.5,
+                ease: "power2.out",
+                overwrite: "auto"
+            });
+        }
     }
 
     const densityProbe = new THREE.Vector3();
@@ -1240,29 +1229,9 @@ function switchCameraPosition() {
 document.addEventListener('keydown', (event) => {
     if (starfieldFrozen) return;
     if (event.ctrlKey && event.shiftKey) {
-        switch (event.code) {
-            case 'Digit5':
-                event.preventDefault();
-                switchCameraPosition();
-                break;
-
-            case 'Digit6':
-                event.preventDefault();
-                switchCameraPosition();
-                break;
-
-            case 'Digit7':
-                event.preventDefault();
-                switchCameraPosition();
-                break;
-
-            case 'Digit8':
-                event.preventDefault();
-                switchCameraPosition();
-                break;
-
-            default:
-                return;
+        if (['Digit5', 'Digit6', 'Digit7', 'Digit8'].includes(event.code)) {
+            event.preventDefault();
+            switchCameraPosition();
         }
     }
 });
@@ -1273,7 +1242,6 @@ document.addEventListener('keydown', (event) => {
             applyMouseAcceleration();
             applyDynamicStarScaling();
             applyShockwaveEffect();
-            applyBlackHoleEffect();
             applyTwinkleEffect();
             applyHyperModeStarGlow();
             animateStars();
