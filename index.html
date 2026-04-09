@@ -1042,56 +1042,69 @@ function isDesktop() {
                                     commandPaletteInput.select();
                                 }
 
-                                // Restart the one-shot scanline sweep (Phase B — terminal boot-up).
-                                commandPalette.classList.remove('is-booting');
-                                void commandPalette.offsetWidth;
-                                commandPalette.classList.add('is-booting');
-
+                                // Header-to-palette morph: palette starts sized like the
+                                // header and expands forward into its full dimensions.
                                 if (typeof gsap !== 'undefined') {
+                                    // Suppress the CSS max-height transition so we can measure
+                                    // the fully-open palette in a single frame; GSAP drives the
+                                    // visible animation instead.
+                                    const prevTransition = commandPalette.style.transition;
+                                    commandPalette.style.transition = 'none';
+                                    // Force a layout flush so `is-open` is applied synchronously.
+                                    void commandPalette.offsetHeight;
+                                    const headerRect = header.getBoundingClientRect();
+                                    const paletteRect = commandPalette.getBoundingClientRect();
+                                    // Restore the original transition on the next frame so
+                                    // future state changes (hide) still animate normally.
+                                    requestAnimationFrame(() => {
+                                        commandPalette.style.transition = prevTransition;
+                                    });
+                                    const startScaleX = paletteRect.width > 0
+                                        ? Math.max(0.18, headerRect.width / paletteRect.width)
+                                        : 0.55;
+                                    const startScaleY = paletteRect.height > 0
+                                        ? Math.max(0.08, headerRect.height / paletteRect.height)
+                                        : 0.12;
+
                                     const tl = gsap.timeline({ overwrite: 'auto' });
 
+                                    // The palette element emerges from the header band, expanding
+                                    // outward (scale) and forward (blur → sharp) into place.
                                     tl.fromTo(commandPalette,
-                                        { scale: 0.96, y: -14, rotateX: -6, opacity: 0, filter: 'blur(6px)' },
                                         {
-                                            scale: 1, y: 0, rotateX: 0, opacity: 1, filter: 'blur(0px)',
-                                            duration: 0.32,
-                                            ease: 'expo.out',
-                                            transformPerspective: 800
-                                        }
+                                            scaleX: startScaleX,
+                                            scaleY: startScaleY,
+                                            opacity: 0,
+                                            filter: 'blur(10px) brightness(1.25)',
+                                            transformOrigin: '50% 0%'
+                                        },
+                                        {
+                                            scaleX: 1,
+                                            scaleY: 1,
+                                            opacity: 1,
+                                            filter: 'blur(0px) brightness(1)',
+                                            duration: 0.55,
+                                            ease: 'expo.out'
+                                        },
+                                        0
                                     );
 
+                                    // Inner pieces fade in once the container has most of its
+                                    // size — they should appear to "materialise" inside the
+                                    // expanded shell, not ride the scale.
                                     const paletteSearch = commandPalette.querySelector('.command-palette-search');
-                                    if (paletteSearch) {
-                                        tl.fromTo(paletteSearch,
-                                            { clipPath: 'inset(0 0 100% 0)', opacity: 0, y: -4 },
-                                            {
-                                                clipPath: 'inset(0 0 0% 0)', opacity: 1, y: 0,
-                                                duration: 0.30,
-                                                ease: 'power3.out'
-                                            },
-                                            0.05
-                                        );
-                                    }
-
                                     const commandItems = commandPalette.querySelectorAll('.command-item');
-                                    if (commandItems.length) {
-                                        tl.fromTo(commandItems,
-                                            { opacity: 0, y: 8, scale: 0.97 },
-                                            {
-                                                opacity: 1, y: 0, scale: 1,
-                                                duration: 0.24,
-                                                ease: 'power2.out',
-                                                stagger: 0.018
-                                            },
-                                            0.12
-                                        );
-                                    }
-
                                     const paletteHintEl = commandPalette.querySelector('.command-palette-hint');
-                                    if (paletteHintEl) {
-                                        tl.fromTo(paletteHintEl,
+                                    const innerTargets = [paletteSearch, ...Array.from(commandItems), paletteHintEl].filter(Boolean);
+                                    if (innerTargets.length) {
+                                        tl.fromTo(innerTargets,
                                             { opacity: 0, y: 4 },
-                                            { opacity: 1, y: 0, duration: 0.22, ease: 'power2.out' },
+                                            {
+                                                opacity: 1, y: 0,
+                                                duration: 0.3,
+                                                ease: 'power2.out',
+                                                stagger: 0.012
+                                            },
                                             0.22
                                         );
                                     }
@@ -1102,15 +1115,16 @@ function isDesktop() {
                                 if (!commandPalette || !menuBar) return;
                                 commandPaletteVisible = false;
                                 setCommandPaletteLockState(false);
-                                commandPalette.classList.remove('is-booting');
 
                                 if (typeof gsap !== 'undefined') {
+                                    // Collapse back into the header band — inverse of the morph.
                                     gsap.to(commandPalette, {
-                                        scale: 0.95,
-                                        y: -15,
+                                        scaleX: 0.55,
+                                        scaleY: 0.12,
                                         opacity: 0,
-                                        filter: 'blur(6px)',
-                                        duration: 0.22,
+                                        filter: 'blur(6px) brightness(1.1)',
+                                        transformOrigin: '50% 0%',
+                                        duration: 0.24,
                                         ease: 'power2.in',
                                         overwrite: 'auto',
                                         onComplete: () => {
@@ -1119,7 +1133,14 @@ function isDesktop() {
                                             commandPalette.classList.remove('is-open');
                                             commandPalette.setAttribute('aria-hidden', 'true');
                                             paletteButton?.setAttribute('aria-expanded', 'false');
-                                            gsap.set(commandPalette, { clearProps: 'scale,y,rotateX,filter,clipPath' });
+                                            gsap.set(commandPalette, { clearProps: 'transform,filter,transformOrigin,clipPath,opacity' });
+                                            // Also clear any inline styles applied on the inner
+                                            // targets during the open timeline so the hover/focus
+                                            // states behave normally next time.
+                                            const innerTargets = commandPalette.querySelectorAll('.command-palette-search, .command-item, .command-palette-hint');
+                                            if (innerTargets.length) {
+                                                gsap.set(innerTargets, { clearProps: 'opacity,y,transform' });
+                                            }
                                             if (commandPaletteInput) commandPaletteInput.value = '';
                                             filterCommandPalette('');
                                         }
@@ -1623,28 +1644,24 @@ function isDesktop() {
                             '<div class="skeleton-line title"></div>' +
                             '<div class="skeleton-line long"></div>' +
                             '<div class="skeleton-line medium"></div>' +
-                            '<div class="skeleton-tags">' +
-                                '<span class="skeleton-tag"></span>' +
-                                '<span class="skeleton-tag"></span>' +
-                                '<span class="skeleton-tag"></span>' +
-                            '</div>' +
                         '</div>';
                 }
                 return '<div class="content-skeleton is-projects">' +
                     '<div class="skeleton-line title"></div>' +
+                    '<div class="skeleton-line subtitle"></div>' +
                     '<div class="skeleton-grid">' + cards + '</div>' +
                 '</div>';
             }
             if (sec === 'about') {
                 return '<div class="content-skeleton is-about">' +
-                    '<div class="skeleton-avatar"></div>' +
                     '<div class="skeleton-line title"></div>' +
+                    '<div class="skeleton-line subtitle"></div>' +
+                    '<div class="skeleton-avatar"></div>' +
                     '<div class="skeleton-line long"></div>' +
                     '<div class="skeleton-line long"></div>' +
                     '<div class="skeleton-line medium"></div>' +
                     '<div class="skeleton-line long"></div>' +
                     '<div class="skeleton-line short"></div>' +
-                    '<div class="skeleton-line medium"></div>' +
                 '</div>';
             }
             if (sec === 'resume') {
@@ -1658,13 +1675,14 @@ function isDesktop() {
                 }
                 return '<div class="content-skeleton is-resume">' +
                     '<div class="skeleton-line title"></div>' +
-                    '<div class="skeleton-line medium"></div>' +
+                    '<div class="skeleton-line subtitle"></div>' +
                     rows +
                 '</div>';
             }
             // home (and any unknown section) — hero block
             return '<div class="content-skeleton is-home">' +
                 '<div class="skeleton-line title"></div>' +
+                '<div class="skeleton-line subtitle"></div>' +
                 '<div class="skeleton-line long"></div>' +
                 '<div class="skeleton-line medium"></div>' +
                 '<div class="skeleton-line long"></div>' +

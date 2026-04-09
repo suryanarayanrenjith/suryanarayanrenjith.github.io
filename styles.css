@@ -467,12 +467,14 @@ body.experimental-motion-freeze *::after {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 16px;
-    padding: 60px 20px;
+    gap: 14px;
+    /* Top padding clears the absolutely-positioned header (top:20px, ~60px tall)
+       plus enough breathing room that the title line doesn't sit right under it. */
+    padding: 140px 20px 60px;
     width: 100%;
     max-width: 900px;
-    min-height: 60vh;
     margin: 0 auto;
+    box-sizing: border-box;
     opacity: 1;
 }
 .skeleton-line {
@@ -491,62 +493,47 @@ body.experimental-motion-freeze *::after {
     background: linear-gradient(90deg, transparent, var(--s-surface-hover), transparent);
     animation: shimmer 1.4s ease-in-out infinite;
 }
-.skeleton-line.title  { width: 45%; height: 22px; margin-bottom: 8px; }
-.skeleton-line.medium { width: 70%; }
-.skeleton-line.long   { width: 85%; }
-.skeleton-line.short  { width: 40%; }
+.skeleton-line.title    { width: 32%; height: 28px; margin-bottom: 2px; }
+.skeleton-line.subtitle { width: 55%; height: 12px; opacity: 0.7; margin-bottom: 14px; }
+.skeleton-line.medium   { width: 70%; }
+.skeleton-line.long     { width: 85%; }
+.skeleton-line.short    { width: 40%; }
 @keyframes shimmer {
     0%   { transform: translateX(-100%); }
     100% { transform: translateX(100%); }
 }
 
-/* Projects skeleton — card grid mimics the real project-card layout */
+/* Projects skeleton — 2-column card grid mirroring the real projects layout */
 .content-skeleton.is-projects {
     max-width: 1100px;
     align-items: stretch;
-    gap: 24px;
+    gap: 16px;
 }
-.content-skeleton.is-projects > .skeleton-line.title {
+.content-skeleton.is-projects > .skeleton-line.title,
+.content-skeleton.is-projects > .skeleton-line.subtitle {
     align-self: center;
 }
 .skeleton-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 24px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
     width: 100%;
+    margin-top: 10px;
 }
 .skeleton-card {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding: 24px;
+    gap: 10px;
+    padding: 18px 20px;
     border: 1px solid var(--s-border-subtle);
     background: var(--s-surface);
     border-radius: 4px;
-    min-height: 200px;
+    min-height: 110px;
 }
-.skeleton-card .skeleton-line.title { width: 60%; }
-.skeleton-tags {
-    display: flex;
-    gap: 8px;
-    margin-top: auto;
-}
-.skeleton-tag {
-    width: 44px;
-    height: 18px;
-    background: var(--s-surface-hover);
-    border-radius: 2px;
-    position: relative;
-    overflow: hidden;
-}
-.skeleton-tag::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    transform: translateX(-100%);
-    background: linear-gradient(90deg, transparent, var(--s-border-subtle), transparent);
-    animation: shimmer 1.4s ease-in-out infinite;
-}
+.skeleton-card .skeleton-line        { height: 10px; }
+.skeleton-card .skeleton-line.title  { width: 55%; height: 16px; margin-bottom: 4px; }
+.skeleton-card .skeleton-line.long   { width: 90%; }
+.skeleton-card .skeleton-line.medium { width: 70%; }
 
 /* About skeleton — avatar + paragraph block */
 .content-skeleton.is-about {
@@ -558,7 +545,7 @@ body.experimental-motion-freeze *::after {
     height: 96px;
     border-radius: 50%;
     background: var(--s-surface);
-    margin-bottom: 12px;
+    margin: 10px 0 14px;
     position: relative;
     overflow: hidden;
 }
@@ -577,7 +564,7 @@ body.experimental-motion-freeze *::after {
     align-items: stretch;
 }
 .content-skeleton.is-resume > .skeleton-line.title,
-.content-skeleton.is-resume > .skeleton-line.medium {
+.content-skeleton.is-resume > .skeleton-line.subtitle {
     align-self: center;
 }
 .skeleton-row {
@@ -612,16 +599,15 @@ body.experimental-motion-freeze *::after {
 
 @media (max-width: 720px) {
     .content-skeleton {
-        padding: 40px 16px;
-        min-height: 50vh;
+        padding: 110px 16px 40px;
     }
     .skeleton-grid {
         grid-template-columns: 1fr;
-        gap: 16px;
+        gap: 14px;
     }
     .skeleton-card {
-        min-height: 160px;
-        padding: 18px;
+        min-height: 100px;
+        padding: 16px 18px;
     }
     .skeleton-avatar {
         width: 72px;
@@ -1121,50 +1107,6 @@ header.command-palette-open {
                 box-shadow 0.24s ease;
 }
 
-/* One-shot scanline sweep overlay for the "terminal boot-up" open animation.
-   Triggered by adding .is-booting from JS; a 0.55s keyframe plays once. */
-.command-palette::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: linear-gradient(
-        180deg,
-        transparent 0%,
-        rgba(255, 255, 255, 0.08) 48%,
-        rgba(255, 255, 255, 0.22) 50%,
-        rgba(255, 255, 255, 0.08) 52%,
-        transparent 100%
-    );
-    background-size: 100% 220%;
-    background-position: 0% -120%;
-    opacity: 0;
-    mix-blend-mode: screen;
-}
-
-.command-palette.is-booting::after {
-    animation: paletteScanlineSweep 0.55s ease-out forwards;
-}
-
-@keyframes paletteScanlineSweep {
-    0%   { background-position: 0% -120%; opacity: 0; }
-    15%  { opacity: 1; }
-    85%  { opacity: 1; }
-    100% { background-position: 0% 220%; opacity: 0; }
-}
-
-body.light-theme .command-palette::after {
-    background: linear-gradient(
-        180deg,
-        transparent 0%,
-        rgba(0, 0, 0, 0.06) 48%,
-        rgba(0, 0, 0, 0.14) 50%,
-        rgba(0, 0, 0, 0.06) 52%,
-        transparent 100%
-    );
-    mix-blend-mode: multiply;
-}
-
 .menu-bar.command-palette-open .command-palette,
 .command-palette.is-open {
     max-height: min(76vh, 760px);
@@ -1182,39 +1124,8 @@ body.light-theme .command-palette::after {
     transform: translate(-50%, 0);
 }
 
-.menu-bar.command-palette-open .command-item,
-.command-palette.is-open .command-item {
-    animation: commandPaletteItemIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-.command-palette-list li {
-    --_i: 0;
-}
-.command-palette-list li:nth-child(1)  { --_i: 1; }
-.command-palette-list li:nth-child(2)  { --_i: 2; }
-.command-palette-list li:nth-child(3)  { --_i: 3; }
-.command-palette-list li:nth-child(4)  { --_i: 4; }
-.command-palette-list li:nth-child(5)  { --_i: 5; }
-.command-palette-list li:nth-child(6)  { --_i: 6; }
-.command-palette-list li:nth-child(7)  { --_i: 7; }
-.command-palette-list li:nth-child(8)  { --_i: 8; }
-.command-palette-list li:nth-child(9)  { --_i: 9; }
-.command-palette-list li:nth-child(10) { --_i: 10; }
-
-:is(.menu-bar.command-palette-open, .command-palette.is-open) .command-palette-list li .command-item {
-    animation-delay: calc(var(--_i) * 0.02s);
-}
-
-@keyframes commandPaletteItemIn {
-    from {
-        opacity: 0;
-        transform: scale(0.985);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
+/* Item entrance is driven entirely by GSAP in showCommandPalette so item
+   fades are perfectly synced with the container morph. */
 
 .command-palette-search {
     display: grid;
@@ -2930,7 +2841,7 @@ body.light-theme .tagline {
     }
 
     .content-skeleton {
-        padding: 40px 12px;
+        padding: 100px 12px 40px;
     }
 
     .links-wrapper h1 {
