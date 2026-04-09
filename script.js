@@ -778,13 +778,39 @@ document.addEventListener("DOMContentLoaded", () => {
     let starSpeeds = new Float32Array(starCount);
     let starTwinkles = new Float32Array(starCount);
 
+    // Halton quasi-random sequence — far more uniform 3D coverage than
+    // uncorrelated Math.random(), which leaves visible clumps and voids.
+    function halton(index, base) {
+        let result = 0;
+        let f = 1 / base;
+        let i = index;
+        while (i > 0) {
+            result += f * (i % base);
+            i = Math.floor(i / base);
+            f /= base;
+        }
+        return result;
+    }
+
     function generateStars() {
-        for (let i = 0; i < starCount * 3; i += 3) {
-            starVertices[i] = (Math.random() - 0.5) * starBounds.x * 2;
-            starVertices[i + 1] = (Math.random() - 0.5) * starBounds.y * 2;
-            starVertices[i + 2] = (Math.random() - 0.5) * starBounds.z * 2;
-            starSpeeds[i / 3] = Math.random() * 0.1 + 0.02;
-            starTwinkles[i / 3] = Math.random() * 0.5 + 0.5;
+        // Randomized offset per regeneration so the pattern isn't identical
+        // across resizes, while each axis still gets low-discrepancy coverage.
+        const haltonOffset = Math.floor(Math.random() * 4096);
+        for (let s = 0; s < starCount; s++) {
+            const i = s * 3;
+            const idx = s + 1 + haltonOffset;
+            const h2 = halton(idx, 2);
+            const h3 = halton(idx, 3);
+            const h5 = halton(idx, 5);
+            // Micro-jitter hides any residual regularity of the sequence.
+            const jx = (Math.random() - 0.5) * 0.012;
+            const jy = (Math.random() - 0.5) * 0.012;
+            const jz = (Math.random() - 0.5) * 0.012;
+            starVertices[i]     = (h2 - 0.5 + jx) * starBounds.x * 2;
+            starVertices[i + 1] = (h3 - 0.5 + jy) * starBounds.y * 2;
+            starVertices[i + 2] = (h5 - 0.5 + jz) * starBounds.z * 2;
+            starSpeeds[s] = Math.random() * 0.1 + 0.02;
+            starTwinkles[s] = Math.random() * 0.5 + 0.5;
         }
         stars.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
     }
@@ -1097,6 +1123,13 @@ function applyTwinkleEffect() {
         return { x: bx, y: by, confidence, visibleRatio };
     }
 
+// Tracks the direction of the most recent switch so we can prevent the
+// camera from immediately reversing into a back-and-forth yo-yo motion.
+let lastSwitchDir = { x: 0, y: 0 };
+// Bias the orbital rotation handedness once per session so successive
+// tangential deflections tend to curve consistently rather than flip-flop.
+let orbitalHandedness = Math.random() < 0.5 ? 1 : -1;
+
 function switchCameraPosition() {
     if (starfieldFrozen) return;
 
@@ -1186,6 +1219,38 @@ function switchCameraPosition() {
     const smartDir = getDensityAwareVelocityDirection();
     const visibilityGuard = THREE.MathUtils.clamp((smartDir.visibleRatio - 0.2) / 0.5, 0.6, 1);
     const directionInfluence = THREE.MathUtils.clamp(0.22 + smartDir.confidence * 0.78, 0.22, 1);
+
+    // --- Anti-reversal: rotate the proposed direction so it never points
+    //     sharply back along the previous travel vector. Instead of flipping
+    //     180°, we deflect it to the perpendicular (orbital-style sweep),
+    //     which eliminates the back-and-forth yo-yo feel between switches.
+    let dirX = smartDir.x;
+    let dirY = smartDir.y;
+    const prevLen = Math.hypot(lastSwitchDir.x, lastSwitchDir.y);
+    if (prevLen > 0.001) {
+        const px = lastSwitchDir.x / prevLen;
+        const py = lastSwitchDir.y / prevLen;
+        const dot = dirX * px + dirY * py;
+        // Anything with dot < MIN_FORWARD_DOT is treated as a reversal.
+        const MIN_FORWARD_DOT = -0.1;
+        if (dot < MIN_FORWARD_DOT) {
+            // Two perpendiculars to the previous direction.
+            const perpX = -py * orbitalHandedness;
+            const perpY =  px * orbitalHandedness;
+            // Blend: mostly tangential, with a small forward component so
+            // the camera still drifts rather than orbits rigidly.
+            const tangentialWeight = 0.78;
+            const forwardWeight = 0.22;
+            dirX = perpX * tangentialWeight + px * forwardWeight;
+            dirY = perpY * tangentialWeight + py * forwardWeight;
+            const nlen = Math.hypot(dirX, dirY) || 1;
+            dirX /= nlen;
+            dirY /= nlen;
+            // Occasionally flip handedness so we don't orbit in one direction forever.
+            if (Math.random() < 0.18) orbitalHandedness = -orbitalHandedness;
+        }
+    }
+
     const directionalTravel = (profile.travelBase + smartDir.confidence * profile.travelBoost)
         * visibilityGuard
         * (0.8 + directionInfluence * 0.35);
@@ -1198,17 +1263,26 @@ function switchCameraPosition() {
         * scatterDamp;
 
     // Only pull back when we are near the outer safe envelope, so movement doesn't feel like snapping home.
+    // The pull is applied PERPENDICULAR to the travel direction so it deflects the
+    // path inward along a curve rather than subtracting a reverse vector (which
+    // used to produce the back-and-forth snap when combined with a near-opposite smartDir).
     const centerPullStrength = profile.centerPullBase + (1 - visibilityGuard) * profile.centerPullGuardScale;
-    const centerPullX = Math.sign(camera.position.x) * Math.max(0, Math.abs(camera.position.x) - profile.centerPullThresholdX) * centerPullStrength;
-    const centerPullY = Math.sign(camera.position.y) * Math.max(0, Math.abs(camera.position.y) - profile.centerPullThresholdY) * centerPullStrength;
+    const rawPullX = Math.sign(camera.position.x) * Math.max(0, Math.abs(camera.position.x) - profile.centerPullThresholdX) * centerPullStrength;
+    const rawPullY = Math.sign(camera.position.y) * Math.max(0, Math.abs(camera.position.y) - profile.centerPullThresholdY) * centerPullStrength;
+    // Project the raw pull onto the plane perpendicular to (dirX, dirY) so it
+    // curves the trajectory instead of reversing it.
+    const forwardComponent = rawPullX * dirX + rawPullY * dirY;
+    const perpPullX = rawPullX - forwardComponent * dirX;
+    const perpPullY = rawPullY - forwardComponent * dirY;
+
     const targetX = camera.position.x
-        + smartDir.x * directionalTravel
+        + dirX * directionalTravel
         + randomScatterX
-        - centerPullX;
+        - perpPullX;
     const targetY = camera.position.y
-        + smartDir.y * directionalTravel
+        + dirY * directionalTravel
         + randomScatterY
-        - centerPullY;
+        - perpPullY;
 
     const maxX = profile.maxXBase + smartDir.confidence * profile.maxXBoost;
     const maxY = profile.maxYBase + smartDir.confidence * profile.maxYBoost;
@@ -1220,9 +1294,23 @@ function switchCameraPosition() {
         profile.zMax
     );
 
+    // Record the direction we actually committed to (from previous position to target,
+    // normalized) so the next switch can honor it. Fall back to (dirX, dirY) when the
+    // delta is tiny (e.g., clamped against the envelope on both axes).
+    const committedDX = randomX - camera.position.x;
+    const committedDY = randomY - camera.position.y;
+    const committedLen = Math.hypot(committedDX, committedDY);
+    if (committedLen > 1) {
+        lastSwitchDir.x = committedDX / committedLen;
+        lastSwitchDir.y = committedDY / committedLen;
+    } else {
+        lastSwitchDir.x = dirX;
+        lastSwitchDir.y = dirY;
+    }
+
     const rotationBias = smartDir.confidence * (Math.PI / profile.rotationBiasDiv);
-    const randomRotationX = (Math.random() - 0.5) * Math.PI / profile.rotationRandDiv - smartDir.y * rotationBias;
-    const randomRotationY = (Math.random() - 0.5) * Math.PI / profile.rotationRandDiv + smartDir.x * rotationBias;
+    const randomRotationX = (Math.random() - 0.5) * Math.PI / profile.rotationRandDiv - dirY * rotationBias;
+    const randomRotationY = (Math.random() - 0.5) * Math.PI / profile.rotationRandDiv + dirX * rotationBias;
 
     const zoomInFOV = Math.random() * profile.zoomRange + profile.zoomMin;
     const originalFOV = camera.fov;
