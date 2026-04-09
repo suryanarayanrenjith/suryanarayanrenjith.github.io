@@ -469,10 +469,18 @@ body.experimental-motion-freeze *::after {
     align-items: center;
     gap: 14px;
     /* Top padding clears the absolutely-positioned header (top:20px, ~60px tall)
-       plus enough breathing room that the title line doesn't sit right under it. */
-    padding: 140px 20px 60px;
-    width: 100%;
-    max-width: 900px;
+       plus breathing room; bottom padding keeps content above the absolute footer. */
+    padding: 120px 20px 80px;
+    /* Explicit width is required: #content is a flex child of body (body is
+       display:flex centered), so without an explicit width here the container
+       collapses to the intrinsic width of the skeleton elements — producing
+       the narrow-column bug. */
+    width: min(900px, calc(100vw - 40px));
+    max-width: min(900px, calc(100vw - 40px));
+    /* Cap vertical reach so the skeleton never pushes under the footer on
+       shorter viewports. */
+    max-height: calc(100vh - 160px);
+    overflow: hidden;
     margin: 0 auto;
     box-sizing: border-box;
     opacity: 1;
@@ -505,9 +513,10 @@ body.experimental-motion-freeze *::after {
 
 /* Projects skeleton — 2-column card grid mirroring the real projects layout */
 .content-skeleton.is-projects {
-    max-width: 1100px;
+    width: min(1100px, calc(100vw - 40px));
+    max-width: min(1100px, calc(100vw - 40px));
     align-items: stretch;
-    gap: 16px;
+    gap: 14px;
 }
 .content-skeleton.is-projects > .skeleton-line.title,
 .content-skeleton.is-projects > .skeleton-line.subtitle {
@@ -524,11 +533,11 @@ body.experimental-motion-freeze *::after {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    padding: 18px 20px;
+    padding: 16px 18px;
     border: 1px solid var(--s-border-subtle);
     background: var(--s-surface);
     border-radius: 4px;
-    min-height: 110px;
+    min-height: 92px;
 }
 .skeleton-card .skeleton-line        { height: 10px; }
 .skeleton-card .skeleton-line.title  { width: 55%; height: 16px; margin-bottom: 4px; }
@@ -537,7 +546,8 @@ body.experimental-motion-freeze *::after {
 
 /* About skeleton — avatar + paragraph block */
 .content-skeleton.is-about {
-    max-width: 760px;
+    width: min(760px, calc(100vw - 40px));
+    max-width: min(760px, calc(100vw - 40px));
     align-items: center;
 }
 .skeleton-avatar {
@@ -560,7 +570,8 @@ body.experimental-motion-freeze *::after {
 
 /* Resume skeleton — bullet rows */
 .content-skeleton.is-resume {
-    max-width: 820px;
+    width: min(820px, calc(100vw - 40px));
+    max-width: min(820px, calc(100vw - 40px));
     align-items: stretch;
 }
 .content-skeleton.is-resume > .skeleton-line.title,
@@ -593,7 +604,8 @@ body.experimental-motion-freeze *::after {
 
 /* Home skeleton — centered hero block */
 .content-skeleton.is-home {
-    max-width: 720px;
+    width: min(720px, calc(100vw - 40px));
+    max-width: min(720px, calc(100vw - 40px));
     align-items: center;
 }
 

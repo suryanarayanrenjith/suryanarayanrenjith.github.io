@@ -463,10 +463,18 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     /**
-     * Directional exit transition for the #content element.
+     * Directional exit transition for #content — a layered GSAP timeline that
+     * decouples blur, translate, rotate, scale and opacity into distinct stages
+     * so the motion reads as a composed "push-off" rather than a flat tween.
+     *
+     * CRITICAL: we always clearProps on the inline transform at the end. The
+     * next step in the pipeline often injects a skeleton into #content, and
+     * because body is display:flex (centered), a left-over scale/rotate would
+     * cause the skeleton container to collapse to an unexpected width.
+     *
      * @param {HTMLElement} content - the container being transitioned out
      * @param {'up'|'down'|'left'|'right'} direction - travel direction
-     * @returns {Promise<void>} resolves when the exit tween completes
+     * @returns {Promise<void>} resolves once the tween completes or interrupts
      */
     window.gsapTransitionOut = function(content, direction) {
         return new Promise(resolve => {
@@ -477,30 +485,75 @@ document.addEventListener("DOMContentLoaded", () => {
             const finish = () => {
                 if (finished) return;
                 finished = true;
+                // Strip the inline transform/filter so downstream code (e.g.
+                // skeleton injection) renders into a clean container. Opacity
+                // is preserved at the tween's final value so content stays
+                // hidden until transitionIn takes over.
+                gsap.set(content, {
+                    clearProps: 'transform,rotationX,rotationY,rotationZ,rotate,scale,scaleX,scaleY,x,y,filter'
+                });
                 resolve();
             };
 
-            gsap.to(content, {
-                opacity: 0,
-                scale: hyper ? 0.62 : 0.92,
-                y: isVertical ? dirMult * (hyper ? 240 : 60) : 0,
-                x: !isVertical ? dirMult * (hyper ? 300 : 80) : 0,
-                rotationY: !isVertical ? dirMult * (hyper ? -20 : -4) : 0,
-                rotationX: isVertical ? dirMult * (hyper ? 14 : 3) : 0,
-                filter: hyper ? 'blur(30px)' : 'blur(8px)',
-                duration: hyper ? 0.26 : 0.45,
-                ease: hyper ? 'steps(4)' : 'power3.in',
-                force3D: true,
-                overwrite: 'auto',
+            gsap.killTweensOf(content);
+
+            if (hyper) {
+                // Chunky stepped exit for hyper mode — one stage, stepped ease.
+                gsap.to(content, {
+                    opacity: 0,
+                    scale: 0.62,
+                    y: isVertical ? dirMult * 240 : 0,
+                    x: !isVertical ? dirMult * 300 : 0,
+                    rotationY: !isVertical ? dirMult * -20 : 0,
+                    rotationX: isVertical ? dirMult * 14 : 0,
+                    filter: 'blur(30px)',
+                    duration: 0.26,
+                    ease: 'steps(4)',
+                    force3D: true,
+                    overwrite: 'auto',
+                    onComplete: finish,
+                    onInterrupt: finish
+                });
+                return;
+            }
+
+            // Normal mode: two-stage timeline.
+            //  S1 — small pre-compress (scale 1 → 0.985, mild blur) signals
+            //       that motion is imminent (100ms)
+            //  S2 — main push: translate + rotate + scale + fade + deep blur
+            const tl = gsap.timeline({
+                defaults: { force3D: true, overwrite: 'auto' },
                 onComplete: finish,
                 onInterrupt: finish
             });
+
+            tl.to(content, {
+                scale: 0.985,
+                filter: 'blur(3px)',
+                duration: 0.12,
+                ease: 'power1.in'
+            }, 0);
+
+            tl.to(content, {
+                opacity: 0,
+                scale: 0.9,
+                y: isVertical ? dirMult * 75 : 0,
+                x: !isVertical ? dirMult * 95 : 0,
+                rotationY: !isVertical ? dirMult * -6 : 0,
+                rotationX: isVertical ? dirMult * 4 : 0,
+                filter: 'blur(12px)',
+                duration: 0.42,
+                ease: 'expo.in'
+            }, 0.08);
         });
     };
 
     /**
-     * Directional entrance transition for the #content element. Also kicks
-     * off animateContentIn() so inner elements fade in with the container.
+     * Directional entrance transition for #content. Uses a three-stage
+     * timeline so position, scale and blur settle on slightly different
+     * curves — feels less rigid than a single tween. Also kicks off
+     * animateContentIn() so the inner subtree animates alongside.
+     *
      * @param {HTMLElement} content
      * @param {'up'|'down'|'left'|'right'} direction
      */
@@ -509,44 +562,82 @@ document.addEventListener("DOMContentLoaded", () => {
         const isVertical = direction === 'up' || direction === 'down';
         const dirMult = (direction === 'down' || direction === 'right') ? 1 : -1;
 
+        gsap.killTweensOf(content);
+
+        // Starting state — opposite side of the exit direction.
         gsap.set(content, {
             opacity: 0,
-            scale: hyper ? 0.6 : 0.88,
-            y: isVertical ? dirMult * (hyper ? 228 : 80) : 0,
-            x: !isVertical ? dirMult * (hyper ? 260 : 100) : 0,
-            rotationY: !isVertical ? dirMult * (hyper ? 20 : 5) : 0,
-            rotationX: isVertical ? dirMult * (hyper ? -14 : -4) : 0,
-            filter: hyper ? 'blur(28px)' : 'blur(10px)',
+            scale: hyper ? 0.6 : 0.9,
+            y: isVertical ? dirMult * (hyper ? 228 : 90) : 0,
+            x: !isVertical ? dirMult * (hyper ? 260 : 110) : 0,
+            rotationY: !isVertical ? dirMult * (hyper ? 20 : 6) : 0,
+            rotationX: isVertical ? dirMult * (hyper ? -14 : -5) : 0,
+            filter: hyper ? 'blur(28px)' : 'blur(14px)',
             force3D: true
         });
 
         window.animateContentIn();
 
-        gsap.to(content, {
-            opacity: 1,
-            scale: 1,
+        const cleanup = () => gsap.set(content, { clearProps: 'all' });
+
+        if (hyper) {
+            gsap.to(content, {
+                opacity: 1,
+                scale: 1,
+                y: 0,
+                x: 0,
+                rotationY: 0,
+                rotationX: 0,
+                filter: 'blur(0px)',
+                duration: 0.28,
+                ease: 'steps(4)',
+                force3D: true,
+                overwrite: 'auto',
+                onComplete: cleanup,
+                onInterrupt: cleanup
+            });
+            return;
+        }
+
+        // Three overlapping tweens so translate, scale and blur resolve on
+        // different curves — reads as motion with depth.
+        const tl = gsap.timeline({
+            defaults: { force3D: true, overwrite: 'auto' },
+            onComplete: cleanup,
+            onInterrupt: cleanup
+        });
+
+        // S1: translate + rotate settle fastest (snap into place)
+        tl.to(content, {
             y: 0,
             x: 0,
-            rotationY: 0,
             rotationX: 0,
+            rotationY: 0,
+            opacity: 1,
+            duration: 0.62,
+            ease: 'expo.out'
+        }, 0);
+
+        // S2: scale eases out slightly slower for a breathing feel
+        tl.to(content, {
+            scale: 1,
+            duration: 0.72,
+            ease: 'expo.out'
+        }, 0.02);
+
+        // S3: blur clears last, so the content sharpens after it lands
+        tl.to(content, {
             filter: 'blur(0px)',
-            duration: hyper ? 0.28 : 0.7,
-            ease: hyper ? 'steps(4)' : 'power3.out',
-            force3D: true,
-            overwrite: 'auto',
-            onComplete: () => {
-                gsap.set(content, { clearProps: 'all' });
-            },
-            onInterrupt: () => {
-                gsap.set(content, { clearProps: 'all' });
-            }
-        });
+            duration: 0.55,
+            ease: 'power2.out'
+        }, 0.14);
     };
 
     /**
-     * Quick non-directional fade-out used when swapping cached sections.
+     * Quick non-directional fade-out used when swapping cached sections or
+     * swapping skeleton → real content on the slow-fetch path.
      * @param {HTMLElement} content
-     * @param {string} [directionHint] - optional direction hint (currently unused)
+     * @param {string} [directionHint] - optional direction hint (unused)
      * @returns {Promise<void>}
      */
     window.gsapFadeSwap = function(content, directionHint) {
@@ -556,14 +647,20 @@ document.addEventListener("DOMContentLoaded", () => {
             const finish = () => {
                 if (finished) return;
                 finished = true;
+                // Same width-collapse defense as gsapTransitionOut: clear
+                // transforms before innerHTML swap.
+                gsap.set(content, {
+                    clearProps: 'transform,rotationX,rotationY,rotationZ,rotate,scale,scaleX,scaleY,x,y,filter'
+                });
                 resolve();
             };
+            gsap.killTweensOf(content);
             gsap.to(content, {
                 opacity: 0,
-                scale: hyper ? 0.76 : 0.96,
-                y: hyper ? -70 : -15,
-                filter: hyper ? 'blur(16px)' : 'blur(4px)',
-                duration: hyper ? 0.16 : 0.25,
+                scale: hyper ? 0.76 : 0.965,
+                y: hyper ? -70 : -12,
+                filter: hyper ? 'blur(16px)' : 'blur(5px)',
+                duration: hyper ? 0.16 : 0.24,
                 ease: hyper ? 'steps(2)' : 'power2.in',
                 force3D: true,
                 overwrite: 'auto',
@@ -574,37 +671,37 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     /**
-     * Quick non-directional fade-in counterpart to gsapFadeSwap.
+     * Quick non-directional fade-in counterpart to gsapFadeSwap. Also runs
+     * the inner-element animation via animateContentIn().
      * @param {HTMLElement} content
      */
     window.gsapFadeIn = function(content) {
         const hyper = isHyperModeEnabled();
 
+        gsap.killTweensOf(content);
+        const cleanup = () => gsap.set(content, { clearProps: 'all' });
+
         gsap.fromTo(content,
             {
                 opacity: 0,
-                scale: hyper ? 0.72 : 0.96,
-                y: hyper ? 95 : 15,
-                filter: hyper ? 'blur(18px)' : 'blur(4px)'
+                scale: hyper ? 0.72 : 0.965,
+                y: hyper ? 95 : 14,
+                filter: hyper ? 'blur(18px)' : 'blur(5px)'
             },
             {
                 opacity: 1,
                 scale: 1,
                 y: 0,
                 filter: 'blur(0px)',
-                duration: hyper ? 0.24 : 0.45,
-                ease: hyper ? 'steps(4)' : 'power2.out',
+                duration: hyper ? 0.24 : 0.48,
+                ease: hyper ? 'steps(4)' : 'expo.out',
                 force3D: true,
                 overwrite: 'auto',
                 onStart: () => {
                     window.animateContentIn();
                 },
-                onComplete: () => {
-                    gsap.set(content, { clearProps: 'all' });
-                },
-                onInterrupt: () => {
-                    gsap.set(content, { clearProps: 'all' });
-                }
+                onComplete: cleanup,
+                onInterrupt: cleanup
             }
         );
     };
@@ -768,7 +865,7 @@ document.addEventListener("DOMContentLoaded", () => {
     pointLight.position.set(0, 0, 500);
     scene.add(pointLight);
 
-    const starDensity = 0.0032;
+    const starDensity = 0.0046;
     const starBounds = { x: 1500, y: 1200, z: 1500 };
     let starCount = Math.floor(window.innerWidth * window.innerHeight * starDensity);
 
@@ -791,6 +888,31 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         return result;
     }
+
+    // Procedural circular star texture with radial falloff. Using a map on a
+    // PointsMaterial transforms the square sprite-points into soft round
+    // glows — the single biggest visual upgrade for stars of this scale.
+    function createStarTexture() {
+        const size = 64;
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        const cx = size / 2, cy = size / 2;
+        const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, size / 2);
+        gradient.addColorStop(0.00, 'rgba(255, 255, 255, 1.0)');
+        gradient.addColorStop(0.15, 'rgba(255, 255, 255, 0.9)');
+        gradient.addColorStop(0.35, 'rgba(255, 255, 255, 0.45)');
+        gradient.addColorStop(0.65, 'rgba(255, 255, 255, 0.12)');
+        gradient.addColorStop(1.00, 'rgba(255, 255, 255, 0.0)');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, size, size);
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.minFilter = THREE.LinearFilter;
+        tex.magFilter = THREE.LinearFilter;
+        tex.generateMipmaps = false;
+        return tex;
+    }
+    const starTexture = createStarTexture();
 
     function generateStars() {
         // Randomized offset per regeneration so the pattern isn't identical
@@ -819,15 +941,49 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const starMaterialWhite = new THREE.PointsMaterial({
         color: 0xffffff,
-        size: 2,
+        size: 4,
+        map: starTexture,
+        alphaTest: 0.01,
         transparent: true,
-        opacity: 0.8,
+        opacity: 0.95,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
+        sizeAttenuation: true,
     });
 
     const starFieldWhite = new THREE.Points(stars, starMaterialWhite);
     scene.add(starFieldWhite);
+
+    // Hero stars — a sparse, brighter layer that gives the starfield real
+    // depth. Uses the same circular texture but with a larger base size and
+    // an independent slow pulse. Positioned using a different Halton offset
+    // so the bright stars never align with the main-field pattern.
+    const HERO_STAR_COUNT = 60;
+    const heroStars = new THREE.BufferGeometry();
+    const heroVertices = new Float32Array(HERO_STAR_COUNT * 3);
+    const heroPhases = new Float32Array(HERO_STAR_COUNT);
+    const heroOffset = 73;
+    for (let i = 0; i < HERO_STAR_COUNT; i++) {
+        const idx = i + 1 + heroOffset;
+        heroVertices[i * 3]     = (halton(idx, 2) - 0.5) * starBounds.x * 1.7;
+        heroVertices[i * 3 + 1] = (halton(idx, 3) - 0.5) * starBounds.y * 1.7;
+        heroVertices[i * 3 + 2] = (halton(idx, 5) - 0.5) * starBounds.z * 1.7;
+        heroPhases[i] = Math.random() * Math.PI * 2;
+    }
+    heroStars.setAttribute('position', new THREE.Float32BufferAttribute(heroVertices, 3));
+    const heroMaterial = new THREE.PointsMaterial({
+        color: 0xffffff,
+        size: 13,
+        map: starTexture,
+        alphaTest: 0.01,
+        transparent: true,
+        opacity: 1.0,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        sizeAttenuation: true,
+    });
+    const heroField = new THREE.Points(heroStars, heroMaterial);
+    scene.add(heroField);
 
     camera.position.z = 1000;
 
@@ -839,6 +995,7 @@ document.addEventListener("DOMContentLoaded", () => {
             gsap.killTweensOf(camera.rotation);
             gsap.killTweensOf(pointLight.position);
             gsap.killTweensOf(starFieldWhite.rotation);
+            gsap.killTweensOf(heroField.rotation);
         }
     });
 
@@ -846,13 +1003,18 @@ document.addEventListener("DOMContentLoaded", () => {
         if (e.detail && e.detail.light) {
             starMaterialWhite.color.setHex(0x222222);
             starMaterialWhite.blending = THREE.NormalBlending;
+            heroMaterial.color.setHex(0x1a1a1a);
+            heroMaterial.blending = THREE.NormalBlending;
             pointLight.color.setHex(0x222222);
         } else {
             starMaterialWhite.color.setHex(0xffffff);
             starMaterialWhite.blending = THREE.AdditiveBlending;
+            heroMaterial.color.setHex(0xffffff);
+            heroMaterial.blending = THREE.AdditiveBlending;
             pointLight.color.setHex(0xffffff);
         }
         starMaterialWhite.needsUpdate = true;
+        heroMaterial.needsUpdate = true;
     });
 
     let resizeTimeout = null;
@@ -915,12 +1077,9 @@ document.addEventListener("DOMContentLoaded", () => {
         stars.attributes.position.needsUpdate = true;
     }
 
-    function applyDynamicStarScaling() {
-        const positions = stars.attributes.position.array;
-        const lastZ = positions[positions.length - 1];
-        const burstSize = warpBurstIntensity * 3;
-        starMaterialWhite.size = Math.max(1, 10 / (lastZ / 100 + 1)) + burstSize;
-    }
+    // applyDynamicStarScaling removed: it used the last-star-Z as a proxy for
+    // global camera depth which was both fragile and overridden by the
+    // twinkle pass below. Warp-burst size boost is folded into twinkle now.
 
     function applyShockwaveEffect() {
         if (shockwaveTime > 0) {
@@ -956,16 +1115,28 @@ function applyTwinkleEffect() {
         (baseSineWave * 0.3 + baseCosineWave * 0.3 + flicker * 0.2 + noise * 0.1)
         * slowBreath * layeredEffect * depthEffect;
 
-    starMaterialWhite.opacity = 3.0 + twinkleIntensity * 0.8;
-    starMaterialWhite.size = 2.0 + twinkleIntensity * 4.0;
+    // Valid opacity range (was being clamped at 1.0 by THREE after bad math).
+    // Keep stars bright with a modest twinkle wobble on top.
+    const burstBoost = warpBurstIntensity * 3;
+    starMaterialWhite.opacity = Math.max(0.55, Math.min(1.0, 0.85 + twinkleIntensity * 0.18));
+    starMaterialWhite.size = 3.6 + twinkleIntensity * 2.4 + burstBoost;
+
+    // Hero stars pulse on a slower, deeper curve — draws the eye without
+    // competing with the field's high-frequency twinkle.
+    const heroPulse = Math.sin(time * 0.9) * 0.5 + 0.5;
+    const heroFlicker = Math.sin(time * 3.1 + 1.7) * 0.15;
+    heroMaterial.size = 11 + heroPulse * 4 + heroFlicker + burstBoost * 1.5;
+    heroMaterial.opacity = Math.max(0.7, Math.min(1.0, 0.82 + heroPulse * 0.18));
 }
 
     function applyHyperModeStarGlow() {
         const targetGlow = isHyperModeEnabled() ? 1 : 0;
         hyperGlowLevel += (targetGlow - hyperGlowLevel) * 0.12;
 
-        starMaterialWhite.size = Math.min(7, starMaterialWhite.size + hyperGlowLevel * 1.4);
-        starMaterialWhite.opacity = Math.min(4.8, starMaterialWhite.opacity + hyperGlowLevel * 0.65);
+        starMaterialWhite.size = Math.min(9, starMaterialWhite.size + hyperGlowLevel * 1.8);
+        starMaterialWhite.opacity = Math.min(1.0, starMaterialWhite.opacity + hyperGlowLevel * 0.1);
+        heroMaterial.size = Math.min(22, heroMaterial.size + hyperGlowLevel * 4);
+        heroMaterial.opacity = Math.min(1.0, heroMaterial.opacity + hyperGlowLevel * 0.1);
 
         const targetIntensity = 1 + hyperGlowLevel * 0.85;
         const targetDistance = 1000 + hyperGlowLevel * 280;
@@ -981,8 +1152,11 @@ function applyTwinkleEffect() {
 
         starFieldWhite.rotation.x += 0.0005 + driftX;
         starFieldWhite.rotation.y += 0.0007 + driftY;
-
         starFieldWhite.position.z += Math.sin(time * 0.5) * 0.05;
+
+        // Hero layer drifts slightly slower for a parallax depth cue.
+        heroField.rotation.x += 0.00032 + driftX * 0.7;
+        heroField.rotation.y += 0.00045 + driftY * 0.7;
     }
 
     let lastMouseTweenTime = 0;
@@ -1351,8 +1525,15 @@ function switchCameraPosition() {
         }
     }, 0);
 
+    const rollZ = (Math.random() - 0.5) * profile.starRollRange;
     tl.to(starFieldWhite.rotation, {
-        z: starFieldWhite.rotation.z + (Math.random() - 0.5) * profile.starRollRange,
+        z: starFieldWhite.rotation.z + rollZ,
+        duration: profile.starRollDuration,
+        ease: profile.starRollEase
+    }, 0);
+    // Keep the hero layer in lockstep on roll so the depth parallax holds.
+    tl.to(heroField.rotation, {
+        z: heroField.rotation.z + rollZ * 0.85,
         duration: profile.starRollDuration,
         ease: profile.starRollEase
     }, 0);
@@ -1385,7 +1566,6 @@ document.addEventListener('keydown', (event) => {
         if (!starfieldFrozen) {
             applyWarpSpeed();
             applyMouseAcceleration();
-            applyDynamicStarScaling();
             applyShockwaveEffect();
             applyTwinkleEffect();
             applyHyperModeStarGlow();

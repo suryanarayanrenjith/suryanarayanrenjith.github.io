@@ -2090,72 +2090,118 @@ function isDesktop() {
             }));
         }
         
+            /* Wheel navigation: delta accumulator with adaptive decay so rapid
+             * scrolls trigger faster and trackpad inertia doesn't double-fire.
+             * An immediate-fire shortcut handles large single-frame deltas
+             * (mouse wheel clicks) without waiting for accumulation. */
             let wheelAccumulator = 0;
-            let wheelTimer;
-            const WHEEL_THRESHOLD = 60;
-            
-            window.addEventListener('wheel', event => {
-                            if (window.__commandPaletteActive || window.__shortcutsModalOpen) return;
-              wheelAccumulator += event.deltaY;
-              
-              clearTimeout(wheelTimer);
-              wheelTimer = setTimeout(() => {
+            let wheelLastTime = 0;
+            let wheelCooldown = 0;
+            const WHEEL_THRESHOLD = 90;
+            const WHEEL_BURST_THRESHOLD = 50;
+            const WHEEL_COOLDOWN_MS = 700;
+            const WHEEL_DECAY_MS = 220;
+
+            function triggerWheelNav(direction) {
+                const now = performance.now();
+                if (now < wheelCooldown) return;
+                wheelCooldown = now + WHEEL_COOLDOWN_MS;
                 wheelAccumulator = 0;
-              }, 250);
-              
-              if (Math.abs(wheelAccumulator) >= WHEEL_THRESHOLD) {
-                if (wheelAccumulator > 0) {
-                  switchToNextSection('down');
-                } else {
-                  switchToNextSection('up');
-                }
-                wheelAccumulator = 0;
-              }
-            }, { passive: true });
-        
-        let touchStartX = 0;
-        let touchStartY = 0;
-        let touchEndX = 0;
-        let touchEndY = 0;
-        
-        window.addEventListener('touchstart', (event) => {
-            if (window.__commandPaletteActive || window.__shortcutsModalOpen) return;
-            touchStartX = event.changedTouches[0].screenX;
-            touchStartY = event.changedTouches[0].screenY;
-        });
-        
-        window.addEventListener('touchend', (event) => {
-            if (window.__commandPaletteActive || window.__shortcutsModalOpen) return;
-            touchEndX = event.changedTouches[0].screenX;
-            touchEndY = event.changedTouches[0].screenY;
-            handleGesture();
-        });
-        
-        function handleGesture() {
-            const deltaX = touchStartX - touchEndX;
-            const deltaY = touchStartY - touchEndY;
-            if (Math.abs(deltaX) > Math.abs(deltaY)) {
-                if (isMobile) {
-                    if (deltaX > 50) {
-                        switchToNextSection('right');
-                    } else if (deltaX < -50) {
-                        switchToNextSection('left');
-                    }
-                } else {
-                    if (deltaX > 50) {
-                        switchToNextSection('left');
-                    } else if (deltaX < -50) {
-                        switchToNextSection('right');
-                    }
-                }
-            } else {
-                if (deltaY > 50) {
-                    switchToNextSection('down');
-                } else if (deltaY < -50) {
-                    switchToNextSection('up');
-                }
+                switchToNextSection(direction);
             }
-        }
+
+            window.addEventListener('wheel', event => {
+                if (window.__commandPaletteActive || window.__shortcutsModalOpen) return;
+                const now = performance.now();
+
+                // Decay the accumulator on long pauses between events.
+                if (now - wheelLastTime > WHEEL_DECAY_MS) {
+                    wheelAccumulator = 0;
+                }
+                wheelLastTime = now;
+                wheelAccumulator += event.deltaY;
+
+                // Fast burst: one big wheel click or fast trackpad flick.
+                if (Math.abs(event.deltaY) >= WHEEL_BURST_THRESHOLD) {
+                    triggerWheelNav(event.deltaY > 0 ? 'down' : 'up');
+                    return;
+                }
+
+                // Slow steady accumulation (fine-grained trackpads).
+                if (Math.abs(wheelAccumulator) >= WHEEL_THRESHOLD) {
+                    triggerWheelNav(wheelAccumulator > 0 ? 'down' : 'up');
+                }
+            }, { passive: true });
+
+            /* Touch navigation: tracks velocity in addition to distance so
+             * short fast flicks still register. Uses multi-point sampling to
+             * get a stable velocity reading and direction-lock once the
+             * dominant axis is clear. */
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let touchStartT = 0;
+            let touchLastX = 0;
+            let touchLastY = 0;
+            let touchLastT = 0;
+            let touchVelX = 0;
+            let touchVelY = 0;
+            let touchActive = false;
+            const SWIPE_MIN_DISTANCE = 45;
+            const SWIPE_MIN_VELOCITY = 0.35;
+            const SWIPE_AXIS_DOMINANCE = 1.25;
+
+            window.addEventListener('touchstart', (event) => {
+                if (window.__commandPaletteActive || window.__shortcutsModalOpen) return;
+                const t = event.changedTouches[0];
+                touchStartX = touchLastX = t.screenX;
+                touchStartY = touchLastY = t.screenY;
+                touchStartT = touchLastT = performance.now();
+                touchVelX = touchVelY = 0;
+                touchActive = true;
+            }, { passive: true });
+
+            window.addEventListener('touchmove', (event) => {
+                if (!touchActive) return;
+                const t = event.changedTouches[0];
+                const now = performance.now();
+                const dt = Math.max(1, now - touchLastT);
+                // Exponential moving average for stable velocity.
+                touchVelX = 0.6 * ((t.screenX - touchLastX) / dt) + 0.4 * touchVelX;
+                touchVelY = 0.6 * ((t.screenY - touchLastY) / dt) + 0.4 * touchVelY;
+                touchLastX = t.screenX;
+                touchLastY = t.screenY;
+                touchLastT = now;
+            }, { passive: true });
+
+            window.addEventListener('touchend', (event) => {
+                if (window.__commandPaletteActive || window.__shortcutsModalOpen) return;
+                if (!touchActive) return;
+                touchActive = false;
+
+                const t = event.changedTouches[0];
+                const dx = t.screenX - touchStartX;
+                const dy = t.screenY - touchStartY;
+                const absDx = Math.abs(dx);
+                const absDy = Math.abs(dy);
+                const absVx = Math.abs(touchVelX);
+                const absVy = Math.abs(touchVelY);
+
+                // Pick the dominant axis with a bias to avoid jitter triggering
+                // an unintended direction.
+                const horizontalDominant = absDx > absDy * SWIPE_AXIS_DOMINANCE
+                    || absVx > absVy * SWIPE_AXIS_DOMINANCE;
+
+                if (horizontalDominant) {
+                    if (absDx < SWIPE_MIN_DISTANCE && absVx < SWIPE_MIN_VELOCITY) return;
+                    // Natural-scroll on mobile: drag left → next (right-bound travel)
+                    const mobileMap = dx < 0 ? 'right' : 'left';
+                    const desktopMap = dx < 0 ? 'left' : 'right';
+                    switchToNextSection(isMobile ? mobileMap : desktopMap);
+                } else {
+                    if (absDy < SWIPE_MIN_DISTANCE && absVy < SWIPE_MIN_VELOCITY) return;
+                    switchToNextSection(dy < 0 ? 'down' : 'up');
+                }
+            }, { passive: true });
         
         showContent('home', 'none');
         updateProgressBar('home');
