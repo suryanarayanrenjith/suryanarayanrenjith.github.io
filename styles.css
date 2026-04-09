@@ -1451,7 +1451,13 @@ body.light-theme .palette-button[aria-expanded="true"] {
 @media (max-width: 768px) {
     header {
         border: 1px solid rgba(255, 255, 255, 0.15);
-        padding: 8px 18px;
+        padding: 8px 16px 8px 16px;
+        max-width: calc(100vw - 16px);
+        box-sizing: border-box;
+    }
+
+    .menu-bar > ul > li {
+        margin-right: 14px;
     }
 
     .menu-bar > ul > li > a::after {
@@ -1463,12 +1469,25 @@ body.light-theme .palette-button[aria-expanded="true"] {
         font-size: small !important;
     }
 
-    .music-button {
-        width: 10px;
-        height: 10px;
-        margin-right: 5px;
-        font-size: 10px;
+    .palette-button-container {
+        display: none !important;
     }
+
+    .music-button-container {
+        max-width: 32px;
+        margin-left: 2px;
+        overflow: visible;
+    }
+
+    .music-button {
+        font-size: 14px;
+        padding: 2px 4px;
+        margin-right: 0;
+    }
+}
+
+body.is-mobile .palette-button-container {
+    display: none !important;
 }
 
 /* ======== MODAL & SHORTCUTS ======== */

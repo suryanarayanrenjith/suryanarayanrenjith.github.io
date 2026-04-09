@@ -1247,11 +1247,26 @@ function isDesktop() {
 
                             commandPaletteClose?.addEventListener('click', hideCommandPalette);
 
-                            paletteButton?.addEventListener('click', (event) => {
-                                event.preventDefault();
-                                event.stopPropagation();
-                                toggleCommandPalette();
-                            });
+                            if (paletteButton) {
+                                const __paletteBtnIsMobile = (function() {
+                                    if (navigator.userAgentData && typeof navigator.userAgentData.mobile === 'boolean') {
+                                        return navigator.userAgentData.mobile;
+                                    }
+                                    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|Windows Phone|Opera Mini|IEMobile|Mobile/i.test(navigator.userAgent);
+                                })();
+                                if (__paletteBtnIsMobile) {
+                                    paletteButton.setAttribute('hidden', '');
+                                    paletteButton.setAttribute('aria-hidden', 'true');
+                                    paletteButton.setAttribute('tabindex', '-1');
+                                    paletteButton.disabled = true;
+                                } else {
+                                    paletteButton.addEventListener('click', (event) => {
+                                        event.preventDefault();
+                                        event.stopPropagation();
+                                        toggleCommandPalette();
+                                    });
+                                }
+                            }
 
                             commandPaletteList?.addEventListener('click', (event) => {
                                 const btn = event.target.closest('.command-item');
@@ -2277,7 +2292,11 @@ function isDesktop() {
         return mobileRegex.test(navigator.userAgent);
     }
 
-    canAutoCollapse = !isMobileDevice();
+    var __isMobile = isMobileDevice();
+    if (__isMobile) {
+        document.body.classList.add('is-mobile');
+    }
+    canAutoCollapse = !__isMobile;
     if (canAutoCollapse) {
     scheduleAutoCollapse(20000);
 
