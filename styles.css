@@ -470,35 +470,163 @@ body.experimental-motion-freeze *::after {
     gap: 16px;
     padding: 60px 20px;
     width: 100%;
-    max-width: 600px;
+    max-width: 900px;
+    min-height: 60vh;
     margin: 0 auto;
-    opacity: 0;
-    animation: skeletonFadeIn 0.3s ease 0.15s forwards;
+    opacity: 1;
 }
 .skeleton-line {
     height: 14px;
-    background: rgba(255,255,255,0.06);
+    background: var(--s-surface);
     position: relative;
     overflow: hidden;
     border-radius: 3px;
+    width: 100%;
 }
 .skeleton-line::after {
     content: '';
     position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
-    animation: shimmer 1.2s ease-in-out infinite;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, var(--s-surface-hover), transparent);
+    animation: shimmer 1.4s ease-in-out infinite;
 }
 .skeleton-line.title  { width: 45%; height: 22px; margin-bottom: 8px; }
 .skeleton-line.medium { width: 70%; }
 .skeleton-line.long   { width: 85%; }
 .skeleton-line.short  { width: 40%; }
 @keyframes shimmer {
-    0%   { left: -100%; }
-    100% { left: 200%; }
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* Projects skeleton — card grid mimics the real project-card layout */
+.content-skeleton.is-projects {
+    max-width: 1100px;
+    align-items: stretch;
+    gap: 24px;
+}
+.content-skeleton.is-projects > .skeleton-line.title {
+    align-self: center;
+}
+.skeleton-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+    width: 100%;
+}
+.skeleton-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 24px;
+    border: 1px solid var(--s-border-subtle);
+    background: var(--s-surface);
+    border-radius: 4px;
+    min-height: 200px;
+}
+.skeleton-card .skeleton-line.title { width: 60%; }
+.skeleton-tags {
+    display: flex;
+    gap: 8px;
+    margin-top: auto;
+}
+.skeleton-tag {
+    width: 44px;
+    height: 18px;
+    background: var(--s-surface-hover);
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+}
+.skeleton-tag::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, var(--s-border-subtle), transparent);
+    animation: shimmer 1.4s ease-in-out infinite;
+}
+
+/* About skeleton — avatar + paragraph block */
+.content-skeleton.is-about {
+    max-width: 760px;
+    align-items: center;
+}
+.skeleton-avatar {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    background: var(--s-surface);
+    margin-bottom: 12px;
+    position: relative;
+    overflow: hidden;
+}
+.skeleton-avatar::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, var(--s-surface-hover), transparent);
+    animation: shimmer 1.4s ease-in-out infinite;
+}
+
+/* Resume skeleton — bullet rows */
+.content-skeleton.is-resume {
+    max-width: 820px;
+    align-items: stretch;
+}
+.content-skeleton.is-resume > .skeleton-line.title,
+.content-skeleton.is-resume > .skeleton-line.medium {
+    align-self: center;
+}
+.skeleton-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+}
+.skeleton-bullet {
+    flex: 0 0 10px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--s-surface-hover);
+    position: relative;
+    overflow: hidden;
+}
+.skeleton-bullet::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, var(--s-border-subtle), transparent);
+    animation: shimmer 1.4s ease-in-out infinite;
+}
+
+/* Home skeleton — centered hero block */
+.content-skeleton.is-home {
+    max-width: 720px;
+    align-items: center;
+}
+
+@media (max-width: 720px) {
+    .content-skeleton {
+        padding: 40px 16px;
+        min-height: 50vh;
+    }
+    .skeleton-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    .skeleton-card {
+        min-height: 160px;
+        padding: 18px;
+    }
+    .skeleton-avatar {
+        width: 72px;
+        height: 72px;
+    }
 }
 @keyframes skeletonFadeIn {
     from { opacity: 0; transform: translateY(6px); }
@@ -993,6 +1121,50 @@ header.command-palette-open {
                 box-shadow 0.24s ease;
 }
 
+/* One-shot scanline sweep overlay for the "terminal boot-up" open animation.
+   Triggered by adding .is-booting from JS; a 0.55s keyframe plays once. */
+.command-palette::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+        180deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.08) 48%,
+        rgba(255, 255, 255, 0.22) 50%,
+        rgba(255, 255, 255, 0.08) 52%,
+        transparent 100%
+    );
+    background-size: 100% 220%;
+    background-position: 0% -120%;
+    opacity: 0;
+    mix-blend-mode: screen;
+}
+
+.command-palette.is-booting::after {
+    animation: paletteScanlineSweep 0.55s ease-out forwards;
+}
+
+@keyframes paletteScanlineSweep {
+    0%   { background-position: 0% -120%; opacity: 0; }
+    15%  { opacity: 1; }
+    85%  { opacity: 1; }
+    100% { background-position: 0% 220%; opacity: 0; }
+}
+
+body.light-theme .command-palette::after {
+    background: linear-gradient(
+        180deg,
+        transparent 0%,
+        rgba(0, 0, 0, 0.06) 48%,
+        rgba(0, 0, 0, 0.14) 50%,
+        rgba(0, 0, 0, 0.06) 52%,
+        transparent 100%
+    );
+    mix-blend-mode: multiply;
+}
+
 .menu-bar.command-palette-open .command-palette,
 .command-palette.is-open {
     max-height: min(76vh, 760px);
@@ -1004,7 +1176,9 @@ header.command-palette-open {
     background-color: var(--s-palette-bg);
     backdrop-filter: blur(16px) saturate(150%);
     -webkit-backdrop-filter: blur(16px) saturate(150%);
-    box-shadow: 0 12px 38px rgba(0, 0, 0, 0.46), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    box-shadow: 0 12px 38px rgba(0, 0, 0, 0.46),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+                inset 0 0 60px rgba(255, 255, 255, 0.025);
     transform: translate(-50%, 0);
 }
 
@@ -1053,12 +1227,34 @@ header.command-palette-open {
     backdrop-filter: blur(16px) saturate(145%);
     -webkit-backdrop-filter: blur(16px) saturate(145%);
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+    will-change: clip-path, opacity;
 }
 
 .command-palette-search i {
-    color: rgba(255, 255, 255, 0.78);
+    color: var(--s-fg-muted);
     font-size: 14px;
     text-align: center;
+    transition: color 0.3s ease;
+}
+
+/* Idle pulse on the terminal icon when the input is empty — draws attention
+   to the search field without being distracting once the user engages. */
+.command-palette-search:has(#commandPaletteInput:placeholder-shown) i {
+    animation: paletteIconPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes paletteIconPulse {
+    0%, 100% { opacity: 0.65; text-shadow: 0 0 0 rgba(255, 255, 255, 0); }
+    50%      { opacity: 1;    text-shadow: 0 0 8px rgba(255, 255, 255, 0.4); }
+}
+
+body.light-theme .command-palette-search:has(#commandPaletteInput:placeholder-shown) i {
+    animation-name: paletteIconPulseLight;
+}
+
+@keyframes paletteIconPulseLight {
+    0%, 100% { opacity: 0.55; text-shadow: 0 0 0 rgba(0, 0, 0, 0); }
+    50%      { opacity: 0.95; text-shadow: 0 0 6px rgba(0, 0, 0, 0.25); }
 }
 
 #commandPaletteInput {
@@ -1080,13 +1276,14 @@ header.command-palette-open {
     height: 30px;
     border: 1px solid var(--s-border-subtle);
     border-radius: 6px;
-    background: rgba(0, 0, 0, 0.35);
-    color: rgba(255, 255, 255, 0.78);
+    background: var(--s-surface);
+    color: var(--s-fg-muted);
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
 .command-palette-close:hover {
+    background: var(--s-surface-hover);
     color: var(--s-fg);
     border-color: var(--s-border-strong);
     transform: translateY(-1px);
@@ -1113,6 +1310,7 @@ header.command-palette-open {
 }
 
 .command-item {
+    position: relative;
     width: 100%;
     border: 1px solid var(--s-border-subtle);
     background: var(--s-surface);
@@ -1122,20 +1320,43 @@ header.command-palette-open {
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    padding: 10px 12px;
+    padding: 10px 12px 10px 16px;
     cursor: pointer;
     transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
 
+/* Left accent bar that slides in on hover/focus — mirrors the nav-link
+   underline pattern for visual consistency with the site's style. */
+.command-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 2px;
+    height: 0%;
+    background: var(--s-fg);
+    transform: translateY(-50%);
+    transition: height 0.25s ease;
+    pointer-events: none;
+}
+
 .command-item:hover,
-.command-item.is-active {
+.command-item.is-active,
+.command-item:focus-visible {
     border-color: var(--s-border-strong);
     background: var(--s-surface-hover);
     transform: translateY(-1px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
 }
 
+.command-item:hover::before,
+.command-item.is-active::before,
+.command-item:focus-visible::before {
+    height: 60%;
+}
+
 .command-item-title {
+    font-family: var(--s-font-code);
     font-size: 14px;
     letter-spacing: 0.2px;
 }
@@ -1240,6 +1461,68 @@ header.command-palette-open {
 
 .music-button.hidden {
     display: none !important;
+}
+
+.palette-button-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 4px;
+    margin-right: 4px;
+}
+
+.palette-button {
+    position: relative;
+    background: transparent;
+    border: none;
+    color: var(--s-fg);
+    font-size: 1.05em;
+    cursor: pointer;
+    outline: none;
+    padding: 4px 10px 4px 6px;
+    transition: transform 0.2s ease, color 0.3s ease, text-shadow 0.3s ease;
+}
+
+.palette-button::after {
+    content: '/';
+    position: absolute;
+    right: 0;
+    bottom: 1px;
+    font-family: var(--s-font-code);
+    font-size: 0.62em;
+    line-height: 1;
+    color: var(--s-fg-muted);
+    background: var(--s-bg);
+    padding: 1px 3px;
+    border: 1px solid var(--s-border-subtle);
+    border-radius: 2px;
+    transform: translate(15%, 10%);
+    transition: color 0.3s ease, border-color 0.3s ease;
+    pointer-events: none;
+}
+
+.palette-button:hover,
+.palette-button:focus-visible {
+    transform: scale(1.1);
+    color: var(--s-fg);
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.35);
+}
+
+.palette-button:hover::after,
+.palette-button:focus-visible::after {
+    color: var(--s-fg);
+    border-color: var(--s-border-strong);
+}
+
+.palette-button[aria-expanded="true"] {
+    color: var(--s-fg);
+    text-shadow: 0 0 12px rgba(255, 255, 255, 0.45);
+}
+
+body.light-theme .palette-button:hover,
+body.light-theme .palette-button:focus-visible,
+body.light-theme .palette-button[aria-expanded="true"] {
+    text-shadow: 0 0 8px rgba(0, 0, 0, 0.25);
 }
 
 @media (max-width: 768px) {
@@ -2152,15 +2435,6 @@ body.light-theme .center-button:hover a,
 body.light-theme #content .center-button:hover a {
     color: #000 !important;
     text-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-}
-
-body.light-theme .command-palette-search i {
-    color: rgba(0, 0, 0, 0.75);
-}
-
-body.light-theme .command-palette-close {
-    background: rgba(255, 255, 255, 0.75);
-    color: rgba(0, 0, 0, 0.65);
 }
 
 @media (max-width: 768px) {

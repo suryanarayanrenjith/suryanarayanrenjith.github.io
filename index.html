@@ -415,6 +415,17 @@ function isDesktop() {
                 <li><a href="#" data-section="about">About</a></li>
                 <li><a href="#" data-section="projects">Projects</a></li>
                 <li><a href="#" data-section="resume">Resume</a></li>
+                <li class="palette-button-container">
+                    <button class="palette-button" id="paletteButton"
+                            type="button"
+                            aria-label="Open command palette"
+                            aria-haspopup="dialog"
+                            aria-expanded="false"
+                            aria-controls="commandPalette"
+                            title="Open command palette (F2)">
+                        <i class="fa-solid fa-terminal" aria-hidden="true"></i>
+                    </button>
+                </li>
                 <li class="music-button-container" id="buttonhide">
                     <button class="music-button" id="unmuteButton" aria-label="Toggle Music">
                         <i class="fas fa-volume-mute"></i>
@@ -451,7 +462,7 @@ function isDesktop() {
                     <li><button type="button" class="command-item" data-command="info" data-search="info help shortcuts modal"><span class="command-item-title">Open Info Section</span><span class="command-item-meta">Ctrl + Shift + /</span></button></li>
                 </ul>
                 <div class="command-palette-empty" id="commandPaletteEmpty">No matching commands.</div>
-                <div class="command-palette-hint">Enter to run • Esc to close • F2 to toggle</div>
+                <div class="command-palette-hint">Enter to run • Esc to close • F2 or header icon to toggle</div>
             </div>
         </nav>
     </header>
@@ -577,6 +588,7 @@ function isDesktop() {
                             const commandPaletteClose = document.getElementById('commandPaletteClose');
                             const commandPaletteEmpty = document.getElementById('commandPaletteEmpty');
                             const commandPaletteHint  = document.querySelector('.command-palette-hint');
+                            const paletteButton       = document.getElementById('paletteButton');
                             const starfieldStatus     = document.querySelector('[data-starfield-status]');
                             const hyperStatus         = document.querySelector('[data-hyper-status]');
                             const motionFxStatus      = document.querySelector('[data-motionfx-status]');
@@ -1020,6 +1032,7 @@ function isDesktop() {
                                 header.classList.add('command-palette-open');
                                 commandPalette.classList.add('is-open');
                                 commandPalette.setAttribute('aria-hidden', 'false');
+                                paletteButton?.setAttribute('aria-expanded', 'true');
                                 syncStarfieldLabel();
                                 syncExperimentalToggleLabels();
                                 syncVortexCursorCommandAvailability(false);
@@ -1029,52 +1042,57 @@ function isDesktop() {
                                     commandPaletteInput.select();
                                 }
 
+                                // Restart the one-shot scanline sweep (Phase B — terminal boot-up).
+                                commandPalette.classList.remove('is-booting');
+                                void commandPalette.offsetWidth;
+                                commandPalette.classList.add('is-booting');
+
                                 if (typeof gsap !== 'undefined') {
-                                    gsap.fromTo(commandPalette,
+                                    const tl = gsap.timeline({ overwrite: 'auto' });
+
+                                    tl.fromTo(commandPalette,
+                                        { scale: 0.96, y: -14, rotateX: -6, opacity: 0, filter: 'blur(6px)' },
                                         {
-                                            scale: 0.92,
-                                            y: -20,
-                                            opacity: 0,
-                                            filter: 'blur(8px)'
-                                        },
-                                        {
-                                            scale: 1,
-                                            y: 0,
-                                            opacity: 1,
-                                            filter: 'blur(0px)',
-                                            duration: 0.35,
-                                            ease: 'back.out(1.4)',
-                                            overwrite: 'auto'
+                                            scale: 1, y: 0, rotateX: 0, opacity: 1, filter: 'blur(0px)',
+                                            duration: 0.32,
+                                            ease: 'expo.out',
+                                            transformPerspective: 800
                                         }
                                     );
 
-                                    const commandItems = commandPalette.querySelectorAll('.command-item');
-                                    if (commandItems.length) {
-                                        gsap.fromTo(commandItems,
-                                            { opacity: 0, y: 12, scale: 0.95 },
+                                    const paletteSearch = commandPalette.querySelector('.command-palette-search');
+                                    if (paletteSearch) {
+                                        tl.fromTo(paletteSearch,
+                                            { clipPath: 'inset(0 0 100% 0)', opacity: 0, y: -4 },
                                             {
-                                                opacity: 1,
-                                                y: 0,
-                                                scale: 1,
-                                                duration: 0.28,
-                                                ease: 'power2.out',
-                                                stagger: 0.025,
-                                                delay: 0.08
-                                            }
+                                                clipPath: 'inset(0 0 0% 0)', opacity: 1, y: 0,
+                                                duration: 0.30,
+                                                ease: 'power3.out'
+                                            },
+                                            0.05
                                         );
                                     }
 
-                                    const paletteSearch = commandPalette.querySelector('.command-palette-search');
-                                    if (paletteSearch) {
-                                        gsap.fromTo(paletteSearch,
-                                            { opacity: 0, y: -8 },
+                                    const commandItems = commandPalette.querySelectorAll('.command-item');
+                                    if (commandItems.length) {
+                                        tl.fromTo(commandItems,
+                                            { opacity: 0, y: 8, scale: 0.97 },
                                             {
-                                                opacity: 1,
-                                                y: 0,
-                                                duration: 0.25,
+                                                opacity: 1, y: 0, scale: 1,
+                                                duration: 0.24,
                                                 ease: 'power2.out',
-                                                delay: 0.05
-                                            }
+                                                stagger: 0.018
+                                            },
+                                            0.12
+                                        );
+                                    }
+
+                                    const paletteHintEl = commandPalette.querySelector('.command-palette-hint');
+                                    if (paletteHintEl) {
+                                        tl.fromTo(paletteHintEl,
+                                            { opacity: 0, y: 4 },
+                                            { opacity: 1, y: 0, duration: 0.22, ease: 'power2.out' },
+                                            0.22
                                         );
                                     }
                                 }
@@ -1084,6 +1102,7 @@ function isDesktop() {
                                 if (!commandPalette || !menuBar) return;
                                 commandPaletteVisible = false;
                                 setCommandPaletteLockState(false);
+                                commandPalette.classList.remove('is-booting');
 
                                 if (typeof gsap !== 'undefined') {
                                     gsap.to(commandPalette, {
@@ -1099,7 +1118,8 @@ function isDesktop() {
                                             header.classList.remove('command-palette-open');
                                             commandPalette.classList.remove('is-open');
                                             commandPalette.setAttribute('aria-hidden', 'true');
-                                            gsap.set(commandPalette, { clearProps: 'scale,y,filter' });
+                                            paletteButton?.setAttribute('aria-expanded', 'false');
+                                            gsap.set(commandPalette, { clearProps: 'scale,y,rotateX,filter,clipPath' });
                                             if (commandPaletteInput) commandPaletteInput.value = '';
                                             filterCommandPalette('');
                                         }
@@ -1109,6 +1129,7 @@ function isDesktop() {
                                     header.classList.remove('command-palette-open');
                                     commandPalette.classList.remove('is-open');
                                     commandPalette.setAttribute('aria-hidden', 'true');
+                                    paletteButton?.setAttribute('aria-expanded', 'false');
                                     if (commandPaletteInput) commandPaletteInput.value = '';
                                     filterCommandPalette('');
                                 }
@@ -1204,6 +1225,12 @@ function isDesktop() {
                             });
 
                             commandPaletteClose?.addEventListener('click', hideCommandPalette);
+
+                            paletteButton?.addEventListener('click', (event) => {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                toggleCommandPalette();
+                            });
 
                             commandPaletteList?.addEventListener('click', (event) => {
                                 const btn = event.target.closest('.command-item');
@@ -1586,15 +1613,63 @@ function isDesktop() {
             setTimeout(() => bar.classList.remove('done'), 500);
         }
 
-        function buildSkeleton() {
-            return '<div class="content-skeleton">' +
+        function buildSkeleton(section) {
+            const sec = section || 'home';
+            if (sec === 'projects') {
+                let cards = '';
+                for (let i = 0; i < 6; i++) {
+                    cards +=
+                        '<div class="skeleton-card">' +
+                            '<div class="skeleton-line title"></div>' +
+                            '<div class="skeleton-line long"></div>' +
+                            '<div class="skeleton-line medium"></div>' +
+                            '<div class="skeleton-tags">' +
+                                '<span class="skeleton-tag"></span>' +
+                                '<span class="skeleton-tag"></span>' +
+                                '<span class="skeleton-tag"></span>' +
+                            '</div>' +
+                        '</div>';
+                }
+                return '<div class="content-skeleton is-projects">' +
+                    '<div class="skeleton-line title"></div>' +
+                    '<div class="skeleton-grid">' + cards + '</div>' +
+                '</div>';
+            }
+            if (sec === 'about') {
+                return '<div class="content-skeleton is-about">' +
+                    '<div class="skeleton-avatar"></div>' +
+                    '<div class="skeleton-line title"></div>' +
+                    '<div class="skeleton-line long"></div>' +
+                    '<div class="skeleton-line long"></div>' +
+                    '<div class="skeleton-line medium"></div>' +
+                    '<div class="skeleton-line long"></div>' +
+                    '<div class="skeleton-line short"></div>' +
+                    '<div class="skeleton-line medium"></div>' +
+                '</div>';
+            }
+            if (sec === 'resume') {
+                let rows = '';
+                for (let i = 0; i < 6; i++) {
+                    rows +=
+                        '<div class="skeleton-row">' +
+                            '<div class="skeleton-bullet"></div>' +
+                            '<div class="skeleton-line long"></div>' +
+                        '</div>';
+                }
+                return '<div class="content-skeleton is-resume">' +
+                    '<div class="skeleton-line title"></div>' +
+                    '<div class="skeleton-line medium"></div>' +
+                    rows +
+                '</div>';
+            }
+            // home (and any unknown section) — hero block
+            return '<div class="content-skeleton is-home">' +
                 '<div class="skeleton-line title"></div>' +
                 '<div class="skeleton-line long"></div>' +
                 '<div class="skeleton-line medium"></div>' +
                 '<div class="skeleton-line long"></div>' +
                 '<div class="skeleton-line short"></div>' +
-                '<div class="skeleton-line medium"></div>' +
-                '</div>';
+            '</div>';
         }
 
         let lastFailedSection = null;
@@ -1692,7 +1767,7 @@ function isDesktop() {
                     return;
                 }
 
-                content.innerHTML = buildSkeleton();
+                content.innerHTML = buildSkeleton(section);
                 content.style.opacity = '1';
                 showLoadingBar();
 
@@ -1734,27 +1809,74 @@ function isDesktop() {
 
                 if (!isCached) showLoadingBar();
 
-                const fetchPromise = fetchWithRetry(section);
-                const exitPromise = window.gsapTransitionOut(content, direction);
+                // Decouple the exit animation from the fetch so a slow fetch
+                // doesn't leave the user staring at a blank region. After the
+                // exit finishes, if the fetch hasn't resolved yet, inject the
+                // skeleton with the entrance animation, then fade-swap to the
+                // real HTML when the fetch finally completes.
+                let fetchedHtml = null;
+                let fetchFailed = false;
+                let fetchError = null;
+                const fetchPromise = fetchWithRetry(section)
+                    .then(html => { fetchedHtml = html; return html; })
+                    .catch(err => { fetchFailed = true; fetchError = err; throw err; });
+                // Swallow unhandled rejection — we handle it explicitly below.
+                fetchPromise.catch(() => {});
 
-                Promise.all([fetchPromise, exitPromise])
-                    .then(([html]) => {
+                window.gsapTransitionOut(content, direction).then(() => {
+                    if (fetchFailed) {
                         hideLoadingBar();
-                        content.innerHTML = html;
-                        sessionStorage.setItem('lastSection', section);
-                        content.style.pointerEvents = '';
-                        window.gsapTransitionIn(content, direction);
-                        prefetchAdjacent(section);
-                    })
-                    .catch(error => {
-                        hideLoadingBar();
-                        console.error('Error fetching content:', error);
+                        console.error('Error fetching content:', fetchError);
                         content.style.pointerEvents = '';
                         content.style.opacity = '1';
                         content.style.transform = '';
                         content.style.filter = '';
                         content.innerHTML = buildErrorUI(section, direction);
-                    });
+                        bindRetryButton();
+                        return;
+                    }
+
+                    if (fetchedHtml !== null) {
+                        // Fast path: fetch finished during the exit animation.
+                        hideLoadingBar();
+                        content.innerHTML = fetchedHtml;
+                        sessionStorage.setItem('lastSection', section);
+                        content.style.pointerEvents = '';
+                        window.gsapTransitionIn(content, direction);
+                        prefetchAdjacent(section);
+                        return;
+                    }
+
+                    // Slow path: fetch still pending — bring the skeleton in with
+                    // the normal entrance animation so the user sees a shaped
+                    // placeholder instead of a blank region.
+                    content.innerHTML = buildSkeleton(section);
+                    content.style.pointerEvents = '';
+                    window.gsapTransitionIn(content, direction);
+
+                    fetchPromise
+                        .then(html => {
+                            hideLoadingBar();
+                            if (window.gsapFadeSwap) {
+                                window.gsapFadeSwap(content).then(() => {
+                                    content.innerHTML = html;
+                                    sessionStorage.setItem('lastSection', section);
+                                    window.gsapFadeIn(content);
+                                    prefetchAdjacent(section);
+                                });
+                            } else {
+                                content.innerHTML = html;
+                                sessionStorage.setItem('lastSection', section);
+                                prefetchAdjacent(section);
+                            }
+                        })
+                        .catch(error => {
+                            hideLoadingBar();
+                            console.error('Error fetching content:', error);
+                            content.innerHTML = buildErrorUI(section, direction);
+                            bindRetryButton();
+                        });
+                });
             } else {
                 const prefix = isMobile ? 'm-' : '';
                 const exitMap  = { down: 'slide-out-up', up: 'slide-out-down', left: 'slide-out-right', right: 'slide-out-left' };
@@ -1768,32 +1890,72 @@ function isDesktop() {
 
                 if (!isCached) showLoadingBar();
 
-                const fetchPromise = fetchWithRetry(section);
+                // Same decoupling strategy for the non-GSAP fallback path.
+                let fetchedHtml = null;
+                let fetchFailed = false;
+                let fetchError = null;
+                const fetchPromise = fetchWithRetry(section)
+                    .then(html => { fetchedHtml = html; return html; })
+                    .catch(err => { fetchFailed = true; fetchError = err; throw err; });
+                fetchPromise.catch(() => {});
+
                 const exitFallbackPromise = new Promise(resolve => setTimeout(resolve, exitDuration));
 
-                Promise.all([fetchPromise, exitFallbackPromise])
-                    .then(([html]) => {
+                exitFallbackPromise.then(() => {
+                    if (fetchFailed) {
                         hideLoadingBar();
-                        content.classList.remove(exitClass);
-                        content.innerHTML = html;
-                        sessionStorage.setItem('lastSection', section);
+                        console.error('Error fetching content:', fetchError);
+                        content.classList.remove(exitClass, 'transitioning');
+                        content.innerHTML = buildErrorUI(section, direction);
+                        bindRetryButton();
+                        content.style.opacity = '1';
+                        return;
+                    }
 
+                    const runEntrance = () => {
                         void content.offsetWidth;
-
                         content.classList.add(enterClass);
                         setTimeout(() => {
                             content.classList.remove(enterClass, 'transitioning');
                             prefetchAdjacent(section);
                         }, enterDuration + 50);
-                    })
-                    .catch(error => {
+                    };
+
+                    if (fetchedHtml !== null) {
+                        // Fast path
                         hideLoadingBar();
-                        console.error('Error fetching content:', error);
-                        content.classList.remove(exitClass, 'transitioning');
-                        content.innerHTML = buildErrorUI(section, direction);
-                        bindRetryButton();
-                        content.style.opacity = '1';
-                    });
+                        content.classList.remove(exitClass);
+                        content.innerHTML = fetchedHtml;
+                        sessionStorage.setItem('lastSection', section);
+                        runEntrance();
+                        return;
+                    }
+
+                    // Slow path — show skeleton, run entrance with it, swap when fetch arrives
+                    content.classList.remove(exitClass);
+                    content.innerHTML = buildSkeleton(section);
+                    runEntrance();
+
+                    fetchPromise
+                        .then(html => {
+                            hideLoadingBar();
+                            content.style.transition = 'opacity 0.2s ease';
+                            content.style.opacity = '0';
+                            setTimeout(() => {
+                                content.innerHTML = html;
+                                sessionStorage.setItem('lastSection', section);
+                                content.style.opacity = '1';
+                                prefetchAdjacent(section);
+                            }, 200);
+                        })
+                        .catch(error => {
+                            hideLoadingBar();
+                            console.error('Error fetching content:', error);
+                            content.innerHTML = buildErrorUI(section, direction);
+                            bindRetryButton();
+                            content.style.opacity = '1';
+                        });
+                });
             }
         }
 
