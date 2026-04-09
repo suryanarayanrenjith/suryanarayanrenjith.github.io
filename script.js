@@ -38,16 +38,28 @@ document.addEventListener("DOMContentLoaded", () => {
         magneticEls.forEach(btn => {
             if (btn.dataset.magnetic) return;
             btn.dataset.magnetic = 'true';
-            btn.addEventListener('mousemove', (e) => {
-                const rect = btn.getBoundingClientRect();
-                const x = e.clientX - rect.left - rect.width / 2;
-                const y = e.clientY - rect.top - rect.height / 2;
+
+            // rAF-throttle mousemove so we issue at most one gsap tween per frame.
+            let pendingX = 0, pendingY = 0;
+            let frameScheduled = false;
+            const flushMagnetic = () => {
+                frameScheduled = false;
                 gsap.to(btn, {
-                    x: x * 0.3,
-                    y: y * 0.3,
+                    x: pendingX * 0.3,
+                    y: pendingY * 0.3,
                     duration: 0.4,
                     ease: "power2.out"
                 });
+            };
+
+            btn.addEventListener('mousemove', (e) => {
+                const rect = btn.getBoundingClientRect();
+                pendingX = e.clientX - rect.left - rect.width / 2;
+                pendingY = e.clientY - rect.top - rect.height / 2;
+                if (!frameScheduled) {
+                    frameScheduled = true;
+                    requestAnimationFrame(flushMagnetic);
+                }
             });
             btn.addEventListener('mouseleave', () => {
                 gsap.to(btn, {
@@ -249,6 +261,11 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    /**
+     * Animates the currently-mounted #content subtree in via GSAP timelines.
+     * Called by gsapTransitionIn / gsapFadeIn after new section HTML is injected.
+     * Public API: invoked from index.html inline scripts after fetchSection().
+     */
     window.animateContentIn = function() {
         const content = document.getElementById('content');
         if (!content) return;
@@ -445,6 +462,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
+    /**
+     * Directional exit transition for the #content element.
+     * @param {HTMLElement} content - the container being transitioned out
+     * @param {'up'|'down'|'left'|'right'} direction - travel direction
+     * @returns {Promise<void>} resolves when the exit tween completes
+     */
     window.gsapTransitionOut = function(content, direction) {
         return new Promise(resolve => {
             const hyper = isHyperModeEnabled();
@@ -475,6 +498,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     };
 
+    /**
+     * Directional entrance transition for the #content element. Also kicks
+     * off animateContentIn() so inner elements fade in with the container.
+     * @param {HTMLElement} content
+     * @param {'up'|'down'|'left'|'right'} direction
+     */
     window.gsapTransitionIn = function(content, direction) {
         const hyper = isHyperModeEnabled();
         const isVertical = direction === 'up' || direction === 'down';
@@ -514,6 +543,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     };
 
+    /**
+     * Quick non-directional fade-out used when swapping cached sections.
+     * @param {HTMLElement} content
+     * @param {string} [directionHint] - optional direction hint (currently unused)
+     * @returns {Promise<void>}
+     */
     window.gsapFadeSwap = function(content, directionHint) {
         return new Promise(resolve => {
             const hyper = isHyperModeEnabled();
@@ -538,6 +573,10 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     };
 
+    /**
+     * Quick non-directional fade-in counterpart to gsapFadeSwap.
+     * @param {HTMLElement} content
+     */
     window.gsapFadeIn = function(content) {
         const hyper = isHyperModeEnabled();
 
@@ -611,6 +650,10 @@ document.addEventListener("DOMContentLoaded", () => {
         );
     }
 
+    /**
+     * Plays the header + menu-bar entrance animation. Called on initial
+     * page load and when returning from the matrix overlay.
+     */
     window.gsapHeaderEntrance = function() {
         const header = document.querySelector('header');
         const menuBar = document.querySelector('.menu-bar');
@@ -786,16 +829,23 @@ document.addEventListener("DOMContentLoaded", () => {
         starMaterialWhite.needsUpdate = true;
     });
 
+    let resizeTimeout = null;
     window.addEventListener('resize', () => {
+        // Update renderer/camera immediately so the canvas never stretches,
+        // but debounce the expensive star buffer reallocation.
         renderer.setSize(window.innerWidth, window.innerHeight);
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
 
-        starCount = Math.floor(window.innerWidth * window.innerHeight * starDensity);
-        starVertices = new Float32Array(starCount * 3);
-        starSpeeds = new Float32Array(starCount);
-        starTwinkles = new Float32Array(starCount);
-        generateStars();
+        if (resizeTimeout) clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            resizeTimeout = null;
+            starCount = Math.floor(window.innerWidth * window.innerHeight * starDensity);
+            starVertices = new Float32Array(starCount * 3);
+            starSpeeds = new Float32Array(starCount);
+            starTwinkles = new Float32Array(starCount);
+            generateStars();
+        }, 180);
     });
 
     let mouseX = 0, mouseY = 0;

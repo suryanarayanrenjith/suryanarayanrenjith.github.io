@@ -33,6 +33,11 @@
     <meta property="og:url" content="https://surya.is-a.dev/" />
     <meta property="og:type" content="website" />
     <meta name="description" content="Suryanarayan Renjith — Fusing Imagination with Innovation. Portfolio website showcasing projects, resume, and more.">
+    <link rel="canonical" href="https://surya.is-a.dev/">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Suryanarayan Renjith">
+    <meta name="twitter:description" content="Fusing Imagination with Innovation.">
+    <meta name="twitter:image" content="https://surya.is-a.dev/assets/bg.png">
 
     <!-- Resource hints for faster external resource loading -->
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
@@ -55,11 +60,11 @@
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js" as="script" crossorigin>
 
     <!-- GSAP (global, used by inline scripts + module) -->
-    <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" integrity="sha384-g4NTh/Iv5PPU4xPyhEWqPcwtNXOvdaDI8LLnyYfyNZOjKJeYQyjzQ9X5275eBjpt" crossorigin="anonymous"></script>
 
     <!-- Anime.js + Letterize.js for preloader -->
-    <script defer src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/letterizejs@2.0.1/lib/letterize.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js" integrity="sha384-oLmuahJgYYR1aWgZwdMQQ2AClE6A2eEwV2x1Z7cbIHehfkkmommQLH3wX1NDEszb" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/letterizejs@2.0.1/lib/letterize.min.js" integrity="sha384-LuNlcKd0gTJuIntBgDmhLhxm7lr4OQn9x8z5/RKgOg6i9hgupb76YRdsapC2VVPD" crossorigin="anonymous"></script>
 
     <script defer src="/blocker.js"></script>
     <script type="application/ld+json">
@@ -82,8 +87,8 @@
     gtag('config', 'G-0QSEZ9VSPZ');
     </script> 
     <title>Suryanarayan Renjith</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"></noscript>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha384-h/hnnw1Bi4nbpD6kE7nYfCXzovi622sY5WBxww8ARKwpdLj5kUWjRuyiXaD1U2JT" crossorigin="anonymous" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha384-h/hnnw1Bi4nbpD6kE7nYfCXzovi622sY5WBxww8ARKwpdLj5kUWjRuyiXaD1U2JT" crossorigin="anonymous"></noscript>
     <script>
   (async function verifyAndProceed() {
     function getFingerprint() {
@@ -148,6 +153,7 @@
   })(); 
 </script>
 
+    <!-- ============ TITLE TYPING ANIMATION ============ -->
     <script>
     document.addEventListener("DOMContentLoaded", function() {
         const fullText = "Suryanarayan Renjith";
@@ -191,6 +197,7 @@
 </head>
 <body>
 
+<!-- ============ THEME INITIALIZATION ============ -->
 <script>
 (function() {
     if (localStorage.getItem('suryaLightTheme') === 'true') {
@@ -200,318 +207,29 @@
 })();
 </script>
 
-<style>
-#fa-test {
-    position: absolute;
-    visibility: hidden;
-}
-
-#content.transitioning {
-    will-change: transform, opacity, filter;
-    pointer-events: none;
-}
-.slide-out-up { animation: slideOutUp 0.42s cubic-bezier(0.55, 0, 0.7, 0.2) forwards; }
-.slide-out-down { animation: slideOutDown 0.42s cubic-bezier(0.55, 0, 0.7, 0.2) forwards; }
-.slide-out-left { animation: slideOutLeft 0.42s cubic-bezier(0.55, 0, 0.7, 0.2) forwards; }
-.slide-out-right { animation: slideOutRight 0.42s cubic-bezier(0.55, 0, 0.7, 0.2) forwards; }
-.slide-in-from-bottom { animation: slideInFromBottom 0.65s cubic-bezier(0.16, 1, 0.3, 1) both; }
-.slide-in-from-top { animation: slideInFromTop 0.65s cubic-bezier(0.16, 1, 0.3, 1) both; }
-.slide-in-from-left { animation: slideInFromLeft 0.65s cubic-bezier(0.16, 1, 0.3, 1) both; }
-.slide-in-from-right { animation: slideInFromRight 0.65s cubic-bezier(0.16, 1, 0.3, 1) both; }
-.m-slide-out-up { animation: mSlideOutUp 0.38s cubic-bezier(0.55, 0, 0.7, 0.2) forwards; }
-.m-slide-out-down { animation: mSlideOutDown 0.38s cubic-bezier(0.55, 0, 0.7, 0.2) forwards; }
-.m-slide-out-left { animation: mSlideOutLeft 0.38s cubic-bezier(0.55, 0, 0.7, 0.2) forwards; }
-.m-slide-out-right { animation: mSlideOutRight 0.38s cubic-bezier(0.55, 0, 0.7, 0.2) forwards; }
-.m-slide-in-from-bottom { animation: mSlideInFromBottom 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
-.m-slide-in-from-top { animation: mSlideInFromTop 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
-.m-slide-in-from-left { animation: mSlideInFromLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
-.m-slide-in-from-right { animation: mSlideInFromRight 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
-
-@keyframes slideOutUp {
-    0%   { transform: translateY(0) scale(1); opacity: 1; filter: blur(0px); }
-    100% { transform: translateY(-50px) scale(0.95); opacity: 0; filter: blur(6px); }
-}
-@keyframes slideOutDown {
-    0%   { transform: translateY(0) scale(1); opacity: 1; filter: blur(0px); }
-    100% { transform: translateY(50px) scale(0.95); opacity: 0; filter: blur(6px); }
-}
-@keyframes slideOutLeft {
-    0%   { transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1); opacity: 1; filter: blur(0px); }
-    100% { transform: perspective(1200px) translateX(-80px) rotateY(4deg) scale(0.96); opacity: 0; filter: blur(4px); }
-}
-@keyframes slideOutRight {
-    0%   { transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1); opacity: 1; filter: blur(0px); }
-    100% { transform: perspective(1200px) translateX(80px) rotateY(-4deg) scale(0.96); opacity: 0; filter: blur(4px); }
-}
-@keyframes slideInFromBottom {
-    0%   { transform: translateY(70px) scale(0.93); opacity: 0; filter: blur(8px); }
-    50%  { opacity: 0.7; filter: blur(2px); }
-    100% { transform: translateY(0) scale(1); opacity: 1; filter: blur(0px); }
-}
-@keyframes slideInFromTop {
-    0%   { transform: translateY(-70px) scale(0.93); opacity: 0; filter: blur(8px); }
-    50%  { opacity: 0.7; filter: blur(2px); }
-    100% { transform: translateY(0) scale(1); opacity: 1; filter: blur(0px); }
-}
-@keyframes slideInFromLeft {
-    0%   { transform: perspective(1200px) translateX(-90px) rotateY(5deg) scale(0.95); opacity: 0; filter: blur(6px); }
-    50%  { opacity: 0.7; filter: blur(1.5px); }
-    100% { transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1); opacity: 1; filter: blur(0px); }
-}
-@keyframes slideInFromRight {
-    0%   { transform: perspective(1200px) translateX(90px) rotateY(-5deg) scale(0.95); opacity: 0; filter: blur(6px); }
-    50%  { opacity: 0.7; filter: blur(1.5px); }
-    100% { transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1); opacity: 1; filter: blur(0px); }
-}
-@keyframes mSlideOutUp {
-    0%   { transform: perspective(1200px) translateY(0) rotateX(0deg) scale(1); opacity: 1; filter: blur(0px); }
-    100% { transform: perspective(1200px) translateY(-35px) rotateX(12deg) scale(0.92); opacity: 0; filter: blur(4px); }
-}
-@keyframes mSlideOutDown {
-    0%   { transform: perspective(1200px) translateY(0) rotateX(0deg) scale(1); opacity: 1; filter: blur(0px); }
-    100% { transform: perspective(1200px) translateY(35px) rotateX(-12deg) scale(0.92); opacity: 0; filter: blur(4px); }
-}
-@keyframes mSlideOutLeft {
-    0%   { transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1); opacity: 1; filter: blur(0px); }
-    100% { transform: perspective(1200px) translateX(-50px) rotateY(15deg) scale(0.92); opacity: 0; filter: blur(3px); }
-}
-@keyframes mSlideOutRight {
-    0%   { transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1); opacity: 1; filter: blur(0px); }
-    100% { transform: perspective(1200px) translateX(50px) rotateY(-15deg) scale(0.92); opacity: 0; filter: blur(3px); }
-}
-@keyframes mSlideInFromBottom {
-    0%   { transform: perspective(1200px) translateY(50px) rotateX(-8deg) scale(0.9); opacity: 0; filter: blur(6px); }
-    60%  { filter: blur(1px); }
-    100% { transform: perspective(1200px) translateY(0) rotateX(0deg) scale(1); opacity: 1; filter: blur(0px); }
-}
-@keyframes mSlideInFromTop {
-    0%   { transform: perspective(1200px) translateY(-50px) rotateX(8deg) scale(0.9); opacity: 0; filter: blur(6px); }
-    60%  { filter: blur(1px); }
-    100% { transform: perspective(1200px) translateY(0) rotateX(0deg) scale(1); opacity: 1; filter: blur(0px); }
-}
-@keyframes mSlideInFromLeft {
-    0%   { transform: perspective(1200px) translateX(-60px) rotateY(12deg) scale(0.9); opacity: 0; filter: blur(5px); }
-    60%  { filter: blur(1px); }
-    100% { transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1); opacity: 1; filter: blur(0px); }
-}
-@keyframes mSlideInFromRight {
-    0%   { transform: perspective(1200px) translateX(60px) rotateY(-12deg) scale(0.9); opacity: 0; filter: blur(5px); }
-    60%  { filter: blur(1px); }
-    100% { transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1); opacity: 1; filter: blur(0px); }
-}
-
-.offline-message {
-    display: none;
-    position: fixed;
-    top: 20%;
-    left: 0;
-    width: 100%;
-    background-color: rgba(0, 0, 0, 0.9);
-    color: white;
-    padding: 15px;
-    text-align: center;
-    font-size: 18px;
-    z-index: 1000;
-    backdrop-filter: blur(8px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-body.light-theme .offline-message {
-    background-color: rgba(245, 245, 245, 0.95);
-    color: #111;
-    border-bottom-color: rgba(0, 0, 0, 0.1);
-}
-@media only screen and (max-width: 600px) {
-    .offline-message { font-size: 14px; padding: 10px; }
-}
-@media only screen and (min-width: 601px) and (max-width: 1024px) {
-    .offline-message { font-size: 16px; }
-}
-
-#preloader {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: #000;
-    z-index: 10000;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-body.light-theme #preloader { background: #f5f5f5; }
-.preloader-inner {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0;
-    position: relative;
-}
-.preloader-corner {
-    position: fixed;
-    width: 0;
-    height: 0;
-    opacity: 0;
-}
-.preloader-corner::before,
-.preloader-corner::after {
-    content: '';
-    position: absolute;
-    background: rgba(255,255,255,0.12);
-}
-body.light-theme .preloader-corner::before,
-body.light-theme .preloader-corner::after { background: rgba(0,0,0,0.15); }
-.preloader-corner::before { width: 100%; height: 1px; }
-.preloader-corner::after { width: 1px; height: 100%; }
-.preloader-corner-tl { top: 40px; left: 40px; }
-.preloader-corner-tl::before { top: 0; left: 0; }
-.preloader-corner-tl::after { top: 0; left: 0; }
-.preloader-corner-tr { top: 40px; right: 40px; }
-.preloader-corner-tr::before { top: 0; right: 0; }
-.preloader-corner-tr::after { top: 0; right: 0; }
-.preloader-corner-bl { bottom: 40px; left: 40px; }
-.preloader-corner-bl::before { bottom: 0; left: 0; }
-.preloader-corner-bl::after { bottom: 0; left: 0; }
-.preloader-corner-br { bottom: 40px; right: 40px; }
-.preloader-corner-br::before { bottom: 0; right: 0; }
-.preloader-corner-br::after { bottom: 0; right: 0; }
-.preloader-line {
-    width: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
-    opacity: 0;
-}
-body.light-theme .preloader-line {
-    background: linear-gradient(90deg, transparent, rgba(0,0,0,0.22), transparent);
-}
-.preloader-line-top { margin-bottom: 32px; }
-.preloader-line-bottom { margin-top: 32px; }
-.preloader-initials {
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    font-family: 'Courier New', monospace;
-    font-size: 72px;
-    font-weight: 200;
-    letter-spacing: 8px;
-    color: #fff;
-    overflow: hidden;
-    position: relative;
-}
-body.light-theme .preloader-initials { color: #111; }
-.preloader-letter-s,
-.preloader-letter-r {
-    display: inline-block;
-    opacity: 0;
-    text-shadow: 0 0 0 transparent;
-}
-.preloader-divider-line {
-    width: 1px;
-    height: 0;
-    background: rgba(255,255,255,0.2);
-    display: inline-block;
-}
-body.light-theme .preloader-divider-line { background: rgba(0,0,0,0.25); }
-.preloader-fullname {
-    font-family: 'Courier New', monospace;
-    font-size: 11px;
-    letter-spacing: 6px;
-    text-transform: uppercase;
-    color: rgba(255,255,255,0.6);
-    margin-top: 18px;
-    overflow: hidden;
-    white-space: nowrap;
-    opacity: 0;
-}
-body.light-theme .preloader-fullname { color: rgba(0,0,0,0.55); }
-.preloader-fullname span {
-    display: inline-block;
-    opacity: 0;
-}
-.preloader-rule {
-    width: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-    margin-top: 10px;
-    opacity: 0;
-}
-body.light-theme .preloader-rule {
-    background: linear-gradient(90deg, transparent, rgba(0,0,0,0.25), transparent);
-}
-.preloader-progress {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    margin-top: 18px;
-    opacity: 0;
-}
-.preloader-progress-pct {
-    font-family: 'Courier New', monospace;
-    font-size: 10px;
-    color: rgba(255,255,255,0.55);
-    letter-spacing: 3px;
-    text-transform: uppercase;
-}
-body.light-theme .preloader-progress-pct { color: rgba(0,0,0,0.5); }
-.preloader-particles {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    width: 300px; height: 300px;
-    pointer-events: none;
-}
-.preloader-particle {
-    position: absolute;
-    width: 2px; height: 2px;
-    background: rgba(255,255,255,0.3);
-    border-radius: 50%;
-}
-body.light-theme .preloader-particle { background: rgba(0,0,0,0.2); }
-@media (max-width: 768px) {
-    .preloader-initials { font-size: 48px; gap: 16px; letter-spacing: 4px; }
-    .preloader-fullname { font-size: 9px; letter-spacing: 4px; }
-    .preloader-progress { margin-top: 14px; }
-    .preloader-progress-pct { font-size: 9px; }
-    .preloader-line-top { margin-bottom: 22px; }
-    .preloader-line-bottom { margin-top: 22px; }
-    .preloader-corner-tl, .preloader-corner-tr,
-    .preloader-corner-bl, .preloader-corner-br { display: none; }
-    .preloader-particles { width: 200px; height: 200px; }
-}
-@media (max-width: 480px) {
-    .preloader-initials { font-size: 36px; gap: 12px; letter-spacing: 3px; }
-    .preloader-fullname { font-size: 8px; letter-spacing: 3px; }
-    .preloader-progress { margin-top: 12px; }
-    .preloader-progress-pct { font-size: 8px; }
-    .preloader-line-top { margin-bottom: 16px; }
-    .preloader-line-bottom { margin-top: 16px; }
-    .preloader-rule { margin-top: 8px; }
-    .preloader-particles { width: 150px; height: 150px; }
-}
-@media (max-width: 360px) {
-    .preloader-initials { font-size: 30px; gap: 10px; letter-spacing: 2px; }
-    .preloader-fullname { font-size: 7px; letter-spacing: 2px; }
-    .preloader-progress { margin-top: 10px; }
-    .preloader-progress-pct { font-size: 7px; }
-}
-
-*, *::before, *::after { -webkit-tap-highlight-color: transparent; }
-button, a, .tab-button, .shortcut-key, .shortcuts-list li { outline: none; }
-</style>
-
 <i id="fa-test" class="fa-solid fa-circle-exclamation"></i>
 
+<!-- ============ FONT AWESOME CHECK ============ -->
 <script>
     function isFontAwesomeLoaded() {
-    const testIcon = document.getElementById('fa-test');
-    const iconWidth = window.getComputedStyle(testIcon).width;   
-    if (!iconWidth || parseFloat(iconWidth) === 0) {
-        alert("Font Awesome icons are not loading correctly. Please whitelist the Font Awesome CDN in your ad blocker settings to ensure proper icon display.");
+        const testIcon = document.getElementById('fa-test');
+        if (!testIcon) return;
+        const iconWidth = window.getComputedStyle(testIcon).width;
+        if (!iconWidth || parseFloat(iconWidth) === 0) {
+            const notice = document.createElement('div');
+            notice.className = 'fa-fallback-notice';
+            notice.textContent = 'Some icons may not display correctly. Please whitelist the Font Awesome CDN.';
+            const dismiss = document.createElement('button');
+            dismiss.textContent = 'Dismiss';
+            dismiss.addEventListener('click', () => notice.remove());
+            notice.appendChild(dismiss);
+            document.body.appendChild(notice);
+        }
     }
-}
-window.onload = isFontAwesomeLoaded;
+    window.addEventListener('load', isFontAwesomeLoaded, { once: true });
 </script>
 
+<!-- ============ CUSTOM CURSOR ============ -->
 <script>
 function isDesktop() {
     return window.innerWidth > 768 && !("ontouchstart" in window || navigator.maxTouchPoints > 0);
@@ -691,7 +409,7 @@ function isDesktop() {
       </script>
     
     <header>
-        <nav class="menu-bar">
+        <nav class="menu-bar" aria-label="Main navigation">
             <ul>
                 <li><a href="#" data-section="home">Home</a></li>
                 <li><a href="#" data-section="about">About</a></li>
@@ -745,8 +463,8 @@ function isDesktop() {
                 <i class="fa-solid fa-info"></i>
             </button>
             <div class="modal-overlay" id="modalOverlay"></div>
-            <div class="shortcuts-modal" id="shortcutsModal">
-                <button class="close-modal" id="closeModal">&times;</button>
+            <div class="shortcuts-modal" id="shortcutsModal" role="dialog" aria-modal="true" aria-label="Info and shortcuts">
+                <button class="close-modal" id="closeModal" aria-label="Close">&times;</button>
                 <div class="modal-container">
                     <div class="modal-tabs">
                         <button class="tab-button active" data-tab="about">About</button>
@@ -1887,7 +1605,7 @@ function isDesktop() {
             return '<div class="fetch-error">' +
                 '<div class="fetch-error-icon">&#x26A0;</div>' +
                 '<p>Something went wrong loading this section. Check your connection and try again.</p>' +
-                '<button class="fetch-error-retry" onclick="retryFetch()">Retry</button>' +
+                '<button class="fetch-error-retry" id="retryFetchBtn">Retry</button>' +
                 '</div>';
         }
         function retryFetch() {
@@ -1895,6 +1613,9 @@ function isDesktop() {
                 delete sectionCache[lastFailedSection];
                 showContent(lastFailedSection, lastFailedDirection);
             }
+        }
+        function bindRetryButton() {
+            document.getElementById('retryFetchBtn')?.addEventListener('click', retryFetch);
         }
 
         function fetchWithRetry(section, retries = 1) {
@@ -2002,6 +1723,7 @@ function isDesktop() {
                         hideLoadingBar();
                         console.error('Error fetching content:', error);
                         content.innerHTML = buildErrorUI(section, direction);
+                        bindRetryButton();
                         content.style.opacity = '1';
                     });
                 return;
@@ -2069,6 +1791,7 @@ function isDesktop() {
                         console.error('Error fetching content:', error);
                         content.classList.remove(exitClass, 'transitioning');
                         content.innerHTML = buildErrorUI(section, direction);
+                        bindRetryButton();
                         content.style.opacity = '1';
                     });
             }
@@ -2533,10 +2256,10 @@ function isDesktop() {
             <div class="preloader-fullname"></div>
             <div class="preloader-rule"></div>
             <div class="preloader-progress">
-                <span class="preloader-progress-pct">[ 0% ]</span>
+                <span class="preloader-progress-pct" role="status" aria-live="polite">[ 0% ]</span>
             </div>
             <div class="preloader-line preloader-line-bottom"></div>
-            <div class="preloader-particles"></div>
+            <div class="preloader-particles" aria-hidden="true"></div>
         </div>
     </div>
 
@@ -2545,7 +2268,7 @@ function isDesktop() {
         <div class="matrix-header">
             <div class="status-indicator"></div>
             <span class="access-text">ACCESS GRANTED</span>
-            <div class="close-btn" onclick="closePopup()">×</div>
+            <button class="close-btn" id="matrixCloseBtn" aria-label="Close">×</button>
         </div>
         
         <div class="matrix-content">
@@ -2563,11 +2286,11 @@ function isDesktop() {
                 </div>
                 
                 <div class="button-group">
-                    <button class="matrix-btn primary" onclick="enterMatrix()">
+                    <button class="matrix-btn primary" id="matrixEnterBtn">
                         <span>ENTER</span>
                         <div class="btn-underline"></div>
                     </button>
-                    <button class="matrix-btn secondary" onclick="closePopup()">
+                    <button class="matrix-btn secondary" id="matrixBackBtn">
                         <span>BACK</span>
                     </button>
                 </div>
@@ -2578,6 +2301,7 @@ function isDesktop() {
     </div>
 </div>
 
+<!-- ============ MATRIX EASTER EGG ============ -->
 <script>
 (function() {
     const SECRET_SEQUENCE = ['KeyM','KeyA','KeyT','KeyR','KeyI','KeyX'];
@@ -2655,6 +2379,10 @@ function isDesktop() {
         window.location.href = '/Matrix';
         closePopup();
     }
+
+    document.getElementById('matrixCloseBtn')?.addEventListener('click', closePopup);
+    document.getElementById('matrixEnterBtn')?.addEventListener('click', enterMatrix);
+    document.getElementById('matrixBackBtn')?.addEventListener('click', closePopup);
 
     window.addEventListener('keydown', e => {
         buffer.push(e.code);
@@ -2770,8 +2498,9 @@ document.addEventListener('DOMContentLoaded', function() {
     <footer>
         <p id="footer-text"></p>
     </footer>
-    <canvas id="animationCanvas"></canvas>
+    <canvas id="animationCanvas" aria-hidden="true"></canvas>
     
+    <!-- ============ PRELOADER ANIMATION ============ -->
     <script>
   document.addEventListener("DOMContentLoaded", () => {
       const params = new URLSearchParams(window.location.search);
@@ -3032,6 +2761,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 </script>
 
+    <!-- ============ STARFIELD TOGGLE & CANVAS FALLBACK ============ -->
     <script>
     window.__starfieldState = window.__starfieldState || { enabled: true };
     window.toggleStarFieldAnimation = function(forceEnabled) {
@@ -3422,8 +3152,9 @@ function isOldBrowser() {
 
     <script type="module" src="script.js"></script>
 
-<div id="sunrise-overlay"></div>
+<div id="sunrise-overlay" aria-hidden="true"></div>
 
+<!-- ============ LIGHT THEME TOGGLE ============ -->
 <script>
 (function() {
     const LIGHT_SEQUENCE = ['KeyS','KeyU','KeyR','KeyY','KeyA'];
