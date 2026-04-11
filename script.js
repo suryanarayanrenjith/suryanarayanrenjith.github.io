@@ -889,30 +889,8 @@ document.addEventListener("DOMContentLoaded", () => {
         return result;
     }
 
-    // Procedural circular star texture with radial falloff. Using a map on a
-    // PointsMaterial transforms the square sprite-points into soft round
-    // glows — the single biggest visual upgrade for stars of this scale.
-    function createStarTexture() {
-        const size = 64;
-        const canvas = document.createElement('canvas');
-        canvas.width = canvas.height = size;
-        const ctx = canvas.getContext('2d');
-        const cx = size / 2, cy = size / 2;
-        const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, size / 2);
-        gradient.addColorStop(0.00, 'rgba(255, 255, 255, 1.0)');
-        gradient.addColorStop(0.15, 'rgba(255, 255, 255, 0.9)');
-        gradient.addColorStop(0.35, 'rgba(255, 255, 255, 0.45)');
-        gradient.addColorStop(0.65, 'rgba(255, 255, 255, 0.12)');
-        gradient.addColorStop(1.00, 'rgba(255, 255, 255, 0.0)');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, size, size);
-        const tex = new THREE.CanvasTexture(canvas);
-        tex.minFilter = THREE.LinearFilter;
-        tex.magFilter = THREE.LinearFilter;
-        tex.generateMipmaps = false;
-        return tex;
-    }
-    const starTexture = createStarTexture();
+    // Square star sprites — PointsMaterial without a `map` renders flat square
+    // point sprites which is the look we want here.
 
     function generateStars() {
         // Randomized offset per regeneration so the pattern isn't identical
@@ -942,8 +920,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const starMaterialWhite = new THREE.PointsMaterial({
         color: 0xffffff,
         size: 4,
-        map: starTexture,
-        alphaTest: 0.01,
         transparent: true,
         opacity: 0.95,
         blending: THREE.AdditiveBlending,
@@ -974,8 +950,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const heroMaterial = new THREE.PointsMaterial({
         color: 0xffffff,
         size: 13,
-        map: starTexture,
-        alphaTest: 0.01,
         transparent: true,
         opacity: 1.0,
         blending: THREE.AdditiveBlending,

@@ -866,6 +866,56 @@ footer:hover {
     contain: strict;
 }
 
+#audioVisualizerCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    contain: strict;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+body.experimental-audio-viz #audioVisualizerCanvas {
+    opacity: 1;
+}
+
+body.experimental-audio-viz #animationCanvas {
+    opacity: 0 !important;
+}
+
+/* ----- Zen Mode: hide everything but the starfield ----- */
+body.experimental-zen-mode header,
+body.experimental-zen-mode .help-button,
+body.experimental-zen-mode .section-indicator,
+body.experimental-zen-mode #content,
+body.experimental-zen-mode footer,
+body.experimental-zen-mode .progress-bar,
+body.experimental-zen-mode .top-loading-bar,
+body.experimental-zen-mode #music-popup,
+body.experimental-zen-mode .cursor-dot,
+body.experimental-zen-mode .cursor-dot-outline {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: opacity 0.5s ease;
+}
+
+/* The command palette is moved to <body>, so it survives the header hide.
+   Keep it interactable while open so the user can still toggle Zen off. */
+body.experimental-zen-mode .command-palette.is-open {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+/* Stars stay visible — that's the whole point of Zen mode.
+   But if the audio visualizer is also on, let it take over the background. */
+body.experimental-zen-mode:not(.experimental-audio-viz) #animationCanvas {
+    opacity: 1 !important;
+}
+
 #music-popup {
     display: none;
     position: fixed;

@@ -456,6 +456,8 @@ function isDesktop() {
                     <li><button type="button" class="command-item" data-command="toggle-motion-fx" data-search="motion fx shake cinematic experimental"><span class="command-item-title">Toggle Motion FX</span><span class="command-item-meta" data-motionfx-status>Off</span></button></li>
                     <li><button type="button" class="command-item" data-command="toggle-vortex-cursor" data-search="cursor vortex orbit futuristic experimental"><span class="command-item-title">Toggle Vortex Cursor</span><span class="command-item-meta" data-vortex-status>Off</span></button></li>
                     <li><button type="button" class="command-item" data-command="toggle-motion-freeze" data-search="motion freeze calm reduce animation experimental"><span class="command-item-title">Toggle Motion Freeze</span><span class="command-item-meta" data-motion-status>Off</span></button></li>
+                    <li><button type="button" class="command-item" data-command="toggle-audio-viz" data-search="audio visualizer cava music spectrum bars experimental"><span class="command-item-title">Toggle Audio Visualizer</span><span class="command-item-meta" data-audioviz-status>Off</span></button></li>
+                    <li><button type="button" class="command-item" data-command="toggle-zen-mode" data-search="zen mode minimal hide ui clean focus experimental"><span class="command-item-title">Toggle Zen Mode</span><span class="command-item-meta" data-zen-status>Off</span></button></li>
                     <li><button type="button" class="command-item" data-command="matrix" data-search="matrix popup experimental"><span class="command-item-title">Open Matrix</span><span class="command-item-meta">Experimental</span></button></li>
                     <li><button type="button" class="command-item" data-command="light" data-search="surya light mode theme toggle"><span class="command-item-title">Toggle Light Mode</span><span class="command-item-meta">Experimental</span></button></li>
                     <li><button type="button" class="command-item" data-command="reset-experimental" data-search="reset experimental toggles disable effects"><span class="command-item-title">Reset Experimental FX</span><span class="command-item-meta">Action</span></button></li>
@@ -594,6 +596,8 @@ function isDesktop() {
                             const motionFxStatus      = document.querySelector('[data-motionfx-status]');
                             const vortexStatus        = document.querySelector('[data-vortex-status]');
                             const motionStatus        = document.querySelector('[data-motion-status]');
+                            const audioVizStatus      = document.querySelector('[data-audioviz-status]');
+                            const zenStatus           = document.querySelector('[data-zen-status]');
                             const commandPaletteItems = commandPaletteList
                                 ? Array.from(commandPaletteList.querySelectorAll('.command-item'))
                                 : [];
@@ -616,6 +620,8 @@ function isDesktop() {
                                 'toggle-motion-fx': 'motion effects cinematic shake',
                                 'toggle-vortex-cursor': 'cursor vortex orbit pointer',
                                 'toggle-motion-freeze': 'freeze pause still calm',
+                                'toggle-audio-viz': 'audio visualizer cava music spectrum bars equalizer',
+                                'toggle-zen-mode': 'zen mode minimal hide ui clean focus distraction free',
                                 matrix: 'secret easter simulation',
                                 light: 'theme bright sun daylight',
                                 'reset-experimental': 'reset defaults restore disable effects',
@@ -907,6 +913,16 @@ function isDesktop() {
                                     className: 'experimental-motion-freeze',
                                     storageKey: 'exp.motionFreeze',
                                     statusEl: motionStatus
+                                },
+                                audioViz: {
+                                    className: 'experimental-audio-viz',
+                                    storageKey: 'exp.audioViz',
+                                    statusEl: audioVizStatus
+                                },
+                                zenMode: {
+                                    className: 'experimental-zen-mode',
+                                    storageKey: 'exp.zenMode',
+                                    statusEl: zenStatus
                                 }
                             };
 
@@ -946,9 +962,24 @@ function isDesktop() {
                                     enabled = false;
                                 }
 
+                                if (name === 'audioViz' && enabled) {
+                                    var viz = window.__audioVisualizer;
+                                    if (!viz || !viz.isAudible()) {
+                                        // Music is muted/paused — refuse to enable.
+                                        enabled = false;
+                                    }
+                                }
+
                                 if (name === 'motionFreeze') {
                                     if (window.setStarFieldFrozen) {
                                         window.setStarFieldFrozen(enabled);
+                                    }
+                                }
+
+                                if (name === 'audioViz') {
+                                    if (window.__audioVisualizer) {
+                                        if (enabled) window.__audioVisualizer.start();
+                                        else window.__audioVisualizer.stop();
                                     }
                                 }
 
@@ -1218,6 +1249,30 @@ function isDesktop() {
                                         toggleExperimentalFeature('motionFreeze');
                                         hideCommandPalette();
                                         break;
+                                    case 'toggle-audio-viz': {
+                                        var nowOn = document.body.classList.contains('experimental-audio-viz');
+                                        if (nowOn) {
+                                            toggleExperimentalFeature('audioViz', false);
+                                        } else {
+                                            var viz = window.__audioVisualizer;
+                                            if (!viz || !viz.isAudible()) {
+                                                toggleExperimentalFeature('audioViz', false);
+                                                if (typeof window.showVisualizerWarning === 'function') {
+                                                    window.showVisualizerWarning();
+                                                } else {
+                                                    console.warn('Audio Visualizer requires music to be playing.');
+                                                }
+                                            } else {
+                                                toggleExperimentalFeature('audioViz', true);
+                                            }
+                                        }
+                                        hideCommandPalette();
+                                        break;
+                                    }
+                                    case 'toggle-zen-mode':
+                                        toggleExperimentalFeature('zenMode');
+                                        hideCommandPalette();
+                                        break;
                                     case 'matrix':
                                         if (typeof window.showMatrixPopup === 'function') {
                                             window.showMatrixPopup();
@@ -1276,6 +1331,15 @@ function isDesktop() {
 
                             window.addEventListener('starfieldToggle', (event) => {
                                 syncStarfieldLabel(!!(event.detail && event.detail.enabled));
+                            });
+
+                            // Auto-disable the audio visualizer if music gets paused/muted
+                            // while it's running — visualizer must follow background music.
+                            window.addEventListener('bgAudioStateChange', (event) => {
+                                const playing = !!(event.detail && event.detail.playing);
+                                if (!playing && document.body.classList.contains('experimental-audio-viz')) {
+                                    toggleExperimentalFeature('audioViz', false);
+                                }
                             });
 
                             initializeExperimentalFeatures();
@@ -2235,6 +2299,17 @@ function isDesktop() {
     var popup = document.getElementById('music-popup');
     var audio = new Audio('/assets/bg_music.mp3');
     audio.loop = true;
+    audio.crossOrigin = 'anonymous';
+    window.__bgAudio = audio;
+    audio.addEventListener('play', function() {
+        window.dispatchEvent(new CustomEvent('bgAudioStateChange', { detail: { playing: true } }));
+    });
+    audio.addEventListener('pause', function() {
+        window.dispatchEvent(new CustomEvent('bgAudioStateChange', { detail: { playing: false } }));
+    });
+    audio.addEventListener('ended', function() {
+        window.dispatchEvent(new CustomEvent('bgAudioStateChange', { detail: { playing: false } }));
+    });
     var animationsTriggered = false;
     var container = document.querySelector('.container');
     var header = document.querySelector('header');
@@ -2744,6 +2819,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <p id="footer-text"></p>
     </footer>
     <canvas id="animationCanvas" aria-hidden="true"></canvas>
+    <canvas id="audioVisualizerCanvas" aria-hidden="true"></canvas>
     
     <!-- ============ PRELOADER ANIMATION ============ -->
     <script>
@@ -3380,6 +3456,247 @@ function isOldBrowser() {
             });
         }
     }
+    </script>
+
+    <!-- ============ AUDIO VISUALIZER (Cava-style) ============ -->
+    <script>
+    (function() {
+        var BAR_COUNT = 96;
+        var canvas = document.getElementById('audioVisualizerCanvas');
+        if (!canvas) return;
+        var ctx = canvas.getContext('2d');
+        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+        function sizeCanvas() {
+            canvas.width  = Math.floor(window.innerWidth  * dpr);
+            canvas.height = Math.floor(window.innerHeight * dpr);
+            canvas.style.width  = window.innerWidth  + 'px';
+            canvas.style.height = window.innerHeight + 'px';
+        }
+        sizeCanvas();
+        window.addEventListener('resize', function() {
+            dpr = Math.min(window.devicePixelRatio || 1, 2);
+            sizeCanvas();
+        });
+
+        var audioCtx       = null;
+        var analyser       = null;
+        var sourceNode     = null;
+        var freqData       = null;
+        var smoothed       = new Float32Array(BAR_COUNT);
+        var peaks          = new Float32Array(BAR_COUNT);
+        var peakVel        = new Float32Array(BAR_COUNT);
+        var rafId          = null;
+        var visualizerOn   = false;
+
+        function isMusicAudible() {
+            var a = window.__bgAudio;
+            if (!a) return false;
+            if (a.paused) return false;
+            if (a.muted) return false;
+            if (a.volume <= 0.001) return false;
+            try {
+                if (sessionStorage.getItem('musicPlaying') === 'false') return false;
+            } catch (e) { /* sessionStorage may be unavailable */ }
+            return true;
+        }
+
+        function ensureAudioGraph() {
+            var a = window.__bgAudio;
+            if (!a) return false;
+            if (audioCtx && analyser && sourceNode) return true;
+            try {
+                var Ctx = window.AudioContext || window.webkitAudioContext;
+                if (!Ctx) return false;
+                audioCtx = new Ctx();
+                // MediaElementSource can only be created once per element; cache it.
+                if (!a.__visualizerSource) {
+                    a.__visualizerSource = audioCtx.createMediaElementSource(a);
+                }
+                sourceNode = a.__visualizerSource;
+                analyser = audioCtx.createAnalyser();
+                analyser.fftSize = 1024;
+                analyser.smoothingTimeConstant = 0.78;
+                sourceNode.connect(analyser);
+                analyser.connect(audioCtx.destination);
+                freqData = new Uint8Array(analyser.frequencyBinCount);
+                return true;
+            } catch (e) {
+                console.warn('Audio visualizer setup failed:', e);
+                audioCtx = null; analyser = null; sourceNode = null;
+                return false;
+            }
+        }
+
+        function logBucketEdges(binCount, barCount) {
+            // Logarithmic bucket distribution — gives bass/mid/treble
+            // visually-pleasing weighting like cava.
+            var minHz = 30;
+            var maxHz = 16000;
+            // Map 0..barCount to log frequency, then convert to bin index.
+            // Using a representative 48k samplerate for the FFT bin width.
+            var sampleRate = audioCtx ? audioCtx.sampleRate : 48000;
+            var nyquist = sampleRate / 2;
+            var edges = new Array(barCount + 1);
+            var lnMin = Math.log(minHz);
+            var lnMax = Math.log(maxHz);
+            for (var i = 0; i <= barCount; i++) {
+                var t = i / barCount;
+                var hz = Math.exp(lnMin + (lnMax - lnMin) * t);
+                var bin = Math.min(binCount - 1, Math.max(0, Math.floor(hz / nyquist * binCount)));
+                edges[i] = bin;
+            }
+            return edges;
+        }
+
+        var cachedEdges = null;
+        var cachedEdgesKey = '';
+
+        function draw() {
+            rafId = requestAnimationFrame(draw);
+            if (!visualizerOn) return;
+
+            // Stop animating when audio becomes inaudible (mute / pause).
+            if (!isMusicAudible()) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                return;
+            }
+
+            if (!analyser) {
+                if (!ensureAudioGraph()) return;
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume().catch(function() {});
+            }
+
+            analyser.getByteFrequencyData(freqData);
+
+            var W = canvas.width;
+            var H = canvas.height;
+            ctx.clearRect(0, 0, W, H);
+
+            var edgesKey = freqData.length + ':' + BAR_COUNT;
+            if (edgesKey !== cachedEdgesKey) {
+                cachedEdges = logBucketEdges(freqData.length, BAR_COUNT);
+                cachedEdgesKey = edgesKey;
+            }
+            var edges = cachedEdges;
+
+            var isLight = document.body.classList.contains('light-theme');
+            var fg = isLight ? '15,15,15' : '255,255,255';
+            var fgDim = isLight ? '0,0,0' : '255,255,255';
+
+            var pad = Math.round(40 * dpr);
+            var gap = Math.max(2 * dpr, Math.floor(W * 0.0014));
+            var usableW = W - pad * 2;
+            var barW = (usableW - gap * (BAR_COUNT - 1)) / BAR_COUNT;
+            var maxBarH = H * 0.62;
+            var baselineY = H * 0.78;
+
+            for (var i = 0; i < BAR_COUNT; i++) {
+                var lo = edges[i];
+                var hi = Math.max(lo + 1, edges[i + 1]);
+                var sum = 0;
+                for (var b = lo; b < hi; b++) sum += freqData[b];
+                var avg = sum / (hi - lo) / 255;
+                // Mild perceptual boost — bass needs taming, treble needs lift.
+                var boost = 0.45 + 0.55 * Math.pow(i / BAR_COUNT, 0.55);
+                var v = Math.min(1, Math.pow(avg, 0.78) * (1.0 + boost * 0.4));
+
+                // Exponential smoothing — fast attack, slower decay (cava-like).
+                var prev = smoothed[i];
+                if (v > prev) {
+                    smoothed[i] = prev + (v - prev) * 0.55;
+                } else {
+                    smoothed[i] = prev + (v - prev) * 0.18;
+                }
+                var sv = smoothed[i];
+
+                // Peak cap that floats above each bar.
+                if (sv > peaks[i]) {
+                    peaks[i] = sv;
+                    peakVel[i] = 0;
+                } else {
+                    peakVel[i] += 0.0018;
+                    peaks[i] -= peakVel[i];
+                    if (peaks[i] < sv) peaks[i] = sv;
+                    if (peaks[i] < 0) peaks[i] = 0;
+                }
+
+                var x = pad + i * (barW + gap);
+                var h = sv * maxBarH;
+                var y = baselineY - h;
+                var alpha = 0.55 + sv * 0.45;
+
+                // Mirrored bar with gradient for depth.
+                var grad = ctx.createLinearGradient(0, y, 0, baselineY);
+                grad.addColorStop(0, 'rgba(' + fg + ',' + alpha.toFixed(3) + ')');
+                grad.addColorStop(1, 'rgba(' + fgDim + ',' + (alpha * 0.18).toFixed(3) + ')');
+                ctx.fillStyle = grad;
+                ctx.fillRect(x, y, barW, h);
+
+                // Reflected lower half for symmetry — gives the "cava" look.
+                var reflGrad = ctx.createLinearGradient(0, baselineY, 0, baselineY + h * 0.6);
+                reflGrad.addColorStop(0, 'rgba(' + fg + ',' + (alpha * 0.35).toFixed(3) + ')');
+                reflGrad.addColorStop(1, 'rgba(' + fg + ',0)');
+                ctx.fillStyle = reflGrad;
+                ctx.fillRect(x, baselineY, barW, h * 0.6);
+
+                // Floating peak cap.
+                var py = baselineY - peaks[i] * maxBarH - 2 * dpr;
+                ctx.fillStyle = 'rgba(' + fg + ',' + Math.min(1, alpha + 0.15).toFixed(3) + ')';
+                ctx.fillRect(x, py, barW, Math.max(1.5 * dpr, 2 * dpr));
+            }
+
+            // Subtle baseline glow line.
+            ctx.fillStyle = 'rgba(' + fg + ',0.08)';
+            ctx.fillRect(pad, baselineY, usableW, 1 * dpr);
+        }
+
+        function startVisualizer() {
+            if (visualizerOn) return;
+            visualizerOn = true;
+            ensureAudioGraph();
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume().catch(function() {});
+            }
+            if (rafId == null) rafId = requestAnimationFrame(draw);
+        }
+
+        function stopVisualizer() {
+            visualizerOn = false;
+            if (rafId != null) {
+                cancelAnimationFrame(rafId);
+                rafId = null;
+            }
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (var i = 0; i < BAR_COUNT; i++) {
+                smoothed[i] = 0; peaks[i] = 0; peakVel[i] = 0;
+            }
+        }
+
+        window.__audioVisualizer = {
+            start: startVisualizer,
+            stop: stopVisualizer,
+            isAudible: isMusicAudible
+        };
+
+        // If the user pauses music while the visualizer is on, the bars
+        // freeze on their last frame. Listen and clear them out cleanly.
+        window.addEventListener('bgAudioStateChange', function(e) {
+            if (!visualizerOn) return;
+            if (e.detail && e.detail.playing) {
+                if (audioCtx && audioCtx.state === 'suspended') {
+                    audioCtx.resume().catch(function() {});
+                }
+            } else {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                for (var i = 0; i < BAR_COUNT; i++) {
+                    smoothed[i] = 0; peaks[i] = 0; peakVel[i] = 0;
+                }
+            }
+        });
+    })();
     </script>
 
     <script>
