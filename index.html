@@ -3458,7 +3458,7 @@ function isOldBrowser() {
     }
     </script>
 
-    <!-- ============ AUDIO VISUALIZER (Cava-style) ============ -->
+    <!-- ============ AUDIO VISUALIZER ============ -->
     <script>
     (function() {
         var BAR_COUNT = 96;
@@ -3515,7 +3515,9 @@ function isOldBrowser() {
                 }
                 sourceNode = a.__visualizerSource;
                 analyser = audioCtx.createAnalyser();
-                analyser.fftSize = 1024;
+                // 4096 → ~12 Hz bin width at 48k. Needed so the bottom log bands
+                // don't all collapse onto the same bin and move as one block.
+                analyser.fftSize = 4096;
                 analyser.smoothingTimeConstant = 0.78;
                 sourceNode.connect(analyser);
                 analyser.connect(audioCtx.destination);
@@ -3528,25 +3530,67 @@ function isOldBrowser() {
             }
         }
 
-        function logBucketEdges(binCount, barCount) {
-            // Logarithmic bucket distribution — gives bass/mid/treble
-            // visually-pleasing weighting like cava.
-            var minHz = 30;
+        function logBandEdges(binCount, barCount) {
+            // Float bin positions (not floor()'d) so we can fractionally sample
+            // between FFT bins below — fixes the "left bars move as a block"
+            // problem caused by integer bucket collisions at low frequencies.
+            var minHz = 40;
             var maxHz = 16000;
-            // Map 0..barCount to log frequency, then convert to bin index.
-            // Using a representative 48k samplerate for the FFT bin width.
             var sampleRate = audioCtx ? audioCtx.sampleRate : 48000;
             var nyquist = sampleRate / 2;
-            var edges = new Array(barCount + 1);
+            var edges = new Float32Array(barCount + 1);
             var lnMin = Math.log(minHz);
             var lnMax = Math.log(maxHz);
             for (var i = 0; i <= barCount; i++) {
                 var t = i / barCount;
                 var hz = Math.exp(lnMin + (lnMax - lnMin) * t);
-                var bin = Math.min(binCount - 1, Math.max(0, Math.floor(hz / nyquist * binCount)));
-                edges[i] = bin;
+                edges[i] = Math.min(binCount - 1, Math.max(0, hz / nyquist * binCount));
             }
             return edges;
+        }
+
+        function sampleBand(freqData, fLo, fHi) {
+            // Returns the band's average energy in [0,1] using fractional FFT
+            // bins. When the band is narrower than one bin (deep bass at the
+            // edge of resolution), we linearly interpolate between the two
+            // surrounding bins so adjacent bars still produce distinct values.
+            var binMax = freqData.length - 1;
+            if (fHi <= fLo) fHi = fLo + 0.0001;
+
+            var loFloor = Math.floor(fLo);
+            var hiFloor = Math.floor(fHi);
+
+            if (loFloor === hiFloor) {
+                var mid = (fLo + fHi) * 0.5;
+                var base = Math.floor(mid);
+                var frac = mid - base;
+                var a = freqData[base] || 0;
+                var b = freqData[Math.min(binMax, base + 1)] || 0;
+                return (a * (1 - frac) + b * frac) / 255;
+            }
+
+            var sum = 0;
+            var weight = 0;
+
+            // First (partial) bin
+            var firstFrac = (loFloor + 1) - fLo;
+            sum += (freqData[loFloor] || 0) * firstFrac;
+            weight += firstFrac;
+
+            // Middle full bins
+            for (var i = loFloor + 1; i < hiFloor; i++) {
+                sum += freqData[i] || 0;
+                weight += 1;
+            }
+
+            // Last (partial) bin
+            var lastFrac = fHi - hiFloor;
+            if (lastFrac > 0 && hiFloor <= binMax) {
+                sum += (freqData[hiFloor] || 0) * lastFrac;
+                weight += lastFrac;
+            }
+
+            return weight > 0 ? (sum / weight / 255) : 0;
         }
 
         var cachedEdges = null;
@@ -3577,7 +3621,7 @@ function isOldBrowser() {
 
             var edgesKey = freqData.length + ':' + BAR_COUNT;
             if (edgesKey !== cachedEdgesKey) {
-                cachedEdges = logBucketEdges(freqData.length, BAR_COUNT);
+                cachedEdges = logBandEdges(freqData.length, BAR_COUNT);
                 cachedEdgesKey = edgesKey;
             }
             var edges = cachedEdges;
@@ -3594,11 +3638,7 @@ function isOldBrowser() {
             var baselineY = H * 0.78;
 
             for (var i = 0; i < BAR_COUNT; i++) {
-                var lo = edges[i];
-                var hi = Math.max(lo + 1, edges[i + 1]);
-                var sum = 0;
-                for (var b = lo; b < hi; b++) sum += freqData[b];
-                var avg = sum / (hi - lo) / 255;
+                var avg = sampleBand(freqData, edges[i], edges[i + 1]);
                 // Mild perceptual boost — bass needs taming, treble needs lift.
                 var boost = 0.45 + 0.55 * Math.pow(i / BAR_COUNT, 0.55);
                 var v = Math.min(1, Math.pow(avg, 0.78) * (1.0 + boost * 0.4));
@@ -3681,7 +3721,6 @@ function isOldBrowser() {
             isAudible: isMusicAudible
         };
 
-        // If the user pauses music while the visualizer is on, the bars
         // freeze on their last frame. Listen and clear them out cleanly.
         window.addEventListener('bgAudioStateChange', function(e) {
             if (!visualizerOn) return;
