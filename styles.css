@@ -281,47 +281,17 @@ body.experimental-hyper-mode .tagline {
     }
 }
 
-body.experimental-motion-fx .container,
-body.experimental-motion-fx footer,
-body.experimental-motion-fx .help-button,
-body.experimental-motion-fx .section-indicator {
+body.experimental-motion-fx #content {
     animation: experimentalGlitchJitter 0.14s steps(2, end) infinite,
                motionFxSkewBurst 1.1s steps(2, end) infinite;
 }
 
-body.experimental-motion-fx header,
-body.experimental-motion-fx .menu-bar {
-    animation: none !important;
-}
-
-body.experimental-motion-fx header {
-    transform: translateX(-50%) !important;
-}
-
-body.experimental-motion-fx .menu-bar {
-    transform: translateY(0) !important;
-}
-
-body.experimental-motion-fx header.command-palette-open,
-body.experimental-motion-fx .menu-bar.command-palette-open,
-body.experimental-motion-fx .menu-bar.command-palette-open .command-item {
-    animation: none !important;
-    transform: none !important;
-}
-
-body.experimental-motion-fx .menu-bar.command-palette-open .command-palette,
-body.experimental-motion-fx .command-palette.is-open {
-    animation: none !important;
-    transform: translate(-50%, 0) !important;
-}
-
-body.experimental-motion-fx .animated-text,
-body.experimental-motion-fx .tagline {
+body.experimental-motion-fx #content .animated-text,
+body.experimental-motion-fx #content .tagline {
     animation: textGlitch 0.85s infinite, motionFxTextSurge 0.18s steps(2, end) infinite;
 }
 
-body.experimental-motion-fx .center-button,
-body.experimental-motion-fx .command-item {
+body.experimental-motion-fx #content .center-button {
     animation: motionFxButtonPulse 0.28s steps(2, end) infinite;
 }
 
