@@ -2059,14 +2059,23 @@ body.is-mobile .palette-button-container {
 }
 
 .close-btn {
+    appearance: none;
+    -webkit-appearance: none;
+    background: transparent;
+    border: none;
     color: rgba(255, 255, 255, 0.60);
     cursor: pointer;
-    font-size: 16px;
+    font-family: inherit;
+    font-size: 18px;
+    line-height: 1;
     width: 20px;
     height: 20px;
+    margin: 0;
+    padding: 0;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex: 0 0 20px;
     transition: color 0.2s ease, text-shadow 0.2s ease;
 }
 
