@@ -1031,41 +1031,48 @@ class Robot3D {
     }
 
     setupLighting() {
-        this.renderer.toneMappingExposure = 1.18;
+        this.renderer.toneMappingExposure = 1.22;
 
         this.godRayAngle = -22;
-        this.godRayIntensity = 2.2;
+        this.godRayIntensity = 2.5;
 
-        this.scene.add(new THREE.HemisphereLight(0xffffff, 0x060606, 0.5));
+        this.scene.add(new THREE.HemisphereLight(0xffffff, 0x000000, 0.16));
 
         const angRad = (this.godRayAngle * Math.PI) / 180;
         this.keyLightSource = new THREE.Vector3(Math.sin(angRad) * 6, Math.cos(Math.abs(angRad)) * 6 + 0.5, 3.5);
         this.keyLightTarget = new THREE.Vector3(0, 0, 0);
 
-        const key = new THREE.DirectionalLight(0xffffff, 2.6);
+        const key = new THREE.DirectionalLight(0xffffff, 3.6);
         key.position.copy(this.keyLightSource);
         key.target.position.copy(this.keyLightTarget);
         this.scene.add(key, key.target);
 
-        const keySecondary = new THREE.DirectionalLight(0xffffff, 0.5);
+        const keySecondary = new THREE.DirectionalLight(0xffffff, 0.25);
         keySecondary.position.set(3.8, 4.6, 2.8);
         this.scene.add(keySecondary);
 
-        const fill = new THREE.PointLight(0xcfcfcf, 0.7, 16, 1.6);
+        const fill = new THREE.PointLight(0x9a9a9a, 0.4, 16, 1.6);
         fill.position.set(3.6, 0.2, 5.2);
         this.scene.add(fill);
 
-        const rim = new THREE.PointLight(0xffffff, 1.1, 11, 1.6);
+        const rim = new THREE.PointLight(0xffffff, 0.65, 11, 1.6);
         rim.position.set(-2.2, 1.8, -3.4);
         this.scene.add(rim);
 
-        const eyeLight = new THREE.PointLight(0xffffff, 0.5, 6, 2);
+        const eyeLight = new THREE.PointLight(0xffffff, 0.32, 6, 2);
         eyeLight.position.set(0, 0.5, 4);
         this.scene.add(eyeLight);
 
-        const bottomLight = new THREE.PointLight(0x6a6a6a, 0.35, 8, 2);
+        const bottomLight = new THREE.PointLight(0x444444, 0.18, 8, 2);
         bottomLight.position.set(0, -2.5, 2);
         this.scene.add(bottomLight);
+
+        if (this.materials && this.materials.shell) {
+            this.materials.shell.emissiveIntensity = 0.1;
+        }
+        if (this.materials && this.materials.dark) {
+            this.materials.dark.emissiveIntensity = 0.04;
+        }
     }
 
     setupGodRays() {
@@ -1133,8 +1140,8 @@ class Robot3D {
         const cy = H * 0.568;
         const radius = Math.min(W, H) * 0.16;
 
-        const srcX = cx + Math.sin(angleBase) * Math.max(W, H) * 1.8;
-        const srcY = cy - Math.cos(Math.abs(angleBase)) * Math.max(W, H) * 1.8 - Math.max(W, H) * 0.3;
+        const srcX = cx + Math.sin(angleBase) * Math.max(W, H) * 1.05;
+        const srcY = cy - Math.cos(Math.abs(angleBase)) * Math.max(W, H) * 1.05 - Math.max(W, H) * 0.18;
 
         ctx.clearRect(0, 0, W, H);
 
@@ -1148,34 +1155,61 @@ class Robot3D {
         const ballX = cx * RAY_RES;
         const ballY = cy * RAY_RES;
 
-        const flare = octx.createRadialGradient(srcRX, srcRY, 0, srcRX, srcRY, rw * 1.2);
-        const sMain = Math.min(1, 0.55 + intensity * 0.22);
+        // Bright source flare — concentrated, soft, static
+        const flare = octx.createRadialGradient(srcRX, srcRY, 0, srcRX, srcRY, rw * 1.05);
+        const sMain = Math.min(1, 0.6 + intensity * 0.2);
         flare.addColorStop(0, `rgba(255,255,255,${sMain})`);
-        flare.addColorStop(0.06, `rgba(255,255,255,${sMain * 0.9})`);
-        flare.addColorStop(0.3, `rgba(255,255,255,${sMain * 0.35 * (0.9 + 0.1 * Math.sin(t * 0.001))})`);
-        flare.addColorStop(0.7, `rgba(230,230,238,${sMain * 0.08})`);
+        flare.addColorStop(0.08, `rgba(255,255,255,${sMain * 0.85})`);
+        flare.addColorStop(0.28, `rgba(255,255,255,${sMain * 0.42})`);
+        flare.addColorStop(0.6, `rgba(240,243,250,${sMain * 0.14})`);
         flare.addColorStop(1, "rgba(0,0,0,0)");
         octx.fillStyle = flare;
         octx.fillRect(0, 0, rw, rh);
 
+        // One broad sunlight cone — wide, soft, static
         const mainA = Math.atan2(ballY - srcRY, ballX - srcRX);
         octx.save();
         octx.globalCompositeOperation = "screen";
-        const bands = 22;
-        for (let i = 0; i < bands; i += 1) {
-            const spread = ((i / (bands - 1)) - 0.5) * 0.9;
-            const a = mainA + spread;
-            const end = Math.max(rw, rh) * 2.2;
-            const ex = srcRX + Math.cos(a) * end;
-            const ey = srcRY + Math.sin(a) * end;
+
+        const coneEnd = Math.max(rw, rh) * 2.6;
+        const coneHalfAngle = 0.42;
+        const conePts = 64;
+        octx.beginPath();
+        octx.moveTo(srcRX, srcRY);
+        for (let i = 0; i <= conePts; i += 1) {
+            const a = mainA - coneHalfAngle + (i / conePts) * coneHalfAngle * 2;
+            octx.lineTo(srcRX + Math.cos(a) * coneEnd, srcRY + Math.sin(a) * coneEnd);
+        }
+        octx.closePath();
+        const coneGrad = octx.createRadialGradient(srcRX, srcRY, 0, srcRX, srcRY, coneEnd * 0.85);
+        const coneAlpha = Math.min(0.55, 0.16 + intensity * 0.14);
+        coneGrad.addColorStop(0, `rgba(255,255,255,${coneAlpha})`);
+        coneGrad.addColorStop(0.2, `rgba(255,255,255,${coneAlpha * 0.75})`);
+        coneGrad.addColorStop(0.55, `rgba(255,255,255,${coneAlpha * 0.32})`);
+        coneGrad.addColorStop(1, "rgba(255,255,255,0)");
+        octx.fillStyle = coneGrad;
+        octx.fill();
+
+        // A few broad, irregular sub-shafts inside the cone for natural variation
+        const shafts = [
+            { spread: -0.30, width: 0.34, alpha: 0.42 },
+            { spread: -0.10, width: 0.46, alpha: 0.55 },
+            { spread:  0.08, width: 0.40, alpha: 0.50 },
+            { spread:  0.26, width: 0.30, alpha: 0.36 }
+        ];
+        for (let i = 0; i < shafts.length; i += 1) {
+            const s = shafts[i];
+            const a = mainA + s.spread;
+            const ex = srcRX + Math.cos(a) * coneEnd;
+            const ey = srcRY + Math.sin(a) * coneEnd;
             const px = -Math.sin(a);
             const py = Math.cos(a);
-            const hw = (2 + Math.abs(Math.sin(i * 3.7 + t * 0.0003)) * 8) * RAY_RES * intensity;
-            const flicker = 0.45 + 0.55 * Math.sin(t * 0.0007 + i * 2.13);
-            const alpha = (0.18 + 0.22 * Math.pow(1 - Math.abs(spread) * 1.3, 3)) * intensity * flicker;
+            const hw = s.width * Math.max(rw, rh) * 0.22;
+            const fade = Math.pow(1 - Math.abs(s.spread) * 1.4, 1.8);
+            const alpha = s.alpha * intensity * 0.35 * fade;
             const g = octx.createLinearGradient(srcRX, srcRY, ex, ey);
-            g.addColorStop(0, `rgba(255,255,255,${Math.min(1, alpha * 2)})`);
-            g.addColorStop(0.4, `rgba(255,255,255,${alpha * 0.7})`);
+            g.addColorStop(0, `rgba(255,255,255,${Math.min(0.55, alpha * 1.4)})`);
+            g.addColorStop(0.4, `rgba(255,255,255,${alpha * 0.55})`);
             g.addColorStop(1, "rgba(255,255,255,0)");
             octx.beginPath();
             octx.moveTo(srcRX, srcRY);
@@ -1183,27 +1217,32 @@ class Robot3D {
             octx.lineTo(ex - px * hw, ey - py * hw);
             octx.closePath();
             octx.fillStyle = g;
+            octx.filter = "blur(2px)";
             octx.fill();
+            octx.filter = "none";
         }
         octx.restore();
 
+        // Cut a soft ball silhouette so the radial blur projects a shadow cone behind it
         octx.globalCompositeOperation = "destination-out";
-        const cutGrad = octx.createRadialGradient(ballX, ballY, ballR * 0.85, ballX, ballY, ballR * 1.18);
+        const cutGrad = octx.createRadialGradient(ballX, ballY, ballR * 0.78, ballX, ballY, ballR * 1.22);
         cutGrad.addColorStop(0, "rgba(0,0,0,1)");
+        cutGrad.addColorStop(0.7, "rgba(0,0,0,0.9)");
         cutGrad.addColorStop(1, "rgba(0,0,0,0)");
         octx.fillStyle = cutGrad;
-        octx.fillRect(ballX - ballR * 1.3, ballY - ballR * 1.3, ballR * 2.6, ballR * 2.6);
+        octx.fillRect(ballX - ballR * 1.4, ballY - ballR * 1.4, ballR * 2.8, ballR * 2.8);
         octx.beginPath();
-        octx.arc(ballX, ballY, ballR * 0.95, 0, Math.PI * 2);
+        octx.arc(ballX, ballY, ballR * 0.92, 0, Math.PI * 2);
         octx.fill();
         octx.globalCompositeOperation = "source-over";
 
+        // Radial-blur scatter — projects rays from source outward
         rctx.clearRect(0, 0, rw, rh);
         rctx.globalCompositeOperation = "lighter";
-        const NUM_PASSES = 40;
-        const decay = 0.94;
-        const density = 0.92;
-        const weight = 0.055 * intensity;
+        const NUM_PASSES = 46;
+        const decay = 0.945;
+        const density = 0.918;
+        const weight = 0.058 * intensity;
         for (let i = 0; i < NUM_PASSES; i += 1) {
             const scale = Math.pow(density, i);
             const w = weight * Math.pow(decay, i);
@@ -1217,34 +1256,36 @@ class Robot3D {
         }
         rctx.globalAlpha = 1;
 
+        // Composite onto main canvas
         ctx.save();
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = "high";
         ctx.drawImage(this.godRayAccum, 0, 0, rw, rh, 0, 0, W, H);
         ctx.restore();
 
+        // Subtle atmospheric halo above the ball where the beam approaches it
         ctx.save();
-        ctx.globalCompositeOperation = "screen";
-        const coronaX = cx + Math.sin(angleBase) * radius * 0.32;
-        const coronaY = cy - radius * 0.6;
-        const corona = ctx.createRadialGradient(coronaX, coronaY, 0, coronaX, coronaY, radius * 1.2);
-        const ci = Math.min(0.55, intensity * 0.32);
+        ctx.globalCompositeOperation = "lighter";
+        const coronaX = cx + Math.sin(angleBase) * radius * 0.9;
+        const coronaY = cy - radius * 1.05;
+        const corona = ctx.createRadialGradient(coronaX, coronaY, 0, coronaX, coronaY, radius * 1.5);
+        const ci = Math.min(0.32, intensity * 0.16);
         corona.addColorStop(0, `rgba(255,255,255,${ci})`);
-        corona.addColorStop(0.25, `rgba(255,255,255,${ci * 0.5})`);
-        corona.addColorStop(0.6, `rgba(220,225,235,${ci * 0.15})`);
+        corona.addColorStop(0.4, `rgba(255,255,255,${ci * 0.35})`);
         corona.addColorStop(1, "rgba(0,0,0,0)");
         ctx.fillStyle = corona;
         ctx.fillRect(0, 0, W, H);
         ctx.restore();
 
+        // Feather mask so canvas edges fade smoothly to transparent
         ctx.save();
         ctx.globalCompositeOperation = "destination-in";
         const featherCX = cx;
         const featherCY = cy - Math.min(W, H) * 0.08;
-        const featherR = Math.min(W, H) * 0.48;
+        const featherR = Math.min(W, H) * 0.5;
         const feather = ctx.createRadialGradient(featherCX, featherCY, 0, featherCX, featherCY, featherR);
         feather.addColorStop(0, "rgba(0,0,0,1)");
-        feather.addColorStop(0.6, "rgba(0,0,0,0.95)");
+        feather.addColorStop(0.55, "rgba(0,0,0,1)");
         feather.addColorStop(1, "rgba(0,0,0,0)");
         ctx.fillStyle = feather;
         ctx.fillRect(0, 0, W, H);
@@ -1283,12 +1324,7 @@ class Robot3D {
             d.style.cssText = `
                 width:${sz}px;height:${sz}px;
                 left:${bx}%;top:${by}%;
-                --tx:${(Math.random() - 0.5) * 50}px;
-                --ty:${-(Math.random() * 110 + 30)}px;
                 --bright:${bright};
-                animation-duration:${6 + Math.random() * 10}s;
-                animation-delay:${Math.random() * 14}s;
-                opacity:0;
             `;
             this.container.appendChild(d);
         }

@@ -282,23 +282,16 @@ body::after {
     pointer-events: none;
 }
 
+
 .dust-mote {
     position: absolute;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.95);
-    box-shadow: 0 0 3px rgba(255, 255, 255, 0.8), 0 0 6px rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.7);
+    box-shadow: 0 0 2px rgba(255, 255, 255, 0.5);
     pointer-events: none;
     z-index: 3;
-    --bright: 0.9;
-    animation: godRayDustFloat linear infinite;
-    will-change: transform, opacity;
-}
-
-@keyframes godRayDustFloat {
-    0%   { transform: translate(0, 0) scale(1); opacity: 0; }
-    15%  { opacity: calc(var(--bright) * 1); }
-    85%  { opacity: calc(var(--bright) * 0.5); }
-    100% { transform: translate(var(--tx), var(--ty)) scale(0.2); opacity: 0; }
+    opacity: var(--bright, 0.6);
+    --bright: 0.6;
 }
 
 @keyframes shellFloat {
@@ -1234,7 +1227,7 @@ body.light-theme .scanlines {
 }
 
 body.light-theme .robot-container {
-    background: radial-gradient(ellipse 65% 65% at 50% 55%, transparent 42%, rgba(0, 0, 0, 0.12) 100%);
+    background: none;
 }
 
 body.light-theme #godRayCanvas,
@@ -1243,10 +1236,8 @@ body.light-theme .dust-mote {
 }
 
 body.light-theme #robotCanvas {
-    filter: drop-shadow(16px 28px 44px rgba(0, 0, 0, 0.28))
-            drop-shadow(8px 12px 20px rgba(0, 0, 0, 0.18))
-            drop-shadow(-18px -14px 36px rgba(0, 0, 0, 0.08))
-            drop-shadow(0 0 60px rgba(0, 0, 0, 0.05));
+    filter: drop-shadow(0 22px 36px rgba(0, 0, 0, 0.18))
+            drop-shadow(0 8px 14px rgba(0, 0, 0, 0.1));
 }
 
 body.light-theme .speech-bubble,
