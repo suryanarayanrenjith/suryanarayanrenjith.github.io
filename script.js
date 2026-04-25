@@ -853,7 +853,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (isWebGLAvailable()) {
     const canvas = document.getElementById('animationCanvas');
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+    // Far-plane bumped to 4500 to comfortably cover the far shell's bound
+    // (2400) plus camera offset and rotation slack. Without this, far-shell
+    // stars would clip in and out at the edge of perspective.
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 4500);
     const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
@@ -861,19 +864,14 @@ document.addEventListener("DOMContentLoaded", () => {
     let starfieldFrozen = !!(window.__starfieldFreezeState && window.__starfieldFreezeState.frozen === true);
     let hyperGlowLevel = isHyperModeEnabled() ? 1 : 0;
 
+    // Anchor the point light to the camera. PointsMaterial doesn't react to
+    // lights, but the camera now travels arbitrarily far in the toroidal
+    // field, and a world-fixed light would be left behind. Parenting to the
+    // camera also makes mouse-driven light offsets read as view-relative.
     const pointLight = new THREE.PointLight(0xffffff, 1, 1000);
     pointLight.position.set(0, 0, 500);
-    scene.add(pointLight);
-
-    const starDensity = 0.0046;
-    const starBounds = { x: 1500, y: 1200, z: 1500 };
-    let starCount = Math.floor(window.innerWidth * window.innerHeight * starDensity);
-
-
-    const stars = new THREE.BufferGeometry();
-    let starVertices = new Float32Array(starCount * 3);
-    let starSpeeds = new Float32Array(starCount);
-    let starTwinkles = new Float32Array(starCount);
+    scene.add(camera);
+    camera.add(pointLight);
 
     // Halton quasi-random sequence — far more uniform 3D coverage than
     // uncorrelated Math.random(), which leaves visible clumps and voids.
@@ -889,75 +887,104 @@ document.addEventListener("DOMContentLoaded", () => {
         return result;
     }
 
-    // Square star sprites — PointsMaterial without a `map` renders flat square
-    // point sprites which is the look we want here.
+    const starDensity = 0.0046;
 
-    function generateStars() {
-        // Randomized offset per regeneration so the pattern isn't identical
-        // across resizes, while each axis still gets low-discrepancy coverage.
-        const haltonOffset = Math.floor(Math.random() * 4096);
-        for (let s = 0; s < starCount; s++) {
-            const i = s * 3;
-            const idx = s + 1 + haltonOffset;
+    // Three concentric shells (plus a bright hero layer) wrap independently
+    // around the camera via signed-modulo torus mapping. The field has no
+    // edge — the camera can travel arbitrarily far and the shells follow.
+    // Different bounds + sprite sizes give genuine motion parallax: near
+    // sweeps fast, far barely moves.
+    const SHELL_PROFILES = {
+        near: { bounds: { x: 450,  y: 380,  z: 700  }, countShare: 0.25, baseSize: 2.0, twinkleAmp: 1.4, hyperBoost: 1.0, haltonOffset: 113, bright: 0.78 },
+        main: { bounds: { x: 1100, y: 900,  z: 1300 }, countShare: 0.55, baseSize: 3.6, twinkleAmp: 2.4, hyperBoost: 1.8, haltonOffset: 0,   bright: 1.00 },
+        far:  { bounds: { x: 2200, y: 1800, z: 2400 }, countShare: 0.20, baseSize: 1.6, twinkleAmp: 0.6, hyperBoost: 0.8, haltonOffset: 947, bright: 0.62 },
+        hero: { bounds: { x: 1540, y: 1260, z: 1820 }, countShare: 0,    baseSize: 13,  twinkleAmp: 0,   hyperBoost: 4.0, haltonOffset: 73,  bright: 1.00, fixedCount: 60 }
+    };
+
+    function computeShellCounts() {
+        const total = Math.floor(window.innerWidth * window.innerHeight * starDensity);
+        return {
+            near: Math.max(80,  Math.floor(total * SHELL_PROFILES.near.countShare)),
+            main: Math.max(160, Math.floor(total * SHELL_PROFILES.main.countShare)),
+            far:  Math.max(80,  Math.floor(total * SHELL_PROFILES.far.countShare)),
+            hero: SHELL_PROFILES.hero.fixedCount
+        };
+    }
+
+    function fillShellVertices(shell) {
+        const v = shell.vertices;
+        const s = shell.speeds;
+        const bx = shell.profile.bounds.x;
+        const by = shell.profile.bounds.y;
+        const bz = shell.profile.bounds.z;
+        // Random per-call offset so the pattern isn't identical across
+        // resizes, while each axis still gets low-discrepancy coverage.
+        const baseOffset = Math.floor(Math.random() * 4096) + shell.profile.haltonOffset;
+        for (let n = 0; n < shell.count; n++) {
+            const i = n * 3;
+            const idx = n + 1 + baseOffset;
             const h2 = halton(idx, 2);
             const h3 = halton(idx, 3);
             const h5 = halton(idx, 5);
-            // Micro-jitter hides any residual regularity of the sequence.
             const jx = (Math.random() - 0.5) * 0.012;
             const jy = (Math.random() - 0.5) * 0.012;
             const jz = (Math.random() - 0.5) * 0.012;
-            starVertices[i]     = (h2 - 0.5 + jx) * starBounds.x * 2;
-            starVertices[i + 1] = (h3 - 0.5 + jy) * starBounds.y * 2;
-            starVertices[i + 2] = (h5 - 0.5 + jz) * starBounds.z * 2;
-            starSpeeds[s] = Math.random() * 0.1 + 0.02;
-            starTwinkles[s] = Math.random() * 0.5 + 0.5;
+            v[i]     = (h2 - 0.5 + jx) * bx * 2;
+            v[i + 1] = (h3 - 0.5 + jy) * by * 2;
+            v[i + 2] = (h5 - 0.5 + jz) * bz * 2;
+            s[n] = Math.random() * 0.1 + 0.02;
         }
-        stars.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+        shell.geometry.setAttribute('position', new THREE.Float32BufferAttribute(v, 3));
     }
 
-    generateStars();
+    function createStarShell(name) {
+        const profile = SHELL_PROFILES[name];
+        const counts = computeShellCounts();
+        const count = counts[name];
 
-    const starMaterialWhite = new THREE.PointsMaterial({
-        color: 0xffffff,
-        size: 4,
-        transparent: true,
-        opacity: 0.95,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-        sizeAttenuation: true,
-    });
+        const shell = {
+            name,
+            profile,
+            count,
+            geometry: new THREE.BufferGeometry(),
+            vertices: new Float32Array(count * 3),
+            speeds: new Float32Array(count)
+        };
 
-    const starFieldWhite = new THREE.Points(stars, starMaterialWhite);
-    scene.add(starFieldWhite);
+        fillShellVertices(shell);
 
-    // Hero stars — a sparse, brighter layer that gives the starfield real
-    // depth. Uses the same circular texture but with a larger base size and
-    // an independent slow pulse. Positioned using a different Halton offset
-    // so the bright stars never align with the main-field pattern.
-    const HERO_STAR_COUNT = 60;
-    const heroStars = new THREE.BufferGeometry();
-    const heroVertices = new Float32Array(HERO_STAR_COUNT * 3);
-    const heroPhases = new Float32Array(HERO_STAR_COUNT);
-    const heroOffset = 73;
-    for (let i = 0; i < HERO_STAR_COUNT; i++) {
-        const idx = i + 1 + heroOffset;
-        heroVertices[i * 3]     = (halton(idx, 2) - 0.5) * starBounds.x * 1.7;
-        heroVertices[i * 3 + 1] = (halton(idx, 3) - 0.5) * starBounds.y * 1.7;
-        heroVertices[i * 3 + 2] = (halton(idx, 5) - 0.5) * starBounds.z * 1.7;
-        heroPhases[i] = Math.random() * Math.PI * 2;
+        shell.material = new THREE.PointsMaterial({
+            color: 0xffffff,
+            size: profile.baseSize,
+            transparent: true,
+            opacity: 0.95 * profile.bright,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            sizeAttenuation: true
+        });
+
+        shell.points = new THREE.Points(shell.geometry, shell.material);
+        scene.add(shell.points);
+        return shell;
     }
-    heroStars.setAttribute('position', new THREE.Float32BufferAttribute(heroVertices, 3));
-    const heroMaterial = new THREE.PointsMaterial({
-        color: 0xffffff,
-        size: 13,
-        transparent: true,
-        opacity: 1.0,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-        sizeAttenuation: true,
-    });
-    const heroField = new THREE.Points(heroStars, heroMaterial);
-    scene.add(heroField);
+
+    function regenerateShell(shell) {
+        const counts = computeShellCounts();
+        const newCount = counts[shell.name];
+        if (newCount !== shell.count) {
+            shell.count = newCount;
+            shell.vertices = new Float32Array(newCount * 3);
+            shell.speeds = new Float32Array(newCount);
+        }
+        fillShellVertices(shell);
+    }
+
+    const nearShell = createStarShell('near');
+    const mainShell = createStarShell('main');
+    const farShell  = createStarShell('far');
+    const heroShell = createStarShell('hero');
+    const fieldShells = [nearShell, mainShell, farShell];
+    const allShells   = [nearShell, mainShell, farShell, heroShell];
 
     camera.position.z = 1000;
 
@@ -968,33 +995,27 @@ document.addEventListener("DOMContentLoaded", () => {
             gsap.killTweensOf(camera.position);
             gsap.killTweensOf(camera.rotation);
             gsap.killTweensOf(pointLight.position);
-            gsap.killTweensOf(starFieldWhite.rotation);
-            gsap.killTweensOf(heroField.rotation);
+            for (const shell of allShells) {
+                gsap.killTweensOf(shell.points.rotation);
+            }
         }
     });
 
     window.addEventListener('themeChanged', (e) => {
-        if (e.detail && e.detail.light) {
-            starMaterialWhite.color.setHex(0x222222);
-            starMaterialWhite.blending = THREE.NormalBlending;
-            heroMaterial.color.setHex(0x1a1a1a);
-            heroMaterial.blending = THREE.NormalBlending;
-            pointLight.color.setHex(0x222222);
-        } else {
-            starMaterialWhite.color.setHex(0xffffff);
-            starMaterialWhite.blending = THREE.AdditiveBlending;
-            heroMaterial.color.setHex(0xffffff);
-            heroMaterial.blending = THREE.AdditiveBlending;
-            pointLight.color.setHex(0xffffff);
+        const light = !!(e.detail && e.detail.light);
+        for (const shell of allShells) {
+            const darkColor = shell.name === 'hero' ? 0x1a1a1a : 0x222222;
+            shell.material.color.setHex(light ? darkColor : 0xffffff);
+            shell.material.blending = light ? THREE.NormalBlending : THREE.AdditiveBlending;
+            shell.material.needsUpdate = true;
         }
-        starMaterialWhite.needsUpdate = true;
-        heroMaterial.needsUpdate = true;
+        pointLight.color.setHex(light ? 0x222222 : 0xffffff);
     });
 
     let resizeTimeout = null;
     window.addEventListener('resize', () => {
         // Update renderer/camera immediately so the canvas never stretches,
-        // but debounce the expensive star buffer reallocation.
+        // but debounce the expensive shell buffer reallocation.
         renderer.setSize(window.innerWidth, window.innerHeight);
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
@@ -1002,11 +1023,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (resizeTimeout) clearTimeout(resizeTimeout);
         resizeTimeout = setTimeout(() => {
             resizeTimeout = null;
-            starCount = Math.floor(window.innerWidth * window.innerHeight * starDensity);
-            starVertices = new Float32Array(starCount * 3);
-            starSpeeds = new Float32Array(starCount);
-            starTwinkles = new Float32Array(starCount);
-            generateStars();
+            for (const shell of allShells) regenerateShell(shell);
         }, 180);
     });
 
@@ -1039,78 +1056,150 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    function applyWarpSpeed() {
-        const burstMultiplier = 1 + warpBurstIntensity * 40;
-        for (let i = 0; i < starVertices.length; i += 3) {
-            starVertices[i + 2] += starSpeeds[i / 3] * 20 * burstMultiplier;
+    // Camera-anchored toroidal wrap. For each star, compute its position
+    // relative to the camera (in shell-local space, since each shell's
+    // points object has its own slowly-accumulating rotation), then signed-
+    // modulo into [-bound, +bound] on each axis. The modulo formula is
+    // robust at any speed — handles huge GSAP-driven jumps and warp bursts
+    // that would skip past simple if-checks. When a star wraps on one axis,
+    // its other two axes get a tiny jitter to dissolve any tiling pattern.
+    const _cameraLocal = new THREE.Vector3();
+    function wrapShellAroundCamera(shell) {
+        _cameraLocal.copy(camera.position);
+        shell.points.updateMatrixWorld();
+        shell.points.worldToLocal(_cameraLocal);
+        const v = shell.vertices;
+        const bx = shell.profile.bounds.x;
+        const by = shell.profile.bounds.y;
+        const bz = shell.profile.bounds.z;
+        const spanX = bx * 2;
+        const spanY = by * 2;
+        const spanZ = bz * 2;
+        const cx = _cameraLocal.x;
+        const cy = _cameraLocal.y;
+        const cz = _cameraLocal.z;
+        const jx = bx * 0.04;
+        const jy = by * 0.04;
+        const jz = bz * 0.04;
 
-            if (starVertices[i + 2] > starBounds.z) {
-                starVertices[i + 2] = -starBounds.z;
+        for (let i = 0; i < v.length; i += 3) {
+            let rx = v[i] - cx;
+            let ry = v[i + 1] - cy;
+            let rz = v[i + 2] - cz;
+
+            if (rx > bx || rx < -bx) {
+                rx = ((rx + bx) % spanX + spanX) % spanX - bx;
+                v[i] = cx + rx;
+                v[i + 1] += (Math.random() - 0.5) * jy;
+                v[i + 2] += (Math.random() - 0.5) * jz;
+            }
+            if (ry > by || ry < -by) {
+                ry = ((ry + by) % spanY + spanY) % spanY - by;
+                v[i + 1] = cy + ry;
+                v[i] += (Math.random() - 0.5) * jx;
+                v[i + 2] += (Math.random() - 0.5) * jz;
+            }
+            if (rz > bz || rz < -bz) {
+                rz = ((rz + bz) % spanZ + spanZ) % spanZ - bz;
+                v[i + 2] = cz + rz;
+                v[i] += (Math.random() - 0.5) * jx;
+                v[i + 1] += (Math.random() - 0.5) * jy;
             }
         }
-        stars.attributes.position.needsUpdate = true;
+        shell.geometry.attributes.position.needsUpdate = true;
     }
 
-    // applyDynamicStarScaling removed: it used the last-star-Z as a proxy for
-    // global camera depth which was both fragile and overridden by the
-    // twinkle pass below. Warp-burst size boost is folded into twinkle now.
+    function advanceWarp() {
+        const burstMultiplier = 1 + warpBurstIntensity * 40;
+        const step = 20 * burstMultiplier;
+        for (const shell of allShells) {
+            const v = shell.vertices;
+            const s = shell.speeds;
+            for (let i = 0; i < v.length; i += 3) {
+                v[i + 2] += s[i / 3] * step;
+            }
+        }
+    }
+
+    function updateShells() {
+        advanceWarp();
+        for (const shell of allShells) {
+            wrapShellAroundCamera(shell);
+        }
+    }
 
     function applyShockwaveEffect() {
-        if (shockwaveTime > 0) {
-            for (let i = 0; i < starVertices.length; i += 3) {
-                const x = starVertices[i], y = starVertices[i + 1];
-                const distSq = x * x + y * y;
-                if (distSq < 250000) {
-                    const dist = Math.sqrt(distSq);
-                    const wave = Math.sin(shockwaveTime * 10 + dist * 0.05) * 5;
-                    starVertices[i] += wave;
-                    starVertices[i + 1] += wave;
-                }
+        if (shockwaveTime <= 0) return;
+        // Re-anchor the shockwave to the camera's local position so the wave
+        // emanates from the viewer rather than from world origin (which the
+        // camera can now be far from in the infinite field).
+        _cameraLocal.copy(camera.position);
+        mainShell.points.updateMatrixWorld();
+        mainShell.points.worldToLocal(_cameraLocal);
+        const v = mainShell.vertices;
+        const cx = _cameraLocal.x, cy = _cameraLocal.y;
+        for (let i = 0; i < v.length; i += 3) {
+            const dx = v[i] - cx;
+            const dy = v[i + 1] - cy;
+            const distSq = dx * dx + dy * dy;
+            if (distSq < 250000) {
+                const dist = Math.sqrt(distSq);
+                const wave = Math.sin(shockwaveTime * 10 + dist * 0.05) * 5;
+                v[i] += wave;
+                v[i + 1] += wave;
             }
-            shockwaveTime -= 0.02;
-            stars.attributes.position.needsUpdate = true;
         }
+        shockwaveTime -= 0.02;
+        mainShell.geometry.attributes.position.needsUpdate = true;
     }
 
 
 
-function applyTwinkleEffect() {
-    const time = performance.now() * 0.001;
+    function applyTwinkleEffect() {
+        const time = performance.now() * 0.001;
 
-    const baseSineWave = Math.sin(time * 5 + 0.75 * 20);
-    const baseCosineWave = Math.cos(time * 2.5 + 0.75 * 10);
-    const flicker = Math.sin(time * 8 + 0.75 * 40) * 0.3;
-    const noise = (Math.random() - 0.5) * 0.15;
-    const slowBreath = Math.sin(time * 0.3 + 0.75 * 5) * 0.2 + 0.8;
-    const layeredEffect = Math.sin(time * 1.2 + Math.sin(time * 0.7) * 2 + 0.75 * 25) * 0.4 + 0.6;
-    const depthEffect = Math.sin(time * 0.2 + 0.75 * 50) * 0.3 + 0.7;
+        const baseSineWave = Math.sin(time * 5 + 0.75 * 20);
+        const baseCosineWave = Math.cos(time * 2.5 + 0.75 * 10);
+        const flicker = Math.sin(time * 8 + 0.75 * 40) * 0.3;
+        const noise = (Math.random() - 0.5) * 0.15;
+        const slowBreath = Math.sin(time * 0.3 + 0.75 * 5) * 0.2 + 0.8;
+        const layeredEffect = Math.sin(time * 1.2 + Math.sin(time * 0.7) * 2 + 0.75 * 25) * 0.4 + 0.6;
+        const depthEffect = Math.sin(time * 0.2 + 0.75 * 50) * 0.3 + 0.7;
 
-    const twinkleIntensity =
-        (baseSineWave * 0.3 + baseCosineWave * 0.3 + flicker * 0.2 + noise * 0.1)
-        * slowBreath * layeredEffect * depthEffect;
+        const twinkleIntensity =
+            (baseSineWave * 0.3 + baseCosineWave * 0.3 + flicker * 0.2 + noise * 0.1)
+            * slowBreath * layeredEffect * depthEffect;
 
-    // Valid opacity range (was being clamped at 1.0 by THREE after bad math).
-    // Keep stars bright with a modest twinkle wobble on top.
-    const burstBoost = warpBurstIntensity * 3;
-    starMaterialWhite.opacity = Math.max(0.55, Math.min(1.0, 0.85 + twinkleIntensity * 0.18));
-    starMaterialWhite.size = 3.6 + twinkleIntensity * 2.4 + burstBoost;
+        const burstBoost = warpBurstIntensity * 3;
 
-    // Hero stars pulse on a slower, deeper curve — draws the eye without
-    // competing with the field's high-frequency twinkle.
-    const heroPulse = Math.sin(time * 0.9) * 0.5 + 0.5;
-    const heroFlicker = Math.sin(time * 3.1 + 1.7) * 0.15;
-    heroMaterial.size = 11 + heroPulse * 4 + heroFlicker + burstBoost * 1.5;
-    heroMaterial.opacity = Math.max(0.7, Math.min(1.0, 0.82 + heroPulse * 0.18));
-}
+        for (const shell of fieldShells) {
+            const amp = shell.profile.twinkleAmp;
+            shell.material.size = shell.profile.baseSize + twinkleIntensity * amp + burstBoost * (amp / 2.4);
+            shell.material.opacity = Math.max(
+                0.55 * shell.profile.bright,
+                Math.min(1.0, 0.85 * shell.profile.bright + twinkleIntensity * 0.18)
+            );
+        }
+
+        // Hero stars pulse on a slower, deeper curve — draws the eye without
+        // competing with the field's high-frequency twinkle.
+        const heroPulse = Math.sin(time * 0.9) * 0.5 + 0.5;
+        const heroFlicker = Math.sin(time * 3.1 + 1.7) * 0.15;
+        heroShell.material.size = 11 + heroPulse * 4 + heroFlicker + burstBoost * 1.5;
+        heroShell.material.opacity = Math.max(0.7, Math.min(1.0, 0.82 + heroPulse * 0.18));
+    }
 
     function applyHyperModeStarGlow() {
         const targetGlow = isHyperModeEnabled() ? 1 : 0;
         hyperGlowLevel += (targetGlow - hyperGlowLevel) * 0.12;
 
-        starMaterialWhite.size = Math.min(9, starMaterialWhite.size + hyperGlowLevel * 1.8);
-        starMaterialWhite.opacity = Math.min(1.0, starMaterialWhite.opacity + hyperGlowLevel * 0.1);
-        heroMaterial.size = Math.min(22, heroMaterial.size + hyperGlowLevel * 4);
-        heroMaterial.opacity = Math.min(1.0, heroMaterial.opacity + hyperGlowLevel * 0.1);
+        for (const shell of fieldShells) {
+            const cap = shell.profile.baseSize + 5 + shell.profile.hyperBoost * 1.4;
+            shell.material.size = Math.min(cap, shell.material.size + hyperGlowLevel * shell.profile.hyperBoost);
+            shell.material.opacity = Math.min(1.0, shell.material.opacity + hyperGlowLevel * 0.1);
+        }
+        heroShell.material.size = Math.min(22, heroShell.material.size + hyperGlowLevel * heroShell.profile.hyperBoost);
+        heroShell.material.opacity = Math.min(1.0, heroShell.material.opacity + hyperGlowLevel * 0.1);
 
         const targetIntensity = 1 + hyperGlowLevel * 0.85;
         const targetDistance = 1000 + hyperGlowLevel * 280;
@@ -1124,13 +1213,21 @@ function applyTwinkleEffect() {
         const driftX = Math.sin(time * 0.3) * 0.001;
         const driftY = Math.cos(time * 0.25) * 0.001;
 
-        starFieldWhite.rotation.x += 0.0005 + driftX;
-        starFieldWhite.rotation.y += 0.0007 + driftY;
-        starFieldWhite.position.z += Math.sin(time * 0.5) * 0.05;
+        // Each shell drifts at a slightly different rate — adds rotational
+        // parallax on top of the wrap-radius parallax. Near drifts fastest,
+        // far slowest. (No more position.z bob — it would desync the wrap
+        // anchor for negligible visual gain.)
+        nearShell.points.rotation.x += 0.00075 + driftX * 1.4;
+        nearShell.points.rotation.y += 0.00105 + driftY * 1.4;
 
-        // Hero layer drifts slightly slower for a parallax depth cue.
-        heroField.rotation.x += 0.00032 + driftX * 0.7;
-        heroField.rotation.y += 0.00045 + driftY * 0.7;
+        mainShell.points.rotation.x += 0.0005 + driftX;
+        mainShell.points.rotation.y += 0.0007 + driftY;
+
+        farShell.points.rotation.x += 0.00018 + driftX * 0.35;
+        farShell.points.rotation.y += 0.00026 + driftY * 0.35;
+
+        heroShell.points.rotation.x += 0.00032 + driftX * 0.7;
+        heroShell.points.rotation.y += 0.00045 + driftY * 0.7;
     }
 
     let lastMouseTweenTime = 0;
@@ -1178,14 +1275,14 @@ function applyTwinkleEffect() {
     const densityGridRows = 3;
 
     function getDensityAwareVelocityDirection() {
-        const posAttr = stars.getAttribute('position');
+        const posAttr = mainShell.geometry.getAttribute('position');
         if (!posAttr || !posAttr.array || posAttr.array.length < 3) {
             const angle = Math.random() * Math.PI * 2;
-            return { x: Math.cos(angle), y: Math.sin(angle), confidence: 0, visibleRatio: 0.6 };
+            return { x: Math.cos(angle), y: Math.sin(angle), confidence: 0 };
         }
 
         camera.updateMatrixWorld(true);
-        starFieldWhite.updateMatrixWorld(true);
+        mainShell.points.updateMatrixWorld(true);
 
         const positions = posAttr.array;
         const bins = new Float32Array(densityGridCols * densityGridRows);
@@ -1193,14 +1290,12 @@ function applyTwinkleEffect() {
         const maxSamples = 1600;
         const stride = Math.max(1, Math.ceil(starTotal / maxSamples));
         let visibleCount = 0;
-        let sampledCount = 0;
 
         for (let starIdx = 0; starIdx < starTotal; starIdx += stride) {
-            sampledCount += 1;
             const i = starIdx * 3;
             densityProbe
                 .set(positions[i], positions[i + 1], positions[i + 2])
-                .applyMatrix4(starFieldWhite.matrixWorld)
+                .applyMatrix4(mainShell.points.matrixWorld)
                 .project(camera);
 
             const nx = densityProbe.x;
@@ -1222,10 +1317,9 @@ function applyTwinkleEffect() {
 
         const randomAngle = Math.random() * Math.PI * 2;
         const randomDir = { x: Math.cos(randomAngle), y: Math.sin(randomAngle) };
-        const visibleRatio = visibleCount / Math.max(1, sampledCount);
 
         if (visibleCount < 25) {
-            return { x: randomDir.x, y: randomDir.y, confidence: 0, visibleRatio };
+            return { x: randomDir.x, y: randomDir.y, confidence: 0 };
         }
 
         let maxVal = -Infinity;
@@ -1254,7 +1348,7 @@ function applyTwinkleEffect() {
 
         const tLen = Math.hypot(tx, ty);
         if (tLen < 0.08) {
-            return { x: randomDir.x, y: randomDir.y, confidence: 0, visibleRatio };
+            return { x: randomDir.x, y: randomDir.y, confidence: 0 };
         }
 
         tx /= tLen;
@@ -1268,14 +1362,13 @@ function applyTwinkleEffect() {
         bx /= blendedLen;
         by /= blendedLen;
 
-        return { x: bx, y: by, confidence, visibleRatio };
+        return { x: bx, y: by, confidence };
     }
 
-// Tracks the direction of the most recent switch so we can prevent the
-// camera from immediately reversing into a back-and-forth yo-yo motion.
-let lastSwitchDir = { x: 0, y: 0 };
-// Bias the orbital rotation handedness once per session so successive
-// tangential deflections tend to curve consistently rather than flip-flop.
+// Aesthetic orbital handedness — flips occasionally so successive sweeps
+// curve gently in alternating directions instead of always heading straight
+// toward the densest patch. Pure flavor; with the toroidal field there is
+// no boundary to defend against.
 let orbitalHandedness = Math.random() < 0.5 ? 1 : -1;
 
 function switchCameraPosition() {
@@ -1286,23 +1379,11 @@ function switchCameraPosition() {
         ? {
             travelBase: 430,
             travelBoost: 720,
-            scatterXConfident: 420,
-            scatterXLoose: 560,
-            scatterYConfident: 320,
-            scatterYLoose: 430,
-            centerPullBase: 0.045,
-            centerPullGuardScale: 0.04,
-            centerPullThresholdX: 390,
-            centerPullThresholdY: 300,
-            maxXBase: 980,
-            maxXBoost: 320,
-            maxYBase: 730,
-            maxYBoost: 260,
+            scatterX: 480,
+            scatterY: 360,
             zBase: 960,
             zJitter: 700,
             zBoost: 260,
-            zMin: 680,
-            zMax: 1620,
             rotationBiasDiv: 13,
             rotationRandDiv: 4.9,
             zoomMin: 40,
@@ -1321,28 +1402,17 @@ function switchCameraPosition() {
             starRollEase: "power3.inOut",
             returnDuration: 0.95,
             returnEase: "power4.out",
-            returnOverlap: "-=0.82"
+            returnOverlap: "-=0.82",
+            orbitalBiasDeg: 18
         }
         : {
             travelBase: 370,
             travelBoost: 610,
-            scatterXConfident: 340,
-            scatterXLoose: 480,
-            scatterYConfident: 260,
-            scatterYLoose: 360,
-            centerPullBase: 0.05,
-            centerPullGuardScale: 0.05,
-            centerPullThresholdX: 330,
-            centerPullThresholdY: 250,
-            maxXBase: 930,
-            maxXBoost: 280,
-            maxYBase: 680,
-            maxYBoost: 220,
+            scatterX: 410,
+            scatterY: 310,
             zBase: 940,
             zJitter: 580,
             zBoost: 190,
-            zMin: 660,
-            zMax: 1500,
             rotationBiasDiv: 15,
             rotationRandDiv: 6.4,
             zoomMin: 46,
@@ -1361,100 +1431,32 @@ function switchCameraPosition() {
             starRollEase: "power2.inOut",
             returnDuration: 1.32,
             returnEase: "power3.out",
-            returnOverlap: "-=1.02"
+            returnOverlap: "-=1.02",
+            orbitalBiasDeg: 14
         };
 
     const smartDir = getDensityAwareVelocityDirection();
-    const visibilityGuard = THREE.MathUtils.clamp((smartDir.visibleRatio - 0.2) / 0.5, 0.6, 1);
-    const directionInfluence = THREE.MathUtils.clamp(0.22 + smartDir.confidence * 0.78, 0.22, 1);
 
-    // --- Anti-reversal: rotate the proposed direction so it never points
-    //     sharply back along the previous travel vector. Instead of flipping
-    //     180°, we deflect it to the perpendicular (orbital-style sweep),
-    //     which eliminates the back-and-forth yo-yo feel between switches.
-    let dirX = smartDir.x;
-    let dirY = smartDir.y;
-    const prevLen = Math.hypot(lastSwitchDir.x, lastSwitchDir.y);
-    if (prevLen > 0.001) {
-        const px = lastSwitchDir.x / prevLen;
-        const py = lastSwitchDir.y / prevLen;
-        const dot = dirX * px + dirY * py;
-        // Anything with dot < MIN_FORWARD_DOT is treated as a reversal.
-        const MIN_FORWARD_DOT = -0.1;
-        if (dot < MIN_FORWARD_DOT) {
-            // Two perpendiculars to the previous direction.
-            const perpX = -py * orbitalHandedness;
-            const perpY =  px * orbitalHandedness;
-            // Blend: mostly tangential, with a small forward component so
-            // the camera still drifts rather than orbits rigidly.
-            const tangentialWeight = 0.78;
-            const forwardWeight = 0.22;
-            dirX = perpX * tangentialWeight + px * forwardWeight;
-            dirY = perpY * tangentialWeight + py * forwardWeight;
-            const nlen = Math.hypot(dirX, dirY) || 1;
-            dirX /= nlen;
-            dirY /= nlen;
-            // Occasionally flip handedness so we don't orbit in one direction forever.
-            if (Math.random() < 0.18) orbitalHandedness = -orbitalHandedness;
-        }
-    }
+    // Aesthetic orbital bias: rotate the proposed direction by a small angle
+    // with a randomly-flipping handedness so successive switches sweep with
+    // gentle variety. With the toroidal field there is no boundary to defend
+    // against — this is purely flavor, not the perpendicular-pull defense
+    // the old code used.
+    const biasRad = THREE.MathUtils.degToRad(profile.orbitalBiasDeg) * orbitalHandedness;
+    const cosB = Math.cos(biasRad);
+    const sinB = Math.sin(biasRad);
+    const dirX = smartDir.x * cosB - smartDir.y * sinB;
+    const dirY = smartDir.x * sinB + smartDir.y * cosB;
+    if (Math.random() < 0.22) orbitalHandedness = -orbitalHandedness;
 
-    const directionalTravel = (profile.travelBase + smartDir.confidence * profile.travelBoost)
-        * visibilityGuard
-        * (0.8 + directionInfluence * 0.35);
-    const scatterDamp = 1.06 - directionInfluence * 0.56;
-    const randomScatterX = (Math.random() - 0.5)
-        * (smartDir.confidence > 0.3 ? profile.scatterXConfident : profile.scatterXLoose)
-        * scatterDamp;
-    const randomScatterY = (Math.random() - 0.5)
-        * (smartDir.confidence > 0.3 ? profile.scatterYConfident : profile.scatterYLoose)
-        * scatterDamp;
+    const directionalTravel = profile.travelBase + smartDir.confidence * profile.travelBoost;
+    const randomScatterX = (Math.random() - 0.5) * profile.scatterX;
+    const randomScatterY = (Math.random() - 0.5) * profile.scatterY;
 
-    // Only pull back when we are near the outer safe envelope, so movement doesn't feel like snapping home.
-    // The pull is applied PERPENDICULAR to the travel direction so it deflects the
-    // path inward along a curve rather than subtracting a reverse vector (which
-    // used to produce the back-and-forth snap when combined with a near-opposite smartDir).
-    const centerPullStrength = profile.centerPullBase + (1 - visibilityGuard) * profile.centerPullGuardScale;
-    const rawPullX = Math.sign(camera.position.x) * Math.max(0, Math.abs(camera.position.x) - profile.centerPullThresholdX) * centerPullStrength;
-    const rawPullY = Math.sign(camera.position.y) * Math.max(0, Math.abs(camera.position.y) - profile.centerPullThresholdY) * centerPullStrength;
-    // Project the raw pull onto the plane perpendicular to (dirX, dirY) so it
-    // curves the trajectory instead of reversing it.
-    const forwardComponent = rawPullX * dirX + rawPullY * dirY;
-    const perpPullX = rawPullX - forwardComponent * dirX;
-    const perpPullY = rawPullY - forwardComponent * dirY;
-
-    const targetX = camera.position.x
-        + dirX * directionalTravel
-        + randomScatterX
-        - perpPullX;
-    const targetY = camera.position.y
-        + dirY * directionalTravel
-        + randomScatterY
-        - perpPullY;
-
-    const maxX = profile.maxXBase + smartDir.confidence * profile.maxXBoost;
-    const maxY = profile.maxYBase + smartDir.confidence * profile.maxYBoost;
-    const randomX = THREE.MathUtils.clamp(targetX, -maxX, maxX);
-    const randomY = THREE.MathUtils.clamp(targetY, -maxY, maxY);
-    const randomZ = THREE.MathUtils.clamp(
-        profile.zBase + (Math.random() - 0.5) * profile.zJitter + smartDir.confidence * profile.zBoost,
-        profile.zMin,
-        profile.zMax
-    );
-
-    // Record the direction we actually committed to (from previous position to target,
-    // normalized) so the next switch can honor it. Fall back to (dirX, dirY) when the
-    // delta is tiny (e.g., clamped against the envelope on both axes).
-    const committedDX = randomX - camera.position.x;
-    const committedDY = randomY - camera.position.y;
-    const committedLen = Math.hypot(committedDX, committedDY);
-    if (committedLen > 1) {
-        lastSwitchDir.x = committedDX / committedLen;
-        lastSwitchDir.y = committedDY / committedLen;
-    } else {
-        lastSwitchDir.x = dirX;
-        lastSwitchDir.y = dirY;
-    }
+    // No clamps — the toroidal field follows the camera, so any target is valid.
+    const targetX = camera.position.x + dirX * directionalTravel + randomScatterX;
+    const targetY = camera.position.y + dirY * directionalTravel + randomScatterY;
+    const targetZ = profile.zBase + (Math.random() - 0.5) * profile.zJitter + smartDir.confidence * profile.zBoost;
 
     const rotationBias = smartDir.confidence * (Math.PI / profile.rotationBiasDiv);
     const randomRotationX = (Math.random() - 0.5) * Math.PI / profile.rotationRandDiv - dirY * rotationBias;
@@ -1464,7 +1466,6 @@ function switchCameraPosition() {
     const originalFOV = camera.fov;
 
     triggerWarpBurst();
-
     shockwaveTime = 1.0;
 
     const tl = gsap.timeline();
@@ -1477,9 +1478,9 @@ function switchCameraPosition() {
     });
 
     tl.to(camera.position, {
-        x: randomX,
-        y: randomY,
-        z: randomZ,
+        x: targetX,
+        y: targetY,
+        z: targetZ,
         duration: profile.moveDuration,
         ease: profile.moveEase,
         onUpdate: () => {
@@ -1499,18 +1500,13 @@ function switchCameraPosition() {
         }
     }, 0);
 
+    // Roll each shell by a different amount so the parallax holds during
+    // the switch — near rolls most, far rolls least.
     const rollZ = (Math.random() - 0.5) * profile.starRollRange;
-    tl.to(starFieldWhite.rotation, {
-        z: starFieldWhite.rotation.z + rollZ,
-        duration: profile.starRollDuration,
-        ease: profile.starRollEase
-    }, 0);
-    // Keep the hero layer in lockstep on roll so the depth parallax holds.
-    tl.to(heroField.rotation, {
-        z: heroField.rotation.z + rollZ * 0.85,
-        duration: profile.starRollDuration,
-        ease: profile.starRollEase
-    }, 0);
+    tl.to(nearShell.points.rotation, { z: nearShell.points.rotation.z + rollZ * 1.15, duration: profile.starRollDuration, ease: profile.starRollEase }, 0);
+    tl.to(mainShell.points.rotation, { z: mainShell.points.rotation.z + rollZ,        duration: profile.starRollDuration, ease: profile.starRollEase }, 0);
+    tl.to(farShell.points.rotation,  { z: farShell.points.rotation.z  + rollZ * 0.55, duration: profile.starRollDuration, ease: profile.starRollEase }, 0);
+    tl.to(heroShell.points.rotation, { z: heroShell.points.rotation.z + rollZ * 0.85, duration: profile.starRollDuration, ease: profile.starRollEase }, 0);
 
     tl.to(camera, {
         fov: originalFOV,
@@ -1538,12 +1534,15 @@ document.addEventListener('keydown', (event) => {
 
     function render() {
         if (!starfieldFrozen) {
-            applyWarpSpeed();
+            // Order matters: animateStars rotates the shell points objects, so
+            // the wrap (inside updateShells) must run after — it transforms
+            // the camera position into each shell's current local space.
             applyMouseAcceleration();
+            animateStars();
+            updateShells();
             applyShockwaveEffect();
             applyTwinkleEffect();
             applyHyperModeStarGlow();
-            animateStars();
         }
 
         renderer.render(scene, camera);
