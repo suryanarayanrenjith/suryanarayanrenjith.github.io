@@ -485,10 +485,6 @@ document.addEventListener("DOMContentLoaded", () => {
             const finish = () => {
                 if (finished) return;
                 finished = true;
-                // Strip the inline transform/filter so downstream code (e.g.
-                // skeleton injection) renders into a clean container. Opacity
-                // is preserved at the tween's final value so content stays
-                // hidden until transitionIn takes over.
                 gsap.set(content, {
                     clearProps: 'transform,rotationX,rotationY,rotationZ,rotate,scale,scaleX,scaleY,x,y,filter'
                 });
@@ -564,7 +560,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         gsap.killTweensOf(content);
 
-        // Starting state — opposite side of the exit direction.
         gsap.set(content, {
             opacity: 0,
             scale: hyper ? 0.6 : 0.9,
@@ -599,8 +594,6 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        // Three overlapping tweens so translate, scale and blur resolve on
-        // different curves — reads as motion with depth.
         const tl = gsap.timeline({
             defaults: { force3D: true, overwrite: 'auto' },
             onComplete: cleanup,
@@ -853,9 +846,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (isWebGLAvailable()) {
     const canvas = document.getElementById('animationCanvas');
     const scene = new THREE.Scene();
-    // Far-plane bumped to 4500 to comfortably cover the far shell's bound
-    // (2400) plus camera offset and rotation slack. Without this, far-shell
-    // stars would clip in and out at the edge of perspective.
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 4500);
     const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -864,17 +854,11 @@ document.addEventListener("DOMContentLoaded", () => {
     let starfieldFrozen = !!(window.__starfieldFreezeState && window.__starfieldFreezeState.frozen === true);
     let hyperGlowLevel = isHyperModeEnabled() ? 1 : 0;
 
-    // Anchor the point light to the camera. PointsMaterial doesn't react to
-    // lights, but the camera now travels arbitrarily far in the toroidal
-    // field, and a world-fixed light would be left behind. Parenting to the
-    // camera also makes mouse-driven light offsets read as view-relative.
     const pointLight = new THREE.PointLight(0xffffff, 1, 1000);
     pointLight.position.set(0, 0, 500);
     scene.add(camera);
     camera.add(pointLight);
 
-    // Halton quasi-random sequence — far more uniform 3D coverage than
-    // uncorrelated Math.random(), which leaves visible clumps and voids.
     function halton(index, base) {
         let result = 0;
         let f = 1 / base;
@@ -887,18 +871,26 @@ document.addEventListener("DOMContentLoaded", () => {
         return result;
     }
 
-    const starDensity = 0.0046;
+    const starDensity = 0.0072;
+    const FOV_DEG = 75;
+    const BOUNDS_MARGIN = 1.18;
 
-    // Three concentric shells (plus a bright hero layer) wrap independently
-    // around the camera via signed-modulo torus mapping. The field has no
-    // edge — the camera can travel arbitrarily far and the shells follow.
-    // Different bounds + sprite sizes give genuine motion parallax: near
-    // sweeps fast, far barely moves.
+    function computeShellBounds(depthZ) {
+        const aspect = Math.max(1, window.innerWidth / Math.max(1, window.innerHeight));
+        const tanV = Math.tan(THREE.MathUtils.degToRad(FOV_DEG / 2));
+        const tanH = tanV * aspect;
+        return {
+            x: depthZ * tanH * BOUNDS_MARGIN,
+            y: depthZ * tanV * BOUNDS_MARGIN,
+            z: depthZ
+        };
+    }
+
     const SHELL_PROFILES = {
-        near: { bounds: { x: 450,  y: 380,  z: 700  }, countShare: 0.25, baseSize: 2.0, twinkleAmp: 1.4, hyperBoost: 1.0, haltonOffset: 113, bright: 0.78 },
-        main: { bounds: { x: 1100, y: 900,  z: 1300 }, countShare: 0.55, baseSize: 3.6, twinkleAmp: 2.4, hyperBoost: 1.8, haltonOffset: 0,   bright: 1.00 },
-        far:  { bounds: { x: 2200, y: 1800, z: 2400 }, countShare: 0.20, baseSize: 1.6, twinkleAmp: 0.6, hyperBoost: 0.8, haltonOffset: 947, bright: 0.62 },
-        hero: { bounds: { x: 1540, y: 1260, z: 1820 }, countShare: 0,    baseSize: 13,  twinkleAmp: 0,   hyperBoost: 4.0, haltonOffset: 73,  bright: 1.00, fixedCount: 60 }
+        near: { depthZ: 700,  countShare: 0.25, baseSize: 2.0, twinkleAmp: 1.4, hyperBoost: 1.0, haltonOffset: 113, bright: 0.78 },
+        main: { depthZ: 1300, countShare: 0.55, baseSize: 3.6, twinkleAmp: 2.4, hyperBoost: 1.8, haltonOffset: 0,   bright: 1.00 },
+        far:  { depthZ: 2400, countShare: 0.20, baseSize: 1.6, twinkleAmp: 0.6, hyperBoost: 0.8, haltonOffset: 947, bright: 0.62 },
+        hero: { depthZ: 1900, countShare: 0,    baseSize: 13,  twinkleAmp: 0,   hyperBoost: 4.0, haltonOffset: 73,  bright: 1.00, fixedCount: 60 }
     };
 
     function computeShellCounts() {
@@ -914,11 +906,9 @@ document.addEventListener("DOMContentLoaded", () => {
     function fillShellVertices(shell) {
         const v = shell.vertices;
         const s = shell.speeds;
-        const bx = shell.profile.bounds.x;
-        const by = shell.profile.bounds.y;
-        const bz = shell.profile.bounds.z;
-        // Random per-call offset so the pattern isn't identical across
-        // resizes, while each axis still gets low-discrepancy coverage.
+        const bx = shell.bounds.x;
+        const by = shell.bounds.y;
+        const bz = shell.bounds.z;
         const baseOffset = Math.floor(Math.random() * 4096) + shell.profile.haltonOffset;
         for (let n = 0; n < shell.count; n++) {
             const i = n * 3;
@@ -946,6 +936,7 @@ document.addEventListener("DOMContentLoaded", () => {
             name,
             profile,
             count,
+            bounds: computeShellBounds(profile.depthZ),
             geometry: new THREE.BufferGeometry(),
             vertices: new Float32Array(count * 3),
             speeds: new Float32Array(count)
@@ -971,6 +962,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function regenerateShell(shell) {
         const counts = computeShellCounts();
         const newCount = counts[shell.name];
+        shell.bounds = computeShellBounds(shell.profile.depthZ);
         if (newCount !== shell.count) {
             shell.count = newCount;
             shell.vertices = new Float32Array(newCount * 3);
@@ -1014,8 +1006,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let resizeTimeout = null;
     window.addEventListener('resize', () => {
-        // Update renderer/camera immediately so the canvas never stretches,
-        // but debounce the expensive shell buffer reallocation.
         renderer.setSize(window.innerWidth, window.innerHeight);
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
@@ -1056,22 +1046,15 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Camera-anchored toroidal wrap. For each star, compute its position
-    // relative to the camera (in shell-local space, since each shell's
-    // points object has its own slowly-accumulating rotation), then signed-
-    // modulo into [-bound, +bound] on each axis. The modulo formula is
-    // robust at any speed — handles huge GSAP-driven jumps and warp bursts
-    // that would skip past simple if-checks. When a star wraps on one axis,
-    // its other two axes get a tiny jitter to dissolve any tiling pattern.
     const _cameraLocal = new THREE.Vector3();
     function wrapShellAroundCamera(shell) {
         _cameraLocal.copy(camera.position);
         shell.points.updateMatrixWorld();
         shell.points.worldToLocal(_cameraLocal);
         const v = shell.vertices;
-        const bx = shell.profile.bounds.x;
-        const by = shell.profile.bounds.y;
-        const bz = shell.profile.bounds.z;
+        const bx = shell.bounds.x;
+        const by = shell.bounds.y;
+        const bz = shell.bounds.z;
         const spanX = bx * 2;
         const spanY = by * 2;
         const spanZ = bz * 2;
@@ -1130,9 +1113,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function applyShockwaveEffect() {
         if (shockwaveTime <= 0) return;
-        // Re-anchor the shockwave to the camera's local position so the wave
-        // emanates from the viewer rather than from world origin (which the
-        // camera can now be far from in the infinite field).
         _cameraLocal.copy(camera.position);
         mainShell.points.updateMatrixWorld();
         mainShell.points.worldToLocal(_cameraLocal);
@@ -1181,8 +1161,6 @@ document.addEventListener("DOMContentLoaded", () => {
             );
         }
 
-        // Hero stars pulse on a slower, deeper curve — draws the eye without
-        // competing with the field's high-frequency twinkle.
         const heroPulse = Math.sin(time * 0.9) * 0.5 + 0.5;
         const heroFlicker = Math.sin(time * 3.1 + 1.7) * 0.15;
         heroShell.material.size = 11 + heroPulse * 4 + heroFlicker + burstBoost * 1.5;
@@ -1213,10 +1191,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const driftX = Math.sin(time * 0.3) * 0.001;
         const driftY = Math.cos(time * 0.25) * 0.001;
 
-        // Each shell drifts at a slightly different rate — adds rotational
-        // parallax on top of the wrap-radius parallax. Near drifts fastest,
-        // far slowest. (No more position.z bob — it would desync the wrap
-        // anchor for negligible visual gain.)
         nearShell.points.rotation.x += 0.00075 + driftX * 1.4;
         nearShell.points.rotation.y += 0.00105 + driftY * 1.4;
 
@@ -1365,10 +1339,6 @@ document.addEventListener("DOMContentLoaded", () => {
         return { x: bx, y: by, confidence };
     }
 
-// Aesthetic orbital handedness — flips occasionally so successive sweeps
-// curve gently in alternating directions instead of always heading straight
-// toward the densest patch. Pure flavor; with the toroidal field there is
-// no boundary to defend against.
 let orbitalHandedness = Math.random() < 0.5 ? 1 : -1;
 
 function switchCameraPosition() {
@@ -1437,11 +1407,6 @@ function switchCameraPosition() {
 
     const smartDir = getDensityAwareVelocityDirection();
 
-    // Aesthetic orbital bias: rotate the proposed direction by a small angle
-    // with a randomly-flipping handedness so successive switches sweep with
-    // gentle variety. With the toroidal field there is no boundary to defend
-    // against — this is purely flavor, not the perpendicular-pull defense
-    // the old code used.
     const biasRad = THREE.MathUtils.degToRad(profile.orbitalBiasDeg) * orbitalHandedness;
     const cosB = Math.cos(biasRad);
     const sinB = Math.sin(biasRad);
@@ -1500,8 +1465,6 @@ function switchCameraPosition() {
         }
     }, 0);
 
-    // Roll each shell by a different amount so the parallax holds during
-    // the switch — near rolls most, far rolls least.
     const rollZ = (Math.random() - 0.5) * profile.starRollRange;
     tl.to(nearShell.points.rotation, { z: nearShell.points.rotation.z + rollZ * 1.15, duration: profile.starRollDuration, ease: profile.starRollEase }, 0);
     tl.to(mainShell.points.rotation, { z: mainShell.points.rotation.z + rollZ,        duration: profile.starRollDuration, ease: profile.starRollEase }, 0);
@@ -1534,9 +1497,6 @@ document.addEventListener('keydown', (event) => {
 
     function render() {
         if (!starfieldFrozen) {
-            // Order matters: animateStars rotates the shell points objects, so
-            // the wrap (inside updateShells) must run after — it transforms
-            // the camera position into each shell's current local space.
             applyMouseAcceleration();
             animateStars();
             updateShells();
