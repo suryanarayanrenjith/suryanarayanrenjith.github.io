@@ -97,6 +97,22 @@ const EMOTIONAL_KEYWORDS = {
 let disposableModel = null;
 const disposableCheckCache = new Map();
 
+function supportsWebGL() {
+    try {
+        const canvas = document.createElement("canvas");
+        const gl = canvas.getContext("webgl2")
+            || canvas.getContext("webgl")
+            || canvas.getContext("experimental-webgl");
+        if (!gl || typeof gl.getParameter !== "function") return false;
+        const version = gl.getParameter(gl.VERSION);
+        const loseExt = gl.getExtension("WEBGL_lose_context");
+        if (loseExt) loseExt.loseContext();
+        return Boolean(version);
+    } catch (error) {
+        return false;
+    }
+}
+
 function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
 }
@@ -602,6 +618,17 @@ class Robot3D {
         this.winkEye = null;
         this.eyelidTarget = 1;
         this.eyelid = 1;
+        this.openMouthTarget = 0;
+        this.openMouthStrength = 0;
+        this.currentPupilScale = 1;
+        this.cheekOpacity = 0;
+        this.currentMouthProfile = [0.03, -0.01, -0.03, -0.01, 0.03];
+        this.mouthThickness = 0.026;
+        this.browState = { visible: 0, leftRot: 0, rightRot: 0, leftY: 0, rightY: 0, leftScale: 1, rightScale: 1 };
+        this.browTarget = { visible: 0, leftRot: 0, rightRot: 0, leftY: 0, rightY: 0, leftScale: 1, rightScale: 1 };
+        this.fallbackMode = false;
+        this.godRayAngle = -22;
+        this.godRayIntensity = 2.5;
         this.speechHistory = new Map();
         this.interactionStats = {
             keystrokes: 0,
@@ -724,15 +751,31 @@ class Robot3D {
     }
 
     setupScene() {
+        if (!supportsWebGL()) {
+            this.fallbackMode = true;
+            this.setupFallbackVisual();
+            window.addEventListener("resize", () => this.onResize(), { passive: true });
+            window.addEventListener("pointermove", (event) => this.onPointerMove(event), { passive: true });
+            return;
+        }
+
         const rect = this.container.getBoundingClientRect();
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(35, rect.width / rect.height, 0.1, 100);
         this.camera.position.set(0, 0.04, 8.35);
-        this.renderer = new THREE.WebGLRenderer({
-            canvas: this.canvas,
-            alpha: true,
-            antialias: true
-        });
+        try {
+            this.renderer = new THREE.WebGLRenderer({
+                canvas: this.canvas,
+                alpha: true,
+                antialias: true
+            });
+        } catch (error) {
+            this.fallbackMode = true;
+            this.setupFallbackVisual();
+            window.addEventListener("resize", () => this.onResize(), { passive: true });
+            window.addEventListener("pointermove", (event) => this.onPointerMove(event), { passive: true });
+            return;
+        }
         this.renderer.setSize(rect.width, rect.height);
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         this.renderer.outputEncoding = THREE.sRGBEncoding;
@@ -745,6 +788,7 @@ class Robot3D {
     }
 
     onResize() {
+        if (this.fallbackMode || !this.renderer || !this.camera) return;
         const rect = this.container.getBoundingClientRect();
         this.camera.aspect = rect.width / rect.height;
         this.camera.updateProjectionMatrix();
@@ -761,7 +805,223 @@ class Robot3D {
         this.pointerTarget.y = clamp(localY * 0.42 + winY * 0.08, -0.55, 0.55);
     }
 
+    setupFallbackVisual() {
+        if (this.canvas) this.canvas.style.display = "none";
+        const highlight = document.getElementById("robotHighlight");
+        if (highlight) highlight.style.display = "none";
+
+        this.colorTargets = {
+            accent: new THREE.Color(0xffffff),
+            glow: new THREE.Color(0xc7c7c7),
+            mouth: new THREE.Color(0xffffff)
+        };
+
+        const SVG_NS = "http://www.w3.org/2000/svg";
+        const svg = document.createElementNS(SVG_NS, "svg");
+        svg.setAttribute("viewBox", "0 0 400 400");
+        svg.setAttribute("class", "robot-svg");
+        svg.setAttribute("role", "img");
+        svg.setAttribute("aria-label", "Robot assistant");
+        svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+
+        svg.innerHTML = `
+            <defs>
+                <radialGradient id="r2-aura-grad" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="rgba(255,255,255,0.22)" />
+                    <stop offset="55%" stop-color="rgba(255,255,255,0.06)" />
+                    <stop offset="100%" stop-color="rgba(255,255,255,0)" />
+                </radialGradient>
+                <radialGradient id="r2-head-grad" cx="42%" cy="32%" r="78%">
+                    <stop offset="0%" stop-color="#3a3d46" />
+                    <stop offset="55%" stop-color="#15171c" />
+                    <stop offset="100%" stop-color="#06070a" />
+                </radialGradient>
+                <radialGradient id="r2-visor-grad" cx="38%" cy="30%" r="80%">
+                    <stop offset="0%" stop-color="rgba(140,156,184,0.42)" />
+                    <stop offset="55%" stop-color="rgba(14,18,28,0.85)" />
+                    <stop offset="100%" stop-color="rgba(4,6,10,0.95)" />
+                </radialGradient>
+                <radialGradient id="r2-screen-grad" cx="50%" cy="50%" r="60%">
+                    <stop offset="0%" stop-color="rgba(20,24,39,0.55)" />
+                    <stop offset="100%" stop-color="rgba(8,10,18,0.92)" />
+                </radialGradient>
+                <radialGradient id="r2-ball-grad" cx="35%" cy="30%" r="70%">
+                    <stop offset="0%" stop-color="#ffffff" />
+                    <stop offset="60%" stop-color="#f0f0f0" />
+                    <stop offset="100%" stop-color="#cfcfcf" />
+                </radialGradient>
+            </defs>
+            <ellipse class="r2-aura" cx="200" cy="208" rx="170" ry="172" fill="url(#r2-aura-grad)" opacity="0.5" />
+            <ellipse class="r2-shadow" cx="200" cy="376" rx="78" ry="6" fill="rgba(0,0,0,0.55)" />
+            <g class="r2-head-group">
+                <g class="r2-antenna">
+                    <line x1="200" y1="80" x2="200" y2="50" stroke="#bfc3cf" stroke-width="3.4" stroke-linecap="round" />
+                    <circle cx="200" cy="80" r="6" fill="#1a1d24" />
+                    <circle class="r2-antenna-glow" cx="200" cy="42" r="18" fill="#ffffff" opacity="0.18" />
+                    <circle class="r2-antenna-ball" cx="200" cy="42" r="11" fill="url(#r2-ball-grad)" />
+                </g>
+                <ellipse class="r2-head-shell" cx="200" cy="208" rx="130" ry="138" fill="url(#r2-head-grad)" stroke="rgba(255,255,255,0.05)" stroke-width="1.4" />
+                <ellipse class="r2-cheek r2-cheek-left" cx="135" cy="248" rx="18" ry="10" fill="#ffffff" opacity="0" />
+                <ellipse class="r2-cheek r2-cheek-right" cx="265" cy="248" rx="18" ry="10" fill="#ffffff" opacity="0" />
+                <ellipse class="r2-visor-frame" cx="200" cy="200" rx="106" ry="58" fill="url(#r2-visor-grad)" stroke="#ffffff" stroke-width="2.4" stroke-opacity="0.9" />
+                <ellipse class="r2-visor-screen" cx="200" cy="200" rx="98" ry="52" fill="url(#r2-screen-grad)" />
+                <ellipse class="r2-visor-shine" cx="170" cy="180" rx="44" ry="14" fill="rgba(255,255,255,0.08)" />
+                <g class="r2-eye r2-eye-left" transform="translate(166 200)">
+                    <ellipse cx="0" cy="0" rx="22" ry="22" fill="#1c1f27" />
+                    <g class="r2-pupil-group">
+                        <ellipse cx="0" cy="0" rx="11" ry="11" fill="#020202" />
+                        <ellipse cx="4" cy="-4" rx="3.4" ry="2.4" fill="#ffffff" opacity="0.95" />
+                        <ellipse cx="-2.8" cy="2.8" rx="1.2" ry="1" fill="#ffffff" opacity="0.85" />
+                    </g>
+                </g>
+                <g class="r2-eye r2-eye-right" transform="translate(234 200)">
+                    <ellipse cx="0" cy="0" rx="22" ry="22" fill="#1c1f27" />
+                    <g class="r2-pupil-group">
+                        <ellipse cx="0" cy="0" rx="11" ry="11" fill="#020202" />
+                        <ellipse cx="4" cy="-4" rx="3.4" ry="2.4" fill="#ffffff" opacity="0.95" />
+                        <ellipse cx="-2.8" cy="2.8" rx="1.2" ry="1" fill="#ffffff" opacity="0.85" />
+                    </g>
+                </g>
+                <path class="r2-brow r2-brow-left" d="M 144 168 Q 164 162, 188 168" stroke="#ffffff" stroke-width="3.6" fill="none" stroke-linecap="round" opacity="0" />
+                <path class="r2-brow r2-brow-right" d="M 212 168 Q 236 162, 256 168" stroke="#ffffff" stroke-width="3.6" fill="none" stroke-linecap="round" opacity="0" />
+                <path class="r2-mouth" d="M 148 270 C 174 274, 226 274, 252 270" stroke="#ffffff" stroke-width="3.4" fill="none" stroke-linecap="round" />
+                <ellipse class="r2-open-mouth" cx="200" cy="276" rx="0" ry="0" fill="#080a14" stroke="#ffffff" stroke-width="2" opacity="0" />
+            </g>
+        `;
+
+        this.container.appendChild(svg);
+        this.fallbackSvg = svg;
+        this.svgRefs = {
+            headGroup: svg.querySelector(".r2-head-group"),
+            eyeLeft: svg.querySelector(".r2-eye-left"),
+            eyeRight: svg.querySelector(".r2-eye-right"),
+            pupilLeft: svg.querySelector(".r2-eye-left .r2-pupil-group"),
+            pupilRight: svg.querySelector(".r2-eye-right .r2-pupil-group"),
+            browLeft: svg.querySelector(".r2-brow-left"),
+            browRight: svg.querySelector(".r2-brow-right"),
+            cheekLeft: svg.querySelector(".r2-cheek-left"),
+            cheekRight: svg.querySelector(".r2-cheek-right"),
+            mouth: svg.querySelector(".r2-mouth"),
+            openMouth: svg.querySelector(".r2-open-mouth"),
+            antennaBall: svg.querySelector(".r2-antenna-ball"),
+            antennaGlow: svg.querySelector(".r2-antenna-glow"),
+            aura: svg.querySelector(".r2-aura"),
+            visorFrame: svg.querySelector(".r2-visor-frame")
+        };
+    }
+
+    svgSmoothPath(xs, ys) {
+        if (xs.length < 2) return "";
+        const tension = 0.5;
+        let d = `M ${xs[0].toFixed(2)} ${ys[0].toFixed(2)}`;
+        for (let i = 0; i < xs.length - 1; i += 1) {
+            const p0x = i > 0 ? xs[i - 1] : xs[i];
+            const p0y = i > 0 ? ys[i - 1] : ys[i];
+            const p1x = xs[i];
+            const p1y = ys[i];
+            const p2x = xs[i + 1];
+            const p2y = ys[i + 1];
+            const p3x = i + 2 < xs.length ? xs[i + 2] : xs[i + 1];
+            const p3y = i + 2 < ys.length ? ys[i + 2] : ys[i + 1];
+            const cp1x = p1x + (p2x - p0x) * tension / 6;
+            const cp1y = p1y + (p2y - p0y) * tension / 6;
+            const cp2x = p2x - (p3x - p1x) * tension / 6;
+            const cp2y = p2y - (p3y - p1y) * tension / 6;
+            d += ` C ${cp1x.toFixed(2)} ${cp1y.toFixed(2)}, ${cp2x.toFixed(2)} ${cp2y.toFixed(2)}, ${p2x.toFixed(2)} ${p2y.toFixed(2)}`;
+        }
+        return d;
+    }
+
+    renderFallback(time, kin) {
+        const refs = this.svgRefs;
+        if (!refs) return;
+
+        const tx = this.look.x * 18 + kin.shake * 80;
+        const ty = -this.look.y * 12 + kin.hover * 220 + kin.bounce * 120 - kin.nod * 60;
+        const rotZ = this.look.x * -3 + kin.shake * 6 + kin.thinkTilt * 14;
+        refs.headGroup.setAttribute(
+            "transform",
+            `translate(${tx.toFixed(2)} ${ty.toFixed(2)}) rotate(${rotZ.toFixed(2)} 200 220)`
+        );
+
+        const lb = Math.max(0.04, kin.leftBlink);
+        const rb = Math.max(0.04, kin.rightBlink);
+        refs.eyeLeft.setAttribute("transform", `translate(166 200) scale(1 ${lb.toFixed(3)})`);
+        refs.eyeRight.setAttribute("transform", `translate(234 200) scale(1 ${rb.toFixed(3)})`);
+
+        const pupilTX = kin.pupilX * 110;
+        const pupilTY = -kin.pupilY * 110;
+        const ps = this.currentPupilScale;
+        const pupilTransform = `translate(${pupilTX.toFixed(2)} ${pupilTY.toFixed(2)}) scale(${ps.toFixed(3)})`;
+        refs.pupilLeft.setAttribute("transform", pupilTransform);
+        refs.pupilRight.setAttribute("transform", pupilTransform);
+
+        const ballPulse = 0.92 + this.antennaPulse * 0.32 + Math.sin(time * 4.5) * 0.06;
+        refs.antennaBall.setAttribute(
+            "transform",
+            `translate(200 42) scale(${ballPulse.toFixed(3)}) translate(-200 -42)`
+        );
+        if (refs.antennaGlow) {
+            const glowPulse = 1 + this.antennaPulse * 0.45 + Math.sin(time * 3.2) * 0.08;
+            refs.antennaGlow.setAttribute(
+                "transform",
+                `translate(200 42) scale(${glowPulse.toFixed(3)}) translate(-200 -42)`
+            );
+            refs.antennaGlow.setAttribute("opacity", clamp(0.18 + this.antennaPulse * 0.18, 0, 0.6).toFixed(3));
+        }
+
+        const cheekOpacity = clamp(this.cheekOpacity * 1.3, 0, 1);
+        refs.cheekLeft.setAttribute("opacity", cheekOpacity.toFixed(3));
+        refs.cheekRight.setAttribute("opacity", cheekOpacity.toFixed(3));
+
+        const auraOpacity = clamp(0.45 + this.antennaPulse * 0.18 + Math.sin(time * 1.8) * 0.05, 0, 1);
+        refs.aura.setAttribute("opacity", auraOpacity.toFixed(3));
+
+        const profile = this.currentMouthProfile || [0.03, -0.01, -0.03, -0.01, 0.03];
+        const xs = [148, 174, 200, 226, 252];
+        const ys = profile.map((v) => 270 - v * 130);
+        refs.mouth.setAttribute("d", this.svgSmoothPath(xs, ys));
+        refs.mouth.setAttribute("stroke-width", ((this.mouthThickness || 0.026) * 130).toFixed(2));
+
+        const openR = (this.openMouthStrength || 0) * 14;
+        const oscillate = this.mood === "surprised" ? 1 + Math.sin(time * 3) * 0.04 : 1;
+        const openSize = openR * oscillate;
+        refs.openMouth.setAttribute("rx", openSize.toFixed(2));
+        refs.openMouth.setAttribute("ry", openSize.toFixed(2));
+        refs.openMouth.setAttribute("opacity", openSize > 0.5 ? "0.85" : "0");
+        refs.mouth.setAttribute("opacity", this.openMouthStrength < 0.7 ? "1" : "0");
+
+        const b = this.browState;
+        const browVisible = clamp(b.visible, 0, 1);
+        refs.browLeft.setAttribute("opacity", browVisible.toFixed(3));
+        refs.browRight.setAttribute("opacity", browVisible.toFixed(3));
+        const browLY = -b.leftY * 80;
+        const browRY = -b.rightY * 80;
+        const browLRot = b.leftRot * -45;
+        const browRRot = b.rightRot * -45;
+        refs.browLeft.setAttribute(
+            "transform",
+            `translate(0 ${browLY.toFixed(2)}) rotate(${browLRot.toFixed(2)} 166 168)`
+        );
+        refs.browRight.setAttribute(
+            "transform",
+            `translate(0 ${browRY.toFixed(2)}) rotate(${browRRot.toFixed(2)} 234 168)`
+        );
+
+        if (this.colorTargets && refs.visorFrame) {
+            const accent = this.colorTargets.accent;
+            const r = Math.round(accent.r * 255);
+            const g = Math.round(accent.g * 255);
+            const bl = Math.round(accent.b * 255);
+            refs.visorFrame.setAttribute("stroke", `rgb(${r},${g},${bl})`);
+            refs.mouth.setAttribute("stroke", `rgb(${r},${g},${bl})`);
+            refs.browLeft.setAttribute("stroke", `rgb(${r},${g},${bl})`);
+            refs.browRight.setAttribute("stroke", `rgb(${r},${g},${bl})`);
+        }
+    }
+
     createRobot() {
+        if (this.fallbackMode) return;
         this.robotRig = new THREE.Group();
         this.robotGroup = new THREE.Group();
         this.headGroup = new THREE.Group();
@@ -1031,6 +1291,7 @@ class Robot3D {
     }
 
     setupLighting() {
+        if (this.fallbackMode) return;
         this.renderer.toneMappingExposure = 1.22;
 
         this.godRayAngle = -22;
@@ -2182,6 +2443,7 @@ class Robot3D {
             playful: 0.03
         };
         this.mouthThickness = thicknesses[mood] || 0.026;
+        this.currentMouthProfile = profiles[mood] || profiles.idle;
 
         if (this.mouth) {
             this.mouth.geometry.dispose();
@@ -2553,52 +2815,19 @@ class Robot3D {
         const nod = this.nodImpulse > 0 ? Math.sin((1 - this.nodImpulse) * Math.PI * 2) * this.nodImpulse * 0.12 : 0;
         const thinkTilt = this.thinkingStrength > 0 ? Math.sin(time * 1.6) * this.thinkingStrength * 0.08 : 0;
 
-        this.robotGroup.rotation.y = 0;
-        this.robotGroup.rotation.x = 0;
-        this.robotGroup.rotation.z = 0;
-
-        this.headGroup.position.x = this.headBaseX + this.look.x * 0.12;
-        this.headGroup.position.y = this.headBaseY + hover + bounce + this.look.y * 0.045 - nod * 0.05;
-        this.headGroup.position.z = 0.08 + Math.abs(this.look.x) * 0.03;
-        this.headGroup.rotation.y = this.look.x * 0.52 + thinkTilt;
-        this.headGroup.rotation.x = -this.look.y * 0.35 + nod * 0.3;
-        this.headGroup.rotation.z = -this.look.x * 0.07 + shake * 0.18 + thinkTilt * 0.3;
-        this.headGroup.scale.setScalar(this.faceScale * breatheScale);
-
         const pupilX = clamp(this.look.x * 0.075, -0.055, 0.055);
         const pupilY = clamp(this.look.y * 0.075, -0.045, 0.045);
-        this.leftPupil.position.x = pupilX;
-        this.leftPupil.position.y = pupilY;
-        this.rightPupil.position.x = pupilX;
-        this.rightPupil.position.y = pupilY;
-
-        const pupilScale = this.mood === "surprised" || this.mood === "impressed"
+        const pupilTargetScale = this.mood === "surprised" || this.mood === "impressed"
             ? 1.2
             : this.mood === "suspicious" || this.mood === "focused"
                 ? 0.8
                 : this.mood === "sleepy" ? 0.85 : 1;
-        const currentPupilScale = this.leftPupil.userData.currentScale ?? 1;
-        const nextPupilScale = currentPupilScale + (pupilScale - currentPupilScale) * 0.12;
-        this.leftPupil.userData.currentScale = nextPupilScale;
-        this.rightPupil.userData.currentScale = nextPupilScale;
-        this.leftPupil.scale.set(1.04 * nextPupilScale, 1 * nextPupilScale, 0.7);
-        this.rightPupil.scale.set(1.04 * nextPupilScale, 1 * nextPupilScale, 0.7);
+        this.currentPupilScale += (pupilTargetScale - this.currentPupilScale) * 0.12;
 
-        this.leftEyeGroup.scale.y = leftBlink;
-        this.rightEyeGroup.scale.y = rightBlink;
+        this.openMouthStrength += ((this.openMouthTarget || 0) - this.openMouthStrength) * 0.12;
+        this.cheekOpacity += (this.cheekTarget - this.cheekOpacity) * 0.08;
 
-        const highlightPulse = 0.95 + Math.sin(time * 2.5) * 0.05;
-        if (this.leftHighlight) {
-            this.leftHighlight.scale.setScalar(highlightPulse);
-            this.rightHighlight.scale.setScalar(highlightPulse);
-        }
-
-        if (this.leftCheek && this.rightCheek) {
-            this.leftCheek.material.opacity += (this.cheekTarget - this.leftCheek.material.opacity) * 0.08;
-            this.rightCheek.material.opacity += (this.cheekTarget - this.rightCheek.material.opacity) * 0.08;
-        }
-
-        if (this.leftEyebrow && this.rightEyebrow && this.browState && this.browTarget) {
+        if (this.browState && this.browTarget) {
             const b = this.browState;
             const t = this.browTarget;
             b.visible += (t.visible - b.visible) * 0.14;
@@ -2608,58 +2837,102 @@ class Robot3D {
             b.rightY += (t.rightY - b.rightY) * 0.15;
             b.leftScale += (t.leftScale - b.leftScale) * 0.15;
             b.rightScale += (t.rightScale - b.rightScale) * 0.15;
-
-            const visible = b.visible > 0.05;
-            this.leftEyebrow.visible = visible;
-            this.rightEyebrow.visible = visible;
-            this.leftEyebrow.rotation.z = b.leftRot;
-            this.rightEyebrow.rotation.z = b.rightRot;
-            this.leftEyebrow.position.set(-0.32, 0.36 + b.leftY, 1.04);
-            this.rightEyebrow.position.set(0.32, 0.36 + b.rightY, 1.04);
-            this.leftEyebrow.scale.set(b.leftScale, b.leftScale, 1);
-            this.rightEyebrow.scale.set(b.rightScale, b.rightScale, 1);
-            this.leftEyebrow.material.opacity = b.visible;
-            this.rightEyebrow.material.opacity = b.visible;
-            this.leftEyebrow.material.transparent = true;
-            this.rightEyebrow.material.transparent = true;
-            this.leftEyebrow.material.emissiveIntensity = 2.4 * b.visible;
-            this.rightEyebrow.material.emissiveIntensity = 2.4 * b.visible;
         }
 
-        if (this.openMouth) {
-            this.openMouthStrength += ((this.openMouthTarget || 0) - this.openMouthStrength) * 0.12;
-            if (this.openMouthStrength > 0.02) {
-                this.openMouth.visible = true;
-                const oscillate = this.mood === "surprised" ? 1 + Math.sin(time * 3) * 0.04 : 1;
-                this.openMouth.scale.setScalar(this.openMouthStrength * oscillate);
-                this.openMouth.material.opacity = 0.85;
-                this.openMouth.material.transparent = true;
-            } else {
-                this.openMouth.visible = false;
+        if (this.fallbackMode) {
+            this.renderFallback(time, {
+                leftBlink, rightBlink, hover, bounce, shake, nod, thinkTilt, pupilX, pupilY
+            });
+        } else {
+            this.robotGroup.rotation.y = 0;
+            this.robotGroup.rotation.x = 0;
+            this.robotGroup.rotation.z = 0;
+
+            this.headGroup.position.x = this.headBaseX + this.look.x * 0.12;
+            this.headGroup.position.y = this.headBaseY + hover + bounce + this.look.y * 0.045 - nod * 0.05;
+            this.headGroup.position.z = 0.08 + Math.abs(this.look.x) * 0.03;
+            this.headGroup.rotation.y = this.look.x * 0.52 + thinkTilt;
+            this.headGroup.rotation.x = -this.look.y * 0.35 + nod * 0.3;
+            this.headGroup.rotation.z = -this.look.x * 0.07 + shake * 0.18 + thinkTilt * 0.3;
+            this.headGroup.scale.setScalar(this.faceScale * breatheScale);
+
+            this.leftPupil.position.x = pupilX;
+            this.leftPupil.position.y = pupilY;
+            this.rightPupil.position.x = pupilX;
+            this.rightPupil.position.y = pupilY;
+
+            this.leftPupil.userData.currentScale = this.currentPupilScale;
+            this.rightPupil.userData.currentScale = this.currentPupilScale;
+            this.leftPupil.scale.set(1.04 * this.currentPupilScale, 1 * this.currentPupilScale, 0.7);
+            this.rightPupil.scale.set(1.04 * this.currentPupilScale, 1 * this.currentPupilScale, 0.7);
+
+            this.leftEyeGroup.scale.y = leftBlink;
+            this.rightEyeGroup.scale.y = rightBlink;
+
+            const highlightPulse = 0.95 + Math.sin(time * 2.5) * 0.05;
+            if (this.leftHighlight) {
+                this.leftHighlight.scale.setScalar(highlightPulse);
+                this.rightHighlight.scale.setScalar(highlightPulse);
             }
-            if (this.mouth) {
-                this.mouth.visible = this.openMouthStrength < 0.7;
+
+            if (this.leftCheek && this.rightCheek) {
+                this.leftCheek.material.opacity += (this.cheekTarget - this.leftCheek.material.opacity) * 0.08;
+                this.rightCheek.material.opacity += (this.cheekTarget - this.rightCheek.material.opacity) * 0.08;
             }
+
+            if (this.leftEyebrow && this.rightEyebrow && this.browState) {
+                const b = this.browState;
+                const visible = b.visible > 0.05;
+                this.leftEyebrow.visible = visible;
+                this.rightEyebrow.visible = visible;
+                this.leftEyebrow.rotation.z = b.leftRot;
+                this.rightEyebrow.rotation.z = b.rightRot;
+                this.leftEyebrow.position.set(-0.32, 0.36 + b.leftY, 1.04);
+                this.rightEyebrow.position.set(0.32, 0.36 + b.rightY, 1.04);
+                this.leftEyebrow.scale.set(b.leftScale, b.leftScale, 1);
+                this.rightEyebrow.scale.set(b.rightScale, b.rightScale, 1);
+                this.leftEyebrow.material.opacity = b.visible;
+                this.rightEyebrow.material.opacity = b.visible;
+                this.leftEyebrow.material.transparent = true;
+                this.rightEyebrow.material.transparent = true;
+                this.leftEyebrow.material.emissiveIntensity = 2.4 * b.visible;
+                this.rightEyebrow.material.emissiveIntensity = 2.4 * b.visible;
+            }
+
+            if (this.openMouth) {
+                if (this.openMouthStrength > 0.02) {
+                    this.openMouth.visible = true;
+                    const oscillate = this.mood === "surprised" ? 1 + Math.sin(time * 3) * 0.04 : 1;
+                    this.openMouth.scale.setScalar(this.openMouthStrength * oscillate);
+                    this.openMouth.material.opacity = 0.85;
+                    this.openMouth.material.transparent = true;
+                } else {
+                    this.openMouth.visible = false;
+                }
+                if (this.mouth) {
+                    this.mouth.visible = this.openMouthStrength < 0.7;
+                }
+            }
+
+            const pulse = 0.92 + this.antennaPulse * 0.32 + Math.sin(time * 4.5) * 0.06;
+            this.antennaBall.scale.setScalar(pulse);
+
+            this.materials.accent.color.lerp(this.colorTargets.accent, 0.08);
+            this.materials.accent.emissive.lerp(this.colorTargets.accent, 0.08);
+            this.materials.mouth.color.lerp(this.colorTargets.mouth, 0.08);
+            this.materials.mouth.emissive.lerp(this.colorTargets.mouth, 0.08);
+
+            if (this.leftCheek && this.rightCheek) {
+                this.leftCheek.material.color.lerp(this.colorTargets.accent, 0.08);
+                this.rightCheek.material.color.lerp(this.colorTargets.accent, 0.08);
+            }
+
+            this.headAura.material.color.lerp(this.colorTargets.glow, 0.08);
+            this.headAura.material.opacity = 0.12 + this.antennaPulse * 0.06 + Math.sin(time * 1.8) * 0.04;
+            this.headAura.scale.setScalar(1.18 + Math.sin(time * 1.5) * 0.02);
+
+            this.renderer.render(this.scene, this.camera);
         }
-
-        const pulse = 0.92 + this.antennaPulse * 0.32 + Math.sin(time * 4.5) * 0.06;
-        this.antennaBall.scale.setScalar(pulse);
-
-        this.materials.accent.color.lerp(this.colorTargets.accent, 0.08);
-        this.materials.accent.emissive.lerp(this.colorTargets.accent, 0.08);
-        this.materials.mouth.color.lerp(this.colorTargets.mouth, 0.08);
-        this.materials.mouth.emissive.lerp(this.colorTargets.mouth, 0.08);
-
-        if (this.leftCheek && this.rightCheek) {
-            this.leftCheek.material.color.lerp(this.colorTargets.accent, 0.08);
-            this.rightCheek.material.color.lerp(this.colorTargets.accent, 0.08);
-        }
-
-        this.headAura.material.color.lerp(this.colorTargets.glow, 0.08);
-        this.headAura.material.opacity = 0.12 + this.antennaPulse * 0.06 + Math.sin(time * 1.8) * 0.04;
-        this.headAura.scale.setScalar(1.18 + Math.sin(time * 1.5) * 0.02);
-
-        this.renderer.render(this.scene, this.camera);
 
         this.drawGodRays(ms);
     }

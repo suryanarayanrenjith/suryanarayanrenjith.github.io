@@ -190,10 +190,29 @@ function initFS() {
   _mkfile(HOME+'/projects','#!/usr/bin/env surya-shell\nsection projects\n', { executable:true });
   _mkfile(HOME+'/resume','#!/usr/bin/env surya-shell\nsection resume\n', { executable:true });
 }
-fetch('https://surya-api.vercel.app/api/fileLinks')
-  .then(function (r) { return r.json(); })
-  .then(function (d) { fileLinks = d; })
-  .catch(function () {});
+var FILE_LINKS_URL = 'https://surya-api.vercel.app/api/fileLinks';
+var fileLinksFetch = null;
+function fetchFileLinks() {
+  return fetch(FILE_LINKS_URL)
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (d && typeof d === 'object' && !d.error) fileLinks = d;
+      return fileLinks;
+    })
+    .catch(function () { return fileLinks; });
+}
+function ensureFileLinks() {
+  var hasKeys = false;
+  for (var k in fileLinks) {
+    if (Object.prototype.hasOwnProperty.call(fileLinks, k) && k !== 'error') { hasKeys = true; break; }
+  }
+  if (hasKeys) return Promise.resolve(fileLinks);
+  if (!fileLinksFetch) {
+    fileLinksFetch = fetchFileLinks().then(function (links) { fileLinksFetch = null; return links; });
+  }
+  return fileLinksFetch;
+}
+ensureFileLinks();
 
 function htmlResult(html, className) {
   return { kind:'html', html:html, className:className || '' };
@@ -373,14 +392,20 @@ function getCommandPath(name) {
   return null;
 }
 function getOpenOptionNames() {
-  var names = Object.keys(routeMap);
+  var names = [];
   Object.keys(fileLinks || {}).forEach(function (name) {
+    if (name === 'error') return;
+    if (names.indexOf(name) < 0) names.push(name);
+  });
+  Object.keys(routeMap).forEach(function (name) {
     if (names.indexOf(name) < 0) names.push(name);
   });
   return names.sort();
 }
 function getOpenOptionsSummary() {
-  return getOpenOptionNames().join(', ');
+  var names = getOpenOptionNames();
+  if (!names.length) return '(loading...)';
+  return names.join(', ');
 }
 
 var manPages = {
@@ -424,7 +449,7 @@ var manPages = {
   env:      'env\n  Display all environment variables.',
   which:    'which COMMAND\n  Show the location of a command.',
   type:     'type COMMAND\n  Show the type of a command.',
-  open:     'open NAME\n  Open a linked page in a new tab.\n  Use help to see the current open targets.',
+  open:     'open NAME\n  Open a linked page in a new tab.\n  Targets are loaded dynamically from the fileLinks endpoint.\n  Press Tab after \'open \' to autocomplete available targets,\n  or run help to see the current list.',
   neofetch: 'neofetch\n  Display system information with ASCII art.',
   cowsay:   'cowsay [TEXT]\n  Make a cow say something.',
   fortune:  'fortune\n  Display a random inspirational quote.',
@@ -998,19 +1023,30 @@ commands.help = function () {
   return lines.join('\n');
 };
 
-commands.open = function (args) {
+commands.open = async function (args) {
   if (!args.length) return fail('open: missing operand');
   var name = args[0];
+
+  await ensureFileLinks();
+
+  var url = fileLinks[name];
+  if (url) {
+    window.open(url, '_blank');
+    return 'Opening ' + name + '...';
+  }
+
   var p = _resolve(name);
   if (_exists(p) && _isFile(p)) {
     var section = extractSectionFromScript(vfs[p].data);
-    if (section && routeMap[section]) {
-      window.open(routeMap[section], '_blank');
-      return 'Opening ' + section + '...';
+    if (section) {
+      var sectionUrl = fileLinks[section] || routeMap[section];
+      if (sectionUrl) {
+        window.open(sectionUrl, '_blank');
+        return 'Opening ' + section + '...';
+      }
     }
   }
-  var url = fileLinks[name];
-  if (url) { window.open(url, '_blank'); return 'Opening ' + name + '...'; }
+
   return fail('open: ' + name + ': No such file or link\nAvailable: ' + getOpenOptionsSummary());
 };
 
@@ -1412,6 +1448,8 @@ function tabComplete() {
   var isCmd = tokens.length === 1 && !before.endsWith(' ');
   var pathLikeToken = /^(?:\.{1,2}(?:\/|$)|~(?:\/|$)|\/)/.test(completing);
   var completeAsCommand = !pathLikeToken && (isCmd || (tokens.length === 1 && completing && !before.includes(' ')));
+  var firstToken = tokens[0] || '';
+  var completingOpenTarget = !completeAsCommand && !pathLikeToken && firstToken === 'open' && tokens.length === 2;
   var matches;
 
   if (completeAsCommand) {
@@ -1421,6 +1459,10 @@ function tabComplete() {
       if (a.indexOf(prefix) === 0 && matches.indexOf(a) < 0) matches.push(a);
     });
     matches.sort();
+  } else if (completingOpenTarget) {
+    ensureFileLinks();
+    var openPrefix = completing.toLowerCase();
+    matches = getOpenOptionNames().filter(function (n) { return n.toLowerCase().indexOf(openPrefix) === 0; });
   } else {
     matches = _completePath(completing);
   }

@@ -311,6 +311,45 @@ body::after {
             drop-shadow(0 0 70px rgba(255, 255, 255, 0.03));
 }
 
+.robot-svg {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+    filter: drop-shadow(10px 28px 46px rgba(0, 0, 0, 0.58))
+            drop-shadow(6px 12px 22px rgba(0, 0, 0, 0.42))
+            drop-shadow(-8px -10px 32px rgba(255, 255, 255, 0.035))
+            drop-shadow(0 0 70px rgba(255, 255, 255, 0.03));
+}
+
+.robot-svg .r2-head-group,
+.robot-svg .r2-eye,
+.robot-svg .r2-pupil-group,
+.robot-svg .r2-antenna-ball,
+.robot-svg .r2-antenna-glow,
+.robot-svg .r2-brow,
+.robot-svg .r2-cheek,
+.robot-svg .r2-mouth,
+.robot-svg .r2-open-mouth,
+.robot-svg .r2-aura {
+    transition: opacity 0.4s var(--ease-fluid);
+}
+
+.robot-svg .r2-cheek {
+    filter: blur(2px);
+}
+
+.robot-svg .r2-aura {
+    filter: blur(8px);
+}
+
+.robot-svg .r2-antenna-glow {
+    filter: blur(4px);
+}
+
 .speech-bubble {
     position: absolute;
     left: 50%;
@@ -1236,6 +1275,11 @@ body.light-theme .dust-mote {
 }
 
 body.light-theme #robotCanvas {
+    filter: drop-shadow(0 22px 36px rgba(0, 0, 0, 0.18))
+            drop-shadow(0 8px 14px rgba(0, 0, 0, 0.1));
+}
+
+body.light-theme .robot-svg {
     filter: drop-shadow(0 22px 36px rgba(0, 0, 0, 0.18))
             drop-shadow(0 8px 14px rgba(0, 0, 0, 0.1));
 }
