@@ -602,6 +602,7 @@ function isDesktop() {
                                 ? Array.from(commandPaletteList.querySelectorAll('.command-item'))
                                 : [];
                             const vortexCommandItem = commandPaletteItems.find(item => item.dataset.command === 'toggle-vortex-cursor');
+                            const audioVizCommandItem = commandPaletteItems.find(item => item.dataset.command === 'toggle-audio-viz');
 
                             if (commandPalette && commandPalette.parentElement !== document.body) {
                                 document.body.appendChild(commandPalette);
@@ -886,6 +887,26 @@ function isDesktop() {
                                 }
                             }
 
+                            function isAudioPlaybackAvailable() {
+                                return window.__audioPlaybackAvailable !== false;
+                            }
+
+                            function syncAudioVizCommandAvailability(refreshFilter) {
+                                if (!audioVizCommandItem) return;
+                                const available = isAudioPlaybackAvailable();
+                                audioVizCommandItem.dataset.unavailable = available ? '0' : '1';
+
+                                if (!available) {
+                                    audioVizCommandItem.classList.remove('is-active');
+                                    document.body.classList.remove('experimental-audio-viz');
+                                    setStoredToggle('exp.audioViz', false);
+                                }
+
+                                if (refreshFilter) {
+                                    filterCommandPalette(commandPaletteInput ? commandPaletteInput.value : '');
+                                }
+                            }
+
                             function syncStarfieldLabel(forceEnabled) {
                                 const enabled = typeof forceEnabled === 'boolean' ? forceEnabled : isStarfieldEnabled();
                                 if (starfieldStatus) starfieldStatus.textContent = enabled ? 'On' : 'Off';
@@ -999,6 +1020,7 @@ function isDesktop() {
                                     }
                                 });
                                 syncVortexCursorCommandAvailability(false);
+                                syncAudioVizCommandAvailability(false);
                                 syncStarfieldLabel();
                             }
 
@@ -1067,6 +1089,7 @@ function isDesktop() {
                                 syncStarfieldLabel();
                                 syncExperimentalToggleLabels();
                                 syncVortexCursorCommandAvailability(false);
+                                syncAudioVizCommandAvailability(false);
                                 filterCommandPalette(commandPaletteInput ? commandPaletteInput.value : '');
                                 if (commandPaletteInput) {
                                     commandPaletteInput.focus();
@@ -1329,6 +1352,18 @@ function isDesktop() {
                                 executePaletteCommand(btn.dataset.command || '');
                             });
 
+                            // Keep mouse hover and keyboard `is-active` highlight in sync —
+                            // when the cursor enters a command, mark it active so the
+                            // previously-active item drops its highlight (no double row glow).
+                            commandPaletteList?.addEventListener('mouseover', (event) => {
+                                const btn = event.target.closest('.command-item');
+                                if (!btn || !commandPaletteList.contains(btn)) return;
+                                if (btn.classList.contains('is-active')) return;
+                                if (btn.dataset.unavailable === '1') return;
+                                if (btn.parentElement && btn.parentElement.style.display === 'none') return;
+                                setActiveCommand(btn);
+                            });
+
                             window.addEventListener('starfieldToggle', (event) => {
                                 syncStarfieldLabel(!!(event.detail && event.detail.enabled));
                             });
@@ -1340,6 +1375,12 @@ function isDesktop() {
                                 if (!playing && document.body.classList.contains('experimental-audio-viz')) {
                                     toggleExperimentalFeature('audioViz', false);
                                 }
+                            });
+
+                            // Hide the Audio Visualizer command entirely when playback
+                            // is unsupported (autoplay rejected, decode error, etc.).
+                            window.addEventListener('audioPlaybackUnavailable', () => {
+                                syncAudioVizCommandAvailability(true);
                             });
 
                             initializeExperimentalFeatures();
@@ -2310,6 +2351,15 @@ function isDesktop() {
     audio.addEventListener('ended', function() {
         window.dispatchEvent(new CustomEvent('bgAudioStateChange', { detail: { playing: false } }));
     });
+    window.__audioPlaybackAvailable = true;
+    function markAudioPlaybackUnavailable(reason) {
+        if (window.__audioPlaybackAvailable === false) return;
+        window.__audioPlaybackAvailable = false;
+        window.dispatchEvent(new CustomEvent('audioPlaybackUnavailable', { detail: { reason: reason || 'unknown' } }));
+    }
+    audio.addEventListener('error', function() {
+        markAudioPlaybackUnavailable('audio-error');
+    });
     var animationsTriggered = false;
     var container = document.querySelector('.container');
     var header = document.querySelector('header');
@@ -2431,6 +2481,7 @@ function isDesktop() {
             }
             autoCollapse();
             hidePopup();
+            markAudioPlaybackUnavailable('autoplay-rejected');
         });
     }
 
@@ -2522,7 +2573,7 @@ function isDesktop() {
         if (sessionStorage.getItem('musicPlaying') === 'true') {
             audio.play().then(() => {
                 toggleMusicButtons();
-            }).catch(() => {});
+            }).catch(() => { markAudioPlaybackUnavailable('autoplay-rejected'); });
         }
         return;
     }
@@ -2546,7 +2597,7 @@ function isDesktop() {
         if (sessionStorage.getItem('musicPlaying') === 'true') {
             audio.play().then(() => {
                 toggleMusicButtons();
-            }).catch(() => {});
+            }).catch(() => { markAudioPlaybackUnavailable('autoplay-rejected'); });
         }
     }
 });   
