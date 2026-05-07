@@ -398,40 +398,97 @@ body.light-theme::after {
     to   { width: 240px; opacity: 1; }
 }
 
-/* Initials block — S | R */
-.initials {
+/* ====== Original rotating ring animation (preserved) ====== */
+.animation-wrapper {
+    position: relative;
+    width: 170px;
+    height: 170px;
+    margin-bottom: 32px;
     display: flex;
     align-items: center;
-    gap: 28px;
-    font-family: var(--s-font-mono);
-    font-size: 64px;
-    font-weight: 200;
-    letter-spacing: 6px;
-    color: var(--s-fg);
-    line-height: 1;
-    margin-bottom: 22px;
+    justify-content: center;
 }
-.initials .glyph {
-    display: inline-block;
-    opacity: 0;
-    transform: translateY(8px);
-    animation: glyphIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    text-shadow: 0 0 24px var(--s-fg-faint);
+
+.web {
+    position: absolute;
+    width: 90%;
+    height: 90%;
+    border: 1px solid var(--s-fg);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--s-fg);
+    animation: rotate 2s linear infinite, scale 4s ease-in-out infinite;
 }
-.initials .glyph.s { animation-delay: 0.25s; }
-.initials .glyph.r { animation-delay: 0.55s; }
-.initials .divider {
+.web:nth-child(2) { animation-delay: -1s; }
+.web:nth-child(3) { animation-delay: -2s; }
+
+@keyframes rotate {
+    0%   { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+@keyframes scale {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.5); }
+}
+
+/* Decorative orbiting elements that frame the rings */
+.orbit-ring {
+    position: absolute;
+    border: 1px dashed var(--s-border-subtle);
+    border-radius: 50%;
+    pointer-events: none;
+}
+.orbit-ring.outer {
+    width: 230px;
+    height: 230px;
+    animation: spinSlow 18s linear infinite;
+}
+.orbit-ring.inner {
+    width: 130px;
+    height: 130px;
+    animation: spinSlow 12s linear reverse infinite;
+}
+@keyframes spinSlow {
+    to { transform: rotate(360deg); }
+}
+
+.orbit-dot {
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--s-fg);
+    box-shadow: 0 0 8px var(--s-fg);
+    top: 50%;
+    left: 50%;
+    transform-origin: 0 0;
+}
+.orbit-dot.d1 { animation: orbitA 5s linear infinite; }
+.orbit-dot.d2 { animation: orbitB 7s linear infinite; }
+.orbit-dot.d3 { animation: orbitC 9s linear infinite; }
+@keyframes orbitA {
+    from { transform: rotate(0deg) translateX(85px) rotate(0deg); }
+    to   { transform: rotate(360deg) translateX(85px) rotate(-360deg); }
+}
+@keyframes orbitB {
+    from { transform: rotate(120deg) translateX(115px) rotate(-120deg); }
+    to   { transform: rotate(480deg) translateX(115px) rotate(-480deg); }
+}
+@keyframes orbitC {
+    from { transform: rotate(240deg) translateX(70px) rotate(-240deg); }
+    to   { transform: rotate(600deg) translateX(70px) rotate(-600deg); }
+}
+
+/* Crosshair tick marks around the rings */
+.tick-mark {
+    position: absolute;
     width: 1px;
-    height: 0;
-    background: var(--s-border);
-    animation: dividerIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.4s forwards;
+    height: 8px;
+    background: var(--s-fg-muted);
 }
-@keyframes glyphIn {
-    to { opacity: 1; transform: translateY(0); }
-}
-@keyframes dividerIn {
-    to { height: 56px; }
-}
+.tick-mark.t-top    { top: -16px;    left: 50%; transform: translateX(-50%); }
+.tick-mark.t-right  { right: -16px;  top: 50%;  transform: translateY(-50%) rotate(90deg); }
+.tick-mark.t-bottom { bottom: -16px; left: 50%; transform: translateX(-50%); }
+.tick-mark.t-left   { left: -16px;   top: 50%;  transform: translateY(-50%) rotate(90deg); }
 
 /* Status label above h1 */
 .status-label {
@@ -560,8 +617,21 @@ h1 {
     .meta-strip-top { top: 24px; }
     .meta-strip-bottom { bottom: 24px; }
     .meta-strip { font-size: 9px; letter-spacing: 3px; }
-    .initials { font-size: 48px; gap: 20px; letter-spacing: 4px; }
-    @keyframes dividerIn { to { height: 42px; } }
+    .animation-wrapper { width: 130px; height: 130px; margin-bottom: 26px; }
+    .orbit-ring.outer { width: 180px; height: 180px; }
+    .orbit-ring.inner { width: 100px; height: 100px; }
+    @keyframes orbitA {
+        from { transform: rotate(0deg) translateX(65px) rotate(0deg); }
+        to   { transform: rotate(360deg) translateX(65px) rotate(-360deg); }
+    }
+    @keyframes orbitB {
+        from { transform: rotate(120deg) translateX(90px) rotate(-120deg); }
+        to   { transform: rotate(480deg) translateX(90px) rotate(-480deg); }
+    }
+    @keyframes orbitC {
+        from { transform: rotate(240deg) translateX(55px) rotate(-240deg); }
+        to   { transform: rotate(600deg) translateX(55px) rotate(-600deg); }
+    }
     .rule { width: 180px; }
     @keyframes ruleIn { from { width: 0; opacity: 0; } to { width: 180px; opacity: 1; } }
     .rule-top { margin-bottom: 26px; }
@@ -572,8 +642,21 @@ h1 {
 
 @media (max-width: 480px) {
     .meta-strip-top, .meta-strip-bottom { display: none; }
-    .initials { font-size: 38px; gap: 16px; letter-spacing: 3px; }
-    @keyframes dividerIn { to { height: 34px; } }
+    .animation-wrapper { width: 100px; height: 100px; margin-bottom: 22px; }
+    .orbit-ring.outer { width: 140px; height: 140px; }
+    .orbit-ring.inner { width: 78px; height: 78px; }
+    @keyframes orbitA {
+        from { transform: rotate(0deg) translateX(50px) rotate(0deg); }
+        to   { transform: rotate(360deg) translateX(50px) rotate(-360deg); }
+    }
+    @keyframes orbitB {
+        from { transform: rotate(120deg) translateX(70px) rotate(-120deg); }
+        to   { transform: rotate(480deg) translateX(70px) rotate(-480deg); }
+    }
+    @keyframes orbitC {
+        from { transform: rotate(240deg) translateX(42px) rotate(-240deg); }
+        to   { transform: rotate(600deg) translateX(42px) rotate(-600deg); }
+    }
     .rule { width: 140px; }
     @keyframes ruleIn { from { width: 0; opacity: 0; } to { width: 140px; opacity: 1; } }
     h1 { font-size: 11px; letter-spacing: 1.5px; }
@@ -613,10 +696,19 @@ h1 {
 <div class="container">
     <div class="rule rule-top"></div>
 
-    <div class="initials" aria-hidden="true">
-        <span class="glyph s">S</span>
-        <span class="divider"></span>
-        <span class="glyph r">R</span>
+    <div class="animation-wrapper" aria-hidden="true">
+        <div class="orbit-ring outer"></div>
+        <div class="orbit-ring inner"></div>
+        <div class="web"></div>
+        <div class="web"></div>
+        <div class="web"></div>
+        <span class="orbit-dot d1"></span>
+        <span class="orbit-dot d2"></span>
+        <span class="orbit-dot d3"></span>
+        <span class="tick-mark t-top"></span>
+        <span class="tick-mark t-right"></span>
+        <span class="tick-mark t-bottom"></span>
+        <span class="tick-mark t-left"></span>
     </div>
 
     <div class="status-label">RESOLVING DESTINATION</div>
@@ -636,7 +728,7 @@ h1 {
 
 <noscript>
 <style>
-    .scan-line, .initials, .progress-track, .ticks, .status-label, .rule, h1, .meta-strip { display: none !important; }
+    .scan-line, .animation-wrapper, .progress-track, .ticks, .status-label, .rule, h1, .meta-strip { display: none !important; }
 </style>
 <div class="noscript-container">
     <p class="noscript-message">Please enable JavaScript for redirection.</p>

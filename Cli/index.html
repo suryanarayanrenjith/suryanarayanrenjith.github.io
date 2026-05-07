@@ -108,13 +108,43 @@
     <div class="elegant-dots" id="elegantDots"></div>
     
     
-    <div class="terminal-container">
+    <div class="terminal-container" id="terminalContainer">
         <div class="terminal">
-            <div class="header">Terminal - surya@portfolio</div>
+            <div class="header" role="toolbar" aria-label="Terminal window controls">
+                <div class="header-left">
+                    <span class="header-tab">
+                        <span class="header-tab-icon" aria-hidden="true">
+                            <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M2 4l3 3-3 3"></path>
+                                <path d="M7 11h6"></path>
+                            </svg>
+                        </span>
+                        <span class="header-tab-title">surya@portfolio: ~</span>
+                    </span>
+                </div>
+                <div class="header-title" aria-hidden="true">Terminal</div>
+                <div class="window-controls" role="group" aria-label="Window controls">
+                    <button type="button" class="window-btn minimize" id="winMin" title="Minimize" aria-label="Minimize">
+                        <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2 9h8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                    </button>
+                    <button type="button" class="window-btn maximize" id="winMax" title="Maximize" aria-label="Maximize">
+                        <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><rect x="2.25" y="2.25" width="7.5" height="7.5" stroke="currentColor" stroke-width="1.2" fill="none" rx="0.5"/></svg>
+                    </button>
+                    <button type="button" class="window-btn close" id="winClose" title="Close" aria-label="Close">
+                        <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </div>
             <div id="output"></div>
             <div class="input-line">
                 <span class="prompt">surya@portfolio:~$</span>
-                <input type="text" id="commandInput" autofocus autocomplete="off">
+                <input type="text" id="commandInput" autofocus autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off">
+            </div>
+            <div class="status-bar" aria-hidden="true">
+                <span class="status-cell"><span class="status-led"></span>connected</span>
+                <span class="status-cell">bash 5.2.15</span>
+                <span class="status-cell status-cell-grow" id="statusPath">~</span>
+                <span class="status-cell" id="statusClock">--:--</span>
             </div>
         </div>
     </div>
@@ -195,7 +225,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             createGeometricShapes();
             createElegantDots();
-            
+
             const cachedShapes = document.querySelectorAll('.geometric-shape');
             setInterval(() => {
                 cachedShapes.forEach(shape => {
@@ -210,6 +240,77 @@
                     }
                 });
             }, 2000);
+
+            // ===== Window chrome behavior (cosmetic only — no terminal logic touched) =====
+            const container = document.getElementById('terminalContainer');
+            const btnMin = document.getElementById('winMin');
+            const btnMax = document.getElementById('winMax');
+            const btnClose = document.getElementById('winClose');
+            const inputEl = document.getElementById('commandInput');
+
+            if (btnMin) btnMin.addEventListener('click', function() {
+                container.classList.toggle('is-minimized');
+                if (!container.classList.contains('is-minimized') && inputEl) inputEl.focus();
+            });
+
+            if (btnMax) btnMax.addEventListener('click', function() {
+                container.classList.toggle('is-maximized');
+                if (inputEl) inputEl.focus();
+            });
+
+            if (btnClose) btnClose.addEventListener('click', function() {
+                container.classList.add('is-closing');
+                setTimeout(function() {
+                    var w = window.open('', '_self');
+                    try { w.close(); } catch (e) {}
+                    if (!w || !w.closed) window.location = '/';
+                }, 280);
+            });
+
+            // Restore on header click when minimized
+            const header = container.querySelector('.header');
+            if (header) header.addEventListener('dblclick', function(e) {
+                if (e.target.closest('.window-btn')) return;
+                container.classList.toggle('is-maximized');
+            });
+
+            // Live status clock
+            const clockEl = document.getElementById('statusClock');
+            if (clockEl) {
+                const tick = function() {
+                    const d = new Date();
+                    const hh = String(d.getHours()).padStart(2, '0');
+                    const mm = String(d.getMinutes()).padStart(2, '0');
+                    const ss = String(d.getSeconds()).padStart(2, '0');
+                    clockEl.textContent = hh + ':' + mm + ':' + ss;
+                };
+                tick();
+                setInterval(tick, 1000);
+            }
+
+            // Mirror cwd into status bar without touching command logic
+            const statusPath = document.getElementById('statusPath');
+            const promptEl = document.querySelector('.prompt');
+            if (statusPath && promptEl) {
+                const syncPath = function() {
+                    const m = (promptEl.textContent || '').match(/:([^$#]+)[$#]/);
+                    if (m && m[1]) statusPath.textContent = m[1].trim();
+                };
+                syncPath();
+                const mo = new MutationObserver(syncPath);
+                mo.observe(promptEl, { childList: true, characterData: true, subtree: true });
+            }
+
+            // Keep input focused when clicking anywhere on the terminal (real-terminal feel)
+            const terminalEl = document.querySelector('.terminal');
+            if (terminalEl && inputEl) {
+                terminalEl.addEventListener('mousedown', function(e) {
+                    if (e.target.closest('.window-btn')) return;
+                    if (e.target.closest('a, button, input, textarea, .html-content')) return;
+                    if (window.getSelection && window.getSelection().toString().length) return;
+                    setTimeout(function() { inputEl.focus(); }, 0);
+                });
+            }
         });
     </script>
 </body>

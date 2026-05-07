@@ -39,7 +39,6 @@ var sessionStart = Date.now();
 var exitCode = 0;
 var interrupted = false;
 var captureMode = false, captureBuffer = '';
-var _headerCleared = null;
 
 var vfs = {};
 var fileLinks = {};
@@ -868,11 +867,6 @@ commands.ps = function () {
 commands.clear = function () {
   outputEl.innerHTML = '';
   removeProjectPreviewOverlay();
-  if (!_headerCleared) {
-    _headerCleared = document.createElement('style');
-    _headerCleared.textContent = '.header::before{content:none!important}';
-    document.head.appendChild(_headerCleared);
-  }
   return '';
 };
 
