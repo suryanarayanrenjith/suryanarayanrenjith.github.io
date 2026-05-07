@@ -1488,88 +1488,150 @@ function isDesktop() {
                 }
               };
           
-              const downloadInstaller = (force = false) => {
-              const clientLogs = document.querySelector('.client-logs code');
-              const ua         = navigator.userAgent || '';
-            
-              const isWindowsClient = /windows nt|win64|wow64/i.test(ua);
-              const isAndroidClient = /android/i.test(ua);
-              const isMobileClient  = /mobile|tablet|iphone|ipad|ipod/i.test(ua);
-              const isLinuxClient   = /linux/i.test(ua) && !isAndroidClient && !isWindowsClient && !isMobileClient;
-            
-              const wantApk        = isAndroidClient || (isMobileClient && !isWindowsClient);
-              const wantAppImage   = isLinuxClient;
-              const wantExe        = isWindowsClient;
-              const canDownload    = wantApk || wantAppImage || wantExe;
-            
-              if (!canDownload && !force) {
-                clientLogs.textContent = `${new Date().toLocaleTimeString()}: This installer is built for Windows, Linux and Android only. If you'd still like to download the file, click below.`;
-                clientLogs.innerHTML += `\n<a href="#" id="forceDownloadLink" style="color:white;">Download .exe anyway...</a>`;
-                document.getElementById('forceDownloadLink')?.addEventListener('click', e => {
-                  e.preventDefault();
-                  downloadInstaller(true);
-                });
-                return;
-              }
-            
-              clientLogs.textContent = `${new Date().toLocaleTimeString()}: Connecting to download server...`;
-            
-              const params = [];
-              if (wantApk)  params.push('apk=true');
-              if (force)    params.push('force=true');
-              const endpoint = `https://surya-verify.vercel.app/api/installer${params.length ? '?' + params.join('&') : ''}`;
-            
-              fetch(endpoint)
-                .then(async response => {
-                  const ct = response.headers.get('Content-Type') || '';
-                  if (ct.includes('application/json')) {
-                    const json = await response.json();
-                    const t    = new Date().toLocaleTimeString();
-                    const msg  = json.message || json.error || 'Unknown response';
-                    clientLogs.textContent += `\n${t}: ${msg}`;
-                    if (json.forceUrl) {
-                      clientLogs.innerHTML += `\n<a href="#" id="forceDownloadLink2" style="color:white;">Download anyway...</a>`;
-                      document.getElementById('forceDownloadLink2')?.addEventListener('click', e => {
+              let __clientDownloadInFlight = false;
+              const downloadInstaller = async (force = false) => {
+                if (__clientDownloadInFlight) return;
+                __clientDownloadInFlight = true;
+
+                const clientLogs = document.querySelector('.client-logs code');
+                if (!clientLogs) { __clientDownloadInFlight = false; return; }
+
+                const ts = () => {
+                  const d = new Date();
+                  return [d.getHours(), d.getMinutes(), d.getSeconds()]
+                    .map(n => String(n).padStart(2, '0'))
+                    .join(':') + '.' + String(d.getMilliseconds()).padStart(3, '0');
+                };
+                const tag = (level) => `<span class="ipc-tag ipc-tag--${level}">${level.toUpperCase().padEnd(8, ' ')}</span>`;
+                const dim = (s) => `<span class="ipc-dim">${s}</span>`;
+                const accent = (s) => `<span class="ipc-accent">${s}</span>`;
+                const append = (line) => {
+                  clientLogs.innerHTML += (clientLogs.innerHTML ? '\n' : '') + line;
+                  const scroller = clientLogs.parentElement;
+                  if (scroller) scroller.scrollTop = scroller.scrollHeight;
+                };
+                const wait = (ms) => new Promise(r => setTimeout(r, ms));
+
+                if (!force) clientLogs.innerHTML = '';
+
+                try {
+                  const ua = navigator.userAgent || '';
+                  const isWindowsClient = /windows nt|win64|wow64/i.test(ua);
+                  const isAndroidClient = /android/i.test(ua);
+                  const isMobileClient  = /mobile|tablet|iphone|ipad|ipod/i.test(ua);
+                  const isLinuxClient   = /linux/i.test(ua) && !isAndroidClient && !isWindowsClient && !isMobileClient;
+
+                  const wantApk      = isAndroidClient || (isMobileClient && !isWindowsClient);
+                  const wantAppImage = isLinuxClient;
+                  const wantExe      = isWindowsClient;
+                  const canDownload  = wantApk || wantAppImage || wantExe;
+
+                  const channel = '0x' + Math.floor(Math.random() * 0xffff)
+                    .toString(16).padStart(4, '0').toUpperCase();
+                  const arch = isWindowsClient ? 'win-x64'
+                    : isLinuxClient ? 'linux-x64'
+                    : (isAndroidClient || isMobileClient) ? 'android-arm64'
+                    : 'unknown';
+
+                  await wait(60);
+                  append(`${dim(ts())}  ${tag('info')}  client.detect: arch=${accent(arch)} mobile=${accent(isMobileClient)}`);
+                  await wait(180);
+                  append(`${dim(ts())}  ${tag('info')}  client.bridge: opening channel ${accent(channel)}`);
+
+                  if (!canDownload && !force) {
+                    await wait(220);
+                    append(`${dim(ts())}  ${tag('warn')}    client.detect: platform unsupported (win/linux/android only)`);
+                    await wait(160);
+                    clientLogs.innerHTML += `\n${dim(ts())}  ${tag('hint')}     <a href="#" id="forceDownloadLink" class="ipc-link">override → download .exe anyway</a>`;
+                    const scroller = clientLogs.parentElement;
+                    if (scroller) scroller.scrollTop = scroller.scrollHeight;
+                    document.getElementById('forceDownloadLink')?.addEventListener('click', e => {
+                      e.preventDefault();
+                      __clientDownloadInFlight = false;
+                      downloadInstaller(true);
+                    });
+                    return;
+                  }
+
+                  await wait(180);
+                  append(`${dim(ts())}  ${tag('info')}  release.fetch: querying installer registry...`);
+
+                  const params = [];
+                  if (wantApk) params.push('apk=true');
+                  if (force)   params.push('force=true');
+                  const endpoint = `https://surya-verify.vercel.app/api/installer${params.length ? '?' + params.join('&') : ''}`;
+
+                  const t0 = performance.now();
+                  let response;
+                  try {
+                    response = await fetch(endpoint, { credentials: 'omit', mode: 'cors' });
+                  } catch (netErr) {
+                    append(`${dim(ts())}  ${tag('error')}   release.fetch: network error — ${netErr.message}`);
+                    return;
+                  }
+                  const rtt = (performance.now() - t0).toFixed(1);
+
+                  let body = null;
+                  try { body = await response.json(); } catch (_) {}
+
+                  if (response.status === 429) {
+                    append(`${dim(ts())}  ${tag('warn')}    rate-limit: ${body?.message || 'too many requests'}`);
+                    return;
+                  }
+                  if (!response.ok || !body) {
+                    append(`${dim(ts())}  ${tag('error')}   release.fetch: server responded with ${response.status}`);
+                    return;
+                  }
+
+                  if (body.error === 'unsupported_platform') {
+                    append(`${dim(ts())}  ${tag('warn')}    release.fetch: ${body.message}`);
+                    if (body.forceUrl) {
+                      clientLogs.innerHTML += `\n${dim(ts())}  ${tag('hint')}     <a href="#" id="forceDownloadLink" class="ipc-link">override → download anyway</a>`;
+                      const scroller = clientLogs.parentElement;
+                      if (scroller) scroller.scrollTop = scroller.scrollHeight;
+                      document.getElementById('forceDownloadLink')?.addEventListener('click', e => {
                         e.preventDefault();
-                        window.location.href = json.forceUrl;
+                        __clientDownloadInFlight = false;
+                        downloadInstaller(true);
                       });
                     }
-                    throw new Error('handled-json');
+                    return;
                   }
-                  if (!response.ok) {
-                    throw new Error(`Server responded with ${response.status}`);
+                  if (body.error) {
+                    append(`${dim(ts())}  ${tag('error')}   release.fetch: ${body.message || body.error}`);
+                    return;
                   }
-            
-                      const disposition = response.headers.get('Content-Disposition') || '';
-                      const m           = disposition.match(/filename="?([^";]+)"?/i);
-                      const fileName    = m
-                        ? m[1]
-                        : wantApk
-                          ? 'SuryaWebsiteApp.apk'
-                          : wantAppImage
-                            ? 'SuryaWebsiteApp.AppImage'
-                            : 'SuryaWebsiteApp.exe';
-                
-                      const blob = await response.blob();
-                      clientLogs.textContent += `\n${new Date().toLocaleTimeString()}: Fetching "${fileName}"...`;
-                
-                      const url = URL.createObjectURL(blob);
-                      const a   = document.createElement('a');
-                      a.href     = url;
-                      a.download = fileName;
-                      document.body.appendChild(a);
-                      a.click();
-                      a.remove();
-                      URL.revokeObjectURL(url);
-                
-                      clientLogs.textContent += `\n${new Date().toLocaleTimeString()}: "${fileName}" fetched successfully.`;
-                    })
-                    .catch(err => {
-                      if (err.message === 'handled-json') return;
-                      const t = new Date().toLocaleTimeString();
-                      clientLogs.textContent += `\n${t}: Download failed ("${err.message}"). Please try again later.`;
-                    });
-                };
+
+                  const fileName = body.fileName || 'SuryaWebsiteApp';
+                  const url      = body.url;
+                  const platform = body.platform || arch;
+
+                  append(`${dim(ts())}  ${tag('ok')}      release.fetch: ack rtt=${rtt}ms · release=${accent(body.release || 'latest')}`);
+                  await wait(160);
+                  append(`${dim(ts())}  ${tag('info')}  release.resolve: ${accent(fileName)} (${platform})`);
+                  await wait(160);
+                  append(`${dim(ts())}  ${tag('info')}  download.handoff: dispatching to user-agent download manager`);
+                  await wait(220);
+
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = fileName;
+                  a.rel = 'noopener';
+                  a.style.display = 'none';
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+
+                  append(`${dim(ts())}  ${tag('redirect')} streaming directly from release CDN — no proxy hop`);
+                  await wait(180);
+                  append(`${dim(ts())}  ${tag('ok')}      download.handoff: dispatched · ${accent(fileName)}`);
+                } catch (err) {
+                  const time = ts();
+                  append(`${dim(time)}  ${tag('error')}   fatal: ${(err && err.message) || 'unknown error'}`);
+                } finally {
+                  __clientDownloadInFlight = false;
+                }
+              };
                 
                 tabButtons.forEach(btn => {
                   btn.addEventListener('click', () => {

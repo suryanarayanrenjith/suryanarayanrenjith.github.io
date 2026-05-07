@@ -1867,8 +1867,9 @@ body.is-mobile .palette-button-container {
     font-variant-ligatures: none;
 }
 
-/* IPC-style log tags (systemd / journalctl flavor) */
-.terminal-logs .ipc-tag {
+/* IPC-style log tags (systemd / journalctl flavor) — shared across logs panels */
+.terminal-logs .ipc-tag,
+.client-logs .ipc-tag {
     display: inline-block;
     font-weight: 600;
     letter-spacing: 0.4px;
@@ -1877,20 +1878,47 @@ body.is-mobile .palette-button-container {
     border-radius: 2px;
     color: var(--s-fg);
 }
-.terminal-logs .ipc-tag--info     { color: #7fb8ff; }
-.terminal-logs .ipc-tag--ok       { color: #6fdc8c; }
-.terminal-logs .ipc-tag--warn     { color: #f5c07f; }
-.terminal-logs .ipc-tag--error    { color: #ff7b7b; }
-.terminal-logs .ipc-tag--redirect { color: #c8a2ff; }
+.terminal-logs .ipc-tag--info,     .client-logs .ipc-tag--info     { color: #7fb8ff; }
+.terminal-logs .ipc-tag--ok,       .client-logs .ipc-tag--ok       { color: #6fdc8c; }
+.terminal-logs .ipc-tag--warn,     .client-logs .ipc-tag--warn     { color: #f5c07f; }
+.terminal-logs .ipc-tag--error,    .client-logs .ipc-tag--error    { color: #ff7b7b; }
+.terminal-logs .ipc-tag--redirect, .client-logs .ipc-tag--redirect { color: #c8a2ff; }
+.terminal-logs .ipc-tag--hint,     .client-logs .ipc-tag--hint     { color: #79e0d8; }
 
-.terminal-logs .ipc-dim    { color: var(--s-fg-muted); }
-.terminal-logs .ipc-accent { color: var(--s-fg); font-weight: 600; }
+.terminal-logs .ipc-dim,    .client-logs .ipc-dim    { color: var(--s-fg-muted); }
+.terminal-logs .ipc-accent, .client-logs .ipc-accent { color: var(--s-fg); font-weight: 600; }
 
-body.light-theme .terminal-logs .ipc-tag--info     { color: #1d4ed8; }
-body.light-theme .terminal-logs .ipc-tag--ok       { color: #157a3a; }
-body.light-theme .terminal-logs .ipc-tag--warn     { color: #a86510; }
-body.light-theme .terminal-logs .ipc-tag--error    { color: #b91c1c; }
-body.light-theme .terminal-logs .ipc-tag--redirect { color: #6d28d9; }
+.terminal-logs .ipc-link,
+.client-logs .ipc-link {
+    color: #79e0d8;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    text-decoration-color: rgba(121, 224, 216, 0.4);
+    cursor: pointer;
+    transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+.terminal-logs .ipc-link:hover,
+.client-logs .ipc-link:hover {
+    color: #b8f1ec;
+    text-decoration-color: rgba(184, 241, 236, 0.85);
+}
+
+body.light-theme .terminal-logs .ipc-tag--info,     body.light-theme .client-logs .ipc-tag--info     { color: #1d4ed8; }
+body.light-theme .terminal-logs .ipc-tag--ok,       body.light-theme .client-logs .ipc-tag--ok       { color: #157a3a; }
+body.light-theme .terminal-logs .ipc-tag--warn,     body.light-theme .client-logs .ipc-tag--warn     { color: #a86510; }
+body.light-theme .terminal-logs .ipc-tag--error,    body.light-theme .client-logs .ipc-tag--error    { color: #b91c1c; }
+body.light-theme .terminal-logs .ipc-tag--redirect, body.light-theme .client-logs .ipc-tag--redirect { color: #6d28d9; }
+body.light-theme .terminal-logs .ipc-tag--hint,     body.light-theme .client-logs .ipc-tag--hint     { color: #0f766e; }
+body.light-theme .terminal-logs .ipc-link,
+body.light-theme .client-logs .ipc-link {
+    color: #0f766e;
+    text-decoration-color: rgba(15, 118, 110, 0.45);
+}
+body.light-theme .terminal-logs .ipc-link:hover,
+body.light-theme .client-logs .ipc-link:hover {
+    color: #134e4a;
+    text-decoration-color: rgba(19, 78, 74, 0.9);
+}
 
 .about-section .year-range {
     color: var(--s-fg-secondary);
