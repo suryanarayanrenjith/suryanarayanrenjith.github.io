@@ -754,106 +754,187 @@ a:hover {
 }
 
 .vim-hidden {
-    display: none;
+    display: none !important;
 }
 
+/* ====== Embedded vim — lives inside the terminal-container, below the header ====== */
 .vim-shell {
-    position: fixed;
-    inset: 4vh 4vw;
-    z-index: 20;
-    border-radius: 14px;
-    overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    background:
-        linear-gradient(180deg, rgba(10, 10, 10, 0.98), rgba(0, 0, 0, 0.99));
-    box-shadow:
-        0 35px 90px rgba(0, 0, 0, 0.55),
-        0 0 80px rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-}
-
-.vim-shell__chrome,
-.vim-shell__statusline {
+    position: absolute;
+    top: 38px; /* matches header height */
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 4;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 12px 18px;
-    background: rgba(255, 255, 255, 0.04);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    flex-direction: column;
+    overflow: hidden;
+    background: rgba(10, 10, 12, 0.96);
+    color: rgba(255, 255, 255, 0.92);
+    font-family: 'JetBrains Mono', monospace;
+    animation: vimFade 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.vim-shell__statusline {
-    border-bottom: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.88);
-    font-size: 0.92rem;
+@keyframes vimFade {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
-.vim-shell__title {
-    color: #ffffff;
-    font-weight: 600;
-    letter-spacing: 0.04em;
+/* Hide terminal body when vim is active — modern :has() */
+.terminal-container:has(.vim-shell:not(.vim-hidden)) > .terminal > .status-bar,
+.terminal-container.vim-active > .terminal > .status-bar {
+    visibility: hidden;
 }
 
-.vim-shell__mode {
-    color: rgba(255, 255, 255, 0.88);
-    font-size: 0.88rem;
-    font-weight: 600;
-    letter-spacing: 0.12em;
+/* The original chrome bar (title + mode at the top) is redundant now —
+   the terminal header tab carries the filename, the bottom statusline carries the mode. */
+.vim-shell__chrome {
+    display: none;
 }
 
 .vim-shell__editor {
     display: grid;
-    grid-template-columns: minmax(48px, 72px) 1fr;
+    grid-template-columns: minmax(44px, 56px) 1fr;
+    flex: 1 1 auto;
     min-height: 0;
-    height: calc(100% - 106px);
+    overflow: hidden;
+    position: relative;
+}
+
+/* Subtle empty-line tildes painted behind the buffer (real-vim flavor) */
+.vim-shell__editor::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 56px;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    background-image: repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent 20px,
+        rgba(255, 255, 255, 0.03) 20px,
+        rgba(255, 255, 255, 0.03) 21px
+    );
+    opacity: 0.45;
+    z-index: 0;
 }
 
 .vim-shell__gutter,
 .vim-shell__buffer {
     margin: 0;
-    padding: 18px 18px 22px;
+    padding: 14px 12px 18px;
     border: none;
     resize: none;
-    font: 0.98rem/1.55 'JetBrains Mono', monospace;
+    font: 13.5px/1.55 'JetBrains Mono', monospace;
     background: transparent;
-    color: #ffffff;
+    color: rgba(255, 255, 255, 0.94);
     overflow: auto;
     outline: none;
+    scrollbar-width: none;
+    position: relative;
+    z-index: 1;
 }
+.vim-shell__gutter::-webkit-scrollbar,
+.vim-shell__buffer::-webkit-scrollbar { display: none; }
 
 .vim-shell__gutter {
     text-align: right;
     user-select: none;
-    color: rgba(255, 255, 255, 0.34);
-    background: rgba(255, 255, 255, 0.03);
+    color: rgba(255, 255, 255, 0.32);
+    background: rgba(255, 255, 255, 0.02);
     border-right: 1px solid rgba(255, 255, 255, 0.06);
+    white-space: pre;
+    padding-right: 14px;
+    padding-left: 8px;
 }
 
 .vim-shell__buffer {
     caret-color: #ffffff;
     white-space: pre;
-    tab-size: 2;
+    tab-size: 4;
+    -moz-tab-size: 4;
+}
+
+.vim-shell--insert .vim-shell__buffer {
+    caret-color: #6fdc8c;
+}
+.vim-shell--command .vim-shell__buffer {
+    caret-color: #f5c07f;
 }
 
 .vim-shell__buffer::selection {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.22);
+}
+.vim-shell__buffer::-moz-selection {
+    background: rgba(255, 255, 255, 0.22);
 }
 
-.vim-shell--insert .vim-shell__mode {
-    color: #ffffff;
+/* ====== Vim status line (sits at the bottom of the terminal area) ====== */
+.vim-shell__statusline {
+    display: flex;
+    align-items: stretch;
+    height: 26px;
+    padding: 0;
+    background: rgba(255, 255, 255, 0.05);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.4px;
+    color: rgba(255, 255, 255, 0.72);
+    user-select: none;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 2;
 }
 
-.vim-shell--command .vim-shell__mode {
-    color: rgba(255, 255, 255, 0.74);
+.vim-shell__statusline-fill {
+    flex: 1 1 auto;
+    background: linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+    border-left: 1px solid rgba(255, 255, 255, 0.06);
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.vim-shell--dirty .vim-shell__title::after {
-    content: " [+]";
-    color: rgba(255, 255, 255, 0.7);
-    font-weight: 500;
+.vim-mode-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 14px;
+    font-weight: 700;
+    color: #f1f1f1;
+    background: rgba(255, 255, 255, 0.18);
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    flex-shrink: 0;
+}
+
+.vim-shell--insert .vim-mode-pill {
+    background: rgba(111, 220, 140, 0.28);
+    color: #b9f3c8;
+    box-shadow: inset 0 0 0 1px rgba(111, 220, 140, 0.3);
+}
+.vim-shell--command .vim-mode-pill {
+    background: rgba(245, 192, 127, 0.26);
+    color: #ffd9a8;
+    box-shadow: inset 0 0 0 1px rgba(245, 192, 127, 0.3);
+}
+
+.vim-status-right {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 14px;
+    color: rgba(255, 255, 255, 0.85);
+    flex-shrink: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 60%;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.vim-shell--dirty .vim-status-right::before {
+    content: "● ";
+    color: #f5c07f;
+    margin-right: 4px;
 }
 
 
@@ -879,12 +960,16 @@ a:hover {
     }
 
     .vim-shell {
-        inset: 3vh 3vw;
+        top: 36px;
     }
 
     .vim-shell__editor {
-        grid-template-columns: 52px 1fr;
+        grid-template-columns: 50px 1fr;
     }
+    .vim-shell__editor::after { left: 50px; }
+    .vim-shell__statusline { height: 24px; font-size: 10.5px; }
+    .vim-mode-pill { padding: 0 10px; }
+    .vim-status-right { padding: 0 10px; max-width: 55%; }
 }
 
 @media screen and (max-width: 480px) {
@@ -917,18 +1002,20 @@ a:hover {
     }
 
     .vim-shell {
-        inset: 0;
-        border-radius: 0;
+        top: 34px;
     }
 
-    .vim-shell__chrome,
-    .vim-shell__statusline {
-        padding: 10px 12px;
+    .vim-shell__editor {
+        grid-template-columns: 42px 1fr;
     }
+    .vim-shell__editor::after { left: 42px; }
+    .vim-shell__statusline { height: 22px; font-size: 10px; }
+    .vim-mode-pill { padding: 0 8px; letter-spacing: 1px; }
+    .vim-status-right { padding: 0 8px; max-width: 52%; }
 
     .vim-shell__gutter,
     .vim-shell__buffer {
-        padding: 14px 12px 18px;
+        padding: 12px 10px 14px;
         font-size: 0.88rem;
     }
 }
@@ -1223,33 +1310,62 @@ body.light-theme .ls-heading {
 }
 
 body.light-theme .vim-shell {
-    background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(242, 242, 242, 0.99));
-    border-color: rgba(0, 0, 0, 0.12);
-    box-shadow:
-        0 35px 90px rgba(0, 0, 0, 0.18),
-        0 0 70px rgba(0, 0, 0, 0.06);
+    background: rgba(248, 248, 250, 0.97);
+    color: #1d1d1f;
 }
 
-body.light-theme .vim-shell__chrome,
+body.light-theme .vim-shell__editor::after {
+    background-image: repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent 20px,
+        rgba(0, 0, 0, 0.04) 20px,
+        rgba(0, 0, 0, 0.04) 21px
+    );
+}
+
 body.light-theme .vim-shell__statusline {
-    background: rgba(0, 0, 0, 0.03);
-    border-color: rgba(0, 0, 0, 0.08);
+    background: rgba(0, 0, 0, 0.04);
+    border-top-color: rgba(0, 0, 0, 0.1);
+    color: rgba(0, 0, 0, 0.65);
+}
+
+body.light-theme .vim-shell__statusline-fill {
+    background: linear-gradient(90deg, rgba(0,0,0,0.03), rgba(0,0,0,0.015));
+    border-left-color: rgba(0, 0, 0, 0.08);
+    border-right-color: rgba(0, 0, 0, 0.08);
+}
+
+body.light-theme .vim-mode-pill {
+    background: rgba(0, 0, 0, 0.12);
     color: #111;
 }
 
-body.light-theme .vim-shell__title {
-    color: #111;
+body.light-theme .vim-shell--insert .vim-mode-pill {
+    background: rgba(21, 122, 58, 0.18);
+    color: #157a3a;
+    box-shadow: inset 0 0 0 1px rgba(21, 122, 58, 0.28);
 }
 
-body.light-theme .vim-shell__mode {
-    color: rgba(0, 0, 0, 0.85);
+body.light-theme .vim-shell--command .vim-mode-pill {
+    background: rgba(168, 101, 16, 0.18);
+    color: #a86510;
+    box-shadow: inset 0 0 0 1px rgba(168, 101, 16, 0.28);
+}
+
+body.light-theme .vim-status-right {
+    color: #111;
+    background: rgba(0, 0, 0, 0.05);
+}
+
+body.light-theme .vim-shell--dirty .vim-status-right::before {
+    color: #a86510;
 }
 
 body.light-theme .vim-shell__gutter {
-    color: rgba(0, 0, 0, 0.38);
+    color: rgba(0, 0, 0, 0.4);
     background: rgba(0, 0, 0, 0.03);
-    border-color: rgba(0, 0, 0, 0.08);
+    border-right-color: rgba(0, 0, 0, 0.08);
 }
 
 body.light-theme .vim-shell__buffer {
@@ -1257,8 +1373,18 @@ body.light-theme .vim-shell__buffer {
     caret-color: #111;
 }
 
+body.light-theme .vim-shell--insert .vim-shell__buffer {
+    caret-color: #157a3a;
+}
+body.light-theme .vim-shell--command .vim-shell__buffer {
+    caret-color: #a86510;
+}
+
 body.light-theme .vim-shell__buffer::selection {
-    background: rgba(0, 0, 0, 0.12);
+    background: rgba(0, 0, 0, 0.14);
+}
+body.light-theme .vim-shell__buffer::-moz-selection {
+    background: rgba(0, 0, 0, 0.14);
 }
 
 body.light-theme a {

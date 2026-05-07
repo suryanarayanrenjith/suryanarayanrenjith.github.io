@@ -327,7 +327,7 @@ body.light-theme::after {
     transform: translateX(-50%);
     font-family: var(--s-font-mono);
     font-size: 10px;
-    letter-spacing: 4px;
+    letter-spacing: 5px;
     text-transform: uppercase;
     color: var(--s-fg-dim);
     z-index: 3;
@@ -336,19 +336,13 @@ body.light-theme::after {
 }
 .meta-strip-top { top: 36px; }
 .meta-strip-bottom { bottom: 36px; }
-.meta-strip .dot {
+.meta-strip .sep {
     display: inline-block;
-    width: 4px;
-    height: 4px;
-    background: var(--s-fg-muted);
-    border-radius: 50%;
-    margin: 0 10px;
+    width: 18px;
+    height: 1px;
+    background: var(--s-border);
+    margin: 0 14px;
     vertical-align: middle;
-    animation: pulseDot 1.6s ease-in-out infinite;
-}
-@keyframes pulseDot {
-    0%, 100% { opacity: 0.3; transform: scale(1); }
-    50% { opacity: 1; transform: scale(1.4); }
 }
 
 /* Sweeping scan line across the viewport */
@@ -430,52 +424,19 @@ body.light-theme::after {
     50%      { transform: scale(1.5); }
 }
 
-/* Decorative orbiting elements that frame the rings */
-.orbit-ring {
+/* Soft radial glow behind the rings — adds depth without clutter */
+.animation-wrapper::before {
+    content: '';
     position: absolute;
-    border: 1px dashed var(--s-border-subtle);
-    border-radius: 50%;
+    inset: -40%;
+    background: radial-gradient(circle at center, var(--s-fg-faint) 0%, transparent 55%);
+    opacity: 0.6;
     pointer-events: none;
+    animation: glowPulse 5s ease-in-out infinite;
 }
-.orbit-ring.outer {
-    width: 230px;
-    height: 230px;
-    animation: spinSlow 18s linear infinite;
-}
-.orbit-ring.inner {
-    width: 130px;
-    height: 130px;
-    animation: spinSlow 12s linear reverse infinite;
-}
-@keyframes spinSlow {
-    to { transform: rotate(360deg); }
-}
-
-.orbit-dot {
-    position: absolute;
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: var(--s-fg);
-    box-shadow: 0 0 8px var(--s-fg);
-    top: 50%;
-    left: 50%;
-    transform-origin: 0 0;
-}
-.orbit-dot.d1 { animation: orbitA 5s linear infinite; }
-.orbit-dot.d2 { animation: orbitB 7s linear infinite; }
-.orbit-dot.d3 { animation: orbitC 9s linear infinite; }
-@keyframes orbitA {
-    from { transform: rotate(0deg) translateX(85px) rotate(0deg); }
-    to   { transform: rotate(360deg) translateX(85px) rotate(-360deg); }
-}
-@keyframes orbitB {
-    from { transform: rotate(120deg) translateX(115px) rotate(-120deg); }
-    to   { transform: rotate(480deg) translateX(115px) rotate(-480deg); }
-}
-@keyframes orbitC {
-    from { transform: rotate(240deg) translateX(70px) rotate(-240deg); }
-    to   { transform: rotate(600deg) translateX(70px) rotate(-600deg); }
+@keyframes glowPulse {
+    0%, 100% { opacity: 0.35; }
+    50%      { opacity: 0.7; }
 }
 
 /* Crosshair tick marks around the rings */
@@ -506,16 +467,14 @@ body.light-theme::after {
 }
 .status-label::before {
     content: '';
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
+    width: 14px;
+    height: 1px;
     background: var(--s-fg);
-    box-shadow: 0 0 10px var(--s-fg);
-    animation: statusBlink 1.4s ease-in-out infinite;
+    animation: statusBlink 1.6s ease-in-out infinite;
 }
 @keyframes statusBlink {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.3; transform: scale(0.8); }
+    0%, 100% { opacity: 1; transform: scaleX(1); }
+    50%      { opacity: 0.35; transform: scaleX(0.5); }
 }
 @keyframes fadeUp {
     from { opacity: 0; transform: translateY(6px); }
@@ -616,22 +575,9 @@ h1 {
     .corner-br { bottom: 20px; right: 20px; }
     .meta-strip-top { top: 24px; }
     .meta-strip-bottom { bottom: 24px; }
-    .meta-strip { font-size: 9px; letter-spacing: 3px; }
+    .meta-strip { font-size: 9px; letter-spacing: 4px; }
+    .meta-strip .sep { width: 14px; margin: 0 10px; }
     .animation-wrapper { width: 130px; height: 130px; margin-bottom: 26px; }
-    .orbit-ring.outer { width: 180px; height: 180px; }
-    .orbit-ring.inner { width: 100px; height: 100px; }
-    @keyframes orbitA {
-        from { transform: rotate(0deg) translateX(65px) rotate(0deg); }
-        to   { transform: rotate(360deg) translateX(65px) rotate(-360deg); }
-    }
-    @keyframes orbitB {
-        from { transform: rotate(120deg) translateX(90px) rotate(-120deg); }
-        to   { transform: rotate(480deg) translateX(90px) rotate(-480deg); }
-    }
-    @keyframes orbitC {
-        from { transform: rotate(240deg) translateX(55px) rotate(-240deg); }
-        to   { transform: rotate(600deg) translateX(55px) rotate(-600deg); }
-    }
     .rule { width: 180px; }
     @keyframes ruleIn { from { width: 0; opacity: 0; } to { width: 180px; opacity: 1; } }
     .rule-top { margin-bottom: 26px; }
@@ -643,20 +589,6 @@ h1 {
 @media (max-width: 480px) {
     .meta-strip-top, .meta-strip-bottom { display: none; }
     .animation-wrapper { width: 100px; height: 100px; margin-bottom: 22px; }
-    .orbit-ring.outer { width: 140px; height: 140px; }
-    .orbit-ring.inner { width: 78px; height: 78px; }
-    @keyframes orbitA {
-        from { transform: rotate(0deg) translateX(50px) rotate(0deg); }
-        to   { transform: rotate(360deg) translateX(50px) rotate(-360deg); }
-    }
-    @keyframes orbitB {
-        from { transform: rotate(120deg) translateX(70px) rotate(-120deg); }
-        to   { transform: rotate(480deg) translateX(70px) rotate(-480deg); }
-    }
-    @keyframes orbitC {
-        from { transform: rotate(240deg) translateX(42px) rotate(-240deg); }
-        to   { transform: rotate(600deg) translateX(42px) rotate(-600deg); }
-    }
     .rule { width: 140px; }
     @keyframes ruleIn { from { width: 0; opacity: 0; } to { width: 140px; opacity: 1; } }
     h1 { font-size: 11px; letter-spacing: 1.5px; }
@@ -688,8 +620,8 @@ h1 {
 <div class="corner corner-bl"></div>
 <div class="corner corner-br"></div>
 
-<div class="meta-strip meta-strip-top">SURYA<span class="dot"></span>SECURE GATEWAY</div>
-<div class="meta-strip meta-strip-bottom">PROTOCOL // 0x7F<span class="dot"></span>HANDSHAKE IN PROGRESS</div>
+<div class="meta-strip meta-strip-top">SURYA<span class="sep"></span>SECURE GATEWAY</div>
+<div class="meta-strip meta-strip-bottom">PROTOCOL 0x7F<span class="sep"></span>HANDSHAKE IN PROGRESS</div>
 
 <div class="scan-line"></div>
 
@@ -697,14 +629,9 @@ h1 {
     <div class="rule rule-top"></div>
 
     <div class="animation-wrapper" aria-hidden="true">
-        <div class="orbit-ring outer"></div>
-        <div class="orbit-ring inner"></div>
         <div class="web"></div>
         <div class="web"></div>
         <div class="web"></div>
-        <span class="orbit-dot d1"></span>
-        <span class="orbit-dot d2"></span>
-        <span class="orbit-dot d3"></span>
         <span class="tick-mark t-top"></span>
         <span class="tick-mark t-right"></span>
         <span class="tick-mark t-bottom"></span>
