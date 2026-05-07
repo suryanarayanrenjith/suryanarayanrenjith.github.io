@@ -1006,15 +1006,6 @@ body::before {
 }
 
 
-.terminal:hover {
-    transform: translateY(-5px);
-    box-shadow: 
-        inset 0 0 80px rgba(0, 0, 0, 0.3),
-        0 0 150px rgba(255, 255, 255, 0.12),
-        0 35px 100px rgba(0, 0, 0, 0.3);
-    border-color: rgba(255, 255, 255, 0.35);
-}
-
 .input-line {
     transition: all 0.3s ease;
 }
@@ -1048,15 +1039,6 @@ body.light-theme .terminal {
         inset 0 0 80px rgba(255, 255, 255, 0.3),
         0 0 120px rgba(0, 0, 0, 0.05),
         0 25px 80px rgba(0, 0, 0, 0.1);
-}
-
-body.light-theme .terminal:hover {
-    transform: translateY(-5px);
-    box-shadow:
-        inset 0 0 80px rgba(255, 255, 255, 0.3),
-        0 0 150px rgba(0, 0, 0, 0.08),
-        0 35px 100px rgba(0, 0, 0, 0.15);
-    border-color: rgba(0, 0, 0, 0.25);
 }
 
 body.light-theme .terminal::before {

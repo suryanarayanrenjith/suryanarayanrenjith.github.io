@@ -1864,7 +1864,33 @@ body.is-mobile .palette-button-container {
 
 .terminal-logs code, .client-logs code {
     white-space: pre-wrap;
+    font-variant-ligatures: none;
 }
+
+/* IPC-style log tags (systemd / journalctl flavor) */
+.terminal-logs .ipc-tag {
+    display: inline-block;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    padding: 0 4px;
+    margin-right: 2px;
+    border-radius: 2px;
+    color: var(--s-fg);
+}
+.terminal-logs .ipc-tag--info     { color: #7fb8ff; }
+.terminal-logs .ipc-tag--ok       { color: #6fdc8c; }
+.terminal-logs .ipc-tag--warn     { color: #f5c07f; }
+.terminal-logs .ipc-tag--error    { color: #ff7b7b; }
+.terminal-logs .ipc-tag--redirect { color: #c8a2ff; }
+
+.terminal-logs .ipc-dim    { color: var(--s-fg-muted); }
+.terminal-logs .ipc-accent { color: var(--s-fg); font-weight: 600; }
+
+body.light-theme .terminal-logs .ipc-tag--info     { color: #1d4ed8; }
+body.light-theme .terminal-logs .ipc-tag--ok       { color: #157a3a; }
+body.light-theme .terminal-logs .ipc-tag--warn     { color: #a86510; }
+body.light-theme .terminal-logs .ipc-tag--error    { color: #b91c1c; }
+body.light-theme .terminal-logs .ipc-tag--redirect { color: #6d28d9; }
 
 .about-section .year-range {
     color: var(--s-fg-secondary);

@@ -508,7 +508,7 @@ function isDesktop() {
                                 <li data-action="go-about"><span class="shortcut-key">Ctrl + Shift + 6</span> Go to About section</li>
                                 <li data-action="go-projects"><span class="shortcut-key">Ctrl + Shift + 7</span> Go to Projects section</li>
                                 <li data-action="go-resume"><span class="shortcut-key">Ctrl + Shift + 8</span> Go to Resume section</li>
-                                <li data-action="open-terminal"><span class="shortcut-key">Ctrl + Shift + K</span> Open Terminal in new tab</li>
+                                <li data-action="open-terminal"><span class="shortcut-key">Ctrl + Shift + K</span> Open Terminal</li>
                                 <li data-action="open-links"><span class="shortcut-key">Ctrl + Shift + L</span> Open Links in new tab</li>
                                 <li data-action="open-resume"><span class="shortcut-key">Ctrl + Shift + V</span> Open Resume in new tab</li>
                             </ul>
@@ -1426,25 +1426,65 @@ function isDesktop() {
                 if (e.target === modalOverlay && shortcutsVisible) hideShortcuts();
               });
           
-              const launchTerminal = () => {
+              let __terminalLaunchInFlight = false;
+              const launchTerminal = async (showSequence = true) => {
+                if (__terminalLaunchInFlight) return;
+                __terminalLaunchInFlight = true;
+
+                if (!showSequence) {
+                  window.location.href = '/Cli';
+                  return;
+                }
+
                 const terminalLogs = document.querySelector('.terminal-logs code');
+                if (!terminalLogs) {
+                  window.location.href = '/Cli';
+                  return;
+                }
+
+                const ts = () => {
+                  const d = new Date();
+                  const hh = String(d.getHours()).padStart(2, '0');
+                  const mm = String(d.getMinutes()).padStart(2, '0');
+                  const ss = String(d.getSeconds()).padStart(2, '0');
+                  const ms = String(d.getMilliseconds()).padStart(3, '0');
+                  return `${hh}:${mm}:${ss}.${ms}`;
+                };
+                const tag = (level) => `<span class="ipc-tag ipc-tag--${level}">${level.toUpperCase().padEnd(7, ' ')}</span>`;
+                const dim = (s) => `<span class="ipc-dim">${s}</span>`;
+                const accent = (s) => `<span class="ipc-accent">${s}</span>`;
+
+                terminalLogs.innerHTML = '';
+
+                const channel = '0x' + Math.floor(Math.random() * 0xffff).toString(16).padStart(4, '0').toUpperCase();
+                const pid = 1000 + Math.floor(Math.random() * 8000);
+
+                const steps = [
+                  { d: 80,  html: `${dim(ts())}  ${tag('info')}  ipc.bridge: opening channel ${accent(channel)}` },
+                  { d: 220, html: `${dim(ts())}  ${tag('info')}  ipc.bridge: requesting handshake from /Cli` },
+                  { d: 240, html: `${dim(ts())}  ${tag('ok')}     ipc.bridge: ack received · rtt=${(8 + Math.random() * 14).toFixed(1)}ms` },
+                  { d: 200, html: `${dim(ts())}  ${tag('info')}  pty.alloc: pts/0 · cols=80 rows=24` },
+                  { d: 180, html: `${dim(ts())}  ${tag('info')}  auth: verifying client fingerprint…` },
+                  { d: 280, html: `${dim(ts())}  ${tag('ok')}     auth: signature accepted` },
+                  { d: 220, html: `${dim(ts())}  ${tag('info')}  shell.spawn: /bin/bash · pid=${pid}` },
+                  { d: 220, html: `${dim(ts())}  ${tag('ok')}     shell.spawn: session ready` },
+                  { d: 200, html: `${dim(ts())}  ${tag('info')}  vfs.mount: ~ -> /home/surya` },
+                  { d: 180, html: `${dim(ts())}  ${tag('info')}  history.sync: 0 entries restored` },
+                  { d: 220, html: `${dim(ts())}  ${tag('redirect')} navigating viewport → /Cli` }
+                ];
+
                 try {
-                  const now = new Date().toLocaleTimeString();
-                  terminalLogs.textContent = `${now}: Opening terminal...`;
-          
-                  const link = document.createElement('a');
-                  link.href   = '/Cli';
-                  link.target = '_blank';
-                  link.rel    = 'noopener noreferrer';
-                  link.style.display = 'none';
-                  document.body.appendChild(link);
-                  link.click();
-                  link.remove();
-          
-                  terminalLogs.textContent += `\n${new Date().toLocaleTimeString()}: Terminal session started. Type 'help' for available commands.`;
+                  for (let i = 0; i < steps.length; i++) {
+                    await new Promise(r => setTimeout(r, steps[i].d));
+                    terminalLogs.innerHTML += (terminalLogs.innerHTML ? '\n' : '') + steps[i].html;
+                    const scroller = terminalLogs.parentElement;
+                    if (scroller) scroller.scrollTop = scroller.scrollHeight;
+                  }
+                  await new Promise(r => setTimeout(r, 260));
+                  window.location.href = '/Cli';
                 } catch (err) {
-                  const errorTime = new Date().toLocaleTimeString();
-                  terminalLogs.textContent += `\n${errorTime}: Failed to open terminal ("${err.message}").`;
+                  terminalLogs.innerHTML += `\n${dim(ts())}  ${tag('error')}  launch failed: ${(err && err.message) || 'unknown'}`;
+                  __terminalLaunchInFlight = false;
                 }
               };
           
@@ -1555,7 +1595,7 @@ function isDesktop() {
                     case 'go-about':      navigateToSection?.('about', 'none'); break;
                     case 'go-projects':   navigateToSection?.('projects', 'none'); break;
                     case 'go-resume':     navigateToSection?.('resume', 'none'); break;
-                    case 'open-terminal': launchTerminal(); break;
+                    case 'open-terminal': launchTerminal(false); break;
                                         case 'open-links':    openLinksNewTab(); break;
                                         case 'open-resume':   openResumeNewTab(); break;
                   }
@@ -1670,7 +1710,7 @@ function isDesktop() {
                     case 'Digit6': event.preventDefault(); navigateToSection?.('about', 'none'); break;
                     case 'Digit7': event.preventDefault(); navigateToSection?.('projects', 'none'); break;
                     case 'Digit8': event.preventDefault(); navigateToSection?.('resume', 'none'); break;
-                    case 'KeyK':   event.preventDefault(); launchTerminal(); break;
+                    case 'KeyK':   event.preventDefault(); launchTerminal(false); break;
                                         case 'KeyL':   event.preventDefault(); openLinksNewTab(); break;
                                         case 'KeyV':   event.preventDefault(); openResumeNewTab(); break;
                   }
@@ -1690,7 +1730,6 @@ function isDesktop() {
 
         let isMobile = /Mobi|Android/i.test(navigator.userAgent);
 
-        /* ── Section Cache ─────────────────────────────── */
         const sectionCache = {};
         const inflightFetches = {};
 
@@ -2210,10 +2249,6 @@ function isDesktop() {
             }));
         }
         
-            /* Wheel navigation: delta accumulator with adaptive decay so rapid
-             * scrolls trigger faster and trackpad inertia doesn't double-fire.
-             * An immediate-fire shortcut handles large single-frame deltas
-             * (mouse wheel clicks) without waiting for accumulation. */
             let wheelAccumulator = 0;
             let wheelLastTime = 0;
             let wheelCooldown = 0;
@@ -2234,29 +2269,23 @@ function isDesktop() {
                 if (window.__commandPaletteActive || window.__shortcutsModalOpen) return;
                 const now = performance.now();
 
-                // Decay the accumulator on long pauses between events.
                 if (now - wheelLastTime > WHEEL_DECAY_MS) {
                     wheelAccumulator = 0;
                 }
                 wheelLastTime = now;
                 wheelAccumulator += event.deltaY;
 
-                // Fast burst: one big wheel click or fast trackpad flick.
                 if (Math.abs(event.deltaY) >= WHEEL_BURST_THRESHOLD) {
                     triggerWheelNav(event.deltaY > 0 ? 'down' : 'up');
                     return;
                 }
 
-                // Slow steady accumulation (fine-grained trackpads).
                 if (Math.abs(wheelAccumulator) >= WHEEL_THRESHOLD) {
                     triggerWheelNav(wheelAccumulator > 0 ? 'down' : 'up');
                 }
             }, { passive: true });
 
-            /* Touch navigation: tracks velocity in addition to distance so
-             * short fast flicks still register. Uses multi-point sampling to
-             * get a stable velocity reading and direction-lock once the
-             * dominant axis is clear. */
+
             let touchStartX = 0;
             let touchStartY = 0;
             let touchStartT = 0;
