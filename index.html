@@ -1233,8 +1233,10 @@ function isDesktop() {
                                         hideCommandPalette();
                                         break;
                                     case 'terminal':
-                                        window.location.href = '/Cli';
                                         hideCommandPalette();
+                                        if (typeof window.openTerminalOverlay === 'function') {
+                                            window.openTerminalOverlay({ skipBoot: false });
+                                        }
                                         break;
                                     case 'links':
                                         openLinksNewTab();
@@ -1431,14 +1433,21 @@ function isDesktop() {
                 if (__terminalLaunchInFlight) return;
                 __terminalLaunchInFlight = true;
 
+                const openOverlay = () => {
+                  if (typeof window.openTerminalOverlay === 'function') {
+                    window.openTerminalOverlay({ skipBoot: false });
+                  }
+                  __terminalLaunchInFlight = false;
+                };
+
                 if (!showSequence) {
-                  window.location.href = '/Cli';
+                  openOverlay();
                   return;
                 }
 
                 const terminalLogs = document.querySelector('.terminal-logs code');
                 if (!terminalLogs) {
-                  window.location.href = '/Cli';
+                  openOverlay();
                   return;
                 }
 
@@ -1461,7 +1470,7 @@ function isDesktop() {
 
                 const steps = [
                   { d: 80,  html: `${dim(ts())}  ${tag('info')}  ipc.bridge: opening channel ${accent(channel)}` },
-                  { d: 220, html: `${dim(ts())}  ${tag('info')}  ipc.bridge: requesting handshake from /Cli` },
+                  { d: 220, html: `${dim(ts())}  ${tag('info')}  ipc.bridge: requesting handshake from in-page shell` },
                   { d: 240, html: `${dim(ts())}  ${tag('ok')}     ipc.bridge: ack received · rtt=${(8 + Math.random() * 14).toFixed(1)}ms` },
                   { d: 200, html: `${dim(ts())}  ${tag('info')}  pty.alloc: pts/0 · cols=80 rows=24` },
                   { d: 180, html: `${dim(ts())}  ${tag('info')}  auth: verifying client fingerprint…` },
@@ -1470,7 +1479,7 @@ function isDesktop() {
                   { d: 220, html: `${dim(ts())}  ${tag('ok')}     shell.spawn: session ready` },
                   { d: 200, html: `${dim(ts())}  ${tag('info')}  vfs.mount: ~ -> /home/surya` },
                   { d: 180, html: `${dim(ts())}  ${tag('info')}  history.sync: 0 entries restored` },
-                  { d: 220, html: `${dim(ts())}  ${tag('redirect')} navigating viewport → /Cli` }
+                  { d: 220, html: `${dim(ts())}  ${tag('redirect')} spawning desktop viewport…` }
                 ];
 
                 try {
@@ -1481,7 +1490,7 @@ function isDesktop() {
                     if (scroller) scroller.scrollTop = scroller.scrollHeight;
                   }
                   await new Promise(r => setTimeout(r, 260));
-                  window.location.href = '/Cli';
+                  openOverlay();
                 } catch (err) {
                   terminalLogs.innerHTML += `\n${dim(ts())}  ${tag('error')}  launch failed: ${(err && err.message) || 'unknown'}`;
                   __terminalLaunchInFlight = false;
@@ -3963,6 +3972,3101 @@ function isOldBrowser() {
             lightBuffer = [];
         }
     });
+})();
+</script>
+
+<!-- ============================================================== -->
+<!-- ============ CLI TERMINAL — IN-PAGE DESKTOP SPAWN ============ -->
+<!-- ============================================================== -->
+<style id="cli-overlay-styles">
+  /* ===== Overlay shell ===== */
+  .cli-terminal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    display: none;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    color: rgba(255, 255, 255, 0.92);
+    background: #000;
+    overflow: hidden;
+    isolation: isolate;
+    pointer-events: none;
+  }
+  .cli-terminal-overlay.is-active {
+    display: block;
+    pointer-events: auto;
+  }
+  body.cli-overlay-open {
+    overflow: hidden;
+  }
+
+  .cli-overlay-fade {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, #06070d 0%, #000 70%);
+    animation: cliFadeIn 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    z-index: 0;
+  }
+  @keyframes cliFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .cli-overlay-scanlines {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent 0,
+      transparent 2px,
+      rgba(255, 255, 255, 0.025) 2px,
+      rgba(255, 255, 255, 0.025) 3px
+    );
+    mix-blend-mode: overlay;
+    opacity: 0.6;
+    z-index: 9;
+  }
+
+  /* ===== BOOT SCREEN (POST-style) ===== */
+  .cli-boot-screen {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    background: #000;
+    z-index: 4;
+    color: #c8e6c9;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.55;
+    text-shadow: 0 0 8px rgba(120, 220, 140, 0.45);
+    letter-spacing: 0.4px;
+    pointer-events: none;
+    transition: opacity 280ms ease-out;
+  }
+  .cli-terminal-overlay.is-booted .cli-boot-screen {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .cli-boot-logo {
+    margin: 0 0 20px;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 1.15;
+    letter-spacing: 0.6px;
+    text-shadow: 0 0 18px rgba(140, 220, 255, 0.55), 0 0 4px rgba(255, 255, 255, 0.5);
+    animation: cliBootLogoGlitch 1.6s steps(8, end) infinite;
+    white-space: pre;
+    text-align: center;
+    opacity: 0;
+    animation: cliBootLogoIn 700ms cubic-bezier(0.16, 1, 0.3, 1) 80ms forwards;
+  }
+  @keyframes cliBootLogoIn {
+    0%   { opacity: 0; transform: translateY(-8px) scale(0.96); filter: blur(6px); }
+    60%  { opacity: 1; filter: blur(0); }
+    100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  }
+
+  .cli-boot-meta {
+    margin-bottom: 18px;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 11.5px;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    opacity: 0;
+    animation: cliBootLogoIn 500ms ease-out 380ms forwards;
+  }
+
+  .cli-boot-lines {
+    width: min(640px, 92%);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 12.5px;
+    color: rgba(220, 240, 230, 0.85);
+  }
+  .cli-boot-lines li {
+    opacity: 0;
+    transform: translateX(-8px);
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cli-boot-lines li.is-shown {
+    opacity: 1;
+    transform: none;
+    transition: opacity 180ms ease, transform 180ms ease;
+  }
+  .cli-boot-lines .ok    { color: #6fdc8c; text-shadow: 0 0 6px rgba(111, 220, 140, 0.4); }
+  .cli-boot-lines .info  { color: #a9c8ff; }
+  .cli-boot-lines .warn  { color: #f5c07f; }
+  .cli-boot-lines .ready { color: #ffffff; font-weight: 600; letter-spacing: 1.4px; text-shadow: 0 0 14px rgba(255, 255, 255, 0.5); }
+  .cli-boot-lines .dim   { color: rgba(255, 255, 255, 0.4); }
+
+  .cli-boot-progress {
+    width: min(560px, 88%);
+    height: 4px;
+    margin-top: 22px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 100px;
+    overflow: hidden;
+    position: relative;
+  }
+  .cli-boot-progress > div {
+    position: absolute;
+    inset: 0 100% 0 0;
+    background: linear-gradient(90deg, rgba(140, 220, 255, 0.2), #ffffff, rgba(140, 220, 255, 0.2));
+    box-shadow: 0 0 12px rgba(140, 220, 255, 0.6);
+    animation: cliBootBar 1.6s cubic-bezier(0.45, 0, 0.15, 1) forwards;
+  }
+  @keyframes cliBootBar {
+    0%   { right: 100%; }
+    100% { right: 0; }
+  }
+
+  .cli-boot-skip {
+    position: absolute;
+    bottom: 22px;
+    right: 24px;
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 10.5px;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+  }
+
+  /* ===== DESKTOP (the wallpaper that hosts the terminal) ===== */
+  .cli-desktop {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse at 22% 14%, rgba(140, 200, 255, 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 78% 86%, rgba(180, 140, 255, 0.06) 0%, transparent 55%),
+      radial-gradient(ellipse at center, #0a0c14 0%, #03040a 80%);
+    opacity: 0;
+    transition: opacity 420ms ease-out;
+  }
+  .cli-terminal-overlay.is-booted .cli-desktop {
+    opacity: 1;
+  }
+
+  .cli-desktop-grid {
+    position: absolute;
+    inset: -50px;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.55) 0%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.55) 0%, transparent 75%);
+    transform: perspective(900px) rotateX(60deg) translateZ(-90px);
+    animation: cliGridDrift 24s linear infinite;
+  }
+  @keyframes cliGridDrift {
+    from { background-position: 0 0; }
+    to   { background-position: 0 56px; }
+  }
+
+  .cli-desktop-rain {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    opacity: 0.55;
+  }
+  .cli-desktop-rain .col {
+    position: absolute;
+    top: -30%;
+    width: 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.35;
+    color: rgba(255, 255, 255, 0.75);
+    text-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
+    white-space: pre;
+    animation: cliRainFall linear infinite;
+  }
+  @keyframes cliRainFall {
+    from { transform: translateY(0); }
+    to   { transform: translateY(160vh); }
+  }
+
+  .cli-desktop-vignette {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse at center, transparent 28%, rgba(0, 0, 0, 0.78) 100%);
+  }
+
+  .cli-desktop-orbs {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .cli-desktop-orbs span {
+    position: absolute;
+    width: 320px;
+    height: 320px;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.55;
+    mix-blend-mode: screen;
+    animation: cliOrbDrift 22s ease-in-out infinite;
+  }
+  .cli-desktop-orbs span:nth-child(1) { background: rgba(120, 180, 255, 0.32); top: -10%; left: -8%; animation-duration: 24s; }
+  .cli-desktop-orbs span:nth-child(2) { background: rgba(190, 140, 255, 0.28); bottom: -12%; right: -6%; animation-duration: 28s; animation-delay: -8s; }
+  .cli-desktop-orbs span:nth-child(3) { background: rgba(140, 240, 200, 0.22); top: 35%; left: 60%; width: 260px; height: 260px; animation-duration: 32s; animation-delay: -14s; }
+  @keyframes cliOrbDrift {
+    0%, 100% { transform: translate3d(0,0,0) scale(1); }
+    50%      { transform: translate3d(40px,-30px,0) scale(1.12); }
+  }
+
+  /* ===== TERMINAL WINDOW (spawn animation) ===== */
+  .cli-terminal-window {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: min(880px, 92%);
+    max-width: 92vw;
+    transform: translate(-50%, -52%);
+    border-radius: 14px;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.06),
+      0 30px 90px rgba(0, 0, 0, 0.7),
+      0 0 120px rgba(140, 200, 255, 0.12);
+    overflow: hidden;
+    z-index: 5;
+    opacity: 0;
+    transform-origin: 50% 60%;
+  }
+  .cli-terminal-overlay.is-spawning .cli-terminal-window {
+    animation: cliWindowSpawn 820ms cubic-bezier(0.18, 1.05, 0.32, 1.04) forwards;
+  }
+  @keyframes cliWindowSpawn {
+    0% {
+      opacity: 0;
+      transform: translate(-50%, -52%) scale(0.5) rotateX(28deg) translateY(40px);
+      filter: blur(14px) brightness(1.4);
+    }
+    35% {
+      opacity: 1;
+      filter: blur(0) brightness(1.15);
+    }
+    70% {
+      transform: translate(-50%, -52%) scale(1.02) rotateX(0deg) translateY(0);
+    }
+    100% {
+      opacity: 1;
+      transform: translate(-50%, -52%) scale(1) rotateX(0) translateY(0);
+      filter: none;
+    }
+  }
+
+  .cli-terminal-overlay.is-closing .cli-terminal-window {
+    animation: cliWindowDespawn 280ms cubic-bezier(0.45, 0, 0.55, 1) forwards;
+  }
+  @keyframes cliWindowDespawn {
+    from { opacity: 1; transform: translate(-50%, -52%) scale(1); }
+    to   { opacity: 0; transform: translate(-50%, -52%) scale(0.92) translateY(20px); filter: blur(8px); }
+  }
+
+  .cli-terminal-overlay.is-closing .cli-desktop,
+  .cli-terminal-overlay.is-closing .cli-overlay-fade,
+  .cli-terminal-overlay.is-closing .cli-taskbar {
+    transition: opacity 240ms ease;
+    opacity: 0;
+  }
+
+  /* Glow ring around the spawned window */
+  .cli-terminal-window::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    pointer-events: none;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
+    background: linear-gradient(140deg, rgba(255, 255, 255, 0.02), transparent 60%);
+    z-index: 12;
+  }
+
+  /* ===== TERMINAL INTERIOR ===== */
+  .cli-terminal-overlay .terminal {
+    padding: 0;
+    background: rgba(8, 9, 14, 0.8);
+    backdrop-filter: blur(28px) saturate(140%);
+    -webkit-backdrop-filter: blur(28px) saturate(140%);
+    color: white;
+    overflow-y: auto;
+    max-height: 78vh;
+    border-radius: 14px;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .cli-terminal-overlay .terminal > #cliOutput {
+    padding: 18px 26px 6px;
+    font-size: 14px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    line-height: 1.55;
+    opacity: 0.96;
+  }
+  .cli-terminal-overlay .terminal > .input-line {
+    padding: 12px 26px 14px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .cli-terminal-overlay .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    height: 40px;
+    padding: 0 10px 0 16px;
+    margin: 0;
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 0.78em;
+    font-weight: 500;
+    letter-spacing: 0.4px;
+    background: linear-gradient(180deg, rgba(28, 28, 32, 0.94) 0%, rgba(18, 18, 22, 0.94) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    cursor: default;
+    user-select: none;
+  }
+  .cli-terminal-overlay .header::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.18), transparent);
+    pointer-events: none;
+  }
+
+  .cli-terminal-overlay .header-left {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    flex: 0 1 auto;
+  }
+  .cli-terminal-overlay .header-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px 6px 10px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom-color: transparent;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    color: rgba(255, 255, 255, 0.95);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1;
+    max-width: 280px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .cli-terminal-overlay .header-tab-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    color: rgba(255, 255, 255, 0.65);
+    flex-shrink: 0;
+  }
+  .cli-terminal-overlay .header-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.4);
+    pointer-events: none;
+  }
+
+  .cli-terminal-overlay .window-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+  .cli-terminal-overlay .window-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    border-radius: 5px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.78);
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+  }
+  .cli-terminal-overlay .window-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+  }
+  .cli-terminal-overlay .window-btn:active {
+    transform: scale(0.92);
+    background: rgba(255, 255, 255, 0.18);
+  }
+  .cli-terminal-overlay .window-btn.close:hover {
+    background: #e04141;
+    color: #fff;
+  }
+  .cli-terminal-overlay .window-btn.close:active {
+    background: #b53232;
+  }
+
+  .cli-terminal-overlay .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    height: 24px;
+    padding: 0 16px;
+    background: rgba(15, 15, 17, 0.94);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: rgba(255, 255, 255, 0.55);
+    letter-spacing: 0.4px;
+    user-select: none;
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+  }
+  .cli-terminal-overlay .status-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .cli-terminal-overlay .status-cell-grow {
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: rgba(255, 255, 255, 0.7);
+  }
+  .cli-terminal-overlay .status-led {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #4ade80;
+    box-shadow: 0 0 6px rgba(74, 222, 128, 0.7);
+    animation: cliLedPulse 2.4s ease-in-out infinite;
+  }
+  @keyframes cliLedPulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.45; }
+  }
+
+  /* ===== Maximized state ===== */
+  .cli-terminal-window.is-maximized {
+    width: 100% !important;
+    height: 100vh !important;
+    max-width: 100vw !important;
+    top: 0 !important;
+    left: 0 !important;
+    transform: none !important;
+    border-radius: 0;
+  }
+  .cli-terminal-window.is-maximized .terminal,
+  .cli-terminal-window.is-maximized .header,
+  .cli-terminal-window.is-maximized .status-bar {
+    border-radius: 0 !important;
+  }
+  .cli-terminal-window.is-maximized .terminal {
+    max-height: calc(100vh - 36px);
+    height: calc(100vh - 36px);
+  }
+
+  .cli-terminal-window.is-minimized .terminal > #cliOutput,
+  .cli-terminal-window.is-minimized .terminal > .input-line,
+  .cli-terminal-window.is-minimized .status-bar {
+    display: none;
+  }
+  .cli-terminal-window.is-minimized .terminal {
+    max-height: 40px;
+  }
+
+  /* ===== CONTENT (output) styles ===== */
+  .cli-terminal-overlay .prompt {
+    margin-right: 10px;
+    color: #ffffff;
+    font-weight: 500;
+    text-shadow: 0 0 3px rgba(255, 255, 255, 0.4);
+    opacity: 0.9;
+  }
+  .cli-terminal-overlay input[type="text"]#cliCommandInput {
+    background: transparent;
+    border: none;
+    color: inherit;
+    width: 100%;
+    outline: none;
+    font-family: inherit;
+    font-size: 14px;
+    caret-color: #ffffff;
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+  .cli-terminal-overlay #cliOutput pre,
+  .cli-terminal-overlay .ls-output,
+  .cli-terminal-overlay .tree-output {
+    margin: 0;
+    font-family: inherit;
+    white-space: pre-wrap;
+    word-break: break-word;
+    line-height: 1.55;
+  }
+
+  .cli-terminal-overlay .term-dim   { opacity: 0.5; font-style: italic; }
+  .cli-terminal-overlay .term-error { color: #ffffff; font-weight: 600; }
+  .cli-terminal-overlay .ls-dir,
+  .cli-terminal-overlay .tree-dir   { color: #ffffff; font-weight: 600; }
+  .cli-terminal-overlay .ls-exec,
+  .cli-terminal-overlay .tree-exec  { color: rgba(255, 255, 255, 0.86); font-weight: 600; text-decoration: underline; text-decoration-color: rgba(255, 255, 255, 0.45); }
+  .cli-terminal-overlay .ls-link,
+  .cli-terminal-overlay .tree-link  { color: rgba(255, 255, 255, 0.82); }
+  .cli-terminal-overlay .ls-hidden,
+  .cli-terminal-overlay .tree-hidden{ color: rgba(255, 255, 255, 0.7); }
+  .cli-terminal-overlay .ls-heading { color: rgba(255, 255, 255, 0.78); font-weight: 600; }
+  .cli-terminal-overlay .tree-branch{ color: rgba(255, 255, 255, 0.45); }
+
+  .cli-terminal-overlay .tab-completions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 18px;
+    padding: 6px 0;
+    opacity: 0.8;
+    font-size: 0.95em;
+  }
+  .cli-terminal-overlay .tab-completions .ls-dir { font-weight: 600; }
+
+  .cli-terminal-overlay .html-content {
+    padding: 12px 0;
+    border-radius: 8px;
+    margin: 12px 0;
+    border-left: 2px solid rgba(255, 255, 255, 0.1);
+    padding-left: 12px;
+    background: rgba(255, 255, 255, 0.02);
+  }
+  .cli-terminal-overlay .html-content h1,
+  .cli-terminal-overlay .html-content h2,
+  .cli-terminal-overlay .html-content h3 {
+    margin-bottom: 12px;
+    color: #fff;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+  .cli-terminal-overlay .html-content .animated-text {
+    animation: cliPulseText 2s ease-in-out infinite alternate;
+    text-align-last: center;
+    font-size: 24px;
+    font-weight: 500;
+    margin-bottom: 15px;
+    color: #fff;
+    letter-spacing: 1px;
+  }
+  @keyframes cliPulseText {
+    from { text-shadow: 0 0 5px rgba(255,255,255,0.5), 0 0 10px rgba(255,255,255,0.3); opacity: 0.8; }
+    to   { text-shadow: 0 0 8px rgba(255,255,255,0.8), 0 0 15px rgba(255,255,255,0.5); opacity: 1; }
+  }
+  .cli-terminal-overlay .html-content .tagline {
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 15px;
+  }
+  .cli-terminal-overlay .html-content p {
+    margin-bottom: 12px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.85);
+  }
+  .cli-terminal-overlay .html-content ul {
+    margin-left: 20px;
+    margin-bottom: 15px;
+    list-style: none;
+    padding: 0;
+  }
+  .cli-terminal-overlay .html-content li {
+    margin-bottom: 6px;
+    position: relative;
+    color: rgba(255, 255, 255, 0.8);
+  }
+  .cli-terminal-overlay .html-content li::before {
+    content: "╶";
+    position: absolute;
+    left: -15px;
+    color: rgba(255, 255, 255, 0.4);
+  }
+  .cli-terminal-overlay .html-content--projects .animated-text,
+  .cli-terminal-overlay .html-content--projects .tagline,
+  .cli-terminal-overlay .html-content--resume .tagline {
+    text-align: center;
+  }
+  .cli-terminal-overlay .html-content--projects .tagline,
+  .cli-terminal-overlay .html-content--resume .tagline {
+    max-width: 64ch;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .cli-terminal-overlay .html-content--projects .p4-project-grid {
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+  .cli-terminal-overlay .html-content--projects .p4-project-grid > li {
+    position: static !important;
+    margin: 0 !important;
+  }
+  .cli-terminal-overlay .html-content--projects .p4-project-grid > li::before { content: none !important; }
+  .cli-terminal-overlay .html-content--projects .p4-project-grid > .p4-card,
+  .cli-terminal-overlay .html-content--projects .p4-project-grid > .p4-explore-slot {
+    width: calc(50% - 8px) !important;
+    margin-left: 0 !important;
+  }
+  .cli-terminal-overlay .html-content--projects .p4-project-grid a,
+  .cli-terminal-overlay .html-content--projects #p4-preview-open-project {
+    border-bottom: none;
+    padding-bottom: 0;
+    text-shadow: none;
+  }
+  .cli-terminal-overlay .html-content .center-button {
+    display: block;
+    width: fit-content;
+    margin: 20px auto;
+    background-color: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+  }
+  .cli-terminal-overlay .html-content .center-button:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 25px rgba(255, 255, 255, 0.2);
+    transform: translateY(-3px);
+    border-color: rgba(255, 255, 255, 0.35);
+  }
+  .cli-terminal-overlay .html-content .center-button a {
+    color: white;
+    text-decoration: none;
+    letter-spacing: 0.5px;
+  }
+  .cli-terminal-overlay .html-content a {
+    color: #ffffff;
+    text-decoration: none;
+    border-bottom: 1px dotted rgba(255, 255, 255, 0.3);
+    padding-bottom: 1px;
+    transition: all 0.3s ease;
+  }
+  .cli-terminal-overlay .html-content a:hover {
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+    border-bottom-color: rgba(255, 255, 255, 0.7);
+  }
+
+  /* Scrollbar inside the terminal */
+  .cli-terminal-overlay .terminal::-webkit-scrollbar { width: 6px; }
+  .cli-terminal-overlay .terminal::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 3px; }
+  .cli-terminal-overlay .terminal::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); border-radius: 3px; }
+  .cli-terminal-overlay .terminal::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.28); }
+
+  /* ===== VIM SHELL ===== */
+  .cli-terminal-overlay .vim-hidden { display: none !important; }
+  .cli-terminal-overlay .vim-shell {
+    position: absolute;
+    top: 40px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: rgba(10, 10, 12, 0.96);
+    color: rgba(255, 255, 255, 0.92);
+    font-family: 'JetBrains Mono', monospace;
+    animation: cliVimFade 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes cliVimFade {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .cli-terminal-window.vim-active .terminal > .status-bar { visibility: hidden; }
+  .cli-terminal-overlay .vim-shell__chrome { display: none; }
+  .cli-terminal-overlay .vim-shell__editor {
+    display: grid;
+    grid-template-columns: minmax(44px, 56px) 1fr;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    position: relative;
+  }
+  .cli-terminal-overlay .vim-shell__editor::after {
+    content: "";
+    position: absolute;
+    top: 0; left: 56px; right: 0; bottom: 0;
+    pointer-events: none;
+    background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 20px, rgba(255,255,255,0.03) 20px, rgba(255,255,255,0.03) 21px);
+    opacity: 0.45;
+    z-index: 0;
+  }
+  .cli-terminal-overlay .vim-shell__gutter,
+  .cli-terminal-overlay .vim-shell__buffer {
+    margin: 0;
+    padding: 14px 12px 18px;
+    border: none;
+    resize: none;
+    font: 13.5px/1.55 'JetBrains Mono', monospace;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.94);
+    overflow: auto;
+    outline: none;
+    scrollbar-width: none;
+    position: relative;
+    z-index: 1;
+  }
+  .cli-terminal-overlay .vim-shell__gutter::-webkit-scrollbar,
+  .cli-terminal-overlay .vim-shell__buffer::-webkit-scrollbar { display: none; }
+  .cli-terminal-overlay .vim-shell__gutter {
+    text-align: right;
+    user-select: none;
+    color: rgba(255, 255, 255, 0.32);
+    background: rgba(255, 255, 255, 0.02);
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    white-space: pre;
+    padding-right: 14px;
+    padding-left: 8px;
+  }
+  .cli-terminal-overlay .vim-shell__buffer {
+    caret-color: #fff;
+    white-space: pre;
+    tab-size: 4;
+    -moz-tab-size: 4;
+  }
+  .cli-terminal-overlay .vim-shell--insert .vim-shell__buffer  { caret-color: #6fdc8c; }
+  .cli-terminal-overlay .vim-shell--command .vim-shell__buffer { caret-color: #f5c07f; }
+  .cli-terminal-overlay .vim-shell__statusline {
+    display: flex;
+    align-items: stretch;
+    height: 26px;
+    padding: 0;
+    background: rgba(255, 255, 255, 0.05);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.4px;
+    color: rgba(255, 255, 255, 0.72);
+    user-select: none;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+  }
+  .cli-terminal-overlay .vim-shell__statusline-fill {
+    flex: 1 1 auto;
+    background: linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+    border-left: 1px solid rgba(255, 255, 255, 0.06);
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .cli-terminal-overlay .vim-mode-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 14px;
+    font-weight: 700;
+    color: #f1f1f1;
+    background: rgba(255, 255, 255, 0.18);
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+  .cli-terminal-overlay .vim-shell--insert .vim-mode-pill {
+    background: rgba(111, 220, 140, 0.28);
+    color: #b9f3c8;
+    box-shadow: inset 0 0 0 1px rgba(111, 220, 140, 0.3);
+  }
+  .cli-terminal-overlay .vim-shell--command .vim-mode-pill {
+    background: rgba(245, 192, 127, 0.26);
+    color: #ffd9a8;
+    box-shadow: inset 0 0 0 1px rgba(245, 192, 127, 0.3);
+  }
+  .cli-terminal-overlay .vim-status-right {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 14px;
+    color: rgba(255, 255, 255, 0.85);
+    flex-shrink: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 60%;
+    background: rgba(255, 255, 255, 0.06);
+  }
+  .cli-terminal-overlay .vim-shell--dirty .vim-status-right::before {
+    content: "● ";
+    color: #f5c07f;
+    margin-right: 4px;
+  }
+
+  /* ===== TASKBAR ===== */
+  .cli-taskbar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 0 16px;
+    background: linear-gradient(180deg, rgba(20, 20, 26, 0.65), rgba(8, 8, 12, 0.85));
+    backdrop-filter: blur(28px) saturate(140%);
+    -webkit-backdrop-filter: blur(28px) saturate(140%);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.7);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.4px;
+    z-index: 6;
+    transform: translateY(120%);
+    transition: transform 480ms cubic-bezier(0.18, 1.05, 0.32, 1.04);
+  }
+  .cli-terminal-overlay.is-booted .cli-taskbar { transform: translateY(0); }
+
+  .cli-taskbar-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.92);
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    font-size: 11px;
+  }
+  .cli-taskbar-brand::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #6fdc8c;
+    box-shadow: 0 0 8px rgba(111, 220, 140, 0.7);
+  }
+  .cli-taskbar-app {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 11px;
+  }
+  .cli-taskbar-spacer { flex: 1 1 auto; }
+  .cli-taskbar-clock {
+    color: rgba(255, 255, 255, 0.85);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.6px;
+  }
+  .cli-taskbar-date {
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 10.5px;
+    letter-spacing: 0.5px;
+  }
+  .cli-taskbar-quit {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.85);
+    font-family: inherit;
+    font-size: 10.5px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+  }
+  .cli-taskbar-quit:hover {
+    background: rgba(255, 80, 80, 0.18);
+    border-color: rgba(255, 100, 100, 0.55);
+    color: #ffe2e2;
+  }
+
+  /* ===== Light theme variant (matches main page) ===== */
+  body.light-theme .cli-terminal-overlay {
+    background: #f5f5f5;
+  }
+  body.light-theme .cli-overlay-fade {
+    background: radial-gradient(ellipse at center, #f6f7fa 0%, #e7e8ec 70%);
+  }
+  body.light-theme .cli-desktop {
+    background:
+      radial-gradient(ellipse at 22% 14%, rgba(140, 200, 255, 0.16) 0%, transparent 50%),
+      radial-gradient(ellipse at 78% 86%, rgba(180, 140, 255, 0.16) 0%, transparent 55%),
+      radial-gradient(ellipse at center, #f3f4f8 0%, #dfe1e6 80%);
+  }
+  body.light-theme .cli-desktop-vignette {
+    background: radial-gradient(ellipse at center, transparent 28%, rgba(120, 120, 140, 0.32) 100%);
+  }
+  body.light-theme .cli-desktop-rain .col {
+    color: rgba(0, 0, 0, 0.6);
+    text-shadow: 0 0 6px rgba(0, 0, 0, 0.15);
+  }
+  body.light-theme .cli-terminal-overlay .terminal {
+    background: rgba(255, 255, 255, 0.4);
+    border-color: rgba(0, 0, 0, 0.12);
+    color: #1d1d1f;
+  }
+  body.light-theme .cli-terminal-overlay #cliCommandInput { color: #222; caret-color: #111; }
+  body.light-theme .cli-terminal-overlay .prompt { color: #111; text-shadow: none; }
+  body.light-theme .cli-terminal-overlay .header {
+    color: #1d1d1f;
+    background: linear-gradient(180deg, rgba(255,255,255,0.7), rgba(238,238,240,0.85));
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  }
+  body.light-theme .cli-terminal-overlay .header-tab {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.1);
+    color: #1d1d1f;
+  }
+  body.light-theme .cli-terminal-overlay .window-btn { color: rgba(0, 0, 0, 0.65); }
+  body.light-theme .cli-terminal-overlay .window-btn:hover { background: rgba(0, 0, 0, 0.08); color: #000; }
+  body.light-theme .cli-terminal-overlay .status-bar {
+    background: rgba(232, 232, 234, 0.85);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    color: rgba(0, 0, 0, 0.55);
+  }
+  body.light-theme .cli-taskbar {
+    background: linear-gradient(180deg, rgba(255,255,255,0.65), rgba(238,238,240,0.85));
+    border-top-color: rgba(0, 0, 0, 0.1);
+    color: rgba(0, 0, 0, 0.65);
+  }
+  body.light-theme .cli-taskbar-brand { color: #1d1d1f; }
+  body.light-theme .cli-taskbar-clock { color: #1d1d1f; }
+  body.light-theme .cli-taskbar-app { background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.1); color: #1d1d1f; }
+  body.light-theme .cli-taskbar-quit { color: #1d1d1f; border-color: rgba(0,0,0,0.18); }
+
+  /* ===== Responsive ===== */
+  @media screen and (max-width: 768px) {
+    .cli-terminal-window { width: 96%; }
+    .cli-terminal-overlay .terminal { font-size: 0.92em; }
+    .cli-terminal-overlay .header { font-size: 0.78em; height: 36px; padding: 0 8px 0 12px; }
+    .cli-terminal-overlay .header-tab { font-size: 11px; padding: 5px 10px 5px 8px; max-width: 200px; }
+    .cli-terminal-overlay .header-title { display: none; }
+    .cli-terminal-overlay .window-btn { width: 26px; height: 24px; }
+    .cli-terminal-overlay .status-bar { font-size: 10px; padding: 0 12px; gap: 12px; }
+    .cli-boot-logo { font-size: 10px; }
+  }
+
+  @media screen and (max-width: 480px) {
+    .cli-terminal-overlay #cliOutput { font-size: 12.5px; }
+    .cli-terminal-overlay .prompt { font-size: 0.9em; }
+    .cli-taskbar { gap: 8px; padding: 0 10px; font-size: 10.5px; }
+    .cli-taskbar-app, .cli-taskbar-date { display: none; }
+  }
+
+  /* Dim main page slightly under overlay */
+  body.cli-overlay-open header,
+  body.cli-overlay-open .progress-bar,
+  body.cli-overlay-open #keyboard-popups,
+  body.cli-overlay-open .palette-button-container { pointer-events: none; }
+</style>
+
+<div id="cli-terminal-overlay" class="cli-terminal-overlay" aria-hidden="true" role="dialog" aria-label="SuryaOS terminal">
+  <div class="cli-overlay-fade"></div>
+
+  <!-- Boot phase -->
+  <div class="cli-boot-screen" id="cliBootScreen">
+    <pre class="cli-boot-logo" id="cliBootLogo">   ███████╗██╗   ██╗██████╗ ██╗   ██╗ █████╗      ██████╗ ███████╗
+   ██╔════╝██║   ██║██╔══██╗╚██╗ ██╔╝██╔══██╗    ██╔═══██╗██╔════╝
+   ███████╗██║   ██║██████╔╝ ╚████╔╝ ███████║    ██║   ██║███████╗
+   ╚════██║██║   ██║██╔══██╗  ╚██╔╝  ██╔══██║    ██║   ██║╚════██║
+   ███████║╚██████╔╝██║  ██║   ██║   ██║  ██║    ╚██████╔╝███████║
+   ╚══════╝ ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝     ╚═════╝ ╚══════╝</pre>
+    <div class="cli-boot-meta">SuryaOS v3.1 · web edition</div>
+    <ul class="cli-boot-lines" id="cliBootLines"></ul>
+    <div class="cli-boot-progress"><div></div></div>
+    <div class="cli-boot-skip">esc · skip</div>
+  </div>
+
+  <!-- Desktop phase -->
+  <div class="cli-desktop">
+    <div class="cli-desktop-orbs"><span></span><span></span><span></span></div>
+    <div class="cli-desktop-grid"></div>
+    <div class="cli-desktop-rain" id="cliDesktopRain"></div>
+    <div class="cli-desktop-vignette"></div>
+
+    <div class="cli-terminal-window" id="cliTerminalWindow">
+      <div class="terminal" id="cliTerminal">
+        <div class="header" role="toolbar" aria-label="Terminal window controls">
+          <div class="header-left">
+            <span class="header-tab">
+              <span class="header-tab-icon" aria-hidden="true">
+                <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 4l3 3-3 3"></path>
+                  <path d="M7 11h6"></path>
+                </svg>
+              </span>
+              <span class="header-tab-title" id="cliHeaderTabTitle">surya@portfolio: ~</span>
+            </span>
+          </div>
+          <div class="header-title" aria-hidden="true">Terminal</div>
+          <div class="window-controls" role="group" aria-label="Window controls">
+            <button type="button" class="window-btn minimize" id="cliWinMin" title="Minimize" aria-label="Minimize">
+              <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2 9h8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            </button>
+            <button type="button" class="window-btn maximize" id="cliWinMax" title="Maximize" aria-label="Maximize">
+              <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><rect x="2.25" y="2.25" width="7.5" height="7.5" stroke="currentColor" stroke-width="1.2" fill="none" rx="0.5"/></svg>
+            </button>
+            <button type="button" class="window-btn close" id="cliWinClose" title="Close" aria-label="Close">
+              <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+        </div>
+        <div id="cliOutput"></div>
+        <div class="input-line">
+          <span class="prompt" id="cliPromptEl">surya@portfolio:~$</span>
+          <input type="text" id="cliCommandInput" autocomplete="off" spellcheck="false" autocapitalize="off" autocorrect="off">
+        </div>
+        <div class="status-bar" aria-hidden="true">
+          <span class="status-cell"><span class="status-led"></span>connected</span>
+          <span class="status-cell">bash 5.2.15</span>
+          <span class="status-cell status-cell-grow" id="cliStatusPath">~</span>
+          <span class="status-cell" id="cliStatusClock">--:--</span>
+        </div>
+      </div>
+
+      <div class="vim-shell vim-hidden" id="cliVimShell" aria-hidden="true">
+        <div class="vim-shell__chrome" aria-hidden="true">
+          <div class="vim-shell__title" id="cliVimTitle">vim</div>
+          <div class="vim-shell__mode" id="cliVimModeLabel">NORMAL</div>
+        </div>
+        <div class="vim-shell__editor">
+          <pre class="vim-shell__gutter" id="cliVimGutter" aria-hidden="true">1</pre>
+          <textarea
+            id="cliVimBuffer"
+            class="vim-shell__buffer"
+            spellcheck="false"
+            autocapitalize="off"
+            autocomplete="off"
+            autocorrect="off"
+          ></textarea>
+        </div>
+        <div class="vim-shell__statusline">
+          <span class="vim-mode-pill" id="cliVimStatusLeft">NORMAL</span>
+          <span class="vim-shell__statusline-fill" aria-hidden="true"></span>
+          <span class="vim-status-right" id="cliVimStatusRight">[No Name]</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="cli-taskbar">
+      <span class="cli-taskbar-brand">SURYAOS</span>
+      <span class="cli-taskbar-app"><i class="fa-solid fa-terminal" aria-hidden="true"></i> bash · pts/0</span>
+      <span class="cli-taskbar-spacer"></span>
+      <span class="cli-taskbar-date" id="cliTaskbarDate"></span>
+      <span class="cli-taskbar-clock" id="cliTaskbarClock">--:--</span>
+      <button type="button" class="cli-taskbar-quit" id="cliTaskbarQuit" title="Close terminal (Esc)">⏻ shutdown</button>
+    </div>
+  </div>
+
+  <div class="cli-overlay-scanlines" aria-hidden="true"></div>
+</div>
+
+<script>
+/* ============================================================
+   CLI TERMINAL — FULL IN-PAGE PORT
+   Original: /Cli/script.js (ported and namespaced for in-page use)
+   ============================================================ */
+(function () {
+  'use strict';
+
+  // ---- DOM nodes (lookup deferred to first use) ----
+  var inputEl, outputEl, promptEl;
+  var vimShellEl, vimTitleEl, vimModeLabelEl, vimBufferEl;
+  var vimGutterEl, vimStatusLeftEl, vimStatusRightEl;
+  var terminalEl, windowEl, overlayEl;
+
+  function $(id) { return document.getElementById(id); }
+  function bindDom() {
+    inputEl  = $('cliCommandInput');
+    outputEl = $('cliOutput');
+    promptEl = $('cliPromptEl');
+    vimShellEl       = $('cliVimShell');
+    vimTitleEl       = $('cliVimTitle');
+    vimModeLabelEl   = $('cliVimModeLabel');
+    vimBufferEl      = $('cliVimBuffer');
+    vimGutterEl      = $('cliVimGutter');
+    vimStatusLeftEl  = $('cliVimStatusLeft');
+    vimStatusRightEl = $('cliVimStatusRight');
+    terminalEl = $('cliTerminal');
+    windowEl   = $('cliTerminalWindow');
+    overlayEl  = $('cli-terminal-overlay');
+  }
+
+  // ---- Shell state ----
+  var USER = 'surya', HOST = 'portfolio', HOME = '/home/surya';
+  var cwd  = HOME;
+  var hist = [], histPos = -1;
+  var aliases = { ll:'ls -la', la:'ls -a', cls:'clear', '..':'cd ..' };
+  var envVars = {
+    HOME: HOME, USER: USER, HOSTNAME: HOST, SHELL: '/bin/bash',
+    TERM: 'xterm-256color', PATH: '/usr/local/bin:/usr/bin:/bin',
+    EDITOR: 'vim', LANG: 'en_US.UTF-8', PWD: HOME, OLDPWD: HOME
+  };
+  var routeMap = { about:'/', projects:'/', resume:'/Resume' };
+  var shellBuiltins = {
+    alias:true, builtin:true, cd:true, clear:true, env:true, exit:true,
+    export:true, help:true, history:true, man:true, open:true, pwd:true,
+    section:true, type:true, unalias:true, which:true
+  };
+  var externalCommandNames = [
+    'ls','cat','head','tail','grep','wc','touch','mkdir','rm','rmdir','cp','mv',
+    'tree','find','file','stat','echo','rev','sort','uniq','whoami','hostname',
+    'uname','date','uptime','id','groups','df','free','ps',
+    'neofetch','cowsay','fortune','cal','factor','vim','chmod',
+    'chown','sudo','top','htop','sl','wget','ssh','apt','brew','pip','npm','su'
+  ];
+  var sessionStart = Date.now();
+  var exitCode = 0;
+  var interrupted = false;
+  var captureMode = false, captureBuffer = '';
+
+  var vfs = {};
+  var fileLinks = {};
+  var vimState = {
+    open: false, mode: 'normal', path: '', displayPath: '[No Name]',
+    original: '', dirty: false, command: '', pending: '', locked: false,
+    lastMessage: 'Press i to insert, :w to save, :q to quit', preferredCol: null
+  };
+
+  function _modeValue(mode) { return parseInt(String(mode || '0644').slice(-4), 8); }
+  function _normalizeMode(mode, fallback) {
+    var raw = String(mode || fallback || '0644').replace(/[^0-7]/g, '');
+    if (!raw) raw = fallback || '0644';
+    if (raw.length === 3) raw = '0' + raw;
+    return raw.slice(-4);
+  }
+  function _setMode(node, mode) {
+    var fallback = node.type === 'd' ? '0755' : '0644';
+    node.mode = _normalizeMode(mode, fallback);
+    node.executable = node.type === 'f' && (_modeValue(node.mode) & 0o111) !== 0;
+  }
+  function _addChild(pp, nm) { if (vfs[pp] && vfs[pp].ch.indexOf(nm) < 0) vfs[pp].ch.push(nm); }
+  function _removeChild(pp, nm) {
+    if (!vfs[pp]) return;
+    var idx = vfs[pp].ch.indexOf(nm);
+    if (idx > -1) vfs[pp].ch.splice(idx, 1);
+  }
+  function _mkdirp(p, meta) {
+    if (vfs[p]) return;
+    vfs[p] = { type:'d', ch:[], mt:new Date() };
+    _setMode(vfs[p], meta && meta.mode ? meta.mode : '0755');
+    if (p !== '/') {
+      var pp = _parent(p), nm = _base(p);
+      if (!vfs[pp]) _mkdirp(pp);
+      _addChild(pp, nm);
+    }
+  }
+  function _mkfile(p, content, meta) {
+    meta = meta || {};
+    var data = content == null ? '' : String(content);
+    var pp = _parent(p), nm = _base(p);
+    if (!vfs[pp]) _mkdirp(pp);
+    vfs[p] = { type:'f', data:data, remote:meta.remote||null, readOnly:!!meta.readOnly, mt:new Date(), sz:data.length };
+    _setMode(vfs[p], meta.mode || (meta.executable ? '0755' : '0644'));
+    _addChild(pp, nm);
+  }
+  function _updateFile(p, content, meta) {
+    meta = meta || {};
+    if (!_exists(p)) { _mkfile(p, content, meta); return vfs[p]; }
+    if (!_isFile(p)) throw new Error('Not a file');
+    vfs[p].data = content == null ? '' : String(content);
+    vfs[p].sz = vfs[p].data.length;
+    vfs[p].mt = new Date();
+    if (meta.mode) _setMode(vfs[p], meta.mode);
+    if (typeof meta.readOnly === 'boolean') vfs[p].readOnly = meta.readOnly;
+    return vfs[p];
+  }
+  function _cloneFileNode(node) {
+    return {
+      type: 'f', data: node.data, remote: node.remote || null,
+      readOnly: !!node.readOnly, mt: new Date(),
+      sz: (node.data || '').length, mode: node.mode, executable: !!node.executable
+    };
+  }
+  function _parent(p)  { if (p==='/') return '/'; var s=p.split('/'); s.pop(); return s.join('/')||'/'; }
+  function _base(p)    { return p==='/'?'/':p.split('/').pop(); }
+  function _resolve(s) {
+    if (!s || s==='') return cwd;
+    if (s==='~') return HOME;
+    if (s==='-') return envVars.OLDPWD || HOME;
+    if (s.charAt(0)==='~') s = HOME + '/' + s.slice(2);
+    else if (s.charAt(0)!=='/') s = cwd + '/' + s;
+    var parts = s.split('/'), out = [];
+    for (var i=0; i<parts.length; i++) {
+      if (parts[i]==='' || parts[i]==='.') continue;
+      if (parts[i]==='..') { out.pop(); continue; }
+      out.push(parts[i]);
+    }
+    return '/' + out.join('/');
+  }
+  function _exists(p) { return !!vfs[p]; }
+  function _isDir(p)  { return vfs[p] && vfs[p].type==='d'; }
+  function _isFile(p) { return vfs[p] && vfs[p].type==='f'; }
+  function _isExecutable(node) { return !!(node && node.type === 'f' && (_modeValue(node.mode) & 0o111)); }
+  function _permString(node) {
+    var value = _modeValue(node.mode);
+    var out = node.type === 'd' ? 'd' : '-';
+    var masks = [0o400,0o200,0o100,0o040,0o020,0o010,0o004,0o002,0o001];
+    var chars = ['r','w','x','r','w','x','r','w','x'];
+    for (var i = 0; i < masks.length; i++) out += (value & masks[i]) ? chars[i] : '-';
+    return out;
+  }
+  function canWritePath(p) {
+    return p === HOME || p.indexOf(HOME + '/') === 0 || p === '/tmp' || p.indexOf('/tmp/') === 0;
+  }
+  function normalizeSectionName(name) {
+    var key = String(name || '').toLowerCase();
+    if (key === 'project') key = 'projects';
+    return key;
+  }
+  function extractSectionFromScript(text) {
+    var match = /^\s*section\s+([a-z0-9_-]+)/im.exec(text || '');
+    return match ? normalizeSectionName(match[1]) : null;
+  }
+  function ensureParentDirectory(p, raw, cmd) {
+    var pp = _parent(p);
+    if (!_exists(pp)) return cmd + ': cannot create \'' + raw + '\': No such file or directory';
+    if (!_isDir(pp)) return cmd + ': cannot create \'' + raw + '\': Not a directory';
+    return '';
+  }
+  function syncHistoryFile() {
+    if (_isFile(HOME + '/.bash_history')) _updateFile(HOME + '/.bash_history', hist.join('\n'));
+  }
+
+  function initFS() {
+    ['/','/home',HOME,HOME+'/Documents',HOME+'/Downloads',
+     '/etc','/usr','/usr/bin','/usr/local','/usr/local/bin',
+     '/tmp','/var','/var/log','/bin','/dev'].forEach(_mkdirp);
+    _mkfile(HOME+'/.bashrc','# ~/.bashrc\nexport PATH="/usr/local/bin:/usr/bin:/bin"\nexport EDITOR="vim"\nalias ll="ls -la"\nalias la="ls -a"\n');
+    _mkfile(HOME+'/.profile','# ~/.profile\n# Executed on login.\n');
+    _mkfile(HOME+'/.bash_history','');
+    _mkfile(HOME+'/README.txt','Run ./about, ./projects, or ./resume to browse portfolio sections.\nRun help to see available commands and current open targets.\nUse vim <file> to edit local files in your home directory.\n');
+    _mkfile('/etc/hostname', HOST + '\n', { readOnly:true });
+    _mkfile('/etc/os-release','NAME="SuryaOS"\nVERSION="3.1"\nID=suryaos\nPRETTY_NAME="SuryaOS 3.1 (Terminal)"\n', { readOnly:true });
+    _mkfile('/etc/passwd','root:x:0:0:root:/root:/bin/bash\nsurya:x:1000:1000:Suryanarayan Renjith:'+HOME+':/bin/bash\n', { readOnly:true });
+    _mkfile('/var/log/syslog','[OK] System initialized\n[OK] Network online\n[OK] Interactive shell attached\n', { readOnly:true });
+    _mkfile('/dev/null','', { mode:'0666', readOnly:true });
+    _mkfile('/bin/bash','#!/usr/bin/env surya-shell\necho "A shell is already running in this page."\n', { executable:true, readOnly:true });
+    _mkfile('/bin/sh','#!/usr/bin/env surya-shell\necho "A POSIX shell is already running in this page."\n', { executable:true, readOnly:true });
+    _mkfile(HOME+'/about','#!/usr/bin/env surya-shell\nsection about\n', { executable:true });
+    _mkfile(HOME+'/projects','#!/usr/bin/env surya-shell\nsection projects\n', { executable:true });
+    _mkfile(HOME+'/resume','#!/usr/bin/env surya-shell\nsection resume\n', { executable:true });
+  }
+
+  var FILE_LINKS_URL = 'https://surya-api.vercel.app/api/fileLinks';
+  var fileLinksFetch = null;
+  function fetchFileLinks() {
+    return fetch(FILE_LINKS_URL)
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d && typeof d === 'object' && !d.error) fileLinks = d;
+        return fileLinks;
+      })
+      .catch(function () { return fileLinks; });
+  }
+  function ensureFileLinks() {
+    var hasKeys = false;
+    for (var k in fileLinks) {
+      if (Object.prototype.hasOwnProperty.call(fileLinks, k) && k !== 'error') { hasKeys = true; break; }
+    }
+    if (hasKeys) return Promise.resolve(fileLinks);
+    if (!fileLinksFetch) {
+      fileLinksFetch = fetchFileLinks().then(function (links) { fileLinksFetch = null; return links; });
+    }
+    return fileLinksFetch;
+  }
+
+  function htmlResult(html, className) { return { kind:'html', html:html, className:className || '' }; }
+  function preResult(text, className) { return { kind:'pre', text:text, className:className || '' }; }
+  function fail(message, code) { exitCode = code == null ? 1 : code; return message; }
+  function print(text, cls) {
+    if (captureMode) { captureBuffer += (text||'') + '\n'; return; }
+    var d = document.createElement('div');
+    if (cls) d.className = cls;
+    d.textContent = text;
+    outputEl.appendChild(d);
+  }
+  function printError(text) { print(text, 'term-error'); }
+  function printHTML(html, cls) {
+    if (captureMode) { captureBuffer += stripTags(html) + '\n'; return; }
+    var d = document.createElement('div');
+    if (cls) d.className = cls;
+    d.innerHTML = html;
+    outputEl.appendChild(d);
+    postProcessInjectedHtml(d);
+  }
+  function printPre(text, cls) {
+    if (captureMode) { captureBuffer += (text||'') + '\n'; return; }
+    var pre = document.createElement('pre');
+    pre.style.cssText = 'margin:0;font-family:inherit;white-space:pre-wrap;';
+    if (cls) pre.className = cls;
+    pre.textContent = text;
+    outputEl.appendChild(pre);
+  }
+  function printPrompt(cmd) {
+    printHTML('<span class="prompt">' + promptStr() + '</span> ' + esc(cmd));
+  }
+  function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+  function stripTags(h) { var d = document.createElement('div'); d.innerHTML = h; return d.textContent||''; }
+  function formatDisplayPath(path) {
+    if (!path) return '[No Name]';
+    if (path === HOME) return '~';
+    if (path.indexOf(HOME + '/') === 0) return '~/' + path.slice(HOME.length + 1);
+    return path;
+  }
+  function promptStr() { return USER + '@' + HOST + ':' + formatDisplayPath(cwd) + '$'; }
+  function updatePrompt() { promptEl.textContent = promptStr(); }
+  function scroll() { if (terminalEl) terminalEl.scrollTop = terminalEl.scrollHeight; }
+  function delay(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+  function cleanFetchedHTML(html) {
+    return html.replace(/style="[^"]*position:\s*absolute[^"]*"/gi,
+      'style="text-align: center; margin-top: 12px;"');
+  }
+  function removeProjectPreviewOverlay() {
+    var overlay = document.body.querySelector('#p4-preview-overlay');
+    if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+  }
+  function moveProjectPreviewOverlay(container) {
+    var overlay = container.querySelector('#p4-preview-overlay');
+    if (!overlay) return;
+    removeProjectPreviewOverlay();
+    overlay.style.display = 'none';
+    overlay.classList.remove('is-open');
+    overlay.classList.add('cli-project-overlay');
+    document.body.appendChild(overlay);
+  }
+  function postProcessInjectedHtml(container) {
+    if (!container || !container.querySelector) return;
+    if (container.querySelector('.p4-project-grid')) {
+      container.classList.add('html-content--projects');
+      moveProjectPreviewOverlay(container);
+    }
+    if (container.querySelector('.center-button a[href="/Resume"], .center-button a[href="/Resume/"]')) {
+      container.classList.add('html-content--resume');
+    }
+  }
+
+  function parseFlags(args) {
+    var flags = {}, positional = [];
+    for (var i = 0; i < args.length; i++) {
+      if (args[i].charAt(0) === '-' && args[i].length > 1 && !/^\-\d/.test(args[i])) {
+        for (var j = 1; j < args[i].length; j++) flags[args[i].charAt(j)] = true;
+      } else { positional.push(args[i]); }
+    }
+    return { flags: flags, args: positional };
+  }
+  function pad(s, n) { s = String(s); while (s.length < n) s = ' ' + s; return s; }
+  function rpad(s, n) { s = String(s); while (s.length < n) s += ' '; return s; }
+  function fmtSize(b) {
+    if (b < 1024) return b + 'B';
+    if (b < 1048576) return (b/1024).toFixed(1) + 'K';
+    return (b/1048576).toFixed(1) + 'M';
+  }
+  function fmtDate(d) {
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return months[d.getMonth()] + ' ' + pad(d.getDate(), 2) + ' ' + pad(d.getHours(), 2) + ':' + ('0'+d.getMinutes()).slice(-2);
+  }
+  function shellEscape(value) {
+    var text = String(value == null ? '' : value);
+    if (!text.length) return '""';
+    if (/[\s"'\\$`]/.test(text)) return '"' + text.replace(/(["\\$`])/g, '\\$1') + '"';
+    return text;
+  }
+  function availableCommandNames() {
+    return Object.keys(commands).filter(function (name) { return name !== 'builtin' && name !== 'section'; });
+  }
+  function closestCmd(cmd) {
+    var best = '', dist = Infinity;
+    var all = availableCommandNames();
+    for (var i = 0; i < all.length; i++) {
+      var d = levenshtein(cmd, all[i]);
+      if (d < dist) { dist = d; best = all[i]; }
+    }
+    return dist <= 3 ? best : null;
+  }
+  function levenshtein(a, b) {
+    var m = a.length, n = b.length, prev = [], curr = [];
+    for (var j = 0; j <= n; j++) prev[j] = j;
+    for (var i = 1; i <= m; i++) {
+      curr[0] = i;
+      for (var jj = 1; jj <= n; jj++) {
+        curr[jj] = Math.min(prev[jj]+1, curr[jj-1]+1, prev[jj-1]+(a[i-1]===b[jj-1]?0:1));
+      }
+      var tmp = prev; prev = curr; curr = tmp;
+    }
+    return prev[n];
+  }
+  function renderResult(result) {
+    if (result == null || result === '') return;
+    if (typeof result === 'string') { printPre(result); return; }
+    if (result.kind === 'html') { printHTML(result.html, result.className); return; }
+    if (result.kind === 'pre') { printPre(result.text, result.className); }
+  }
+  function renderNameHtml(name, path, node, prefix) {
+    var classes = [prefix + '-node'];
+    if (node.type === 'd') classes.push(prefix + '-dir');
+    else if (_isExecutable(node)) classes.push(prefix + '-exec');
+    else classes.push(prefix + '-file');
+    if (name.charAt(0) === '.') classes.push(prefix + '-hidden');
+    return '<span class="' + classes.join(' ') + '">' + esc(name + (node.type === 'd' ? '/' : '')) + '</span>';
+  }
+  function _lsLong(name, path, node, human) {
+    if (!node) return '??????????  ? ?     ?       ?            ? ' + name;
+    var links = node.type === 'd' ? (node.ch ? node.ch.length + 2 : 2) : 1;
+    var sz = node.type === 'd' ? 4096 : (node.sz || 0);
+    if (human) sz = fmtSize(sz); else sz = String(sz);
+    return esc(_permString(node) + ' ' + pad(links, 2) + ' ' + rpad(USER, 6) + ' ' + rpad(USER, 6) + ' ' + pad(sz, 6) + ' ' + fmtDate(node.mt) + ' ') + renderNameHtml(name, path, node, 'ls');
+  }
+  function describeFileType(path) {
+    var node = vfs[path];
+    if (!node) return 'missing';
+    if (node.type === 'd') return 'directory';
+    if (extractSectionFromScript(node.data)) return 'POSIX shell script, ASCII text executable';
+    if (/^#!\s*\S+/.test(node.data || '')) return _isExecutable(node) ? 'POSIX shell script, ASCII text executable' : 'POSIX shell script, ASCII text';
+    if (!node.data || !node.data.length) return _isExecutable(node) ? 'empty executable' : 'empty';
+    return _isExecutable(node) ? 'ASCII text executable' : 'ASCII text';
+  }
+  function getCommandPath(name) {
+    var dirs = envVars.PATH.split(':');
+    for (var i = 0; i < dirs.length; i++) {
+      var path = _resolve(dirs[i] + '/' + name);
+      if (_isFile(path) && _isExecutable(vfs[path])) return path;
+    }
+    return null;
+  }
+  function getOpenOptionNames() {
+    var names = [];
+    Object.keys(fileLinks || {}).forEach(function (name) {
+      if (name === 'error') return;
+      if (names.indexOf(name) < 0) names.push(name);
+    });
+    Object.keys(routeMap).forEach(function (name) { if (names.indexOf(name) < 0) names.push(name); });
+    return names.sort();
+  }
+  function getOpenOptionsSummary() {
+    var names = getOpenOptionNames();
+    if (!names.length) return '(loading...)';
+    return names.join(', ');
+  }
+
+  var manPages = {
+    ls:       'ls [OPTIONS] [PATH...]\n  List directory contents with Linux-style coloring.\n  -a  Show hidden files\n  -l  Long listing format\n  -h  Human-readable sizes (with -l)',
+    cd:       'cd [DIR]\n  Change directory.\n  ~   Home directory\n  -   Previous directory\n  ..  Parent directory',
+    pwd:      'pwd\n  Print the current working directory.',
+    cat:      'cat [FILE...]\n  Display plain file contents.\n  Use ./about, ./projects, or ./resume to launch portfolio sections.',
+    echo:     'echo [TEXT]\n  Print text to the terminal.\n  Supports $VARIABLE expansion.',
+    clear:    'clear\n  Clear the terminal screen.\n  Shortcut: Ctrl+L',
+    mkdir:    'mkdir [-p] DIR\n  Create a directory.\n  -p  Create parent directories as needed.',
+    touch:    'touch FILE\n  Create an empty file or update timestamp.',
+    rm:       'rm [-r] [-f] FILE\n  Remove files or directories.\n  -r  Remove directories recursively\n  -f  Force removal without confirmation',
+    rmdir:    'rmdir DIR\n  Remove an empty directory.',
+    cp:       'cp SOURCE DEST\n  Copy a file to a new location.',
+    mv:       'mv SOURCE DEST\n  Move or rename a file.',
+    head:     'head [-n N] FILE\n  Display the first N lines (default 10).',
+    tail:     'tail [-n N] FILE\n  Display the last N lines (default 10).',
+    grep:     'grep PATTERN [FILE]\n  Search for PATTERN in file or piped input.\n  Supports piping: cat file | grep pattern',
+    wc:       'wc [FILE]\n  Print line, word, and byte counts.',
+    tree:     'tree [PATH]\n  Display directory structure as a tree.',
+    find:     'find [PATH] -name PATTERN\n  Search for files matching a pattern.',
+    file:     'file PATH\n  Determine file type.',
+    stat:     'stat FILE\n  Display detailed file information.',
+    chmod:    'chmod MODE FILE\n  Change file permissions.\n  Supports 755/644 and symbolic modes like +x, -x, u+x, go-w.',
+    date:     'date\n  Display current date and time.',
+    uname:    'uname [-a|-s|-r|-n|-m]\n  Print system information.',
+    uptime:   'uptime\n  Show session uptime and load averages.',
+    hostname: 'hostname\n  Print the system hostname.',
+    whoami:   'whoami\n  Print the current username.',
+    id:       'id\n  Print user and group identity.',
+    groups:   'groups\n  Print group memberships.',
+    df:       'df [-h]\n  Show disk usage.\n  -h  Human-readable format.',
+    free:     'free [-h]\n  Show memory usage.\n  -h  Human-readable format.',
+    ps:       'ps [aux]\n  Show running processes.',
+    history:  'history [-c]\n  Show command history.\n  -c  Clear history.',
+    man:      'man COMMAND\n  Display the manual page for a command.',
+    help:     'help\n  List all available commands and shortcuts.',
+    alias:    'alias [NAME=VALUE]\n  Set or list aliases.',
+    unalias:  'unalias NAME\n  Remove a command alias.',
+    export:   'export VAR=VALUE\n  Set an environment variable.',
+    env:      'env\n  Display all environment variables.',
+    which:    'which COMMAND\n  Show the location of a command.',
+    type:     'type COMMAND\n  Show the type of a command.',
+    open:     'open NAME\n  Open a linked page in a new tab.',
+    neofetch: 'neofetch\n  Display system information with ASCII art.',
+    cowsay:   'cowsay [TEXT]\n  Make a cow say something.',
+    fortune:  'fortune\n  Display a random inspirational quote.',
+    cal:      'cal\n  Display a calendar for the current month.',
+    factor:   'factor NUMBER\n  Print the prime factors of a number.',
+    rev:      'rev TEXT\n  Reverse a string.',
+    vim:      'vim [FILE]\n  Open the built-in modal editor.\n  i/a/o  enter insert mode\n  Esc    return to normal mode\n  :w     save    :q     quit    :wq / :x  save and quit',
+    exit:     'exit\n  Close the terminal session.',
+    sudo:     'sudo COMMAND\n  Execute a command as superuser (simulated).'
+  };
+
+  var commands = {};
+
+  commands.ls = function (args) {
+    var parsed = parseFlags(args);
+    var showAll = parsed.flags.a, longFmt = parsed.flags.l, human = parsed.flags.h;
+    var targets = parsed.args.length ? parsed.args : ['.'];
+    var blocks = [];
+    for (var ti = 0; ti < targets.length; ti++) {
+      var rawTarget = targets[ti];
+      var target = _resolve(rawTarget);
+      if (!_exists(target)) { printError('ls: cannot access \'' + rawTarget + '\': No such file or directory'); exitCode = 2; continue; }
+      if (blocks.length) blocks.push('');
+      if (targets.length > 1) blocks.push('<span class="ls-heading">' + esc(rawTarget) + ':</span>');
+      if (_isFile(target)) {
+        blocks.push(longFmt ? _lsLong(_base(target), target, vfs[target], human) : renderNameHtml(_base(target), target, vfs[target], 'ls'));
+        continue;
+      }
+      var entries = vfs[target].ch.slice().sort();
+      if (!showAll) entries = entries.filter(function (e) { return e.charAt(0) !== '.'; });
+      if (longFmt) {
+        var lines = ['total ' + entries.length];
+        for (var i = 0; i < entries.length; i++) {
+          var fp = (target === '/' ? '' : target) + '/' + entries[i];
+          lines.push(_lsLong(entries[i], fp, vfs[fp], human));
+        }
+        blocks.push(lines.join('\n'));
+      } else {
+        blocks.push(entries.map(function (name) {
+          var fp = (target === '/' ? '' : target) + '/' + name;
+          return renderNameHtml(name, fp, vfs[fp], 'ls');
+        }).join('  '));
+      }
+    }
+    if (!blocks.length) return '';
+    return htmlResult('<pre class="ls-output">' + blocks.join('\n') + '</pre>');
+  };
+
+  commands.cd = function (args) {
+    var target = args[0] ? _resolve(args[0]) : HOME;
+    if (!_exists(target)) return fail('bash: cd: ' + args[0] + ': No such file or directory');
+    if (!_isDir(target)) return fail('bash: cd: ' + args[0] + ': Not a directory');
+    envVars.OLDPWD = cwd;
+    cwd = target;
+    envVars.PWD = cwd;
+    updatePrompt();
+    if (args[0] === '-') print(cwd);
+    return '';
+  };
+
+  commands.pwd = function () { return cwd; };
+
+  commands.cat = function (args, stdin) {
+    if (stdin) return stdin;
+    if (!args.length) return fail('cat: missing operand');
+    var parts = [];
+    for (var i = 0; i < args.length; i++) {
+      var path = _resolve(args[i]);
+      if (!_exists(path))  { printError('cat: ' + args[i] + ': No such file or directory'); exitCode = 1; continue; }
+      if (_isDir(path))    { printError('cat: ' + args[i] + ': Is a directory'); exitCode = 1; continue; }
+      parts.push(vfs[path].data || '');
+    }
+    return parts.join(parts.length > 1 ? '\n' : '');
+  };
+
+  commands.head = function (args, stdin) {
+    var parsed = parseFlags(args);
+    var n = 10;
+    if (parsed.flags.n && parsed.args.length > 0 && /^\d+$/.test(parsed.args[0])) n = parseInt(parsed.args.shift());
+    var text = stdin;
+    if (!text) {
+      if (!parsed.args.length) return fail('head: missing operand');
+      var p = _resolve(parsed.args[0]);
+      if (!_exists(p)) return fail('head: ' + parsed.args[0] + ': No such file or directory');
+      if (_isDir(p)) return fail('head: ' + parsed.args[0] + ': Is a directory');
+      text = vfs[p].data || '';
+    }
+    return text.split('\n').slice(0, n).join('\n');
+  };
+
+  commands.tail = function (args, stdin) {
+    var parsed = parseFlags(args);
+    var n = 10;
+    if (parsed.flags.n && parsed.args.length > 0 && /^\d+$/.test(parsed.args[0])) n = parseInt(parsed.args.shift());
+    var text = stdin;
+    if (!text) {
+      if (!parsed.args.length) return fail('tail: missing operand');
+      var p = _resolve(parsed.args[0]);
+      if (!_exists(p)) return fail('tail: ' + parsed.args[0] + ': No such file or directory');
+      if (_isDir(p)) return fail('tail: ' + parsed.args[0] + ': Is a directory');
+      text = vfs[p].data || '';
+    }
+    var lines = text.split('\n');
+    return lines.slice(Math.max(0, lines.length - n)).join('\n');
+  };
+
+  commands.grep = function (args, stdin) {
+    if (!args.length) return fail('grep: missing pattern');
+    var pattern = args[0];
+    var text = stdin;
+    if (!text && args.length > 1) {
+      var p = _resolve(args[1]);
+      if (!_exists(p)) return fail('grep: ' + args[1] + ': No such file or directory');
+      if (_isDir(p)) return fail('grep: ' + args[1] + ': Is a directory');
+      text = vfs[p].data || '';
+    }
+    if (!text) return fail('grep: missing file operand');
+    var lines = text.split('\n');
+    var matched = [];
+    for (var i = 0; i < lines.length; i++) {
+      if (lines[i].toLowerCase().indexOf(pattern.toLowerCase()) > -1) matched.push(lines[i]);
+    }
+    if (!matched.length) { exitCode = 1; return ''; }
+    return matched.join('\n');
+  };
+
+  commands.wc = function (args, stdin) {
+    var text = stdin;
+    if (!text && args.length) {
+      var p = _resolve(args[0]);
+      if (!_exists(p)) return fail('wc: ' + args[0] + ': No such file or directory');
+      if (_isDir(p)) return fail('wc: ' + args[0] + ': Is a directory');
+      text = vfs[p].data || '';
+    }
+    if (!text) return fail('wc: missing operand');
+    var lines = text.split('\n').length;
+    var words = text.split(/\s+/).filter(Boolean).length;
+    var bytes = text.length;
+    return pad(lines, 6) + pad(words, 6) + pad(bytes, 6) + (args.length ? ' ' + args[0] : '');
+  };
+
+  commands.touch = function (args) {
+    if (!args.length) return fail('touch: missing operand');
+    var p = _resolve(args[0]);
+    if (_exists(p)) {
+      if (!canWritePath(p) || vfs[p].readOnly) return fail('touch: cannot touch \'' + args[0] + '\': Permission denied');
+      vfs[p].mt = new Date(); return '';
+    }
+    if (!canWritePath(_parent(p))) return fail('touch: cannot touch \'' + args[0] + '\': Permission denied');
+    var parentError = ensureParentDirectory(p, args[0], 'touch');
+    if (parentError) return fail(parentError);
+    _mkfile(p, ''); return '';
+  };
+
+  commands.mkdir = function (args) {
+    var parsed = parseFlags(args);
+    if (!parsed.args.length) return fail('mkdir: missing operand');
+    var p = _resolve(parsed.args[0]);
+    if (_exists(p)) return fail('mkdir: cannot create directory \'' + parsed.args[0] + '\': File exists');
+    if (!canWritePath(_parent(p))) return fail('mkdir: cannot create directory \'' + parsed.args[0] + '\': Permission denied');
+    if (parsed.flags.p) { _mkdirp(p); return ''; }
+    var pp = _parent(p);
+    if (!_exists(pp)) return fail('mkdir: cannot create directory \'' + parsed.args[0] + '\': No such file or directory');
+    _mkdirp(p); return '';
+  };
+
+  commands.rm = function (args) {
+    var parsed = parseFlags(args);
+    if (!parsed.args.length) return fail('rm: missing operand');
+    var target = parsed.args[0];
+    var p = _resolve(target);
+    if (p === '/') return fail('rm: it is dangerous to operate recursively on \'/\'\nrm: use --no-preserve-root to override this failsafe');
+    if (!_exists(p)) { if (!parsed.flags.f) return fail('rm: cannot remove \'' + target + '\': No such file or directory'); return ''; }
+    if (_isDir(p) && !parsed.flags.r) return fail('rm: cannot remove \'' + target + '\': Is a directory');
+    if (!canWritePath(p) || vfs[p].readOnly) return fail('rm: cannot remove \'' + target + '\': Permission denied');
+    var pp = _parent(p), nm = _base(p);
+    if (_isDir(p)) { _rmRecursive(p); }
+    delete vfs[p];
+    _removeChild(pp, nm);
+    return '';
+  };
+  function _rmRecursive(p) {
+    if (!_isDir(p)) return;
+    var ch = vfs[p].ch.slice();
+    for (var i = 0; i < ch.length; i++) {
+      var cp = (p === '/' ? '' : p) + '/' + ch[i];
+      if (_isDir(cp)) _rmRecursive(cp);
+      delete vfs[cp];
+    }
+  }
+
+  commands.rmdir = function (args) {
+    if (!args.length) return fail('rmdir: missing operand');
+    var p = _resolve(args[0]);
+    if (!_exists(p)) return fail('rmdir: failed to remove \'' + args[0] + '\': No such file or directory');
+    if (!_isDir(p)) return fail('rmdir: failed to remove \'' + args[0] + '\': Not a directory');
+    if (vfs[p].ch.length > 0) return fail('rmdir: failed to remove \'' + args[0] + '\': Directory not empty');
+    if (!canWritePath(p) || vfs[p].readOnly) return fail('rmdir: failed to remove \'' + args[0] + '\': Permission denied');
+    var pp = _parent(p), nm = _base(p);
+    delete vfs[p]; _removeChild(pp, nm);
+    return '';
+  };
+
+  commands.cp = function (args) {
+    if (args.length < 2) return fail('cp: missing destination file operand');
+    var src = _resolve(args[0]), dst = _resolve(args[1]);
+    if (!_exists(src)) return fail('cp: cannot stat \'' + args[0] + '\': No such file or directory');
+    if (_isDir(src)) return fail('cp: -r not specified; omitting directory \'' + args[0] + '\'');
+    if (_isDir(dst)) dst = dst + '/' + _base(src);
+    if (!canWritePath(_parent(dst)) || (_exists(dst) && vfs[dst].readOnly)) return fail('cp: cannot create regular file \'' + args[1] + '\': Permission denied');
+    var cpParentError = ensureParentDirectory(dst, args[1], 'cp');
+    if (cpParentError) return fail(cpParentError);
+    vfs[dst] = _cloneFileNode(vfs[src]);
+    vfs[dst].mt = new Date();
+    _addChild(_parent(dst), _base(dst));
+    return '';
+  };
+
+  commands.mv = function (args) {
+    if (args.length < 2) return fail('mv: missing destination file operand');
+    var src = _resolve(args[0]), dst = _resolve(args[1]);
+    if (!_exists(src)) return fail('mv: cannot stat \'' + args[0] + '\': No such file or directory');
+    if (_isDir(dst)) dst = dst + '/' + _base(src);
+    if (!canWritePath(src) || !canWritePath(_parent(dst)) || vfs[src].readOnly || (_exists(dst) && vfs[dst].readOnly)) return fail('mv: cannot move \'' + args[0] + '\': Permission denied');
+    var mvParentError = ensureParentDirectory(dst, args[1], 'mv');
+    if (mvParentError) return fail(mvParentError);
+    vfs[dst] = vfs[src];
+    var pp = _parent(src), nm = _base(src);
+    vfs[dst].mt = new Date();
+    delete vfs[src];
+    _removeChild(pp, nm);
+    _addChild(_parent(dst), _base(dst));
+    return '';
+  };
+
+  commands.tree = function (args) {
+    var target = args.length ? _resolve(args[0]) : cwd;
+    if (!_exists(target)) return fail('tree: \'' + (args[0]||'.') + '\': No such file or directory');
+    if (!_isDir(target)) return htmlResult('<pre class="tree-output">' + renderNameHtml(_base(target), target, vfs[target], 'tree') + '</pre>');
+    var lines = [_base(target) === _base(cwd) && !args.length ? '.' : (args[0]||'.')];
+    _treeBuild(target, '', lines);
+    return htmlResult('<pre class="tree-output">' + lines.join('\n') + '</pre>');
+  };
+  function _treeBuild(path, prefix, lines) {
+    var entries = vfs[path].ch.slice().sort();
+    for (var i = 0; i < entries.length; i++) {
+      var last = i === entries.length - 1;
+      var connector = last ? '`-- ' : '|-- ';
+      var fp = (path === '/' ? '' : path) + '/' + entries[i];
+      lines.push('<span class="tree-branch">' + esc(prefix + connector) + '</span>' + renderNameHtml(entries[i], fp, vfs[fp], 'tree'));
+      if (_isDir(fp)) _treeBuild(fp, prefix + (last ? '    ' : '|   '), lines);
+    }
+  }
+
+  commands.find = function (args) {
+    var searchPath = cwd, pattern = null;
+    for (var i = 0; i < args.length; i++) {
+      if (args[i] === '-name' && i + 1 < args.length) { pattern = args[++i]; }
+      else if (!pattern && args[i].charAt(0) !== '-') { searchPath = _resolve(args[i]); }
+    }
+    if (!_exists(searchPath)) return fail('find: \'' + args[0] + '\': No such file or directory');
+    var results = [];
+    _findRecursive(searchPath, pattern, results);
+    return results.join('\n') || '';
+  };
+  function _findRecursive(path, pattern, results) {
+    var name = _base(path);
+    if (!pattern || _globMatch(name, pattern)) {
+      var display = path;
+      if (display.indexOf(cwd) === 0) display = '.' + display.slice(cwd.length);
+      results.push(display);
+    }
+    if (_isDir(path)) {
+      var ch = vfs[path].ch.slice().sort();
+      for (var i = 0; i < ch.length; i++) _findRecursive((path === '/' ? '' : path) + '/' + ch[i], pattern, results);
+    }
+  }
+  function _globMatch(name, pattern) {
+    var regex = '^' + pattern.replace(/\*/g, '.*').replace(/\?/g, '.') + '$';
+    return new RegExp(regex, 'i').test(name);
+  }
+
+  commands.file = function (args) {
+    if (!args.length) return fail('file: missing operand');
+    var p = _resolve(args[0]);
+    if (!_exists(p)) return fail(args[0] + ': cannot open (No such file or directory)');
+    return args[0] + ': ' + describeFileType(p);
+  };
+
+  commands.stat = function (args) {
+    if (!args.length) return fail('stat: missing operand');
+    var p = _resolve(args[0]);
+    if (!_exists(p)) return fail('stat: cannot statx \'' + args[0] + '\': No such file or directory');
+    var n = vfs[p];
+    var size = n.type === 'd' ? 4096 : (n.sz||0);
+    var lines = [
+      '  File: ' + args[0],
+      '  Size: ' + size + '\tBlocks: ' + Math.ceil((size || 1)/512) + '\tIO Block: 4096\t' + (n.type==='d'?'directory':'regular file'),
+      'Access: (' + n.mode + '/' + _permString(n) + ')\tUid: ( 1000/  '+USER+')\tGid: ( 1000/  '+USER+')',
+      'Modify: ' + n.mt.toISOString(),
+      'Change: ' + n.mt.toISOString()
+    ];
+    return lines.join('\n');
+  };
+
+  commands.echo = function (args) { return args.join(' '); };
+  commands.rev = function (args, stdin) {
+    var text = stdin || args.join(' ');
+    if (!text) return '';
+    return text.split('\n').map(function (l) { return l.split('').reverse().join(''); }).join('\n');
+  };
+  commands.sort = function (args, stdin) {
+    var text = stdin;
+    if (!text && args.length) {
+      var p = _resolve(args[0]);
+      if (!_exists(p) || _isDir(p)) return fail('sort: cannot read: ' + args[0]);
+      text = vfs[p].data || '';
+    }
+    if (!text) return '';
+    return text.split('\n').sort().join('\n');
+  };
+  commands.uniq = function (args, stdin) {
+    var text = stdin;
+    if (!text && args.length) {
+      var p = _resolve(args[0]);
+      if (!_exists(p) || _isDir(p)) return fail('uniq: cannot read: ' + args[0]);
+      text = vfs[p].data || '';
+    }
+    if (!text) return '';
+    var lines = text.split('\n'), out = [lines[0]];
+    for (var i = 1; i < lines.length; i++) if (lines[i] !== lines[i-1]) out.push(lines[i]);
+    return out.join('\n');
+  };
+
+  commands.whoami = function () { return USER; };
+  commands.hostname = function () { return HOST; };
+  commands.uname = function (args) {
+    var parsed = parseFlags(args);
+    if (parsed.flags.a) return 'SuryaOS portfolio 3.1.0-web #1 SMP x86_64 WebAssembly';
+    if (parsed.flags.r) return '3.1.0-web';
+    if (parsed.flags.n) return HOST;
+    if (parsed.flags.m) return 'x86_64';
+    return 'SuryaOS';
+  };
+  commands.date = function () { return new Date().toString(); };
+  commands.uptime = function () {
+    var diff = Math.floor((Date.now() - sessionStart) / 1000);
+    var h = Math.floor(diff / 3600), m = Math.floor((diff % 3600) / 60), s = diff % 60;
+    var upStr = h > 0 ? h + 'h ' + m + 'min' : m + ' min, ' + s + ' sec';
+    return ' ' + new Date().toLocaleTimeString() + ' up ' + upStr + ',  1 user,  load average: 0.08, 0.03, 0.01';
+  };
+  commands.id = function () { return 'uid=1000(' + USER + ') gid=1000(' + USER + ') groups=1000(' + USER + '),27(sudo),1001(developers)'; };
+  commands.groups = function () { return USER + ' : ' + USER + ' sudo developers'; };
+  commands.df = function (args) {
+    var parsed = parseFlags(args), h = parsed.flags.h;
+    var lines = [
+      rpad('Filesystem', 16) + pad(h ? 'Size' : '1K-blocks', 10) + pad('Used', 8) + pad('Avail', 8) + pad('Use%', 6) + ' Mounted on'
+    ];
+    lines.push(rpad('/dev/sda1', 16) + pad(h ? '20G' : '20971520', 10) + pad(h ? '3.2G' : '3355443', 8) + pad(h ? '16G' : '16777216', 8) + pad('17%', 6) + ' /');
+    lines.push(rpad('tmpfs', 16) + pad(h ? '512M' : '524288', 10) + pad(h ? '0' : '0', 8) + pad(h ? '512M' : '524288', 8) + pad('0%', 6) + ' /tmp');
+    return lines.join('\n');
+  };
+  commands.free = function (args) {
+    var parsed = parseFlags(args), h = parsed.flags.h;
+    var lines = [
+      rpad('', 16) + pad('total', 12) + pad('used', 12) + pad('free', 12) + pad('shared', 12) + pad('buff/cache', 12) + pad('available', 12)
+    ];
+    lines.push(rpad('Mem:', 16) + pad(h?'8.0Gi':'8388608', 12) + pad(h?'2.1Gi':'2202009', 12) + pad(h?'4.2Gi':'4404019', 12) + pad(h?'256Mi':'262144', 12) + pad(h?'1.7Gi':'1782579', 12) + pad(h?'5.4Gi':'5662310', 12));
+    lines.push(rpad('Swap:', 16) + pad(h?'2.0Gi':'2097152', 12) + pad(h?'0B':'0', 12) + pad(h?'2.0Gi':'2097152', 12));
+    return lines.join('\n');
+  };
+  commands.ps = function () {
+    var lines = [
+      rpad('USER', 8) + pad('PID', 6) + pad('%CPU', 6) + pad('%MEM', 6) + pad('VSZ', 8) + pad('RSS', 6) + ' ' + rpad('TTY', 6) + rpad('STAT', 5) + rpad('START', 8) + rpad('TIME', 6) + 'COMMAND'
+    ];
+    var start = new Date(sessionStart).toLocaleTimeString().slice(0,5);
+    lines.push(rpad(USER, 8) + pad('1', 6) + pad('0.0', 6) + pad('0.1', 6) + pad('21032', 8) + pad('4096', 6) + ' ' + rpad('pts/0', 6) + rpad('Ss', 5) + rpad(start, 8) + rpad('0:00', 6) + '/bin/bash');
+    lines.push(rpad(USER, 8) + pad('42', 6) + pad('0.1', 6) + pad('0.2', 6) + pad('51200', 8) + pad('8192', 6) + ' ' + rpad('pts/0', 6) + rpad('S+', 5) + rpad(start, 8) + rpad('0:01', 6) + 'animation.js');
+    if (vimState.open) lines.push(rpad(USER, 8) + pad('73', 6) + pad('0.0', 6) + pad('0.3', 6) + pad('12800', 8) + pad('6144', 6) + ' ' + rpad('pts/0', 6) + rpad('S+', 5) + rpad(start, 8) + rpad('0:00', 6) + 'vim ' + vimState.displayPath);
+    lines.push(rpad(USER, 8) + pad('87', 6) + pad('0.0', 6) + pad('0.0', 6) + pad('7892', 8) + pad('2048', 6) + ' ' + rpad('pts/0', 6) + rpad('R+', 5) + rpad(start, 8) + rpad('0:00', 6) + 'ps aux');
+    return lines.join('\n');
+  };
+
+  commands.clear = function () {
+    outputEl.innerHTML = '';
+    removeProjectPreviewOverlay();
+    return '';
+  };
+
+  commands.exit = function () {
+    if (typeof window.closeTerminalOverlay === 'function') window.closeTerminalOverlay();
+    return '';
+  };
+
+  commands.history = function (args) {
+    if (args[0] === '-c') { hist.length = 0; syncHistoryFile(); return ''; }
+    var lines = [];
+    for (var i = 0; i < hist.length; i++) lines.push(pad(i + 1, 5) + '  ' + hist[i]);
+    return lines.join('\n');
+  };
+
+  commands.alias = function (args) {
+    if (!args.length) {
+      var lines = [];
+      for (var k in aliases) lines.push('alias ' + k + '=\'' + aliases[k] + '\'');
+      return lines.join('\n');
+    }
+    var eq = args.join(' ');
+    var eqIdx = eq.indexOf('=');
+    if (eqIdx < 1) return fail('alias: usage: alias name=value');
+    var name = eq.slice(0, eqIdx), val = eq.slice(eqIdx + 1).replace(/^['"]|['"]$/g, '');
+    aliases[name] = val;
+    return '';
+  };
+  commands.unalias = function (args) {
+    if (!args.length) return fail('unalias: usage: unalias name');
+    if (!aliases[args[0]]) return fail('bash: unalias: ' + args[0] + ': not found');
+    delete aliases[args[0]];
+    return '';
+  };
+  commands.export = function (args) {
+    if (!args.length) {
+      var lines = [];
+      for (var k in envVars) lines.push('declare -x ' + k + '="' + envVars[k] + '"');
+      return lines.join('\n');
+    }
+    var expr = args.join(' '), eqIdx = expr.indexOf('=');
+    if (eqIdx < 1) return fail('export: usage: export VAR=value');
+    envVars[expr.slice(0, eqIdx)] = expr.slice(eqIdx + 1);
+    return '';
+  };
+  commands.env = function () {
+    var lines = [];
+    for (var k in envVars) lines.push(k + '=' + envVars[k]);
+    return lines.join('\n');
+  };
+  commands.which = function (args) {
+    if (!args.length) return fail('which: missing operand');
+    if (args[0].indexOf('/') > -1) {
+      var rp = _resolve(args[0]);
+      if (_isFile(rp) && _isExecutable(vfs[rp])) return rp;
+      return fail('which: no ' + args[0] + ' in (' + envVars.PATH + ')', 1);
+    }
+    var path = getCommandPath(args[0]);
+    if (path) return path;
+    return fail('which: no ' + args[0] + ' in (' + envVars.PATH + ')', 1);
+  };
+  commands.type = function (args) {
+    if (!args.length) return fail('type: missing operand');
+    var c = args[0];
+    if (aliases[c]) return c + ' is aliased to \'' + aliases[c] + '\'';
+    if (shellBuiltins[c]) return c + ' is a shell built-in';
+    if (c.indexOf('/') > -1) {
+      var rp = _resolve(c);
+      if (_isFile(rp) && _isExecutable(vfs[rp])) return c + ' is ' + rp;
+    }
+    var path = getCommandPath(c);
+    if (path) return c + ' is ' + path;
+    if (commands[c]) return c + ' is a shell command';
+    return fail('bash: type: ' + c + ': not found');
+  };
+  commands.man = function (args) {
+    if (!args.length) return fail('What manual page do you want?\nFor example, try \'man ls\'.');
+    var page = manPages[args[0]];
+    if (!page) return fail('No manual entry for ' + args[0]);
+    return args[0].toUpperCase() + '(1)\n\nNAME\n    ' + page;
+  };
+
+  commands.help = function () {
+    var sections = [
+      ['Portfolio', './about  ./projects  ./resume  open'],
+      ['Filesystem', 'ls  cd  pwd  cat  head  tail  mkdir  touch  rm  rmdir  cp  mv  tree  find  file  stat  chmod'],
+      ['Text', 'echo  grep  wc  rev  sort  uniq'],
+      ['System', 'whoami  hostname  uname  date  uptime  id  groups  df  free  ps'],
+      ['Shell', 'help  man  history  clear  exit  alias  unalias  export  env  which  type'],
+      ['Editor', 'vim'],
+      ['Fun', 'neofetch  cowsay  fortune  cal  factor  sudo']
+    ];
+    var labels = sections.map(function (section) { return section[0]; });
+    labels = labels.concat(['Chaining', 'Piping', 'History', 'Open targets', 'Vim']);
+    var labelWidth = 0;
+    for (var li = 0; li < labels.length; li++) {
+      var width = labels[li].length + 1;
+      if (width > labelWidth) labelWidth = width;
+    }
+    function row(label, value) { return '  ' + rpad(label + ':', labelWidth) + '  ' + value; }
+    function shortcutCell(key, action) { return rpad(key, 8) + ' ' + rpad(action, 12); }
+    var lines = ['', '  Available commands:', ''];
+    for (var i = 0; i < sections.length; i++) lines.push(row(sections[i][0], sections[i][1]));
+    lines.push('');
+    lines.push('  Shortcuts:');
+    lines.push('    ' + shortcutCell('Ctrl+C', 'Interrupt') + '  ' + shortcutCell('Ctrl+L', 'Clear screen') + '  ' + shortcutCell('Ctrl+U', 'Clear line'));
+    lines.push('    ' + shortcutCell('Ctrl+W', 'Delete word') + '  ' + shortcutCell('Ctrl+A', 'Cursor start') + '  ' + shortcutCell('Ctrl+E', 'Cursor end'));
+    lines.push('    ' + shortcutCell('Ctrl+D', 'Exit') + '  ' + shortcutCell('Tab', 'Autocomplete') + '  ' + shortcutCell('Up/Down', 'History'));
+    lines.push('');
+    lines.push(row('Chaining', 'cmd1 ; cmd2    cmd1 && cmd2    cmd1 || cmd2'));
+    lines.push(row('Piping', 'cmd1 | cmd2'));
+    lines.push(row('History', '!! (repeat last)    !n (repeat nth)'));
+    var targets = getOpenOptionNames();
+    if (targets.length) {
+      var chunkSize = 6;
+      lines.push(row('Open targets', targets.slice(0, chunkSize).join(', ')));
+      for (var t = chunkSize; t < targets.length; t += chunkSize) {
+        lines.push('  ' + rpad('', labelWidth) + '  ' + targets.slice(t, t + chunkSize).join(', '));
+      }
+    } else {
+      lines.push(row('Open targets', 'none'));
+    }
+    lines.push(row('Vim', 'i insert, Esc normal, :w save, :q quit, dd delete line'));
+    lines.push("  Use 'man <command>' for detailed usage.");
+    lines.push('');
+    return lines.join('\n');
+  };
+
+  commands.open = async function (args) {
+    if (!args.length) return fail('open: missing operand');
+    var name = args[0];
+    await ensureFileLinks();
+    var url = fileLinks[name];
+    if (url) { window.open(url, '_blank'); return 'Opening ' + name + '...'; }
+    var p = _resolve(name);
+    if (_exists(p) && _isFile(p)) {
+      var section = extractSectionFromScript(vfs[p].data);
+      if (section) {
+        var sectionUrl = fileLinks[section] || routeMap[section];
+        if (sectionUrl) { window.open(sectionUrl, '_blank'); return 'Opening ' + section + '...'; }
+      }
+    }
+    return fail('open: ' + name + ': No such file or link\nAvailable: ' + getOpenOptionsSummary());
+  };
+
+  commands.section = async function (args) {
+    if (!args.length) return fail('section: missing operand');
+    var section = normalizeSectionName(args[0]);
+    if (!routeMap[section]) return fail('section: ' + section + ': unknown portfolio section');
+    try {
+      var res = await fetch('https://pages.surya-ops.workers.dev/?section=' + section);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return htmlResult(cleanFetchedHTML(await res.text()), 'html-content');
+    } catch (e) {
+      return fail('section: ' + section + ': Error loading section');
+    }
+  };
+
+  commands.builtin = function (args, stdin) {
+    if (!args.length) return fail('builtin: usage: builtin <command>');
+    if (args[0] === 'builtin') return fail('builtin: recursion detected');
+    if (!commands[args[0]]) return fail('builtin: ' + args[0] + ': not found');
+    return commands[args[0]](args.slice(1), stdin);
+  };
+
+  commands.sudo = function (args) {
+    if (!args.length) return fail('usage: sudo <command>');
+    if (args.join(' ').indexOf('rm -rf /') > -1) {
+      print('[sudo] password for ' + USER + ': ');
+      print('Removing /boot... done');
+      print('Removing /home... done');
+      print('Removing /usr... done');
+      print('Just kidding. Nice try though.');
+      return '';
+    }
+    return fail(USER + ' is not in the sudoers file. This incident will be reported.');
+  };
+
+  commands.neofetch = function () {
+    var diff = Math.floor((Date.now() - sessionStart) / 1000);
+    var h = Math.floor(diff / 3600), m = Math.floor((diff % 3600) / 60);
+    var upStr = h > 0 ? h + 'h ' + m + 'm' : m + ' min';
+    var logo = [
+      '        _____   _____  ',
+      '       / ____| |  __ \\ ',
+      '      | (___   | |__) |',
+      '       \\___|  \\   \\ \\  ',
+      '       ____) | | | \\ \\ ',
+      '      |_____/  |_|  \\_\\'
+    ];
+    var info = [
+      USER + '@' + HOST,
+      '------------------',
+      'OS: SuryaOS 3.1 (Web)',
+      'Host: ' + HOST,
+      'Kernel: 3.1.0-web',
+      'Uptime: ' + upStr,
+      'Shell: bash 5.2',
+      'Terminal: ' + envVars.TERM,
+      'CPU: WebAssembly @ infGHz',
+      'Memory: Dynamic'
+    ];
+    var logoWidth = 0;
+    for (var j = 0; j < logo.length; j++) if (logo[j].length > logoWidth) logoWidth = logo[j].length;
+    var lines = [];
+    var max = Math.max(logo.length, info.length);
+    for (var i = 0; i < max; i++) {
+      var left = i < logo.length ? rpad(logo[i], logoWidth) : rpad('', logoWidth);
+      var right = i < info.length ? info[i] : '';
+      lines.push(left + '   ' + right);
+    }
+    return lines.join('\n');
+  };
+
+  commands.cowsay = function (args) {
+    var text = args.length ? args.join(' ') : 'Moo!';
+    var border = ' ' + Array(text.length + 2).fill('_').join('');
+    var bottom = ' ' + Array(text.length + 2).fill('-').join('');
+    return border + '\n< ' + text + ' >\n' + bottom + '\n        \\   ^__^\n         \\  (oo)\\_______\n            (__)\\       )\\/\\\n                ||----w |\n                ||     ||';
+  };
+
+  commands.fortune = function () {
+    var quotes = [
+      '"The only way to do great work is to love what you do." — Steve Jobs',
+      '"Innovation distinguishes between a leader and a follower." — Steve Jobs',
+      '"Code is like humor. When you have to explain it, it\'s bad." — Cory House',
+      '"First, solve the problem. Then, write the code." — John Johnson',
+      '"Simplicity is the soul of efficiency." — Austin Freeman',
+      '"Talk is cheap. Show me the code." — Linus Torvalds',
+      '"Any fool can write code that a computer can understand. Good programmers write code that humans can understand." — Martin Fowler',
+      '"The best error message is the one that never shows up." — Thomas Fuchs',
+      '"Make it work, make it right, make it fast." — Kent Beck',
+      '"Programs must be written for people to read, and only incidentally for machines to execute." — Harold Abelson'
+    ];
+    return quotes[Math.floor(Math.random() * quotes.length)];
+  };
+
+  commands.cal = function () {
+    var now = new Date();
+    var year = now.getFullYear(), month = now.getMonth();
+    var names = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var title = names[month] + ' ' + year;
+    var padTitle = '';
+    var totalWidth = 20;
+    var leftPad = Math.floor((totalWidth - title.length) / 2);
+    for (var p = 0; p < leftPad; p++) padTitle += ' ';
+    padTitle += title;
+    var header = 'Su Mo Tu We Th Fr Sa';
+    var firstDay = new Date(year, month, 1).getDay();
+    var daysInMonth = new Date(year, month + 1, 0).getDate();
+    var lines = [padTitle, header];
+    var line = '';
+    for (var s = 0; s < firstDay; s++) line += '   ';
+    for (var d = 1; d <= daysInMonth; d++) {
+      var ds = d < 10 ? ' ' + d : '' + d;
+      line += ds;
+      if ((firstDay + d) % 7 === 0) { lines.push(line); line = ''; }
+      else { line += ' '; }
+    }
+    if (line.trim()) lines.push(line);
+    return lines.join('\n');
+  };
+
+  commands.factor = function (args) {
+    if (!args.length) return fail('factor: missing operand');
+    var n = parseInt(args[0]);
+    if (isNaN(n) || n < 2) return fail('factor: \'' + args[0] + '\' is not a valid positive integer');
+    var factors = [], orig = n;
+    for (var d = 2; d * d <= n; d++) while (n % d === 0) { factors.push(d); n /= d; }
+    if (n > 1) factors.push(n);
+    return orig + ': ' + factors.join(' ');
+  };
+
+  function applyChmodSpec(node, spec) {
+    if (/^[0-7]{3,4}$/.test(spec)) { _setMode(node, spec); return true; }
+    var clauses = spec.split(',');
+    var modeValue = _modeValue(node.mode);
+    for (var i = 0; i < clauses.length; i++) {
+      var match = /^([ugoa]*)([+=-])([rwx]+)$/.exec(clauses[i]);
+      if (!match) return false;
+      var who = match[1] || 'a';
+      var op = match[2];
+      var perms = match[3];
+      var targets = who.indexOf('a') > -1 ? ['u','g','o'] : who.split('');
+      var permissionMask = 0;
+      for (var t = 0; t < targets.length; t++) {
+        var target = targets[t];
+        for (var p = 0; p < perms.length; p++) {
+          if (target === 'u' && perms[p] === 'r') permissionMask |= 0o400;
+          if (target === 'u' && perms[p] === 'w') permissionMask |= 0o200;
+          if (target === 'u' && perms[p] === 'x') permissionMask |= 0o100;
+          if (target === 'g' && perms[p] === 'r') permissionMask |= 0o040;
+          if (target === 'g' && perms[p] === 'w') permissionMask |= 0o020;
+          if (target === 'g' && perms[p] === 'x') permissionMask |= 0o010;
+          if (target === 'o' && perms[p] === 'r') permissionMask |= 0o004;
+          if (target === 'o' && perms[p] === 'w') permissionMask |= 0o002;
+          if (target === 'o' && perms[p] === 'x') permissionMask |= 0o001;
+        }
+      }
+      if (op === '+') modeValue |= permissionMask;
+      if (op === '-') modeValue &= ~permissionMask;
+      if (op === '=') {
+        var clearMask = 0;
+        for (var c = 0; c < targets.length; c++) {
+          if (targets[c] === 'u') clearMask |= 0o700;
+          if (targets[c] === 'g') clearMask |= 0o070;
+          if (targets[c] === 'o') clearMask |= 0o007;
+        }
+        modeValue = (modeValue & ~clearMask) | permissionMask;
+      }
+    }
+    _setMode(node, modeValue.toString(8));
+    return true;
+  }
+
+  commands.vim  = function (args) { return openVim(args[0] || ''); };
+  commands.apt  = function () { return fail('apt: package manager not available in this web terminal.'); };
+  commands.brew = commands.apt;
+  commands.pip  = commands.apt;
+  commands.npm  = commands.apt;
+  commands.wget = function () { return fail('wget: disabled in this terminal.'); };
+  commands.ssh  = function () { return fail('ssh: network access restricted in this terminal.'); };
+  commands.chmod = function (args) {
+    if (args.length < 2) return fail('chmod: missing operand');
+    var spec = args[0], path = _resolve(args[1]);
+    if (!_exists(path)) return fail('chmod: cannot access \'' + args[1] + '\': No such file or directory');
+    if (!canWritePath(path) || vfs[path].readOnly) return fail('chmod: changing permissions of \'' + args[1] + '\': Permission denied');
+    if (!applyChmodSpec(vfs[path], spec)) return fail('chmod: invalid mode: \'' + spec + '\'');
+    vfs[path].mt = new Date();
+    return '';
+  };
+  commands.chown = function () { return fail('chown: ownership is fixed in this simulated filesystem.'); };
+  commands.su   = function () { return fail('su: authentication failure'); };
+  commands.top  = function () { return commands.ps(); };
+  commands.htop = commands.top;
+  commands.sl   = function () {
+    return '  ====        ________\n _D _|  |_______/        \\__I_I_____===__\n  |(_)---  |   H\\________/ |   |\n  /     |  |   H  |  |     |   |\n |      |  |   H  |__--------------------|\n | ________|___H__/__|_____/[][]~\\_______|\n |/ |   |-----------I_____I [][] []  D   |\n\n You meant \'ls\', didn\'t you?';
+  };
+
+  function tokenize(line) {
+    var tokens = [], cur = '', inS = false, inD = false, esc = false;
+    for (var i = 0; i < line.length; i++) {
+      var ch = line.charAt(i);
+      if (esc) { cur += ch; esc = false; continue; }
+      if (ch === '\\') { esc = true; continue; }
+      if (ch === '\'' && !inD) { inS = !inS; continue; }
+      if (ch === '"' && !inS)  { inD = !inD; continue; }
+      if (ch === ' ' && !inS && !inD) { if (cur) { tokens.push(cur); cur = ''; } continue; }
+      cur += ch;
+    }
+    if (cur) tokens.push(cur);
+    return tokens;
+  }
+  function splitOutsideQuotes(line, delim) {
+    var parts = [], cur = '', inS = false, inD = false;
+    for (var i = 0; i < line.length; i++) {
+      var ch = line.charAt(i);
+      if (ch === '\'' && !inD) { inS = !inS; cur += ch; continue; }
+      if (ch === '"' && !inS)  { inD = !inD; cur += ch; continue; }
+      if (!inS && !inD && line.substr(i, delim.length) === delim) {
+        parts.push(cur); cur = ''; i += delim.length - 1; continue;
+      }
+      cur += ch;
+    }
+    parts.push(cur);
+    return parts;
+  }
+  function expandScriptLine(line, scriptPath, args) {
+    var expandedArgs = args.map(shellEscape).join(' ');
+    var out = line.replace(/\$0/g, shellEscape(scriptPath));
+    out = out.replace(/"\$@"/g, expandedArgs);
+    out = out.replace(/\$@/g, expandedArgs);
+    out = out.replace(/\$(\d+)/g, function (_, index) { return shellEscape(args[parseInt(index, 10) - 1] || ''); });
+    return out;
+  }
+
+  async function executeFile(path, args, stdin, rawCommand) {
+    if (!_exists(path)) { printError('bash: ' + rawCommand + ': No such file or directory'); exitCode = 127; return; }
+    if (_isDir(path)) { printError('bash: ' + rawCommand + ': Is a directory'); exitCode = 126; return; }
+    if (!_isExecutable(vfs[path])) { printError('bash: ' + rawCommand + ': Permission denied'); exitCode = 126; return; }
+    var lines = (vfs[path].data || '').split(/\r?\n/);
+    for (var i = 0; i < lines.length; i++) {
+      if (i === 0 && /^#!\s*\S+/.test(lines[i])) continue;
+      if (!lines[i].trim() || /^\s*#/.test(lines[i])) continue;
+      await execute(expandScriptLine(lines[i], path, args));
+      if (exitCode !== 0) return;
+    }
+  }
+
+  async function execute(line) {
+    line = line.trim();
+    if (!line) return;
+    if (line === '!!') {
+      if (hist.length < 1) { printError('bash: !!: event not found'); exitCode = 1; return; }
+      line = hist[hist.length - 1];
+      print(line, 'term-dim');
+    } else if (/^!(\d+)$/.test(line)) {
+      var n = parseInt(line.slice(1));
+      if (n < 1 || n > hist.length) { printError('bash: ' + line + ': event not found'); exitCode = 1; return; }
+      line = hist[n - 1];
+      print(line, 'term-dim');
+    }
+    var firstSpace = line.indexOf(' ');
+    var firstWord = firstSpace > -1 ? line.slice(0, firstSpace) : line;
+    if (aliases[firstWord]) line = aliases[firstWord] + (firstSpace > -1 ? line.slice(firstSpace) : '');
+
+    var semiParts = splitOutsideQuotes(line, ';');
+    if (semiParts.length > 1) { for (var si = 0; si < semiParts.length; si++) await execute(semiParts[si]); return; }
+    var andParts = splitOutsideQuotes(line, '&&');
+    if (andParts.length > 1) { for (var ai = 0; ai < andParts.length; ai++) { await execute(andParts[ai]); if (exitCode !== 0) return; } return; }
+    var orParts = splitOutsideQuotes(line, '||');
+    if (orParts.length > 1) { for (var oi = 0; oi < orParts.length; oi++) { await execute(orParts[oi]); if (exitCode === 0) return; } return; }
+
+    line = line.trim();
+    if (!line) return;
+    line = line.replace(/\$(\w+)/g, function (m, v) { return envVars[v] || ''; });
+
+    var pipeParts = splitOutsideQuotes(line, '|');
+    if (pipeParts.length > 1) {
+      var pipeStdin = null;
+      for (var pi = 0; pi < pipeParts.length; pi++) {
+        var seg = pipeParts[pi].trim();
+        if (!seg) continue;
+        var isLast = pi === pipeParts.length - 1;
+        if (!isLast) captureMode = true;
+        captureBuffer = '';
+        await runSingle(seg, pipeStdin);
+        if (!isLast) { captureMode = false; pipeStdin = captureBuffer; }
+      }
+      captureMode = false;
+      return;
+    }
+    await runSingle(line, null);
+  }
+
+  async function runSingle(line, stdin) {
+    var tokens = tokenize(line);
+    if (!tokens.length) return;
+    var cmd = tokens[0], args = tokens.slice(1);
+    if (cmd.indexOf('=') > 0 && /^[A-Za-z_]\w*=/.test(cmd)) {
+      var eqI = cmd.indexOf('=');
+      envVars[cmd.slice(0, eqI)] = cmd.slice(eqI + 1);
+      exitCode = 0; return;
+    }
+    exitCode = 0;
+    if (!commands[cmd]) {
+      if (cmd.indexOf('/') > -1) { await executeFile(_resolve(cmd), args, stdin, cmd); return; }
+      var commandPath = getCommandPath(cmd);
+      if (commandPath) { await executeFile(commandPath, args, stdin, cmd); return; }
+      printError('bash: ' + cmd + ': command not found');
+      var suggest = closestCmd(cmd);
+      if (suggest) print('Command \'' + cmd + '\' not found, did you mean \'' + suggest + '\'?', 'term-dim');
+      exitCode = 127;
+      return;
+    }
+    try {
+      var result = commands[cmd](args, stdin);
+      if (result instanceof Promise) result = await result;
+      renderResult(result);
+    } catch (e) {
+      printError('bash: ' + cmd + ': ' + (e.message || 'unknown error'));
+      exitCode = 1;
+    }
+  }
+
+  function tabComplete() {
+    var val = inputEl.value;
+    var cursor = inputEl.selectionStart;
+    var before = val.slice(0, cursor);
+    var after = val.slice(cursor);
+    var tokens = before.split(/\s+/);
+    var completing = tokens[tokens.length - 1] || '';
+    var isCmd = tokens.length === 1 && !before.endsWith(' ');
+    var pathLikeToken = /^(?:\.{1,2}(?:\/|$)|~(?:\/|$)|\/)/.test(completing);
+    var completeAsCommand = !pathLikeToken && (isCmd || (tokens.length === 1 && completing && !before.includes(' ')));
+    var firstToken = tokens[0] || '';
+    var completingOpenTarget = !completeAsCommand && !pathLikeToken && firstToken === 'open' && tokens.length === 2;
+    var matches;
+    if (completeAsCommand) {
+      var prefix = completing.toLowerCase();
+      matches = availableCommandNames().filter(function (c) { return c.indexOf(prefix) === 0; });
+      Object.keys(aliases).forEach(function (a) { if (a.indexOf(prefix) === 0 && matches.indexOf(a) < 0) matches.push(a); });
+      matches.sort();
+    } else if (completingOpenTarget) {
+      ensureFileLinks();
+      var openPrefix = completing.toLowerCase();
+      matches = getOpenOptionNames().filter(function (n) { return n.toLowerCase().indexOf(openPrefix) === 0; });
+    } else {
+      matches = _completePath(completing);
+    }
+    if (!matches.length) return;
+    if (matches.length === 1) {
+      var completion = matches[0];
+      if (completeAsCommand) {
+        tokens[tokens.length - 1] = completion;
+        var newVal = tokens.join(' ') + ' ';
+        inputEl.value = newVal + after;
+        inputEl.selectionStart = inputEl.selectionEnd = newVal.length;
+      } else {
+        tokens[tokens.length - 1] = completion;
+        var resolved = _resolve(completion);
+        var suffix = _isDir(resolved) ? '/' : ' ';
+        var joined = tokens.join(' ') + suffix;
+        inputEl.value = joined + after;
+        inputEl.selectionStart = inputEl.selectionEnd = joined.length;
+      }
+    } else {
+      var matchDiv = document.createElement('div');
+      matchDiv.className = 'tab-completions';
+      matches.forEach(function (m) {
+        var span = document.createElement('span');
+        span.textContent = m;
+        if (!completeAsCommand) {
+          var rp = _resolve(m);
+          if (_isDir(rp)) { span.textContent += '/'; span.classList.add('ls-dir'); }
+          else if (_isFile(rp) && _isExecutable(vfs[rp])) span.classList.add('ls-exec');
+        }
+        matchDiv.appendChild(span);
+      });
+      outputEl.appendChild(matchDiv);
+      var common = _commonPrefix(matches);
+      if (common.length > completing.length) {
+        tokens[tokens.length - 1] = common;
+        inputEl.value = tokens.join(' ') + after;
+        inputEl.selectionStart = inputEl.selectionEnd = tokens.join(' ').length;
+      }
+      printPrompt(inputEl.value);
+      scroll();
+    }
+  }
+  function _completePath(partial) {
+    var dirPath, prefix;
+    if (partial.indexOf('/') > -1) {
+      var lastSlash = partial.lastIndexOf('/');
+      dirPath = _resolve(partial.slice(0, lastSlash + 1) || '/');
+      prefix = partial.slice(lastSlash + 1);
+    } else {
+      dirPath = cwd;
+      prefix = partial;
+    }
+    if (!_isDir(dirPath)) return [];
+    return vfs[dirPath].ch.filter(function (c) { return c.indexOf(prefix) === 0; }).map(function (c) {
+      return partial.indexOf('/') > -1
+        ? partial.slice(0, partial.lastIndexOf('/') + 1) + c
+        : c;
+    });
+  }
+  function _commonPrefix(arr) {
+    if (!arr.length) return '';
+    var p = arr[0];
+    for (var i = 1; i < arr.length; i++) while (arr[i].indexOf(p) !== 0) p = p.slice(0, -1);
+    return p;
+  }
+
+  /* ===== Vim ===== */
+  function countLines(text) { return Math.max(1, (text || '').split('\n').length); }
+  function isVimOpen() { return !!vimState.open; }
+  function updateVimGutter() {
+    if (!vimGutterEl) return;
+    var total = countLines(vimBufferEl.value);
+    var lines = [];
+    for (var i = 1; i <= total; i++) lines.push(i);
+    vimGutterEl.textContent = lines.join('\n');
+  }
+  function getCaretLineCol(text, index) {
+    var safe = Math.max(0, Math.min(index, text.length));
+    var line = 0, lastBreak = -1;
+    for (var i = 0; i < safe; i++) if (text.charAt(i) === '\n') { line++; lastBreak = i; }
+    return { line: line, col: safe - lastBreak - 1 };
+  }
+  function getIndexForLineCol(text, line, col) {
+    var lines = text.split('\n');
+    var targetLine = Math.max(0, Math.min(line, lines.length - 1));
+    var index = 0;
+    for (var i = 0; i < targetLine; i++) index += lines[i].length + 1;
+    return index + Math.min(Math.max(col, 0), lines[targetLine].length);
+  }
+  function setVimCaret(index) {
+    var bounded = Math.max(0, Math.min(index, vimBufferEl.value.length));
+    vimBufferEl.selectionStart = vimBufferEl.selectionEnd = bounded;
+    updateVimStatus();
+  }
+  function getCurrentLineRange() {
+    var value = vimBufferEl.value;
+    var index = vimBufferEl.selectionStart;
+    var start = value.lastIndexOf('\n', Math.max(0, index - 1));
+    start = start === -1 ? 0 : start + 1;
+    var end = value.indexOf('\n', index);
+    if (end === -1) end = value.length;
+    return { start: start, end: end };
+  }
+  function updateVimStatus() {
+    if (!isVimOpen()) return;
+    var caret = getCaretLineCol(vimBufferEl.value, vimBufferEl.selectionStart);
+    var left = '';
+    if (vimState.mode === 'insert') left = '-- INSERT --';
+    else if (vimState.mode === 'command') left = ':' + vimState.command;
+    else if (vimState.pending) left = vimState.pending;
+    else left = vimState.lastMessage || 'NORMAL';
+    vimStatusLeftEl.textContent = left;
+    vimStatusRightEl.textContent = vimState.displayPath + (vimState.dirty ? ' [+]' : '') + '  Ln ' + (caret.line + 1) + ', Col ' + (caret.col + 1);
+    vimTitleEl.textContent = 'vim ' + vimState.displayPath;
+    vimShellEl.classList.toggle('vim-shell--dirty', vimState.dirty);
+  }
+  function setVimMode(mode) {
+    vimState.mode = mode;
+    if (mode !== 'command') vimState.command = '';
+    vimBufferEl.readOnly = mode !== 'insert';
+    vimModeLabelEl.textContent = mode.toUpperCase();
+    vimShellEl.classList.toggle('vim-shell--insert', mode === 'insert');
+    vimShellEl.classList.toggle('vim-shell--command', mode === 'command');
+    updateVimStatus();
+  }
+  function ensureVimEditable() {
+    if (!vimState.locked) return true;
+    vimState.lastMessage = 'E45: readonly option is set';
+    updateVimStatus();
+    return false;
+  }
+  function applyVimBufferChange(nextValue, nextCaret) {
+    vimBufferEl.value = nextValue;
+    vimState.dirty = vimBufferEl.value !== vimState.original;
+    updateVimGutter();
+    setVimCaret(nextCaret);
+  }
+  function moveVimHorizontal(delta) { vimState.preferredCol = null; setVimCaret(vimBufferEl.selectionStart + delta); }
+  function moveVimVertical(delta) {
+    var info = getCaretLineCol(vimBufferEl.value, vimBufferEl.selectionStart);
+    var preferred = vimState.preferredCol == null ? info.col : vimState.preferredCol;
+    vimState.preferredCol = preferred;
+    setVimCaret(getIndexForLineCol(vimBufferEl.value, info.line + delta, preferred));
+  }
+  function moveToLineBoundary(atEnd) {
+    var info = getCaretLineCol(vimBufferEl.value, vimBufferEl.selectionStart);
+    vimState.preferredCol = null;
+    setVimCaret(getIndexForLineCol(vimBufferEl.value, info.line, atEnd ? Number.MAX_SAFE_INTEGER : 0));
+  }
+  function moveToFirstNonBlank() {
+    var range = getCurrentLineRange();
+    var lineText = vimBufferEl.value.slice(range.start, range.end);
+    var match = /\S/.exec(lineText);
+    setVimCaret(range.start + (match ? match.index : 0));
+  }
+  function deleteCharUnderCursor() {
+    if (!ensureVimEditable()) return;
+    var value = vimBufferEl.value;
+    var index = vimBufferEl.selectionStart;
+    if (index >= value.length) { vimState.lastMessage = 'Already at end of buffer'; updateVimStatus(); return; }
+    applyVimBufferChange(value.slice(0, index) + value.slice(index + 1), index);
+  }
+  function deleteCurrentLine() {
+    if (!ensureVimEditable()) return;
+    var value = vimBufferEl.value;
+    var range = getCurrentLineRange();
+    var removeStart = range.start, removeEnd = range.end;
+    if (value.charAt(removeEnd) === '\n') removeEnd++;
+    else if (removeStart > 0) removeStart--;
+    applyVimBufferChange(value.slice(0, removeStart) + value.slice(removeEnd), Math.min(removeStart, value.length));
+    vimState.lastMessage = '1 line deleted';
+  }
+  function openLineBelow() {
+    if (!ensureVimEditable()) return;
+    var range = getCurrentLineRange();
+    var value = vimBufferEl.value;
+    applyVimBufferChange(value.slice(0, range.end) + '\n' + value.slice(range.end), range.end + 1);
+    setVimMode('insert');
+  }
+  function openLineAbove() {
+    if (!ensureVimEditable()) return;
+    var range = getCurrentLineRange();
+    var value = vimBufferEl.value;
+    applyVimBufferChange(value.slice(0, range.start) + '\n' + value.slice(range.start), range.start);
+    setVimMode('insert');
+  }
+  function saveVimBuffer(targetArg) {
+    var savePath = targetArg ? _resolve(targetArg) : vimState.path;
+    if (!savePath) { vimState.lastMessage = 'E32: No file name'; updateVimStatus(); return false; }
+    if (_exists(savePath) && _isDir(savePath)) { vimState.lastMessage = 'E17: "' + savePath + '" is a directory'; updateVimStatus(); return false; }
+    if (!_exists(_parent(savePath)) || !_isDir(_parent(savePath)) || !canWritePath(savePath) || (_exists(savePath) && vfs[savePath].readOnly)) {
+      vimState.lastMessage = 'E212: Cannot open file for writing';
+      updateVimStatus(); return false;
+    }
+    var existing = _exists(savePath) ? vfs[savePath] : null;
+    _updateFile(savePath, vimBufferEl.value, { mode: existing ? existing.mode : '0644', readOnly:false });
+    vimState.path = savePath;
+    vimState.displayPath = formatDisplayPath(savePath);
+    vimState.original = vimBufferEl.value;
+    vimState.dirty = false;
+    vimState.locked = false;
+    vimState.lastMessage = '"' + vimState.displayPath + '" ' + countLines(vimBufferEl.value) + 'L, ' + vimBufferEl.value.length + 'B written';
+    updateVimStatus();
+    return true;
+  }
+  function closeVim(force) {
+    if (!force && vimState.dirty) {
+      vimState.lastMessage = 'E37: No write since last change (add ! to override)';
+      updateVimStatus();
+      return false;
+    }
+    vimState.open = false;
+    vimState.mode = 'normal';
+    vimState.path = '';
+    vimState.displayPath = '[No Name]';
+    vimState.original = '';
+    vimState.dirty = false;
+    vimState.command = '';
+    vimState.pending = '';
+    vimState.locked = false;
+    vimState.lastMessage = 'Press i to insert, :w to save, :q to quit';
+    vimState.preferredCol = null;
+    vimShellEl.classList.add('vim-hidden');
+    vimShellEl.classList.remove('vim-shell--insert');
+    vimShellEl.classList.remove('vim-shell--command');
+    vimShellEl.classList.remove('vim-shell--dirty');
+    vimShellEl.setAttribute('aria-hidden', 'true');
+    if (windowEl) windowEl.classList.remove('vim-active');
+    inputEl.focus();
+    return true;
+  }
+  function executeVimCommand() {
+    var raw = vimState.command.trim();
+    var parts = raw ? raw.split(/\s+/) : [];
+    var cmd = parts[0] || '';
+    var target = parts.slice(1).join(' ');
+    if (!raw) { setVimMode('normal'); return; }
+    if (cmd === 'q')   { if (!closeVim(false)) setVimMode('normal'); return; }
+    if (cmd === 'q!')  { closeVim(true); return; }
+    if (cmd === 'w')   { saveVimBuffer(target); setVimMode('normal'); return; }
+    if (cmd === 'wq' || cmd === 'x') { if (saveVimBuffer(target)) closeVim(true); else setVimMode('normal'); return; }
+    if (cmd === 'help'){ vimState.lastMessage = 'i insert | Esc normal | :w save | :q quit | dd delete line'; setVimMode('normal'); return; }
+    vimState.lastMessage = 'Not an editor command: ' + raw;
+    setVimMode('normal');
+  }
+  function openVim(target) {
+    if (!vimShellEl || !vimBufferEl) return fail('vim: editor resources failed to initialize');
+    var path = '';
+    var initialContent = '';
+    var locked = false;
+    if (target) {
+      path = _resolve(target);
+      if (_exists(path) && _isDir(path)) return fail('vim: ' + target + ': Is a directory');
+      if (_exists(path)) {
+        initialContent = vfs[path].data || '';
+        locked = !!vfs[path].readOnly;
+      }
+    }
+    vimState.open = true;
+    vimState.path = path;
+    vimState.displayPath = path ? formatDisplayPath(path) : '[No Name]';
+    vimState.original = initialContent;
+    vimState.dirty = false;
+    vimState.command = '';
+    vimState.pending = '';
+    vimState.locked = locked;
+    vimState.lastMessage = locked ? 'readonly buffer' : 'Press i to insert, :w to save, :q to quit';
+    vimState.preferredCol = null;
+    vimBufferEl.value = initialContent;
+    vimShellEl.classList.remove('vim-hidden');
+    vimShellEl.setAttribute('aria-hidden', 'false');
+    if (windowEl) windowEl.classList.add('vim-active');
+    updateVimGutter();
+    setVimMode('normal');
+    setTimeout(function () { vimBufferEl.focus(); setVimCaret(0); }, 0);
+    return '';
+  }
+  function handleVimKeyDown(e) {
+    if (!isVimOpen()) return;
+    if (vimState.mode === 'insert') {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (vimBufferEl.selectionStart > 0) setVimCaret(vimBufferEl.selectionStart - 1);
+        setVimMode('normal');
+      }
+      return;
+    }
+    e.preventDefault();
+    if (vimState.mode === 'command') {
+      if (e.key === 'Escape') { vimState.command = ''; setVimMode('normal'); return; }
+      if (e.key === 'Backspace') { vimState.command = vimState.command.slice(0, -1); updateVimStatus(); return; }
+      if (e.key === 'Enter') { executeVimCommand(); return; }
+      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) { vimState.command += e.key; updateVimStatus(); }
+      return;
+    }
+    if (e.key === 'Escape') { vimState.pending = ''; vimState.lastMessage = 'NORMAL'; updateVimStatus(); return; }
+    if (vimState.pending === 'd') { vimState.pending = ''; if (e.key === 'd') deleteCurrentLine(); else vimState.lastMessage = 'Unknown command: d' + e.key; updateVimStatus(); return; }
+    if (vimState.pending === 'g') { vimState.pending = ''; if (e.key === 'g') setVimCaret(0); else vimState.lastMessage = 'Unknown command: g' + e.key; updateVimStatus(); return; }
+    if (e.key === ':') { vimState.command = ''; setVimMode('command'); return; }
+    if (e.key === 'h' || e.key === 'ArrowLeft')  { moveVimHorizontal(-1); return; }
+    if (e.key === 'l' || e.key === 'ArrowRight') { moveVimHorizontal(1); return; }
+    if (e.key === 'j' || e.key === 'ArrowDown')  { moveVimVertical(1); return; }
+    if (e.key === 'k' || e.key === 'ArrowUp')    { moveVimVertical(-1); return; }
+    if (e.key === '0') { moveToLineBoundary(false); return; }
+    if (e.key === '$') { moveToLineBoundary(true);  return; }
+    if (e.key === 'G') { setVimCaret(vimBufferEl.value.length); return; }
+    if (e.key === 'g') { vimState.pending = 'g'; vimState.lastMessage = 'g'; updateVimStatus(); return; }
+    if (e.key === 'd') { vimState.pending = 'd'; vimState.lastMessage = 'd'; updateVimStatus(); return; }
+    if (e.key === 'i') { if (ensureVimEditable()) setVimMode('insert'); return; }
+    if (e.key === 'a') { moveVimHorizontal(1); if (ensureVimEditable()) setVimMode('insert'); return; }
+    if (e.key === 'I') { moveToFirstNonBlank(); if (ensureVimEditable()) setVimMode('insert'); return; }
+    if (e.key === 'A') { moveToLineBoundary(true); if (ensureVimEditable()) setVimMode('insert'); return; }
+    if (e.key === 'o') { openLineBelow(); return; }
+    if (e.key === 'O') { openLineAbove(); return; }
+    if (e.key === 'x') { deleteCharUnderCursor(); return; }
+    vimState.lastMessage = 'Keys: i, a, o, dd, gg, G, :w, :q';
+    updateVimStatus();
+  }
+  function syncCommandBinaries() {
+    for (var i = 0; i < externalCommandNames.length; i++) {
+      var name = externalCommandNames[i];
+      var path = '/usr/bin/' + name;
+      if (_exists(path)) continue;
+      _mkfile(path, '#!/usr/bin/env surya-shell\nbuiltin ' + name + ' "$@"\n', { executable:true, readOnly:true });
+    }
+  }
+
+  async function processCommand() {
+    var text = inputEl.value.trim();
+    printPrompt(inputEl.value);
+    inputEl.value = '';
+    histPos = -1;
+    if (text) { hist.push(text); syncHistoryFile(); await execute(text); }
+    scroll();
+  }
+
+  function handleKeyDown(e) {
+    if (e.key === 'Tab') { e.preventDefault(); tabComplete(); return; }
+    if (e.key === 'Enter') { e.preventDefault(); processCommand(); return; }
+    if (e.ctrlKey && !e.shiftKey && !e.altKey) {
+      switch (e.key.toLowerCase()) {
+        case 'c': e.preventDefault(); interrupted = true; print(promptStr() + ' ' + inputEl.value + '^C'); inputEl.value = ''; scroll(); return;
+        case 'l': e.preventDefault(); commands.clear(); return;
+        case 'u': e.preventDefault(); inputEl.value = inputEl.value.slice(inputEl.selectionStart); inputEl.selectionStart = inputEl.selectionEnd = 0; return;
+        case 'k': e.preventDefault(); inputEl.value = inputEl.value.slice(0, inputEl.selectionStart); return;
+        case 'w': {
+          e.preventDefault();
+          var v = inputEl.value, c = inputEl.selectionStart;
+          var leftPart = v.slice(0, c);
+          var trimmed = leftPart.replace(/\s+$/, '');
+          var lastSpace = trimmed.lastIndexOf(' ');
+          inputEl.value = v.slice(0, lastSpace + 1) + v.slice(c);
+          inputEl.selectionStart = inputEl.selectionEnd = lastSpace + 1;
+          return;
+        }
+        case 'a': e.preventDefault(); inputEl.selectionStart = inputEl.selectionEnd = 0; return;
+        case 'e': e.preventDefault(); inputEl.selectionStart = inputEl.selectionEnd = inputEl.value.length; return;
+        case 'd': e.preventDefault(); if (!inputEl.value) commands.exit(); return;
+      }
+    }
+    if (e.ctrlKey && e.shiftKey) {
+      if (e.key === 'Q' || e.key === 'q') { e.preventDefault(); commands.exit(); return; }
+      if (e.key === 'L' || e.key === 'l') { e.preventDefault(); commands.clear(); return; }
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (histPos === -1) histPos = hist.length;
+      if (histPos > 0) {
+        histPos--;
+        inputEl.value = hist[histPos];
+        setTimeout(function () { inputEl.selectionStart = inputEl.selectionEnd = inputEl.value.length; }, 0);
+      }
+      return;
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (histPos >= 0 && histPos < hist.length - 1) { histPos++; inputEl.value = hist[histPos]; }
+      else { histPos = -1; inputEl.value = ''; }
+      return;
+    }
+    if (e.key === 'Home') { e.preventDefault(); inputEl.selectionStart = inputEl.selectionEnd = 0; return; }
+    if (e.key === 'End')  { e.preventDefault(); inputEl.selectionStart = inputEl.selectionEnd = inputEl.value.length; return; }
+  }
+
+  // ===== One-time CLI core init =====
+  var __cliInited = false;
+  function initCLI() {
+    if (__cliInited) return;
+    bindDom();
+    if (!inputEl || !outputEl) return;
+
+    initFS();
+    syncCommandBinaries();
+    syncHistoryFile();
+    outputEl.innerHTML = '';
+
+    printPre('Welcome to SuryaOS 3.1 — In-Page Terminal Emulator');
+    printPre('Executable section launchers: ./about  ./projects  ./resume');
+    printPre('Type \'help\' for available commands, \'man <cmd>\' for details.\n');
+    updatePrompt();
+
+    inputEl.addEventListener('keydown', handleKeyDown);
+
+    if (vimBufferEl) {
+      vimBufferEl.addEventListener('keydown', handleVimKeyDown);
+      vimBufferEl.addEventListener('input', function () {
+        vimState.dirty = vimBufferEl.value !== vimState.original;
+        updateVimGutter();
+        updateVimStatus();
+      });
+      vimBufferEl.addEventListener('scroll', function () {
+        if (vimGutterEl) vimGutterEl.scrollTop = vimBufferEl.scrollTop;
+      });
+      vimBufferEl.addEventListener('click', function () { vimState.pending = ''; updateVimStatus(); });
+    }
+
+    // Click-anywhere-on-terminal-to-focus (scoped to overlay)
+    if (terminalEl) {
+      terminalEl.addEventListener('mousedown', function (e) {
+        if (windowEl && windowEl.classList.contains('vim-active')) return;
+        if (e.target.closest('.window-btn')) return;
+        if (e.target.closest('a, button, input, textarea, .html-content')) return;
+        if (e.target.closest('.vim-shell')) return;
+        if (window.getSelection && window.getSelection().toString().length) return;
+        setTimeout(function () { inputEl.focus(); }, 0);
+      });
+    }
+
+    // Window controls
+    var btnMin = $('cliWinMin');
+    var btnMax = $('cliWinMax');
+    var btnClose = $('cliWinClose');
+    if (btnMin) btnMin.addEventListener('click', function () {
+      windowEl.classList.toggle('is-minimized');
+      if (!windowEl.classList.contains('is-minimized') && inputEl) inputEl.focus();
+    });
+    if (btnMax) btnMax.addEventListener('click', function () {
+      windowEl.classList.toggle('is-maximized');
+      if (inputEl) inputEl.focus();
+    });
+    if (btnClose) btnClose.addEventListener('click', function () {
+      if (typeof window.closeTerminalOverlay === 'function') window.closeTerminalOverlay();
+    });
+
+    // Header double-click to toggle maximize
+    var headerEl = terminalEl ? terminalEl.querySelector('.header') : null;
+    if (headerEl) {
+      headerEl.addEventListener('dblclick', function (e) {
+        if (e.target.closest('.window-btn')) return;
+        windowEl.classList.toggle('is-maximized');
+      });
+    }
+
+    // Status path mirror
+    var statusPath = $('cliStatusPath');
+    if (statusPath && promptEl) {
+      var syncPath = function () {
+        var m = (promptEl.textContent || '').match(/:([^$#]+)[$#]/);
+        if (m && m[1]) statusPath.textContent = m[1].trim();
+      };
+      syncPath();
+      new MutationObserver(syncPath).observe(promptEl, { childList: true, characterData: true, subtree: true });
+    }
+
+    // Status clock
+    var clockEl = $('cliStatusClock');
+    if (clockEl) {
+      var tick = function () {
+        var d = new Date();
+        clockEl.textContent =
+          String(d.getHours()).padStart(2, '0') + ':' +
+          String(d.getMinutes()).padStart(2, '0') + ':' +
+          String(d.getSeconds()).padStart(2, '0');
+      };
+      tick();
+      setInterval(tick, 1000);
+    }
+
+    // Mirror vim title
+    var tabTitleEl = $('cliHeaderTabTitle');
+    if (vimShellEl && tabTitleEl) {
+      var baseTabTitle = tabTitleEl.textContent;
+      var syncTab = function () {
+        var open = !vimShellEl.classList.contains('vim-hidden');
+        if (windowEl) windowEl.classList.toggle('vim-active', open);
+        tabTitleEl.textContent = open && vimTitleEl ? (vimTitleEl.textContent || baseTabTitle) : baseTabTitle;
+      };
+      syncTab();
+      new MutationObserver(syncTab).observe(vimShellEl, { attributes: true, attributeFilter: ['class'] });
+      if (vimTitleEl) new MutationObserver(syncTab).observe(vimTitleEl, { childList: true, characterData: true, subtree: true });
+    }
+
+    ensureFileLinks();
+    __cliInited = true;
+  }
+
+  /* ================================================================
+     Overlay control: spawn animation + boot sequence + show/hide
+     ================================================================ */
+  var __spawnTimers = [];
+  function clearSpawnTimers() {
+    for (var i = 0; i < __spawnTimers.length; i++) clearTimeout(__spawnTimers[i]);
+    __spawnTimers = [];
+  }
+  function later(fn, ms) { var id = setTimeout(fn, ms); __spawnTimers.push(id); return id; }
+
+  function buildDesktopRain() {
+    var rain = $('cliDesktopRain');
+    if (!rain || rain.dataset.built === '1') return;
+    rain.dataset.built = '1';
+    var charset = '01<>/[]{}()$#=*+~|';
+    var cols = Math.max(14, Math.floor(window.innerWidth / 32));
+    for (var i = 0; i < cols; i++) {
+      var col = document.createElement('div');
+      col.className = 'col';
+      col.style.left = ((i / cols) * 100) + '%';
+      col.style.animationDuration = (7 + Math.random() * 8).toFixed(2) + 's';
+      col.style.animationDelay = '-' + (Math.random() * 8).toFixed(2) + 's';
+      col.style.opacity = (0.45 + Math.random() * 0.45).toFixed(2);
+      var txt = '';
+      for (var r = 0; r < 24; r++) txt += charset[(Math.random() * charset.length) | 0] + '\n';
+      col.textContent = txt;
+      rain.appendChild(col);
+    }
+  }
+
+  var bootScript = [
+    { c: 'dim',  t: '[ 0.000001 ] booting suryaos.kernel · web edition' },
+    { c: 'ok',   t: '[   OK   ] hardware probe · WebGL2 · WebAudio · WebAssembly' },
+    { c: 'ok',   t: '[   OK   ] mounting tmpfs on /tmp' },
+    { c: 'ok',   t: '[   OK   ] initialized virtual filesystem (vfs)' },
+    { c: 'info', t: '[  INFO  ] resolving fileLinks endpoint…' },
+    { c: 'ok',   t: '[   OK   ] systemd-userland · spawned' },
+    { c: 'ok',   t: '[   OK   ] mounted /etc · /usr · /home' },
+    { c: 'info', t: '[  INFO  ] pty.alloc · pts/0 · 80x24 · xterm-256color' },
+    { c: 'ok',   t: '[   OK   ] starting interactive shell · /bin/bash 5.2.15' },
+    { c: 'ok',   t: '[   OK   ] terminal emulator ready' },
+    { c: 'ready',t: '[ READY ] welcome, surya — desktop spawn handover' }
+  ];
+
+  function runBootSequence(skipAnimation) {
+    var bootScreen = $('cliBootScreen');
+    var bootLines = $('cliBootLines');
+    if (bootLines) bootLines.innerHTML = '';
+    if (skipAnimation) {
+      if (overlayEl) overlayEl.classList.add('is-booted', 'is-spawning');
+      later(function () {
+        if (overlayEl) overlayEl.classList.remove('is-spawning');
+        if (inputEl) inputEl.focus();
+      }, 820);
+      return;
+    }
+    overlayEl.classList.remove('is-booted');
+    overlayEl.classList.remove('is-spawning');
+    var stride = 90;
+    bootScript.forEach(function (line, i) {
+      later(function () {
+        if (!bootLines) return;
+        var li = document.createElement('li');
+        li.className = line.c;
+        li.textContent = line.t;
+        bootLines.appendChild(li);
+        requestAnimationFrame(function () { li.classList.add('is-shown'); });
+      }, 180 + i * stride);
+    });
+    var totalBoot = 180 + bootScript.length * stride + 220;
+    later(function () { overlayEl.classList.add('is-booted', 'is-spawning'); }, totalBoot);
+    later(function () {
+      overlayEl.classList.remove('is-spawning');
+      if (inputEl) inputEl.focus();
+    }, totalBoot + 820);
+  }
+
+  function startTaskbarClock() {
+    var clock = $('cliTaskbarClock');
+    var date = $('cliTaskbarDate');
+    function tick() {
+      var d = new Date();
+      if (clock) clock.textContent =
+        String(d.getHours()).padStart(2, '0') + ':' +
+        String(d.getMinutes()).padStart(2, '0');
+      if (date) date.textContent = d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+    tick();
+    if (window.__cliTaskbarClockTimer) clearInterval(window.__cliTaskbarClockTimer);
+    window.__cliTaskbarClockTimer = setInterval(tick, 30000);
+  }
+
+  function openTerminalOverlay(opts) {
+    opts = opts || {};
+    initCLI();
+    if (!overlayEl) return;
+    if (overlayEl.classList.contains('is-active')) return;
+    clearSpawnTimers();
+    document.body.classList.add('cli-overlay-open');
+    overlayEl.classList.add('is-active');
+    overlayEl.classList.remove('is-closing');
+    overlayEl.setAttribute('aria-hidden', 'false');
+    buildDesktopRain();
+    startTaskbarClock();
+    runBootSequence(!!opts.skipBoot);
+  }
+
+  function closeTerminalOverlay() {
+    if (!overlayEl) return;
+    if (!overlayEl.classList.contains('is-active')) return;
+    clearSpawnTimers();
+    overlayEl.classList.add('is-closing');
+    overlayEl.classList.remove('is-spawning');
+    later(function () {
+      overlayEl.classList.remove('is-active', 'is-closing', 'is-booted');
+      overlayEl.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('cli-overlay-open');
+      // Clean up any project preview overlays that were lifted to body.
+      var pp = document.querySelector('#p4-preview-overlay.cli-project-overlay');
+      if (pp && pp.parentNode) pp.parentNode.removeChild(pp);
+    }, 320);
+  }
+
+  // Skip boot on Esc / click during boot phase
+  document.addEventListener('keydown', function (e) {
+    if (!overlayEl || !overlayEl.classList.contains('is-active')) return;
+    if (e.key === 'Escape') {
+      // If vim is open inside CLI, let vim handle it
+      if (windowEl && windowEl.classList.contains('vim-active')) return;
+      // If we're still booting, skip to terminal
+      if (!overlayEl.classList.contains('is-booted')) {
+        clearSpawnTimers();
+        overlayEl.classList.add('is-booted', 'is-spawning');
+        setTimeout(function () { overlayEl.classList.remove('is-spawning'); if (inputEl) inputEl.focus(); }, 820);
+        return;
+      }
+      // Otherwise, close the overlay
+      closeTerminalOverlay();
+    }
+  });
+
+  document.addEventListener('click', function (e) {
+    if (!overlayEl || !overlayEl.classList.contains('is-active')) return;
+    if (overlayEl.classList.contains('is-booted')) return;
+    if (e.target.closest('.cli-boot-screen')) {
+      clearSpawnTimers();
+      overlayEl.classList.add('is-booted', 'is-spawning');
+      setTimeout(function () { overlayEl.classList.remove('is-spawning'); if (inputEl) inputEl.focus(); }, 820);
+    }
+  });
+
+  // Taskbar quit button
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('#cliTaskbarQuit')) closeTerminalOverlay();
+  });
+
+  // Public API
+  window.openTerminalOverlay = openTerminalOverlay;
+  window.closeTerminalOverlay = closeTerminalOverlay;
+
 })();
 </script>
 
