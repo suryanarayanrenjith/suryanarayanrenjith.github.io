@@ -1429,70 +1429,19 @@ function isDesktop() {
               });
           
               let __terminalLaunchInFlight = false;
-              const launchTerminal = async (showSequence = true) => {
+              // The terminal now glitch-spawns directly in place of the page;
+              // no IPC preloader sequence is shown.
+              const launchTerminal = async () => {
                 if (__terminalLaunchInFlight) return;
                 __terminalLaunchInFlight = true;
-
-                const openOverlay = () => {
-                  if (typeof window.openTerminalOverlay === 'function') {
-                    window.openTerminalOverlay({ skipBoot: false });
-                  }
-                  __terminalLaunchInFlight = false;
-                };
-
-                if (!showSequence) {
-                  openOverlay();
-                  return;
-                }
-
-                const terminalLogs = document.querySelector('.terminal-logs code');
-                if (!terminalLogs) {
-                  openOverlay();
-                  return;
-                }
-
-                const ts = () => {
-                  const d = new Date();
-                  const hh = String(d.getHours()).padStart(2, '0');
-                  const mm = String(d.getMinutes()).padStart(2, '0');
-                  const ss = String(d.getSeconds()).padStart(2, '0');
-                  const ms = String(d.getMilliseconds()).padStart(3, '0');
-                  return `${hh}:${mm}:${ss}.${ms}`;
-                };
-                const tag = (level) => `<span class="ipc-tag ipc-tag--${level}">${level.toUpperCase().padEnd(7, ' ')}</span>`;
-                const dim = (s) => `<span class="ipc-dim">${s}</span>`;
-                const accent = (s) => `<span class="ipc-accent">${s}</span>`;
-
-                terminalLogs.innerHTML = '';
-
-                const channel = '0x' + Math.floor(Math.random() * 0xffff).toString(16).padStart(4, '0').toUpperCase();
-                const pid = 1000 + Math.floor(Math.random() * 8000);
-
-                const steps = [
-                  { d: 80,  html: `${dim(ts())}  ${tag('info')}  ipc.bridge: opening channel ${accent(channel)}` },
-                  { d: 220, html: `${dim(ts())}  ${tag('info')}  ipc.bridge: requesting handshake from in-page shell` },
-                  { d: 240, html: `${dim(ts())}  ${tag('ok')}     ipc.bridge: ack received · rtt=${(8 + Math.random() * 14).toFixed(1)}ms` },
-                  { d: 200, html: `${dim(ts())}  ${tag('info')}  pty.alloc: pts/0 · cols=80 rows=24` },
-                  { d: 180, html: `${dim(ts())}  ${tag('info')}  auth: verifying client fingerprint…` },
-                  { d: 280, html: `${dim(ts())}  ${tag('ok')}     auth: signature accepted` },
-                  { d: 220, html: `${dim(ts())}  ${tag('info')}  shell.spawn: /bin/bash · pid=${pid}` },
-                  { d: 220, html: `${dim(ts())}  ${tag('ok')}     shell.spawn: session ready` },
-                  { d: 200, html: `${dim(ts())}  ${tag('info')}  vfs.mount: ~ -> /home/surya` },
-                  { d: 180, html: `${dim(ts())}  ${tag('info')}  history.sync: 0 entries restored` },
-                  { d: 220, html: `${dim(ts())}  ${tag('redirect')} spawning desktop viewport…` }
-                ];
-
                 try {
-                  for (let i = 0; i < steps.length; i++) {
-                    await new Promise(r => setTimeout(r, steps[i].d));
-                    terminalLogs.innerHTML += (terminalLogs.innerHTML ? '\n' : '') + steps[i].html;
-                    const scroller = terminalLogs.parentElement;
-                    if (scroller) scroller.scrollTop = scroller.scrollHeight;
+                  // If the help modal is open (this button lives inside it), close it first
+                  // so the page collapses cleanly into the terminal.
+                  if (shortcutsVisible) hideShortcuts();
+                  if (typeof window.openTerminalOverlay === 'function') {
+                    window.openTerminalOverlay({ skipBoot: true });
                   }
-                  await new Promise(r => setTimeout(r, 260));
-                  openOverlay();
-                } catch (err) {
-                  terminalLogs.innerHTML += `\n${dim(ts())}  ${tag('error')}  launch failed: ${(err && err.message) || 'unknown'}`;
+                } finally {
                   __terminalLaunchInFlight = false;
                 }
               };
@@ -1828,6 +1777,9 @@ function isDesktop() {
             inflightFetches[section] = promise;
             return promise;
         }
+
+        // Expose for the in-page terminal so it can reuse the cache + dedupe.
+        window.fetchSection = fetchSection;
 
         function prefetchAdjacent(section) {
             const idx = sectionOrder.indexOf(section);
@@ -4000,13 +3952,29 @@ function isOldBrowser() {
     overflow: hidden;
   }
 
+  /* Replace the page (nav + content) with the terminal — keep the canvas backdrop */
+  body.cli-overlay-open header,
+  body.cli-overlay-open #content,
+  body.cli-overlay-open footer,
+  body.cli-overlay-open #sectionIndicator,
+  body.cli-overlay-open #topLoadingBar,
+  body.cli-overlay-open .progress-bar,
+  body.cli-overlay-open #keyboard-popups,
+  body.cli-overlay-open .palette-button-container,
+  body.cli-overlay-open .modal-overlay,
+  body.cli-overlay-open .command-palette {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    transition: opacity 280ms ease, visibility 0s linear 280ms;
+  }
+  body.cli-overlay-open::after { display: none !important; }
+
   .cli-overlay-fade {
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, 0.62);
-    backdrop-filter: blur(18px) saturate(120%);
-    -webkit-backdrop-filter: blur(18px) saturate(120%);
-    animation: cliFadeIn 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    background: transparent;
+    animation: cliFadeIn 280ms ease-out both;
     z-index: 0;
   }
   @keyframes cliFadeIn {
@@ -4030,7 +3998,11 @@ function isOldBrowser() {
     z-index: 9;
   }
 
-  /* ===== BOOT SCREEN (POST-style) ===== */
+  /* Boot screen + taskbar removed — terminal now glitch-spawns directly */
+  .cli-boot-screen,
+  .cli-taskbar { display: none !important; }
+
+  /* ===== BOOT SCREEN (legacy — kept for back-compat, hidden above) ===== */
   .cli-boot-screen {
     position: absolute;
     inset: 0;
@@ -4250,7 +4222,7 @@ function isOldBrowser() {
     50%      { transform: translate3d(40px,-30px,0) scale(1.12); }
   }
 
-  /* ===== TERMINAL WINDOW (spawn animation) ===== */
+  /* ===== TERMINAL WINDOW (glitch spawn) ===== */
   .cli-terminal-window {
     position: absolute;
     left: 50%;
@@ -4273,34 +4245,63 @@ function isOldBrowser() {
     pointer-events: none;
   }
   .cli-terminal-overlay.is-spawning .cli-terminal-window {
-    animation: cliWindowSpawn 820ms cubic-bezier(0.18, 1.05, 0.32, 1.04) forwards;
+    animation: cliWindowGlitch 720ms steps(1, end) forwards;
   }
-  @keyframes cliWindowSpawn {
-    0% {
-      opacity: 0;
-      transform: translate(-50%, -52%) scale(0.5) rotateX(28deg) translateY(40px);
-      filter: blur(14px) brightness(1.4);
-    }
-    35% {
-      opacity: 1;
-      filter: blur(0) brightness(1.15);
-    }
-    70% {
-      transform: translate(-50%, -52%) scale(1.02) rotateX(0deg) translateY(0);
-    }
-    100% {
-      opacity: 1;
-      transform: translate(-50%, -52%) scale(1) rotateX(0) translateY(0);
-      filter: none;
-    }
+  @keyframes cliWindowGlitch {
+    0%   { opacity: 0; clip-path: inset(46% 0 46% 0); transform: translate(-50%, -52%) scale(0.96); filter: contrast(1.6) brightness(1.4) hue-rotate(0deg); }
+    8%   { opacity: 1; clip-path: inset(46% 0 46% 0); transform: translate(calc(-50% + 6px), -52%) scale(0.96); filter: contrast(2.0) brightness(1.6); }
+    16%  { clip-path: inset(20% 0 60% 0); transform: translate(calc(-50% - 8px), -52%); }
+    24%  { clip-path: inset(60% 0 18% 0); transform: translate(calc(-50% + 4px), -52%); }
+    32%  { clip-path: inset(8% 0 70% 0); transform: translate(calc(-50% - 10px), -52%); filter: contrast(1.8) brightness(1.3) saturate(0); }
+    40%  { clip-path: inset(70% 0 8% 0); transform: translate(calc(-50% + 10px), -52%); }
+    48%  { clip-path: inset(0 28% 0 28%); transform: translate(-50%, -52%); }
+    56%  { clip-path: inset(0 0 0 0); transform: translate(calc(-50% - 4px), -52%) scale(1.01); filter: contrast(1.4) brightness(1.2); }
+    64%  { clip-path: inset(36% 0 36% 0); transform: translate(calc(-50% + 2px), -52%); }
+    72%  { clip-path: inset(0); transform: translate(-50%, -52%) scale(1.02); filter: contrast(1.2) brightness(1.1); }
+    100% { clip-path: inset(0); transform: translate(-50%, -52%) scale(1); filter: none; opacity: 1; }
+  }
+  /* RGB-split overlay during the glitch */
+  .cli-terminal-overlay.is-spawning .cli-terminal-window::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      repeating-linear-gradient(0deg, transparent 0 2px, rgba(255,255,255,0.06) 2px 3px),
+      linear-gradient(180deg, rgba(255,255,255,0.10) 0%, transparent 28%, transparent 72%, rgba(255,255,255,0.10) 100%);
+    mix-blend-mode: screen;
+    z-index: 20;
+    animation: cliGlitchScan 720ms steps(8, end) forwards;
+  }
+  @keyframes cliGlitchScan {
+    0%, 100% { opacity: 0; transform: translateY(0); }
+    20%      { opacity: 0.85; transform: translateY(-12px); }
+    40%      { opacity: 0.6;  transform: translateY(8px); }
+    60%      { opacity: 0.7;  transform: translateY(-4px); }
+    80%      { opacity: 0.4;  transform: translateY(2px); }
   }
 
   .cli-terminal-overlay.is-closing .cli-terminal-window {
-    animation: cliWindowDespawn 280ms cubic-bezier(0.45, 0, 0.55, 1) forwards;
+    animation: cliWindowDespawn 320ms steps(1, end) forwards;
+    pointer-events: none;
   }
   @keyframes cliWindowDespawn {
-    from { opacity: 1; transform: translate(-50%, -52%) scale(1); }
-    to   { opacity: 0; transform: translate(-50%, -52%) scale(0.92) translateY(20px); filter: blur(8px); }
+    0%   { opacity: 1; clip-path: inset(0); filter: contrast(1); }
+    20%  { opacity: 1; clip-path: inset(20% 0 60% 0); filter: contrast(1.6) brightness(1.3); transform: translate(calc(-50% + 6px), -52%); }
+    45%  { opacity: 0.85; clip-path: inset(60% 0 18% 0); transform: translate(calc(-50% - 8px), -52%); filter: contrast(1.4) brightness(1.1) saturate(0); }
+    70%  { opacity: 0.5; clip-path: inset(45% 0 45% 0); transform: translate(-50%, -52%) scale(0.98); filter: blur(2px) brightness(0.9); }
+    100% { opacity: 0; clip-path: inset(50% 0 50% 0); transform: translate(-50%, -52%) scale(0.92); filter: blur(6px); }
+  }
+  /* When closing while maximized, ignore the centered transform in the keyframe */
+  .cli-terminal-overlay.is-closing .cli-terminal-window.is-maximized {
+    animation: cliWindowDespawnFlat 320ms steps(1, end) forwards;
+  }
+  @keyframes cliWindowDespawnFlat {
+    0%   { opacity: 1; clip-path: inset(0); }
+    25%  { clip-path: inset(20% 0 60% 0); filter: contrast(1.6) brightness(1.3); }
+    55%  { clip-path: inset(60% 0 18% 0); filter: contrast(1.4) brightness(1.1) saturate(0); }
+    80%  { opacity: 0.5; clip-path: inset(45% 0 45% 0); filter: blur(2px); }
+    100% { opacity: 0; clip-path: inset(50% 0 50% 0); filter: blur(6px); }
   }
 
   .cli-terminal-overlay.is-closing .cli-desktop,
@@ -4513,33 +4514,131 @@ function isOldBrowser() {
     50%      { opacity: 0.45; }
   }
 
-  /* ===== Maximized state ===== */
+  /* ===== Maximized state — fills the entire viewport ===== */
   .cli-terminal-window.is-maximized {
-    width: 100% !important;
-    height: 100vh !important;
+    width: 100vw !important;
     max-width: 100vw !important;
+    height: 100vh !important;
     top: 0 !important;
     left: 0 !important;
     transform: none !important;
-    border-radius: 0;
+    border-radius: 0 !important;
+    transition: width 280ms cubic-bezier(0.4, 0, 0.2, 1),
+                height 280ms cubic-bezier(0.4, 0, 0.2, 1),
+                transform 280ms cubic-bezier(0.4, 0, 0.2, 1),
+                border-radius 280ms ease;
   }
   .cli-terminal-window.is-maximized .terminal,
-  .cli-terminal-window.is-maximized .header,
-  .cli-terminal-window.is-maximized .status-bar {
+  .cli-terminal-window.is-maximized .header {
     border-radius: 0 !important;
   }
   .cli-terminal-window.is-maximized .terminal {
-    max-height: calc(100vh - 36px);
-    height: calc(100vh - 36px);
+    max-height: calc(100vh - 40px);
+    height: calc(100vh - 40px);
+  }
+  .cli-terminal-window:not(.is-maximized) {
+    transition: width 280ms cubic-bezier(0.4, 0, 0.2, 1),
+                height 280ms cubic-bezier(0.4, 0, 0.2, 1),
+                border-radius 280ms ease;
   }
 
-  .cli-terminal-window.is-minimized .terminal > #cliOutput,
-  .cli-terminal-window.is-minimized .terminal > .input-line,
-  .cli-terminal-window.is-minimized .status-bar {
-    display: none;
+  /* ===== Genie minimize ===== */
+  .cli-terminal-window.is-genie-out {
+    animation: cliGenieMinimize 540ms cubic-bezier(0.55, 0, 0.32, 1.02) forwards;
+    pointer-events: none;
   }
-  .cli-terminal-window.is-minimized .terminal {
-    max-height: 40px;
+  .cli-terminal-window.is-genie-in {
+    animation: cliGenieRestore 520ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes cliGenieMinimize {
+    0%   { transform: translate(-50%, -52%) scale(1, 1); opacity: 1; filter: blur(0); border-radius: 14px; }
+    35%  { transform: translate(-50%, 25vh) scale(0.65, 0.55); opacity: 0.95; filter: blur(0); border-radius: 24px; }
+    70%  { transform: translate(-50%, 45vh) scale(0.28, 0.16) skewY(2deg); opacity: 0.55; filter: blur(2px); border-radius: 50% 50% 32px 32px / 60% 60% 16px 16px; }
+    100% { transform: translate(-50%, 60vh) scale(0.06, 0.03) skewY(-2deg); opacity: 0; filter: blur(6px); border-radius: 50%; }
+  }
+  @keyframes cliGenieRestore {
+    0%   { transform: translate(-50%, 60vh) scale(0.06, 0.03); opacity: 0; filter: blur(6px); border-radius: 50%; }
+    35%  { transform: translate(-50%, 40vh) scale(0.32, 0.2);  opacity: 0.7; filter: blur(2px); border-radius: 50% 50% 32px 32px / 60% 60% 16px 16px; }
+    70%  { transform: translate(-50%, 10vh) scale(0.85, 0.85); opacity: 1; filter: blur(0); border-radius: 18px; }
+    100% { transform: translate(-50%, -52%) scale(1, 1);       opacity: 1; filter: none;     border-radius: 14px; }
+  }
+  .cli-terminal-window.is-minimized {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  /* ===== Dock pill (when minimized) ===== */
+  .cli-dock-pill {
+    position: fixed;
+    left: 50%;
+    bottom: 22px;
+    transform: translate(-50%, 80px) scale(0.6);
+    display: none;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 18px 9px 14px;
+    background: rgba(18, 18, 22, 0.78);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 999px;
+    color: rgba(255, 255, 255, 0.92);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.6px;
+    cursor: pointer;
+    z-index: 100001;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.04),
+      0 12px 40px rgba(0, 0, 0, 0.6),
+      0 0 28px rgba(255, 255, 255, 0.08);
+    opacity: 0;
+    transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 320ms ease,
+                background 200ms ease,
+                border-color 200ms ease;
+    pointer-events: none;
+    user-select: none;
+  }
+  .cli-dock-pill.is-visible {
+    display: inline-flex;
+    transform: translate(-50%, 0) scale(1);
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .cli-dock-pill:hover {
+    background: rgba(28, 28, 34, 0.86);
+    border-color: rgba(255, 255, 255, 0.28);
+    transform: translate(-50%, -3px) scale(1.02);
+  }
+  .cli-dock-pill::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
+    animation: cliLedPulse 2.4s ease-in-out infinite;
+  }
+  .cli-dock-pill-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.85);
+  }
+  body.light-theme .cli-dock-pill {
+    background: rgba(245, 245, 245, 0.85);
+    border-color: rgba(0, 0, 0, 0.16);
+    color: #1d1d1f;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 12px 40px rgba(0, 0, 0, 0.18);
+  }
+  body.light-theme .cli-dock-pill::before {
+    background: #000;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.4);
+  }
+  body.light-theme .cli-dock-pill:hover {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(0, 0, 0, 0.32);
   }
 
   /* ===== CONTENT (output) styles ===== */
@@ -5086,20 +5185,6 @@ function isOldBrowser() {
 <div id="cli-terminal-overlay" class="cli-terminal-overlay" aria-hidden="true" role="dialog" aria-label="SuryaOS terminal">
   <div class="cli-overlay-fade"></div>
 
-  <!-- Boot phase -->
-  <div class="cli-boot-screen" id="cliBootScreen">
-    <pre class="cli-boot-logo" id="cliBootLogo">   ███████╗██╗   ██╗██████╗ ██╗   ██╗ █████╗      ██████╗ ███████╗
-   ██╔════╝██║   ██║██╔══██╗╚██╗ ██╔╝██╔══██╗    ██╔═══██╗██╔════╝
-   ███████╗██║   ██║██████╔╝ ╚████╔╝ ███████║    ██║   ██║███████╗
-   ╚════██║██║   ██║██╔══██╗  ╚██╔╝  ██╔══██║    ██║   ██║╚════██║
-   ███████║╚██████╔╝██║  ██║   ██║   ██║  ██║    ╚██████╔╝███████║
-   ╚══════╝ ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝     ╚═════╝ ╚══════╝</pre>
-    <div class="cli-boot-meta">SuryaOS v3.1 · web edition</div>
-    <ul class="cli-boot-lines" id="cliBootLines"></ul>
-    <div class="cli-boot-progress"><div></div></div>
-    <div class="cli-boot-skip">esc · skip</div>
-  </div>
-
   <!-- Desktop phase -->
   <div class="cli-desktop">
     <div class="cli-desktop-orbs"><span></span><span></span><span></span></div>
@@ -5171,18 +5256,21 @@ function isOldBrowser() {
       </div>
     </div>
 
-    <div class="cli-taskbar">
-      <span class="cli-taskbar-brand">SURYAOS</span>
-      <span class="cli-taskbar-app"><i class="fa-solid fa-terminal" aria-hidden="true"></i> bash · pts/0</span>
-      <span class="cli-taskbar-spacer"></span>
-      <span class="cli-taskbar-date" id="cliTaskbarDate"></span>
-      <span class="cli-taskbar-clock" id="cliTaskbarClock">--:--</span>
-      <button type="button" class="cli-taskbar-quit" id="cliTaskbarQuit" title="Close terminal (Esc)">⏻ shutdown</button>
-    </div>
   </div>
 
   <div class="cli-overlay-scanlines" aria-hidden="true"></div>
 </div>
+
+<!-- Dock pill shown when the terminal is genie-minimized -->
+<button type="button" id="cliDockPill" class="cli-dock-pill" aria-label="Restore terminal" aria-hidden="true">
+  <span class="cli-dock-pill-icon" aria-hidden="true">
+    <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M2 4l3 3-3 3"></path>
+      <path d="M7 11h6"></path>
+    </svg>
+  </span>
+  <span>terminal</span>
+</button>
 
 <script>
 /* ============================================================
@@ -6151,9 +6239,16 @@ function isOldBrowser() {
     var section = normalizeSectionName(args[0]);
     if (!routeMap[section]) return fail('section: ' + section + ': unknown portfolio section');
     try {
-      var res = await fetch('https://pages.surya-ops.workers.dev/?section=' + section);
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      return htmlResult(cleanFetchedHTML(await res.text()), 'html-content');
+      // Reuse the GUI's worker-ops loader (in-memory cache + inflight de-dupe)
+      var html;
+      if (typeof window.fetchSection === 'function') {
+        html = await window.fetchSection(section);
+      } else {
+        var res = await fetch('https://pages.surya-ops.workers.dev/?section=' + section);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        html = await res.text();
+      }
+      return htmlResult(cleanFetchedHTML(html), 'html-content');
     } catch (e) {
       return fail('section: ' + section + ': Error loading section');
     }
@@ -6922,8 +7017,7 @@ function isOldBrowser() {
     var btnMax = $('cliWinMax');
     var btnClose = $('cliWinClose');
     if (btnMin) btnMin.addEventListener('click', function () {
-      windowEl.classList.toggle('is-minimized');
-      if (!windowEl.classList.contains('is-minimized') && inputEl) inputEl.focus();
+      if (typeof window.minimizeTerminal === 'function') window.minimizeTerminal();
     });
     if (btnMax) btnMax.addEventListener('click', function () {
       windowEl.classList.toggle('is-maximized');
@@ -6939,6 +7033,7 @@ function isOldBrowser() {
       headerEl.addEventListener('dblclick', function (e) {
         if (e.target.closest('.window-btn')) return;
         windowEl.classList.toggle('is-maximized');
+        if (inputEl) inputEl.focus();
       });
     }
 
@@ -7015,51 +7110,17 @@ function isOldBrowser() {
     }
   }
 
-  var bootScript = [
-    { c: 'dim',  t: '[ 0.000001 ] booting suryaos.kernel · web edition' },
-    { c: 'ok',   t: '[   OK   ] hardware probe · WebGL2 · WebAudio · WebAssembly' },
-    { c: 'ok',   t: '[   OK   ] mounting tmpfs on /tmp' },
-    { c: 'ok',   t: '[   OK   ] initialized virtual filesystem (vfs)' },
-    { c: 'info', t: '[  INFO  ] resolving fileLinks endpoint…' },
-    { c: 'ok',   t: '[   OK   ] systemd-userland · spawned' },
-    { c: 'ok',   t: '[   OK   ] mounted /etc · /usr · /home' },
-    { c: 'info', t: '[  INFO  ] pty.alloc · pts/0 · 80x24 · xterm-256color' },
-    { c: 'ok',   t: '[   OK   ] starting interactive shell · /bin/bash 5.2.15' },
-    { c: 'ok',   t: '[   OK   ] terminal emulator ready' },
-    { c: 'ready',t: '[ READY ] welcome, surya — desktop spawn handover' }
-  ];
-
-  function runBootSequence(skipAnimation) {
-    var bootScreen = $('cliBootScreen');
-    var bootLines = $('cliBootLines');
-    if (bootLines) bootLines.innerHTML = '';
-    if (skipAnimation) {
-      if (overlayEl) overlayEl.classList.add('is-booted', 'is-spawning');
-      later(function () {
-        if (overlayEl) overlayEl.classList.remove('is-spawning');
-        if (inputEl) inputEl.focus();
-      }, 820);
-      return;
-    }
+  function runGlitchSpawn() {
+    if (!overlayEl) return;
     overlayEl.classList.remove('is-booted');
     overlayEl.classList.remove('is-spawning');
-    var stride = 90;
-    bootScript.forEach(function (line, i) {
-      later(function () {
-        if (!bootLines) return;
-        var li = document.createElement('li');
-        li.className = line.c;
-        li.textContent = line.t;
-        bootLines.appendChild(li);
-        requestAnimationFrame(function () { li.classList.add('is-shown'); });
-      }, 180 + i * stride);
-    });
-    var totalBoot = 180 + bootScript.length * stride + 220;
-    later(function () { overlayEl.classList.add('is-booted', 'is-spawning'); }, totalBoot);
+    // Force a reflow so re-applying the spawn classes restarts the animation.
+    void overlayEl.offsetWidth;
+    overlayEl.classList.add('is-booted', 'is-spawning');
     later(function () {
-      overlayEl.classList.remove('is-spawning');
+      if (overlayEl) overlayEl.classList.remove('is-spawning');
       if (inputEl) inputEl.focus();
-    }, totalBoot + 820);
+    }, 720);
   }
 
   function startTaskbarClock() {
@@ -7077,8 +7138,67 @@ function isOldBrowser() {
     window.__cliTaskbarClockTimer = setInterval(tick, 30000);
   }
 
+  function getDockPill() { return document.getElementById('cliDockPill'); }
+
+  function isMinimized() {
+    return !!(windowEl && windowEl.classList.contains('is-minimized'));
+  }
+
+  function minimizeTerminal() {
+    if (!overlayEl || !windowEl) return;
+    if (isMinimized()) return;
+    if (windowEl.classList.contains('vim-active')) return;
+    clearSpawnTimers();
+    windowEl.classList.remove('is-genie-in');
+    windowEl.classList.add('is-genie-out');
+    later(function () {
+      windowEl.classList.remove('is-genie-out');
+      windowEl.classList.add('is-minimized');
+      var pill = getDockPill();
+      if (pill) {
+        pill.classList.add('is-visible');
+        pill.setAttribute('aria-hidden', 'false');
+      }
+    }, 540);
+  }
+
+  function restoreTerminal() {
+    if (!overlayEl || !windowEl) return;
+    if (!isMinimized()) return;
+    var pill = getDockPill();
+    if (pill) {
+      pill.classList.remove('is-visible');
+      pill.setAttribute('aria-hidden', 'true');
+    }
+    windowEl.classList.remove('is-minimized', 'is-genie-out');
+    // Re-trigger the restore animation
+    void windowEl.offsetWidth;
+    windowEl.classList.add('is-genie-in');
+    later(function () {
+      windowEl.classList.remove('is-genie-in');
+      if (inputEl) inputEl.focus();
+    }, 520);
+  }
+
+  function shutdownTerminalState() {
+    // Wipe runtime state so the next launch is a fresh shell.
+    if (outputEl) outputEl.innerHTML = '';
+    if (inputEl) inputEl.value = '';
+    hist = []; histPos = -1;
+    cwd = HOME;
+    // Reset the init guard so initCLI() re-prints the welcome banner.
+    __cliInited = false;
+    if (windowEl) {
+      windowEl.classList.remove('is-maximized', 'is-minimized', 'is-genie-out', 'is-genie-in');
+    }
+  }
+
   function openTerminalOverlay(opts) {
     opts = opts || {};
+    if (overlayEl && isMinimized()) {
+      restoreTerminal();
+      return;
+    }
     initCLI();
     if (!overlayEl) return;
     if (overlayEl.classList.contains('is-active')) return;
@@ -7087,9 +7207,7 @@ function isOldBrowser() {
     overlayEl.classList.add('is-active');
     overlayEl.classList.remove('is-closing');
     overlayEl.setAttribute('aria-hidden', 'false');
-    buildDesktopRain();
-    startTaskbarClock();
-    runBootSequence(!!opts.skipBoot);
+    runGlitchSpawn();
   }
 
   function closeTerminalOverlay() {
@@ -7098,52 +7216,43 @@ function isOldBrowser() {
     clearSpawnTimers();
     overlayEl.classList.add('is-closing');
     overlayEl.classList.remove('is-spawning');
+    var pill = getDockPill();
+    if (pill) {
+      pill.classList.remove('is-visible');
+      pill.setAttribute('aria-hidden', 'true');
+    }
+    document.body.classList.add('cli-overlay-closing');
     later(function () {
       overlayEl.classList.remove('is-active', 'is-closing', 'is-booted');
       overlayEl.setAttribute('aria-hidden', 'true');
-      document.body.classList.remove('cli-overlay-open');
+      document.body.classList.remove('cli-overlay-open', 'cli-overlay-closing');
       // Clean up any project preview overlays that were lifted to body.
       var pp = document.querySelector('#p4-preview-overlay.cli-project-overlay');
       if (pp && pp.parentNode) pp.parentNode.removeChild(pp);
+      shutdownTerminalState();
     }, 320);
   }
 
-  // Skip boot on Esc / click during boot phase
+  // Esc closes the active terminal (or restores from minimized first)
   document.addEventListener('keydown', function (e) {
     if (!overlayEl || !overlayEl.classList.contains('is-active')) return;
     if (e.key === 'Escape') {
-      // If vim is open inside CLI, let vim handle it
       if (windowEl && windowEl.classList.contains('vim-active')) return;
-      // If we're still booting, skip to terminal
-      if (!overlayEl.classList.contains('is-booted')) {
-        clearSpawnTimers();
-        overlayEl.classList.add('is-booted', 'is-spawning');
-        setTimeout(function () { overlayEl.classList.remove('is-spawning'); if (inputEl) inputEl.focus(); }, 820);
-        return;
-      }
-      // Otherwise, close the overlay
+      if (isMinimized()) { restoreTerminal(); return; }
       closeTerminalOverlay();
     }
   });
 
+  // Dock pill click → restore terminal
   document.addEventListener('click', function (e) {
-    if (!overlayEl || !overlayEl.classList.contains('is-active')) return;
-    if (overlayEl.classList.contains('is-booted')) return;
-    if (e.target.closest('.cli-boot-skip') || e.target.closest('.cli-boot-screen')) {
-      clearSpawnTimers();
-      overlayEl.classList.add('is-booted', 'is-spawning');
-      setTimeout(function () { overlayEl.classList.remove('is-spawning'); if (inputEl) inputEl.focus(); }, 820);
-    }
-  });
-
-  // Taskbar quit button
-  document.addEventListener('click', function (e) {
-    if (e.target.closest('#cliTaskbarQuit')) closeTerminalOverlay();
+    if (e.target.closest('#cliDockPill')) restoreTerminal();
   });
 
   // Public API
   window.openTerminalOverlay = openTerminalOverlay;
   window.closeTerminalOverlay = closeTerminalOverlay;
+  window.minimizeTerminal = minimizeTerminal;
+  window.restoreTerminal = restoreTerminal;
 
 })();
 </script>
