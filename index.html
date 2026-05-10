@@ -4655,6 +4655,38 @@ function isOldBrowser() {
   }
   /* Disable the glow ring (::after) when maximized — it'd wrap the viewport edge */
   .cli-terminal-window.is-maximized::after { display: none !important; }
+
+  /* ===== Experimental modes — apply the page-wide FX to the terminal too ===== */
+  /* Motion FX → glitch jitter + skew burst on the window */
+  body.experimental-motion-fx .cli-terminal-window {
+    animation: experimentalGlitchJitter 0.14s steps(2, end) infinite,
+               motionFxSkewBurst 1.1s steps(2, end) infinite !important;
+  }
+  body.experimental-motion-fx .cli-terminal-overlay #cliOutput,
+  body.experimental-motion-fx .cli-terminal-overlay .prompt {
+    animation: motionFxTextSurge 0.18s steps(2, end) infinite;
+  }
+  /* Hyper mode → boost the window glow + saturated outline */
+  body.experimental-hyper-mode .cli-terminal-window {
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.46),
+      0 30px 90px rgba(0, 0, 0, 0.7),
+      0 0 32px rgba(255, 255, 255, 0.18),
+      0 0 80px rgba(255, 255, 255, 0.12) !important;
+  }
+  body.experimental-hyper-mode .cli-terminal-overlay {
+    filter: saturate(1.08) contrast(1.08);
+  }
+  /* Zen mode → strip the chrome glow entirely */
+  body.experimental-zen-mode .cli-terminal-window {
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
+  }
+  /* Motion freeze → kill the LED pulse + scanline animation */
+  body.experimental-motion-freeze .cli-terminal-overlay .status-led,
+  body.experimental-motion-freeze .cli-terminal-overlay .cli-taskbar-brand::before,
+  body.experimental-motion-freeze .cli-dock-pill::before {
+    animation: none !important;
+  }
   /* Restore animation when un-maximizing */
   .cli-terminal-window.is-restoring {
     animation: cliMaximizeOut 280ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
@@ -4849,6 +4881,36 @@ function isOldBrowser() {
     font-style: italic;
     color: rgba(255, 255, 255, 0.7);
     margin-bottom: 15px;
+    text-align: center;
+  }
+  /* About section returned by the worker — center the profile pic + subtext
+     inside the terminal context only. The GUI route renders these in #content. */
+  .cli-terminal-overlay .html-content .about-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    width: 100%;
+    margin: 0 auto;
+  }
+  .cli-terminal-overlay .html-content .about-content > * {
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .cli-terminal-overlay .html-content .logo,
+  .cli-terminal-overlay .html-content .about-content img {
+    display: block;
+    margin: 0 auto 15px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 8px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  }
+  body.light-theme .cli-terminal-overlay .html-content .logo,
+  body.light-theme .cli-terminal-overlay .html-content .about-content img {
+    border-color: rgba(0, 0, 0, 0.18);
+    background: rgba(0, 0, 0, 0.02);
   }
   .cli-terminal-overlay .html-content p {
     margin-bottom: 12px;
@@ -5357,6 +5419,42 @@ function isOldBrowser() {
      Header / palette / music must STAY clickable so the user can keep using them. */
   body.cli-overlay-open .progress-bar,
   body.cli-overlay-open #keyboard-popups { pointer-events: none; }
+
+  /* Command palette must float ABOVE the terminal overlay when engaged so users
+     can still trigger commands. Cursor sits one notch higher. */
+  body.cli-overlay-open .command-palette,
+  body.cli-overlay-open header {
+    z-index: 100005 !important;
+  }
+  body.cli-overlay-open .command-palette.is-open {
+    pointer-events: auto !important;
+  }
+  body.cli-overlay-open .command-palette.is-open .command-item,
+  body.cli-overlay-open .command-palette.is-open #commandPaletteInput,
+  body.cli-overlay-open .command-palette.is-open .command-palette-close {
+    pointer-events: auto !important;
+  }
+
+  /* When the terminal is MAXIMIZED, hide the nav bar entirely — nothing should distract
+     from a fullscreen terminal. The dock/cursor still float above. */
+  body.cli-overlay-open:has(.cli-terminal-window.is-maximized) header {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    transition: opacity 220ms ease, visibility 0s linear 220ms;
+  }
+  /* If the user opens the palette via F2 while maximized, still show it on top. */
+  body.cli-overlay-open:has(.cli-terminal-window.is-maximized) .command-palette.is-open {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    z-index: 100006 !important;
+  }
+  body.cli-overlay-open:has(.cli-terminal-window.is-maximized) header:has(.command-palette.is-open) {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+  }
 
   /* Keep the site's custom cursor visible above EVERYTHING — overlay, nav, project preview */
   body.cli-overlay-open .cursor-dot,
