@@ -1,11 +1,18 @@
 import { defineConfig } from 'vite';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 import { minify as htmlMinify } from 'html-minifier-terser';
+import { transform as esbuildTransform } from 'esbuild';
+import { promises as fsp } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
+import { dirname, resolve, join, relative } from 'node:path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const r = (...p) => resolve(__dirname, ...p);
+
+const PROJECT_ROOT = __dirname;
+const SRC_DIR      = resolve(PROJECT_ROOT, 'src');
+const DIST_DIR     = resolve(PROJECT_ROOT, 'dist');
+
+const r = (...p) => resolve(SRC_DIR, ...p);
 
 const PUBLIC_SCRIPT_RE =
     /<script\b[^>]*\bsrc=["']\/[\w./-]+\.js["'][^>]*><\/script>/gi;
@@ -29,6 +36,103 @@ const protectPublicScriptsPlugin = () => ({
                 protectedScripts.set(id, match);
                 return placeholderFor(id);
             });
+        }
+    }
+});
+
+const suryaBrandingPlugin = () => {
+    const c = (n) => (s) => `\x1b[${n}m${s}\x1b[0m`;
+    const dim   = c(2);
+    const bold  = c(1);
+    const cyan  = c(36);
+    const white = c(97);
+
+    let printed = false;
+    return {
+        name: 'sr-surya-branding',
+        apply: 'build',
+        enforce: 'pre',
+        buildStart() {
+            if (printed) return;
+            printed = true;
+            const lines = [
+                '',
+                cyan('  ╭──────────────────────────────────────────────────────────────╮'),
+                cyan('  │  ') + bold(white('Surya Website')) + dim(' - Production Build') + cyan('                            │'),
+                cyan('  │  ') + dim('Fusing Imagination with Innovation · surya.is-a.dev') + cyan('         │'),
+                cyan('  ╰──────────────────────────────────────────────────────────────╯'),
+                '',
+                `  ${cyan('→')} ${dim('Bundling, minifying, and emitting to')} ${bold('dist/')}…`,
+                ''
+            ];
+            console.log(lines.join('\n'));
+        }
+    };
+};
+
+const verbatimCssMinifyPlugin = () => ({
+    name: 'sr-verbatim-css-minify',
+    apply: 'build',
+    enforce: 'post',
+    async closeBundle() {
+        const distDir = DIST_DIR;
+        const targets = ['Contact', 'Resume'];
+
+        async function* walkCss(dir) {
+            let entries;
+            try {
+                entries = await fsp.readdir(dir, { withFileTypes: true });
+            } catch {
+                return;
+            }
+            for (const e of entries) {
+                const full = join(dir, e.name);
+                if (e.isDirectory()) yield* walkCss(full);
+                else if (e.isFile() && e.name.toLowerCase().endsWith('.css'))
+                    yield full;
+            }
+        }
+
+        let totalBefore = 0;
+        let totalAfter = 0;
+        let count = 0;
+
+        for (const t of targets) {
+            for await (const file of walkCss(join(distDir, t))) {
+                try {
+                    const orig = await fsp.readFile(file, 'utf8');
+                    const result = await esbuildTransform(orig, {
+                        loader: 'css',
+                        minify: true,
+                        target: 'es2020',
+                        legalComments: 'none'
+                    });
+                    if (
+                        typeof result.code === 'string' &&
+                        result.code.length < orig.length
+                    ) {
+                        await fsp.writeFile(file, result.code, 'utf8');
+                        totalBefore += orig.length;
+                        totalAfter += result.code.length;
+                        count++;
+                        const rel = relative(distDir, file);
+                        const pct = ((1 - result.code.length / orig.length) * 100).toFixed(1);
+                        console.log(
+                            `  ${rel.padEnd(32)} ${(orig.length / 1024).toFixed(1).padStart(7)}KB → ${(result.code.length / 1024).toFixed(1).padStart(7)}KB  -${pct}%`
+                        );
+                    }
+                } catch (err) {
+                    console.warn(`  [skip] ${relative(distDir, file)}: ${err?.message || err}`);
+                }
+            }
+        }
+
+        if (count > 0) {
+            const saved = totalBefore - totalAfter;
+            const pct = ((saved / totalBefore) * 100).toFixed(1);
+            console.log(
+                `[verbatim-css-minify] ${count} file(s), saved ${(saved / 1024).toFixed(1)}KB (-${pct}%)\n`
+            );
         }
     }
 });
@@ -84,8 +188,35 @@ const htmlMinifyPlugin = () => ({
     }
 });
 
-export default defineConfig({
-    root: __dirname,
+const refuseNonBuild = (command) => {
+    if (command === 'build') return;
+    const c = (n) => (s) => `\x1b[${n}m${s}\x1b[0m`;
+    const dim   = c(2);
+    const bold  = c(1);
+    const cyan  = c(36);
+    const red   = c(31);
+    const white = c(97);
+    const banner = [
+        '',
+        cyan('  ╭──────────────────────────────────────────────────────────────╮'),
+        cyan('  │  ') + bold(white('Surya Website')) + dim(' - Production-Build-Only Project') + cyan('               │'),
+        cyan('  │  ') + dim('Fusing Imagination with Innovation · surya.is-a.dev') + cyan('         │'),
+        cyan('  ╰──────────────────────────────────────────────────────────────╯'),
+        '',
+        `  ${red('✗')} Dev server, preview, serve, and all non-build modes are disabled.`,
+        '',
+        `  ${cyan('→')} The only supported command is:`,
+        `      ${bold(cyan('npm run build'))}`,
+        ''
+    ].join('\n');
+    process.stderr.write(banner + '\n');
+    throw new Error('Vite is configured for production builds only.');
+};
+
+export default defineConfig(({ command }) => {
+    refuseNonBuild(command);
+    return {
+    root: SRC_DIR,
     publicDir: false,
     base: '/',
     appType: 'mpa',
@@ -94,19 +225,8 @@ export default defineConfig({
         preserveSymlinks: true
     },
 
-    server: {
-        port: 5173,
-        strictPort: false,
-        open: false
-    },
-
-    preview: {
-        port: 4173,
-        strictPort: false
-    },
-
     build: {
-        outDir: 'dist',
+        outDir: DIST_DIR,
         emptyOutDir: true,
         assetsDir: '_app',
         cssCodeSplit: true,
@@ -151,21 +271,27 @@ export default defineConfig({
     },
 
     plugins: [
+        suryaBrandingPlugin(),
+
         viteStaticCopy({
+
             targets: [
                 { src: 'blocker.js',         dest: '.' },
                 { src: 'tf-fix-blocker.js',  dest: '.' },
                 { src: 'CNAME',              dest: '.' },
                 { src: '.nojekyll',          dest: '.' },
                 { src: 'robots.txt',         dest: '.' },
-                { src: 'LICENSE',            dest: '.' },
                 { src: 'assets',             dest: '.' },
                 { src: 'Contact',            dest: '.' },
-                { src: 'Resume',             dest: '.' }
+                { src: 'Resume',             dest: '.' },
+
+                { src: '../LICENSE',         dest: '.' }
             ]
         }),
 
         protectPublicScriptsPlugin(),
-        htmlMinifyPlugin()
+        htmlMinifyPlugin(),
+        verbatimCssMinifyPlugin()
     ]
+    };
 });
