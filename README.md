@@ -33,7 +33,7 @@ npm run clean     # removes the dist/ directory
 ├── package.json
 ├── README.md
 ├── LICENSE
-├── asset/Screenshot.png ← README screenshot only
+├── static/Screenshot.png ← README screenshot only
 └── dist/                 ← build output (gitignored, deployed by Pages)
 ```
 
@@ -47,7 +47,7 @@ See the [LICENSE](LICENSE) file for full terms and details.
 
 ## Screenshot
 
-![Screenshot](asset/Screenshot.png)
+![Screenshot](static/Screenshot.png)
 
 ## Website Uptime
 

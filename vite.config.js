@@ -6,6 +6,8 @@ import { promises as fsp } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve, join, relative } from 'node:path';
 
+import { brandedBanner, bold, cyan, dim, red } from './scripts/branding.mjs';
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const PROJECT_ROOT = __dirname;
@@ -41,12 +43,6 @@ const protectPublicScriptsPlugin = () => ({
 });
 
 const suryaBrandingPlugin = () => {
-    const c = (n) => (s) => `\x1b[${n}m${s}\x1b[0m`;
-    const dim   = c(2);
-    const bold  = c(1);
-    const cyan  = c(36);
-    const white = c(97);
-
     let printed = false;
     return {
         name: 'sr-surya-branding',
@@ -55,17 +51,10 @@ const suryaBrandingPlugin = () => {
         buildStart() {
             if (printed) return;
             printed = true;
-            const lines = [
-                '',
-                cyan('  ╭──────────────────────────────────────────────────────────────╮'),
-                cyan('  │  ') + bold(white('Surya Website')) + dim(' - Production Build') + cyan('                            │'),
-                cyan('  │  ') + dim('Fusing Imagination with Innovation · surya.is-a.dev') + cyan('         │'),
-                cyan('  ╰──────────────────────────────────────────────────────────────╯'),
-                '',
-                `  ${cyan('→')} ${dim('Bundling, minifying, and emitting to')} ${bold('dist/')}…`,
-                ''
-            ];
-            console.log(lines.join('\n'));
+            process.stdout.write(
+                brandedBanner('Production Build') +
+                `  ${cyan('→')} ${dim('Bundling, minifying, and emitting to')} ${bold('dist/')}…\n\n`
+            );
         }
     };
 };
@@ -190,26 +179,13 @@ const htmlMinifyPlugin = () => ({
 
 const refuseNonBuild = (command) => {
     if (command === 'build') return;
-    const c = (n) => (s) => `\x1b[${n}m${s}\x1b[0m`;
-    const dim   = c(2);
-    const bold  = c(1);
-    const cyan  = c(36);
-    const red   = c(31);
-    const white = c(97);
-    const banner = [
-        '',
-        cyan('  ╭──────────────────────────────────────────────────────────────╮'),
-        cyan('  │  ') + bold(white('Surya Website')) + dim(' - Production-Build-Only Project') + cyan('               │'),
-        cyan('  │  ') + dim('Fusing Imagination with Innovation · surya.is-a.dev') + cyan('         │'),
-        cyan('  ╰──────────────────────────────────────────────────────────────╯'),
-        '',
-        `  ${red('✗')} Dev server, preview, serve, and all non-build modes are disabled.`,
-        '',
-        `  ${cyan('→')} The only supported command is:`,
-        `      ${bold(cyan('npm run build'))}`,
-        ''
-    ].join('\n');
-    process.stderr.write(banner + '\n');
+    process.stderr.write(
+        brandedBanner('Production-Build-Only Project') +
+        `  ${red('✗')} Dev server, preview, serve, and all non-build modes are disabled.\n` +
+        '\n' +
+        `  ${cyan('→')} The only supported command is:\n` +
+        `      ${bold(cyan('npm run build'))}\n\n`
+    );
     throw new Error('Vite is configured for production builds only.');
 };
 
