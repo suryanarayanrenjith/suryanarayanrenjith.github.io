@@ -1801,6 +1801,31 @@ body.is-mobile .palette-button-container {
     line-height: 1.5;
 }
 
+.terminal-info p.terminal-info-sub {
+    color: var(--s-fg-tertiary);
+    font-size: 13px;
+    line-height: 1.65;
+}
+.terminal-info p.terminal-info-sub code {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 12px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--s-fg);
+}
+body.light-theme .terminal-info p.terminal-info-sub code {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.12);
+}
+.shortcut-key.inline {
+    display: inline-block;
+    padding: 1px 6px;
+    font-size: 11px;
+    margin: 0 2px;
+}
+
 .action-button {
     background-color: var(--s-bg);
     color: var(--s-fg);

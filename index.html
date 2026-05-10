@@ -462,7 +462,7 @@ function isDesktop() {
                     <li><button type="button" class="command-item" data-command="resume" data-search="resume go to resume section"><span class="command-item-title">Go to Resume</span><span class="command-item-meta">Section</span></button></li>
                     <li><button type="button" class="command-item" data-command="links" data-search="links open links section"><span class="command-item-title">Open Links</span><span class="command-item-meta">Section</span></button></li>
                     <li><button type="button" class="command-item" data-command="resume-page" data-search="open resume page pdf profile"><span class="command-item-title">Open Resume</span><span class="command-item-meta">Link</span></button></li>
-                    <li><button type="button" class="command-item" data-command="terminal" data-search="terminal cli open terminal"><span class="command-item-title">Open Terminal</span><span class="command-item-meta">Link</span></button></li>
+                    <li><button type="button" class="command-item" data-command="terminal" data-search="terminal cli open terminal"><span class="command-item-title">Go to Terminal</span><span class="command-item-meta">Toggle</span></button></li>
                     <li><button type="button" class="command-item" data-command="toggle-stars" data-search="disable enable starfield animation webgl fallback"><span class="command-item-title">Toggle Star Field</span><span class="command-item-meta" data-starfield-status>On</span></button></li>
                     <li><button type="button" class="command-item" data-command="toggle-hyper-mode" data-search="hyper mode neon next level experimental"><span class="command-item-title">Toggle Hyper Mode</span><span class="command-item-meta" data-hyper-status>Off</span></button></li>
                     <li><button type="button" class="command-item" data-command="toggle-motion-fx" data-search="motion fx shake cinematic experimental"><span class="command-item-title">Toggle Motion FX</span><span class="command-item-meta" data-motionfx-status>Off</span></button></li>
@@ -527,13 +527,11 @@ function isDesktop() {
                         </div>
                         <div class="tab-pane" id="terminal-tab">
                             <div class="terminal-info">
-                                <p>Access the terminal to run commands and interact with this portfolio directly.</p>
+                                <p>SuryaOS 3.1 — an in-page terminal that glitch-spawns over the portfolio.</p>
+                                <p class="terminal-info-sub">Drive the page from the shell: <code>theme</code>, <code>music</code>, <code>fx</code>, <code>notify</code>, <code>stats</code>. Run <code>./about</code>, <code>./projects</code>, or <code>./resume</code> to load sections inline. Press <span class="shortcut-key inline">Ctrl + Shift + K</span> any time to toggle.</p>
                                 <button class="action-button" id="openTerminal">
-                                    <i class="fa-solid fa-terminal"></i> Open Terminal
+                                    <i class="fa-solid fa-terminal"></i> Launch Terminal
                                 </button>
-                                <div class="terminal-logs">
-                                    <code></code>
-                                </div>
                             </div>
                         </div>
                         <div class="tab-pane" id="client-tab">
@@ -6136,7 +6134,7 @@ function isOldBrowser() {
     /* Page-control commands */
     theme:    'theme [light|dark|toggle|status]\n  Switch the page theme without leaving the terminal.\n  Persists via localStorage.',
     music:    'music [play|pause|toggle|mute|unmute|status]\n  Drive the page\'s background music control from the shell.',
-    fx:       'fx [MODE [on|off|toggle]]   |   fx reset\n  Toggle experimental visual effects (hyper, motion, vortex, freeze, audio, zen).\n  Run with no args to list current state.',
+    fx:       'fx [MODE [on|off|toggle]]   |   fx reset\n  Toggle experimental visual effects.\n  Modes: motion, vortex, freeze, audio, zen.\n  Note: `audio` requires music to be playing first (run `music play`).\n  Run with no args to list current state.',
     notify:   'notify TEXT\n  Display a transient toast at the top of the viewport.',
     quote:    'quote\n  Print a random programming quote.',
     calc:     'calc EXPRESSION\n  Evaluate an arithmetic expression. Supports + - * / ( ) % ^ !\n  Example: calc (3+4)*2^3',
@@ -6918,14 +6916,19 @@ function isOldBrowser() {
   };
 
   // ---- fx: toggle experimental modes from the terminal ----
+  // Note: `hyper` is intentionally not exposed here (only available via the palette).
   var __fxMap = {
-    'hyper':       'experimental-hyper-mode',
     'motion':      'experimental-motion-fx',
     'vortex':      'experimental-vortex-cursor',
     'freeze':      'experimental-motion-freeze',
     'audio':       'experimental-audio-viz',
     'zen':         'experimental-zen-mode'
   };
+  function __isMusicPlaying() {
+    var m = document.getElementById('muteButton');
+    // mute-icon is visible (no .hidden class) → click-to-mute → audio is currently on
+    return !!(m && !m.classList.contains('hidden'));
+  }
   commands.fx = function (args) {
     if (!args.length) {
       var lines = ['available fx modes:'];
@@ -6943,6 +6946,16 @@ function isOldBrowser() {
     var cls = __fxMap[key];
     if (!cls) return fail('fx: unknown mode \'' + args[0] + '\' — try `fx` for the list');
     var op = (args[1] || 'toggle').toLowerCase();
+
+    // The audio visualizer needs a running audio source. Refuse to enable it if
+    // music isn't actually playing (the visualizer would just render an empty bar
+    // graph and confuse the user).
+    var willEnable = (op === 'on') || (op === 'toggle' && !document.body.classList.contains(cls));
+    if (key === 'audio' && willEnable && !__isMusicPlaying()) {
+      return fail('fx: audio: no audio source detected\n' +
+                  'fx: enable music first (click the speaker in the nav, or run `music play`)');
+    }
+
     if (op === 'on')          document.body.classList.add(cls);
     else if (op === 'off')    document.body.classList.remove(cls);
     else if (op === 'toggle') document.body.classList.toggle(cls);
