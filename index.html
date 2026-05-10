@@ -4434,15 +4434,16 @@ function isOldBrowser() {
   /* ===== TERMINAL INTERIOR ===== */
   .cli-terminal-overlay .terminal {
     padding: 0;
-    background: rgba(8, 9, 14, 0.8);
-    backdrop-filter: blur(28px) saturate(140%);
-    -webkit-backdrop-filter: blur(28px) saturate(140%);
-    color: white;
+    /* Match the main page's pure-black aesthetic + the header's translucent backdrop */
+    background: rgba(0, 0, 0, 0.78);
+    backdrop-filter: blur(24px) saturate(140%);
+    -webkit-backdrop-filter: blur(24px) saturate(140%);
+    color: var(--s-fg, #fff);
     overflow-y: auto;
     max-height: 78vh;
     border-radius: 14px;
     position: relative;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--s-header-border, rgba(255, 255, 255, 0.2));
   }
   .cli-terminal-overlay .terminal > #cliOutput {
     padding: 18px 26px 6px;
@@ -4472,10 +4473,10 @@ function isOldBrowser() {
     font-size: 0.78em;
     font-weight: 500;
     letter-spacing: 0.4px;
-    background: linear-gradient(180deg, rgba(28, 28, 32, 0.94) 0%, rgba(18, 18, 22, 0.94) 100%);
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.86) 100%);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    border-bottom: 1px solid var(--s-header-border, rgba(255, 255, 255, 0.18));
     position: sticky;
     top: 0;
     z-index: 5;
@@ -4583,7 +4584,7 @@ function isOldBrowser() {
     gap: 18px;
     height: 24px;
     padding: 0 16px;
-    background: rgba(15, 15, 17, 0.94);
+    background: rgba(0, 0, 0, 0.92);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -5025,7 +5026,7 @@ function isOldBrowser() {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    background: rgba(10, 10, 12, 0.96);
+    background: rgba(0, 0, 0, 0.94);
     color: rgba(255, 255, 255, 0.92);
     font-family: 'JetBrains Mono', monospace;
     animation: cliVimFade 0.18s cubic-bezier(0.16, 1, 0.3, 1);
@@ -5352,11 +5353,10 @@ function isOldBrowser() {
     .cli-taskbar-app, .cli-taskbar-date { display: none; }
   }
 
-  /* Dim main page slightly under overlay */
-  body.cli-overlay-open header,
+  /* Make non-interactive page chrome ignore pointer events while terminal is engaged.
+     Header / palette / music must STAY clickable so the user can keep using them. */
   body.cli-overlay-open .progress-bar,
-  body.cli-overlay-open #keyboard-popups,
-  body.cli-overlay-open .palette-button-container { pointer-events: none; }
+  body.cli-overlay-open #keyboard-popups { pointer-events: none; }
 
   /* Keep the site's custom cursor visible above EVERYTHING — overlay, nav, project preview */
   body.cli-overlay-open .cursor-dot,
@@ -7156,6 +7156,13 @@ function isOldBrowser() {
 
   // ===== One-time CLI core init =====
   var __cliInited = false;
+  function printWelcomeBanner() {
+    if (!outputEl) return;
+    printPre('Welcome to SuryaOS 3.1 — In-Page Terminal Emulator');
+    printPre('Executable section launchers: ./about  ./projects  ./resume');
+    printPre('Type \'help\' for available commands, \'man <cmd>\' for details.\n');
+    updatePrompt();
+  }
   function initCLI() {
     if (__cliInited) return;
     bindDom();
@@ -7166,10 +7173,7 @@ function isOldBrowser() {
     syncHistoryFile();
     outputEl.innerHTML = '';
 
-    printPre('Welcome to SuryaOS 3.1 — In-Page Terminal Emulator');
-    printPre('Executable section launchers: ./about  ./projects  ./resume');
-    printPre('Type \'help\' for available commands, \'man <cmd>\' for details.\n');
-    updatePrompt();
+    printWelcomeBanner();
 
     inputEl.addEventListener('keydown', handleKeyDown);
 
@@ -7456,13 +7460,14 @@ function isOldBrowser() {
   }
 
   function shutdownTerminalState() {
-    // Wipe runtime state so the next launch is a fresh shell.
+    // Wipe runtime state so the next launch is a fresh shell. We DO NOT reset
+    // __cliInited — re-running initCLI() would re-attach every event handler
+    // (maximize, minimize, close, header dblclick, keydown, etc.) on top of the
+    // existing ones, causing each click to fire N times after N reopens.
     if (outputEl) outputEl.innerHTML = '';
     if (inputEl) inputEl.value = '';
     hist = []; histPos = -1;
     cwd = HOME;
-    // Reset the init guard so initCLI() re-prints the welcome banner.
-    __cliInited = false;
     if (windowEl) {
       windowEl.classList.remove('is-maximized', 'is-minimized', 'is-genie-out', 'is-genie-in');
     }
@@ -7515,6 +7520,8 @@ function isOldBrowser() {
     initCLI();
     if (!overlayEl) return;
     if (overlayEl.classList.contains('is-active')) return;
+    // initCLI() is a one-shot; on re-open we still want a fresh greeting in the cleared shell.
+    if (outputEl && !outputEl.firstChild) printWelcomeBanner();
     clearSpawnTimers();
     document.body.classList.add('cli-overlay-open');
     overlayEl.classList.add('is-active');
