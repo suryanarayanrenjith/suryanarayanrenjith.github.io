@@ -4657,10 +4657,39 @@ function isOldBrowser() {
   .cli-terminal-window.is-maximized::after { display: none !important; }
 
   /* ===== Experimental modes — apply the page-wide FX to the terminal too ===== */
-  /* Motion FX → glitch jitter + skew burst on the window */
+  /* Motion FX → glitch jitter + skew burst on the window. The page-wide keyframes
+     overwrite `transform`, which would knock the centered translate(-50%, -52%) off,
+     so we use CLI-specific keyframes that compose the jitter on top of the centering. */
   body.experimental-motion-fx .cli-terminal-window {
-    animation: experimentalGlitchJitter 0.14s steps(2, end) infinite,
-               motionFxSkewBurst 1.1s steps(2, end) infinite !important;
+    animation: cliMotionFxJitter 0.14s steps(2, end) infinite,
+               cliMotionFxSkew 1.1s steps(2, end) infinite !important;
+  }
+  body.experimental-motion-fx .cli-terminal-window.is-maximized {
+    animation: cliMotionFxJitterMax 0.14s steps(2, end) infinite,
+               cliMotionFxSkew 1.1s steps(2, end) infinite !important;
+  }
+  @keyframes cliMotionFxJitter {
+    0%, 100% { transform: translate(-50%, -52%); }
+    18%      { transform: translate(calc(-50% - 3px), calc(-52% + 2px)); }
+    36%      { transform: translate(calc(-50% + 3px), calc(-52% - 2px)); }
+    54%      { transform: translate(calc(-50% - 4px), calc(-52% - 1px)); }
+    72%      { transform: translate(calc(-50% + 4px), calc(-52% + 2px)); }
+    88%      { transform: translate(calc(-50% - 2px), calc(-52% + 3px)); }
+  }
+  @keyframes cliMotionFxJitterMax {
+    0%, 100% { transform: translate(0, 0); }
+    18%      { transform: translate(-3px, 2px); }
+    36%      { transform: translate(3px, -2px); }
+    54%      { transform: translate(-4px, -1px); }
+    72%      { transform: translate(4px, 2px); }
+    88%      { transform: translate(-2px, 3px); }
+  }
+  /* Skew via filter so it stacks alongside the translate animation without clobbering it */
+  @keyframes cliMotionFxSkew {
+    0%, 100% { filter: none; }
+    30%      { filter: blur(0.4px) contrast(1.06); }
+    58%      { filter: blur(0.6px) contrast(1.08); }
+    84%      { filter: blur(0.4px) contrast(1.04); }
   }
   body.experimental-motion-fx .cli-terminal-overlay #cliOutput,
   body.experimental-motion-fx .cli-terminal-overlay .prompt {
@@ -4947,22 +4976,30 @@ function isOldBrowser() {
   }
   .cli-terminal-overlay .html-content--projects .p4-project-grid {
     list-style: none !important;
-    margin: 0 !important;
+    margin: 0 auto !important;
     padding: 0 !important;
     display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
   }
   .cli-terminal-overlay .html-content--projects .p4-project-grid > li {
     position: static !important;
-    margin: 0 !important;
+    margin: 0 auto !important;
+    width: min(520px, 92%) !important;
+    text-align: center;
   }
   .cli-terminal-overlay .html-content--projects .p4-project-grid > li::before { content: none !important; }
   .cli-terminal-overlay .html-content--projects .p4-project-grid > .p4-card,
   .cli-terminal-overlay .html-content--projects .p4-project-grid > .p4-explore-slot {
-    width: calc(50% - 8px) !important;
-    margin-left: 0 !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
   }
   .cli-terminal-overlay .html-content--projects .p4-project-grid a,
   .cli-terminal-overlay .html-content--projects #p4-preview-open-project {
@@ -6522,16 +6559,15 @@ function isOldBrowser() {
     if (!args.length) return fail('section: missing operand');
     var section = normalizeSectionName(args[0]);
     if (!routeMap[section]) return fail('section: ' + section + ': unknown portfolio section');
+    if (typeof window.fetchSection !== 'function') {
+      return fail('section: loader unavailable');
+    }
     try {
-      // Reuse the GUI's worker-ops loader (in-memory cache + inflight de-dupe)
-      var html;
-      if (typeof window.fetchSection === 'function') {
-        html = await window.fetchSection(section);
-      } else {
-        var res = await fetch('https://pages.surya-ops.workers.dev/?section=' + section);
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        html = await res.text();
-      }
+      // Single source of truth for worker hits: window.fetchSection() (defined once in
+      // the GUI bootstrap at the top of the page). It owns the in-memory cache and the
+      // inflight-promise table — so calling it from here never produces a duplicate
+      // network request, even if the GUI already fetched / prefetched the same section.
+      var html = await window.fetchSection(section);
       return htmlResult(cleanFetchedHTML(html), 'html-content');
     } catch (e) {
       return fail('section: ' + section + ': Error loading section');
