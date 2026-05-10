@@ -1,18 +1,10 @@
 name: Build & Deploy to GitHub Pages
 
-# Builds the site with Vite (minifies HTML/CSS/JS, mirrors /assets, /blocker.js,
-# /tf-fix-blocker.js, CNAME, .nojekyll, robots.txt verbatim) and publishes ONLY
-# the `dist/` directory to GitHub Pages. Source files are never modified.
-#
-# Repo settings checklist (one-time):
-#   Settings → Pages → Build and deployment → Source: "GitHub Actions"
-
 on:
   push:
     branches: [main]
   workflow_dispatch: {}
 
-# Single concurrent deploy; cancel anything in flight when a new push lands.
 concurrency:
   group: pages-deploy
   cancel-in-progress: true
