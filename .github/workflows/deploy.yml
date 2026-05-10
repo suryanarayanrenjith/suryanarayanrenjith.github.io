@@ -1,0 +1,84 @@
+name: Build & Deploy to GitHub Pages
+
+# Builds the site with Vite (minifies HTML/CSS/JS, mirrors /assets, /blocker.js,
+# /tf-fix-blocker.js, CNAME, .nojekyll, robots.txt verbatim) and publishes ONLY
+# the `dist/` directory to GitHub Pages. Source files are never modified.
+#
+# Repo settings checklist (one-time):
+#   Settings → Pages → Build and deployment → Source: "GitHub Actions"
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+# Single concurrent deploy; cancel anything in flight when a new push lands.
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    name: Build (Vite)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci --no-audit --no-fund
+          else
+            npm install --no-audit --no-fund
+          fi
+
+      - name: Build with Vite
+        env:
+          NODE_ENV: production
+        run: npm run build
+
+      - name: Verify dist output
+        run: |
+          if [ ! -d dist ]; then
+            echo "::error::dist/ was not produced — check vite.config.js"
+            exit 1
+          fi
+          echo "── dist tree ──"
+          find dist -maxdepth 3 -type f | sort | head -200
+          echo "── dist size ──"
+          du -sh dist
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
