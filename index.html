@@ -3973,9 +3973,8 @@ function isOldBrowser() {
     overflow: hidden;
   }
 
-  /* Replace the page (content) with the terminal — keep the canvas backdrop AND a slim nav */
+  /* Replace the page (content) with the terminal — keep the canvas backdrop, slim nav, AND footer */
   body.cli-overlay-open #content,
-  body.cli-overlay-open footer,
   body.cli-overlay-open #sectionIndicator,
   body.cli-overlay-open #topLoadingBar,
   body.cli-overlay-open .progress-bar,
@@ -3987,6 +3986,21 @@ function isOldBrowser() {
     transition: opacity 280ms ease, visibility 0s linear 280ms;
   }
   body.cli-overlay-open::after { display: none !important; }
+
+  /* Keep the page footer visible while the terminal is engaged. Boost z-index so it
+     renders above the terminal overlay's dim layer. */
+  body.cli-overlay-open footer {
+    z-index: 100004 !important;
+    opacity: 0.88;
+  }
+  body.cli-overlay-open footer:hover { opacity: 1; }
+  /* When the terminal is MAXIMIZED, the footer would be obscured by the chrome —
+     hide it then since the user is in fullscreen mode. */
+  body.cli-overlay-open:has(.cli-terminal-window.is-maximized) footer {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
 
   /* Collapse the top nav to JUST the command palette + music toggle while terminal is engaged */
   body.cli-overlay-open header {
@@ -4754,7 +4768,8 @@ function isOldBrowser() {
   .cli-dock-pill {
     position: fixed;
     left: 50%;
-    bottom: 22px;
+    /* Sit above the page footer (footer is at bottom: 20px, ~22px tall) so they don't collide */
+    bottom: 56px;
     transform: translate(-50%, 80px) scale(0.6);
     display: none;
     align-items: center;
@@ -4976,30 +4991,45 @@ function isOldBrowser() {
   }
   .cli-terminal-overlay .html-content--projects .p4-project-grid {
     list-style: none !important;
-    margin: 0 auto !important;
+    /* Cap the grid container so cards inside (which use width:100%) stay readable */
+    width: 100% !important;
+    max-width: min(560px, 96%) !important;
+    margin: 16px auto !important;
     padding: 0 !important;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
     gap: 12px;
-    width: 100%;
+    box-sizing: border-box;
   }
   .cli-terminal-overlay .html-content--projects .p4-project-grid > li {
     position: static !important;
-    margin: 0 auto !important;
-    width: min(520px, 92%) !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
     text-align: center;
+    box-sizing: border-box;
   }
   .cli-terminal-overlay .html-content--projects .p4-project-grid > li::before { content: none !important; }
   .cli-terminal-overlay .html-content--projects .p4-project-grid > .p4-card,
   .cli-terminal-overlay .html-content--projects .p4-project-grid > .p4-explore-slot {
     width: 100% !important;
-    margin: 0 auto !important;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
+    max-width: 100% !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    padding: 18px 16px !important;
+    box-sizing: border-box;
+    min-height: 110px;
+  }
+  .cli-terminal-overlay .html-content--projects .p4-project-grid > .p4-card > *,
+  .cli-terminal-overlay .html-content--projects .p4-project-grid > .p4-explore-slot > * {
+    margin-left: auto !important;
+    margin-right: auto !important;
+    text-align: center !important;
   }
   .cli-terminal-overlay .html-content--projects .p4-project-grid a,
   .cli-terminal-overlay .html-content--projects #p4-preview-open-project {
