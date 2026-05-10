@@ -846,7 +846,15 @@ function isDesktop() {
                             function getVisibleCommandItems() {
                                 if (!commandPaletteList) return [];
                                 return Array.from(commandPaletteList.querySelectorAll('.command-item'))
-                                    .filter(item => item.parentElement.style.display !== 'none');
+                                    .filter(item => {
+                                        var li = item.parentElement;
+                                        if (!li) return false;
+                                        if (li.style.display === 'none') return false;
+                                        // Honor CSS-based hiding (e.g. while the terminal overlay is engaged)
+                                        var cs = window.getComputedStyle ? window.getComputedStyle(li) : null;
+                                        if (cs && (cs.display === 'none' || cs.visibility === 'hidden')) return false;
+                                        return true;
+                                    });
                             }
 
                             function setActiveCommand(item) {
@@ -1719,11 +1727,21 @@ function isDesktop() {
                     }
                   }
                 if (modPressed && event.shiftKey) {
+                  // While the terminal is engaged, only the palette toggle stays active —
+                  // section navigation, info modal, links, and re-launch shortcuts are gated.
+                  var __terminalEngaged = document.body.classList.contains('cli-overlay-open');
                   if (['Slash','/','?'].includes(event.key) || event.code === 'Slash') {
+                    if (__terminalEngaged) { event.preventDefault(); return; }
                     event.preventDefault();
-                                        hideCommandPalette();
+                    hideCommandPalette();
                     toggleShortcuts();
                     return;
+                  }
+                  if (__terminalEngaged) {
+                    if (['Digit5','Digit6','Digit7','Digit8','KeyK','KeyL','KeyV'].indexOf(event.code) !== -1) {
+                      event.preventDefault();
+                      return;
+                    }
                   }
                   switch (event.code) {
                     case 'Digit5': event.preventDefault(); navigateToSection?.('home', 'none'); break;
@@ -2290,6 +2308,7 @@ function isDesktop() {
 
             window.addEventListener('wheel', event => {
                 if (window.__commandPaletteActive || window.__shortcutsModalOpen) return;
+                if (document.body.classList.contains('cli-overlay-open')) return;
                 const now = performance.now();
 
                 if (now - wheelLastTime > WHEEL_DECAY_MS) {
@@ -2324,6 +2343,7 @@ function isDesktop() {
 
             window.addEventListener('touchstart', (event) => {
                 if (window.__commandPaletteActive || window.__shortcutsModalOpen) return;
+                if (document.body.classList.contains('cli-overlay-open')) return;
                 const t = event.changedTouches[0];
                 touchStartX = touchLastX = t.screenX;
                 touchStartY = touchLastY = t.screenY;
@@ -2347,6 +2367,7 @@ function isDesktop() {
 
             window.addEventListener('touchend', (event) => {
                 if (window.__commandPaletteActive || window.__shortcutsModalOpen) return;
+                if (document.body.classList.contains('cli-overlay-open')) return;
                 if (!touchActive) return;
                 touchActive = false;
 
@@ -3952,23 +3973,59 @@ function isOldBrowser() {
     overflow: hidden;
   }
 
-  /* Replace the page (nav + content) with the terminal — keep the canvas backdrop */
-  body.cli-overlay-open header,
+  /* Replace the page (content) with the terminal — keep the canvas backdrop AND a slim nav */
   body.cli-overlay-open #content,
   body.cli-overlay-open footer,
   body.cli-overlay-open #sectionIndicator,
   body.cli-overlay-open #topLoadingBar,
   body.cli-overlay-open .progress-bar,
   body.cli-overlay-open #keyboard-popups,
-  body.cli-overlay-open .palette-button-container,
-  body.cli-overlay-open .modal-overlay,
-  body.cli-overlay-open .command-palette {
+  body.cli-overlay-open .modal-overlay {
     opacity: 0 !important;
     visibility: hidden !important;
     pointer-events: none !important;
     transition: opacity 280ms ease, visibility 0s linear 280ms;
   }
   body.cli-overlay-open::after { display: none !important; }
+
+  /* Collapse the top nav to JUST the command palette + music toggle while terminal is engaged */
+  body.cli-overlay-open header {
+    z-index: 100003;
+    padding: 8px 22px !important;
+    background-color: rgba(10, 10, 10, 0.55) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+    backdrop-filter: blur(20px) saturate(140%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(140%) !important;
+  }
+  body.cli-overlay-open .menu-bar > ul > li {
+    transition: opacity 220ms ease, transform 220ms cubic-bezier(0.4, 0, 0.2, 1), max-width 280ms ease;
+  }
+  body.cli-overlay-open .menu-bar > ul > li:not(.palette-button-container):not(.music-button-container) {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    max-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+  /* Hide section/info/hyper-mode/terminal/links commands inside the palette while the terminal is engaged */
+  body.cli-overlay-open .command-palette li:has(button[data-command="home"]),
+  body.cli-overlay-open .command-palette li:has(button[data-command="about"]),
+  body.cli-overlay-open .command-palette li:has(button[data-command="projects"]),
+  body.cli-overlay-open .command-palette li:has(button[data-command="resume"]),
+  body.cli-overlay-open .command-palette li:has(button[data-command="links"]),
+  body.cli-overlay-open .command-palette li:has(button[data-command="resume-page"]),
+  body.cli-overlay-open .command-palette li:has(button[data-command="terminal"]),
+  body.cli-overlay-open .command-palette li:has(button[data-command="toggle-hyper-mode"]),
+  body.cli-overlay-open .command-palette li:has(button[data-command="info"]),
+  body.cli-overlay-open .command-palette li:has(button[data-command="matrix"]) {
+    display: none !important;
+  }
+  body.light-theme.cli-overlay-open header {
+    background-color: rgba(245, 245, 245, 0.6) !important;
+    border-color: rgba(0, 0, 0, 0.14) !important;
+  }
 
   .cli-overlay-fade {
     position: absolute;
@@ -4261,24 +4318,61 @@ function isOldBrowser() {
     100% { clip-path: inset(0); transform: translate(-50%, -52%) scale(1); filter: none; opacity: 1; }
   }
   /* RGB-split overlay during the glitch */
+  /* Dense scanline + sweeping vertical band overlay during spawn */
   .cli-terminal-overlay.is-spawning .cli-terminal-window::before {
     content: "";
     position: absolute;
     inset: 0;
     pointer-events: none;
     background:
-      repeating-linear-gradient(0deg, transparent 0 2px, rgba(255,255,255,0.06) 2px 3px),
-      linear-gradient(180deg, rgba(255,255,255,0.10) 0%, transparent 28%, transparent 72%, rgba(255,255,255,0.10) 100%);
+      repeating-linear-gradient(0deg, transparent 0 1px, rgba(255,255,255,0.07) 1px 2px),
+      linear-gradient(180deg, rgba(255,255,255,0.18) 0%, transparent 22%, transparent 78%, rgba(255,255,255,0.18) 100%);
     mix-blend-mode: screen;
     z-index: 20;
-    animation: cliGlitchScan 720ms steps(8, end) forwards;
+    animation: cliGlitchScan 720ms steps(10, end) forwards;
   }
   @keyframes cliGlitchScan {
     0%, 100% { opacity: 0; transform: translateY(0); }
-    20%      { opacity: 0.85; transform: translateY(-12px); }
-    40%      { opacity: 0.6;  transform: translateY(8px); }
-    60%      { opacity: 0.7;  transform: translateY(-4px); }
-    80%      { opacity: 0.4;  transform: translateY(2px); }
+    15%      { opacity: 1;    transform: translateY(-16px); }
+    30%      { opacity: 0.7;  transform: translateY(10px); }
+    45%      { opacity: 0.85; transform: translateY(-6px); }
+    60%      { opacity: 0.55; transform: translateY(4px); }
+    75%      { opacity: 0.4;  transform: translateY(-2px); }
+    90%      { opacity: 0.2;  transform: translateY(0); }
+  }
+
+  /* Rolling horizontal sweep that drops across the window during spawn */
+  .cli-terminal-overlay.is-spawning .cli-terminal-window::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0;
+    height: 18%;
+    top: -20%;
+    background: linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.18) 40%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.18) 60%, transparent 100%);
+    box-shadow: none;
+    border-radius: 0;
+    z-index: 21;
+    pointer-events: none;
+    background-color: transparent;
+    mix-blend-mode: screen;
+    animation: cliGlitchSweep 720ms cubic-bezier(0.4, 0, 0.6, 1) forwards;
+  }
+  @keyframes cliGlitchSweep {
+    0%   { top: -22%; opacity: 0.85; }
+    50%  { top: 50%;  opacity: 1; }
+    100% { top: 110%; opacity: 0; }
+  }
+
+  /* TV power-on flash on the overlay itself */
+  .cli-terminal-overlay.is-spawning .cli-overlay-fade {
+    animation: cliTvPowerOn 540ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes cliTvPowerOn {
+    0%   { background: rgba(255, 255, 255, 0.0); }
+    8%   { background: rgba(255, 255, 255, 0.55); }
+    18%  { background: rgba(255, 255, 255, 0.18); }
+    35%  { background: rgba(255, 255, 255, 0.06); }
+    100% { background: transparent; }
   }
 
   .cli-terminal-overlay.is-closing .cli-terminal-window {
@@ -4514,32 +4608,45 @@ function isOldBrowser() {
     50%      { opacity: 0.45; }
   }
 
-  /* ===== Maximized state — fills the entire viewport ===== */
+  /* ===== Maximized state — fills the entire viewport (escapes all parents) ===== */
   .cli-terminal-window.is-maximized {
-    width: 100vw !important;
-    max-width: 100vw !important;
-    height: 100vh !important;
+    position: fixed !important;
     top: 0 !important;
     left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: auto !important;
+    max-width: none !important;
+    height: auto !important;
+    max-height: none !important;
     transform: none !important;
     border-radius: 0 !important;
-    transition: width 280ms cubic-bezier(0.4, 0, 0.2, 1),
-                height 280ms cubic-bezier(0.4, 0, 0.2, 1),
-                transform 280ms cubic-bezier(0.4, 0, 0.2, 1),
-                border-radius 280ms ease;
+    z-index: 100001 !important;
+    box-shadow: none !important;
+    animation: cliMaximizeIn 320ms cubic-bezier(0.34, 1.2, 0.5, 1) forwards;
+  }
+  @keyframes cliMaximizeIn {
+    0%   { transform: scale(0.94); opacity: 0.7; clip-path: inset(6%); }
+    60%  { transform: scale(1.005); opacity: 1; clip-path: inset(0); }
+    100% { transform: none; opacity: 1; clip-path: inset(0); }
   }
   .cli-terminal-window.is-maximized .terminal,
   .cli-terminal-window.is-maximized .header {
     border-radius: 0 !important;
   }
   .cli-terminal-window.is-maximized .terminal {
-    max-height: calc(100vh - 40px);
-    height: calc(100vh - 40px);
+    max-height: none !important;
+    height: calc(100vh - 40px) !important;
   }
-  .cli-terminal-window:not(.is-maximized) {
-    transition: width 280ms cubic-bezier(0.4, 0, 0.2, 1),
-                height 280ms cubic-bezier(0.4, 0, 0.2, 1),
-                border-radius 280ms ease;
+  /* Disable the glow ring (::after) when maximized — it'd wrap the viewport edge */
+  .cli-terminal-window.is-maximized::after { display: none !important; }
+  /* Restore animation when un-maximizing */
+  .cli-terminal-window.is-restoring {
+    animation: cliMaximizeOut 280ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+  @keyframes cliMaximizeOut {
+    0%   { transform: translate(-50%, -52%) scale(1.02); opacity: 0.85; }
+    100% { transform: translate(-50%, -52%) scale(1); opacity: 1; }
   }
 
   /* ===== Genie minimize ===== */
@@ -7020,8 +7127,9 @@ function isOldBrowser() {
       if (typeof window.minimizeTerminal === 'function') window.minimizeTerminal();
     });
     if (btnMax) btnMax.addEventListener('click', function () {
-      windowEl.classList.toggle('is-maximized');
-      if (inputEl) inputEl.focus();
+      if (typeof window.toggleMaximizeTerminal === 'function') {
+        window.toggleMaximizeTerminal();
+      }
     });
     if (btnClose) btnClose.addEventListener('click', function () {
       if (typeof window.closeTerminalOverlay === 'function') window.closeTerminalOverlay();
@@ -7032,8 +7140,9 @@ function isOldBrowser() {
     if (headerEl) {
       headerEl.addEventListener('dblclick', function (e) {
         if (e.target.closest('.window-btn')) return;
-        windowEl.classList.toggle('is-maximized');
-        if (inputEl) inputEl.focus();
+        if (typeof window.toggleMaximizeTerminal === 'function') {
+          window.toggleMaximizeTerminal();
+        }
       });
     }
 
@@ -7117,11 +7226,85 @@ function isOldBrowser() {
     // Force a reflow so re-applying the spawn classes restarts the animation.
     void overlayEl.offsetWidth;
     overlayEl.classList.add('is-booted', 'is-spawning');
+
+    // Layer anime.js polish on top of the CSS keyframe spawn for richer
+    // chromatic aberration + content flicker. Animate the INNER content (not the
+    // window) since the window's transform/clip-path is owned by the CSS keyframe.
+    if (typeof window.anime === 'function') {
+      var contentEl = document.getElementById('cliTerminal');
+      var outputEl2 = document.getElementById('cliOutput');
+      var promptEl2 = document.getElementById('cliPromptEl');
+
+      if (contentEl) {
+        window.anime({
+          targets: contentEl,
+          duration: 720,
+          easing: 'easeOutExpo',
+          keyframes: [
+            { filter: 'contrast(1.8) brightness(1.4) blur(1px)', duration: 90 },
+            { filter: 'contrast(2.2) brightness(1.6) blur(0.5px) saturate(0)', duration: 80 },
+            { filter: 'contrast(1.4) brightness(1.15) blur(0)', duration: 200 },
+            { filter: 'none', duration: 350 }
+          ],
+          complete: function () { contentEl.style.filter = ''; }
+        });
+      }
+      // Chromatic-aberration text-shadow on the readable content
+      var aberrationTargets = [outputEl2, promptEl2].filter(Boolean);
+      if (aberrationTargets.length) {
+        window.anime({
+          targets: aberrationTargets,
+          duration: 680,
+          easing: 'easeOutQuart',
+          keyframes: [
+            { textShadow: '3px 0 rgba(255,255,255,0.6), -3px 0 rgba(255,255,255,0.5)', duration: 90 },
+            { textShadow: '6px 0 rgba(255,255,255,0.45), -6px 0 rgba(255,255,255,0.35)', duration: 80 },
+            { textShadow: '2px 0 rgba(255,255,255,0.3), -2px 0 rgba(255,255,255,0.25)', duration: 200 },
+            { textShadow: '0 0 transparent', duration: 310 }
+          ],
+          complete: function () {
+            aberrationTargets.forEach(function (n) { n.style.textShadow = ''; });
+          }
+        });
+      }
+      // Brief opacity flicker mimicking signal noise on the inner output
+      if (outputEl2) {
+        window.anime({
+          targets: outputEl2,
+          duration: 380,
+          easing: 'steps(1)',
+          keyframes: [
+            { opacity: 1,    duration: 40 },
+            { opacity: 0.4,  duration: 30 },
+            { opacity: 1,    duration: 35 },
+            { opacity: 0.7,  duration: 30 },
+            { opacity: 1,    duration: 245 }
+          ],
+          complete: function () { outputEl2.style.opacity = ''; }
+        });
+      }
+    }
+
     later(function () {
       if (overlayEl) overlayEl.classList.remove('is-spawning');
       if (inputEl) inputEl.focus();
     }, 720);
   }
+
+  function toggleMaximizeTerminal() {
+    if (!windowEl) return;
+    var isMax = windowEl.classList.contains('is-maximized');
+    if (isMax) {
+      // Restore — play a short "zoom out" pulse via class + animation
+      windowEl.classList.remove('is-maximized');
+      windowEl.classList.add('is-restoring');
+      later(function () { if (windowEl) windowEl.classList.remove('is-restoring'); }, 300);
+    } else {
+      windowEl.classList.add('is-maximized');
+    }
+    if (inputEl) inputEl.focus();
+  }
+  window.toggleMaximizeTerminal = toggleMaximizeTerminal;
 
   function startTaskbarClock() {
     var clock = $('cliTaskbarClock');
@@ -7149,6 +7332,16 @@ function isOldBrowser() {
     if (isMinimized()) return;
     if (windowEl.classList.contains('vim-active')) return;
     clearSpawnTimers();
+    // Genie keyframes assume the centered (non-maximized) layout. Drop the
+    // maximize first so the suck-down animation starts from the right anchor.
+    var wasMax = windowEl.classList.contains('is-maximized');
+    if (wasMax) {
+      windowEl.classList.remove('is-maximized');
+      // Remember so a future restore can return to the maximized state if desired
+      windowEl.dataset.cliWasMaximized = '1';
+    } else {
+      delete windowEl.dataset.cliWasMaximized;
+    }
     windowEl.classList.remove('is-genie-in');
     windowEl.classList.add('is-genie-out');
     later(function () {
@@ -7170,12 +7363,15 @@ function isOldBrowser() {
       pill.classList.remove('is-visible');
       pill.setAttribute('aria-hidden', 'true');
     }
+    var wasMax = windowEl.dataset.cliWasMaximized === '1';
+    delete windowEl.dataset.cliWasMaximized;
     windowEl.classList.remove('is-minimized', 'is-genie-out');
     // Re-trigger the restore animation
     void windowEl.offsetWidth;
     windowEl.classList.add('is-genie-in');
     later(function () {
       windowEl.classList.remove('is-genie-in');
+      if (wasMax) windowEl.classList.add('is-maximized');
       if (inputEl) inputEl.focus();
     }, 520);
   }
