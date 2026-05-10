@@ -7,19 +7,12 @@ import { dirname, resolve } from 'node:path';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const r = (...p) => resolve(__dirname, ...p);
 
-/**
- * Custom HTML minifier that PRESERVES all HTML comments —
- * including the SR `@@@@` ASCII art at the top of index.html.
- * Inline <script>/<style>/<pre> contents are not whitespace-collapsed
- * (html-minifier-terser default behavior).
- */
 const htmlMinifyPlugin = () => ({
     name: 'sr-html-minify-preserve-comments',
     enforce: 'post',
     apply: 'build',
     async transformIndexHtml(html, ctx) {
-        // The curl/index.html is intentionally an ASCII-only redirector;
-        // skip aggressive minification so the <pre> art is byte-perfect.
+
         const isCurl = ctx?.path?.endsWith('curl/index.html') || ctx?.filename?.includes(`${'curl'}`);
         try {
             return await htmlMinify(html, {
@@ -32,15 +25,12 @@ const htmlMinifyPlugin = () => ({
                 removeStyleLinkTypeAttributes: true,
                 useShortDoctype: true,
                 minifyJS: true,
-                minifyCSS: true,
+                minifyCSS: false,
                 decodeEntities: false,
                 keepClosingSlash: true,
                 preserveLineBreaks: false
             });
         } catch (err) {
-            // If minification fails for any reason, fall back to the
-            // original HTML so the build never breaks.
-            // eslint-disable-next-line no-console
             console.warn('[html-minify] skipped:', err?.message || err);
             return html;
         }
@@ -89,19 +79,14 @@ export default defineConfig({
         },
         cssMinify: 'esbuild',
         rollupOptions: {
-            // Keep https:// imports (e.g. THREE.js from cdnjs in script.js) external —
-            // browsers handle them natively in module scripts.
             external: [/^https?:\/\//],
             input: {
                 index:    r('index.html'),
                 notfound: r('404.html'),
                 policy:   r('policy.html'),
-                cli:      r('Cli/index.html'),
-                contact:  r('Contact/index.html'),
                 game:     r('Game/index.html'),
                 goto:     r('Goto/index.html'),
                 matrix:   r('Matrix/index.html'),
-                resume:   r('Resume/index.html'),
                 curl:     r('curl/index.html')
             },
             output: {
@@ -120,8 +105,6 @@ export default defineConfig({
     },
 
     plugins: [
-        // Mirror untouched static files into dist/. These are referenced by
-        // absolute paths in the HTML and must keep their original location.
         viteStaticCopy({
             targets: [
                 { src: 'blocker.js',         dest: '.' },
@@ -130,9 +113,10 @@ export default defineConfig({
                 { src: '.nojekyll',          dest: '.' },
                 { src: 'robots.txt',         dest: '.' },
                 { src: 'LICENSE',            dest: '.' },
-                // Preserve the existing assets tree verbatim — same paths the site
-                // already references (/assets/favicon, /assets/bg.webp, /assets/bg_music.mp3, etc.)
-                { src: 'assets/**/*',        dest: 'assets' }
+                { src: 'assets/**/*',        dest: 'assets' },
+
+                { src: 'Contact/**/*',       dest: 'Contact' },
+                { src: 'Resume/**/*',        dest: 'Resume' }
             ]
         }),
 
