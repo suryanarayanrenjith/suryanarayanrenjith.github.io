@@ -12,24 +12,40 @@ const htmlMinifyPlugin = () => ({
     enforce: 'post',
     apply: 'build',
     async transformIndexHtml(html, ctx) {
-
         const isCurl = ctx?.path?.endsWith('curl/index.html') || ctx?.filename?.includes(`${'curl'}`);
         try {
-            return await htmlMinify(html, {
+            let out = await htmlMinify(html, {
                 collapseWhitespace: !isCurl,
                 conservativeCollapse: true,
-                removeComments: false,
-                removeRedundantAttributes: true,
-                removeEmptyAttributes: true,
+                removeComments: true,
+                ignoreCustomComments: [/@@@@@@/],
+
+                removeRedundantAttributes: false,
+                removeEmptyAttributes: false,
                 removeScriptTypeAttributes: false,
                 removeStyleLinkTypeAttributes: true,
-                useShortDoctype: true,
-                minifyJS: true,
+                useShortDoctype: false,
+                minifyJS: {
+                    format: { comments: false }
+                },
                 minifyCSS: false,
                 decodeEntities: false,
                 keepClosingSlash: true,
                 preserveLineBreaks: false
             });
+
+            out = out.replace(
+                /<style\b([^>]*)>([\s\S]*?)<\/style>/gi,
+                (_m, attrs, css) =>
+                    `<style${attrs}>${css.replace(/\/\*[\s\S]*?\*\//g, '')}</style>`
+            );
+
+            out = out.replace(
+                /(-->)\s*(<!DOCTYPE\s+html[^>]*>)/i,
+                '$1\n$2'
+            );
+
+            return out;
         } catch (err) {
             console.warn('[html-minify] skipped:', err?.message || err);
             return html;
@@ -61,7 +77,6 @@ export default defineConfig({
     build: {
         outDir: 'dist',
         emptyOutDir: true,
-        // IMPORTANT: avoid colliding with the existing /assets/ folder at repo root.
         assetsDir: '_app',
         cssCodeSplit: true,
         modulePreload: { polyfill: true },
@@ -114,7 +129,6 @@ export default defineConfig({
                 { src: 'robots.txt',         dest: '.' },
                 { src: 'LICENSE',            dest: '.' },
                 { src: 'assets/**/*',        dest: 'assets' },
-
                 { src: 'Contact/**/*',       dest: 'Contact' },
                 { src: 'Resume/**/*',        dest: 'Resume' }
             ]
