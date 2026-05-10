@@ -156,19 +156,31 @@
     <!-- ============ TITLE TYPING ANIMATION ============ -->
     <script>
     document.addEventListener("DOMContentLoaded", function() {
-        const fullText = "Suryanarayan Renjith";
-        const fixedChar = "S";
-        const dynamicText = fullText.slice(1);
+        const defaultText = "Suryanarayan Renjith";
+        const terminalText = "Surya Terminal — bash 5.2.15";
+        let currentTarget = defaultText;
+        let fixedChar = currentTarget[0];
+        let dynamicText = currentTarget.slice(1);
         let index = 0;
         let isDeleting = false;
-    
+
+        window.setPageTitleMode = function (mode) {
+            const next = mode === 'terminal' ? terminalText : defaultText;
+            if (next === currentTarget) return;
+            currentTarget = next;
+            fixedChar = currentTarget[0];
+            dynamicText = currentTarget.slice(1);
+            isDeleting = true;
+            if (index === 0) isDeleting = false;
+        };
+
         function type() {
             if (document.hidden) {
                 setTimeout(type, 500);
                 return;
             }
             const speed = 300;
-    
+
             if (isDeleting) {
                 document.title = fixedChar + dynamicText.substring(0, index - 1);
                 index--;
@@ -182,10 +194,10 @@
                     isDeleting = true;
                 }
             }
-    
+
             setTimeout(type, speed);
         }
-    
+
         type();
 });
     </script>
@@ -4839,6 +4851,45 @@ function isOldBrowser() {
     border-color: rgba(0, 0, 0, 0.32);
   }
 
+  /* ===== Terminal toast (used by `notify` command) ===== */
+  .cli-toast {
+    position: fixed;
+    top: 90px;
+    left: 50%;
+    transform: translate(-50%, -16px);
+    padding: 12px 22px;
+    background: rgba(10, 10, 10, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    color: #fff;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 13px;
+    letter-spacing: 0.4px;
+    z-index: 2147483645;
+    opacity: 0;
+    pointer-events: none;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.04),
+      0 18px 48px rgba(0, 0, 0, 0.55),
+      0 0 24px rgba(255, 255, 255, 0.10);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    transition: opacity 280ms ease, transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
+    max-width: min(560px, 88vw);
+    text-align: center;
+    white-space: pre-wrap;
+  }
+  .cli-toast.is-visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  body.light-theme .cli-toast {
+    background: rgba(245, 245, 245, 0.96);
+    border-color: rgba(0, 0, 0, 0.16);
+    color: #111;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 18px 48px rgba(0, 0, 0, 0.18);
+  }
+
   /* ===== CONTENT (output) styles ===== */
   .cli-terminal-overlay .prompt {
     margin-right: 10px;
@@ -5675,7 +5726,9 @@ function isOldBrowser() {
     'tree','find','file','stat','echo','rev','sort','uniq','whoami','hostname',
     'uname','date','uptime','id','groups','df','free','ps',
     'neofetch','cowsay','fortune','cal','factor','vim','chmod',
-    'chown','sudo','top','htop','sl','wget','ssh','apt','brew','pip','npm','su'
+    'chown','sudo','top','htop','sl','wget','ssh','apt','brew','pip','npm','su',
+    /* New page-control commands */
+    'theme','music','calc','notify','quote','fx','stats'
   ];
   var sessionStart = Date.now();
   var exitCode = 0;
@@ -5723,7 +5776,13 @@ function isOldBrowser() {
     var data = content == null ? '' : String(content);
     var pp = _parent(p), nm = _base(p);
     if (!vfs[pp]) _mkdirp(pp);
-    vfs[p] = { type:'f', data:data, remote:meta.remote||null, readOnly:!!meta.readOnly, mt:new Date(), sz:data.length };
+    vfs[p] = {
+      type:'f', data:data, remote:meta.remote||null,
+      readOnly:!!meta.readOnly,
+      protected:!!meta.protected,
+      protectedReason: meta.protectedReason || null,
+      mt:new Date(), sz:data.length
+    };
     _setMode(vfs[p], meta.mode || (meta.executable ? '0755' : '0644'));
     _addChild(pp, nm);
   }
@@ -5776,6 +5835,16 @@ function isOldBrowser() {
   function canWritePath(p) {
     return p === HOME || p.indexOf(HOME + '/') === 0 || p === '/tmp' || p.indexOf('/tmp/') === 0;
   }
+  /* Smart edit blocker — used by rm/cp/mv/chmod/touch/vim to refuse changes
+     to system binaries (./about, ./projects, ./resume) with a meaningful reason
+     instead of a generic Permission denied. Returns a fail-string or null. */
+  function denyForProtected(p, op, target) {
+    var n = vfs[p];
+    if (!n || !n.protected) return null;
+    var reason = n.protectedReason || 'protected by SuryaOS';
+    return fail(op + ': cannot ' + op + ' \'' + target + '\': ' + reason +
+                '\n' + op + ': hint — these are system shims; the real handler is the `section` builtin');
+  }
   function normalizeSectionName(name) {
     var key = String(name || '').toLowerCase();
     if (key === 'project') key = 'projects';
@@ -5810,9 +5879,10 @@ function isOldBrowser() {
     _mkfile('/dev/null','', { mode:'0666', readOnly:true });
     _mkfile('/bin/bash','#!/usr/bin/env surya-shell\necho "A shell is already running in this page."\n', { executable:true, readOnly:true });
     _mkfile('/bin/sh','#!/usr/bin/env surya-shell\necho "A POSIX shell is already running in this page."\n', { executable:true, readOnly:true });
-    _mkfile(HOME+'/about','#!/usr/bin/env surya-shell\nsection about\n', { executable:true });
-    _mkfile(HOME+'/projects','#!/usr/bin/env surya-shell\nsection projects\n', { executable:true });
-    _mkfile(HOME+'/resume','#!/usr/bin/env surya-shell\nsection resume\n', { executable:true });
+    var __protReason = 'system binary, signed by SuryaOS — try `man section` for the underlying call';
+    _mkfile(HOME+'/about','#!/usr/bin/env surya-shell\nsection about\n', { executable:true, readOnly:true, protected:true, protectedReason: __protReason });
+    _mkfile(HOME+'/projects','#!/usr/bin/env surya-shell\nsection projects\n', { executable:true, readOnly:true, protected:true, protectedReason: __protReason });
+    _mkfile(HOME+'/resume','#!/usr/bin/env surya-shell\nsection resume\n', { executable:true, readOnly:true, protected:true, protectedReason: __protReason });
   }
 
   var FILE_LINKS_URL = 'https://surya-api.vercel.app/api/fileLinks';
@@ -6062,7 +6132,16 @@ function isOldBrowser() {
     rev:      'rev TEXT\n  Reverse a string.',
     vim:      'vim [FILE]\n  Open the built-in modal editor.\n  i/a/o  enter insert mode\n  Esc    return to normal mode\n  :w     save    :q     quit    :wq / :x  save and quit',
     exit:     'exit\n  Close the terminal session.',
-    sudo:     'sudo COMMAND\n  Execute a command as superuser (simulated).'
+    sudo:     'sudo COMMAND\n  Execute a command as superuser (simulated).',
+    /* Page-control commands */
+    theme:    'theme [light|dark|toggle|status]\n  Switch the page theme without leaving the terminal.\n  Persists via localStorage.',
+    music:    'music [play|pause|toggle|mute|unmute|status]\n  Drive the page\'s background music control from the shell.',
+    fx:       'fx [MODE [on|off|toggle]]   |   fx reset\n  Toggle experimental visual effects (hyper, motion, vortex, freeze, audio, zen).\n  Run with no args to list current state.',
+    notify:   'notify TEXT\n  Display a transient toast at the top of the viewport.',
+    quote:    'quote\n  Print a random programming quote.',
+    calc:     'calc EXPRESSION\n  Evaluate an arithmetic expression. Supports + - * / ( ) % ^ !\n  Example: calc (3+4)*2^3',
+    stats:    'stats\n  Show session uptime, command count, sections visited, and theme.',
+    section:  'section NAME\n  Internal handler for ./about, ./projects, ./resume launchers.\n  These three are protected — they cannot be edited or removed.'
   };
 
   var commands = {};
@@ -6199,6 +6278,8 @@ function isOldBrowser() {
     if (!args.length) return fail('touch: missing operand');
     var p = _resolve(args[0]);
     if (_exists(p)) {
+      var touchProt = denyForProtected(p, 'touch', args[0]);
+      if (touchProt) return touchProt;
       if (!canWritePath(p) || vfs[p].readOnly) return fail('touch: cannot touch \'' + args[0] + '\': Permission denied');
       vfs[p].mt = new Date(); return '';
     }
@@ -6228,6 +6309,8 @@ function isOldBrowser() {
     if (p === '/') return fail('rm: it is dangerous to operate recursively on \'/\'\nrm: use --no-preserve-root to override this failsafe');
     if (!_exists(p)) { if (!parsed.flags.f) return fail('rm: cannot remove \'' + target + '\': No such file or directory'); return ''; }
     if (_isDir(p) && !parsed.flags.r) return fail('rm: cannot remove \'' + target + '\': Is a directory');
+    var rmProt = denyForProtected(p, 'rm', target);
+    if (rmProt) return rmProt;
     if (!canWritePath(p) || vfs[p].readOnly) return fail('rm: cannot remove \'' + target + '\': Permission denied');
     var pp = _parent(p), nm = _base(p);
     if (_isDir(p)) { _rmRecursive(p); }
@@ -6263,6 +6346,10 @@ function isOldBrowser() {
     if (!_exists(src)) return fail('cp: cannot stat \'' + args[0] + '\': No such file or directory');
     if (_isDir(src)) return fail('cp: -r not specified; omitting directory \'' + args[0] + '\'');
     if (_isDir(dst)) dst = dst + '/' + _base(src);
+    if (_exists(dst)) {
+      var cpProt = denyForProtected(dst, 'cp', args[1]);
+      if (cpProt) return cpProt;
+    }
     if (!canWritePath(_parent(dst)) || (_exists(dst) && vfs[dst].readOnly)) return fail('cp: cannot create regular file \'' + args[1] + '\': Permission denied');
     var cpParentError = ensureParentDirectory(dst, args[1], 'cp');
     if (cpParentError) return fail(cpParentError);
@@ -6277,6 +6364,12 @@ function isOldBrowser() {
     var src = _resolve(args[0]), dst = _resolve(args[1]);
     if (!_exists(src)) return fail('mv: cannot stat \'' + args[0] + '\': No such file or directory');
     if (_isDir(dst)) dst = dst + '/' + _base(src);
+    var mvProtSrc = denyForProtected(src, 'mv', args[0]);
+    if (mvProtSrc) return mvProtSrc;
+    if (_exists(dst)) {
+      var mvProtDst = denyForProtected(dst, 'mv', args[1]);
+      if (mvProtDst) return mvProtDst;
+    }
     if (!canWritePath(src) || !canWritePath(_parent(dst)) || vfs[src].readOnly || (_exists(dst) && vfs[dst].readOnly)) return fail('mv: cannot move \'' + args[0] + '\': Permission denied');
     var mvParentError = ensureParentDirectory(dst, args[1], 'mv');
     if (mvParentError) return fail(mvParentError);
@@ -6530,7 +6623,8 @@ function isOldBrowser() {
       ['System', 'whoami  hostname  uname  date  uptime  id  groups  df  free  ps'],
       ['Shell', 'help  man  history  clear  exit  alias  unalias  export  env  which  type'],
       ['Editor', 'vim'],
-      ['Fun', 'neofetch  cowsay  fortune  cal  factor  sudo']
+      ['Fun', 'neofetch  cowsay  fortune  cal  factor  sudo  quote'],
+      ['Page', 'theme  music  fx  notify  stats  calc']
     ];
     var labels = sections.map(function (section) { return section[0]; });
     labels = labels.concat(['Chaining', 'Piping', 'History', 'Open targets', 'Vim']);
@@ -6598,6 +6692,7 @@ function isOldBrowser() {
       // inflight-promise table — so calling it from here never produces a duplicate
       // network request, even if the GUI already fetched / prefetched the same section.
       var html = await window.fetchSection(section);
+      __sectionsVisited[section] = (__sectionsVisited[section] || 0) + 1;
       return htmlResult(cleanFetchedHTML(html), 'html-content');
     } catch (e) {
       return fail('section: ' + section + ': Error loading section');
@@ -6719,6 +6814,159 @@ function isOldBrowser() {
     return orig + ': ' + factors.join(' ');
   };
 
+  /* ============================================================
+     New game-changing commands — terminal-driven page control
+     ============================================================ */
+
+  // Session stats — cheap counters, used by `stats`
+  var __sessionStart = Date.now();
+  var __cmdCount = 0;
+  var __sectionsVisited = {};
+
+  // ---- theme: toggle / set the page's light-theme class from inside the terminal ----
+  commands.theme = function (args) {
+    var arg = (args[0] || 'toggle').toLowerCase();
+    var body = document.body;
+    var isLight = body.classList.contains('light-theme');
+    if (arg === 'light')      { body.classList.add('light-theme'); }
+    else if (arg === 'dark')  { body.classList.remove('light-theme'); }
+    else if (arg === 'toggle') { body.classList.toggle('light-theme'); }
+    else if (arg === 'status') { return 'theme: ' + (isLight ? 'light' : 'dark'); }
+    else { return fail('theme: unknown mode \'' + arg + '\' — use light | dark | toggle | status'); }
+    try { localStorage.setItem('suryaLightTheme', body.classList.contains('light-theme') ? 'true' : 'false'); } catch (_) {}
+    return 'theme: ' + (body.classList.contains('light-theme') ? 'light' : 'dark') + ' applied';
+  };
+
+  // ---- music: control the page's music button without leaving the terminal ----
+  commands.music = function (args) {
+    var arg = (args[0] || 'status').toLowerCase();
+    var u = document.getElementById('unmuteButton');
+    var m = document.getElementById('muteButton');
+    if (!u || !m) return fail('music: audio controls not available');
+    var playing = !m.classList.contains('hidden');
+    if (arg === 'status') return 'music: ' + (playing ? 'playing' : 'muted');
+    if (arg === 'play' || arg === 'unmute') {
+      if (!playing) { u.click(); return 'music: ▶ playing'; }
+      return 'music: already playing';
+    }
+    if (arg === 'pause' || arg === 'mute') {
+      if (playing) { m.click(); return 'music: ⏸ muted'; }
+      return 'music: already muted';
+    }
+    if (arg === 'toggle') {
+      (playing ? m : u).click();
+      return 'music: toggled (now ' + (playing ? 'muted' : 'playing') + ')';
+    }
+    return fail('music: usage — music [play|pause|toggle|mute|unmute|status]');
+  };
+
+  // ---- calc: safe-ish arithmetic expression evaluator ----
+  commands.calc = function (args) {
+    if (!args.length) return fail('calc: usage — calc <expression>');
+    var expr = args.join(' ');
+    if (!/^[\d\s+\-*/().,%^!eE]+$/.test(expr)) {
+      return fail('calc: only digits and + - * / ( ) % ^ ! are allowed');
+    }
+    try {
+      // Convert ^ to ** and ! (factorial) into a function call.
+      var prepared = expr.replace(/\^/g, '**');
+      prepared = prepared.replace(/(\d+)!/g, function (_, n) {
+        var v = parseInt(n, 10), r = 1;
+        for (var i = 2; i <= v; i++) r *= i;
+        return String(r);
+      });
+      // Function constructor is gated by the regex above; nothing dynamic enters.
+      var result = (new Function('return (' + prepared + ');'))();
+      if (typeof result !== 'number' || !isFinite(result)) return fail('calc: invalid expression');
+      return expr + ' = ' + result;
+    } catch (e) {
+      return fail('calc: ' + (e && e.message ? e.message : 'invalid expression'));
+    }
+  };
+
+  // ---- notify: emit a transient toast at the top of the viewport ----
+  commands.notify = function (args) {
+    if (!args.length) return fail('notify: usage — notify <message>');
+    var msg = args.join(' ');
+    var toast = document.createElement('div');
+    toast.className = 'cli-toast';
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    requestAnimationFrame(function () { toast.classList.add('is-visible'); });
+    setTimeout(function () {
+      toast.classList.remove('is-visible');
+      setTimeout(function () { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 320);
+    }, 3200);
+    return 'notify: dispatched';
+  };
+
+  // ---- quote: random programming / engineering quote ----
+  var __quotes = [
+    '"Talk is cheap. Show me the code." — Linus Torvalds',
+    '"Premature optimization is the root of all evil." — Donald Knuth',
+    '"Programs must be written for people to read, and only incidentally for machines to execute." — Harold Abelson',
+    '"There are 2 hard things in CS: cache invalidation, naming things, and off-by-one errors."',
+    '"Make it work, make it right, make it fast." — Kent Beck',
+    '"First, solve the problem. Then, write the code." — John Johnson',
+    '"Any fool can write code that a computer can understand. Good programmers write code that humans can understand." — Martin Fowler',
+    '"Simplicity is prerequisite for reliability." — Edsger W. Dijkstra',
+    '"The best error message is the one that never shows up." — Thomas Fuchs',
+    '"Code is like humor. When you have to explain it, it’s bad." — Cory House'
+  ];
+  commands.quote = function () {
+    return __quotes[(Math.random() * __quotes.length) | 0];
+  };
+
+  // ---- fx: toggle experimental modes from the terminal ----
+  var __fxMap = {
+    'hyper':       'experimental-hyper-mode',
+    'motion':      'experimental-motion-fx',
+    'vortex':      'experimental-vortex-cursor',
+    'freeze':      'experimental-motion-freeze',
+    'audio':       'experimental-audio-viz',
+    'zen':         'experimental-zen-mode'
+  };
+  commands.fx = function (args) {
+    if (!args.length) {
+      var lines = ['available fx modes:'];
+      Object.keys(__fxMap).forEach(function (k) {
+        lines.push('  ' + rpad(k, 10) + (document.body.classList.contains(__fxMap[k]) ? '[on]' : '[off]'));
+      });
+      lines.push('\nusage: fx <mode> [on|off|toggle]   |   fx reset');
+      return lines.join('\n');
+    }
+    if (args[0] === 'reset') {
+      Object.keys(__fxMap).forEach(function (k) { document.body.classList.remove(__fxMap[k]); });
+      return 'fx: all experimental modes cleared';
+    }
+    var key = args[0].toLowerCase();
+    var cls = __fxMap[key];
+    if (!cls) return fail('fx: unknown mode \'' + args[0] + '\' — try `fx` for the list');
+    var op = (args[1] || 'toggle').toLowerCase();
+    if (op === 'on')          document.body.classList.add(cls);
+    else if (op === 'off')    document.body.classList.remove(cls);
+    else if (op === 'toggle') document.body.classList.toggle(cls);
+    else return fail('fx: usage — fx ' + key + ' [on|off|toggle]');
+    return 'fx: ' + key + ' ' + (document.body.classList.contains(cls) ? '[on]' : '[off]');
+  };
+
+  // ---- stats: session counters — uptime, commands run, sections visited ----
+  commands.stats = function () {
+    var ms = Date.now() - __sessionStart;
+    var s = Math.floor(ms / 1000);
+    var hh = Math.floor(s / 3600), mm = Math.floor((s % 3600) / 60), ss = s % 60;
+    var visited = Object.keys(__sectionsVisited);
+    var lines = [
+      'session uptime    : ' + (hh ? hh + 'h ' : '') + mm + 'm ' + ss + 's',
+      'commands executed : ' + __cmdCount,
+      'history entries   : ' + hist.length,
+      'cwd               : ' + cwd,
+      'sections visited  : ' + (visited.length ? visited.join(', ') : '(none yet)'),
+      'theme             : ' + (document.body.classList.contains('light-theme') ? 'light' : 'dark')
+    ];
+    return lines.join('\n');
+  };
+
   function applyChmodSpec(node, spec) {
     if (/^[0-7]{3,4}$/.test(spec)) { _setMode(node, spec); return true; }
     var clauses = spec.split(',');
@@ -6772,6 +7020,8 @@ function isOldBrowser() {
     if (args.length < 2) return fail('chmod: missing operand');
     var spec = args[0], path = _resolve(args[1]);
     if (!_exists(path)) return fail('chmod: cannot access \'' + args[1] + '\': No such file or directory');
+    var chmodProt = denyForProtected(path, 'chmod', args[1]);
+    if (chmodProt) return chmodProt;
     if (!canWritePath(path) || vfs[path].readOnly) return fail('chmod: changing permissions of \'' + args[1] + '\': Permission denied');
     if (!applyChmodSpec(vfs[path], spec)) return fail('chmod: invalid mode: \'' + spec + '\'');
     vfs[path].mt = new Date();
@@ -6838,6 +7088,7 @@ function isOldBrowser() {
   async function execute(line) {
     line = line.trim();
     if (!line) return;
+    __cmdCount++;
     if (line === '!!') {
       if (hist.length < 1) { printError('bash: !!: event not found'); exitCode = 1; return; }
       line = hist[hist.length - 1];
@@ -7184,12 +7435,16 @@ function isOldBrowser() {
     var path = '';
     var initialContent = '';
     var locked = false;
+    var protectedNote = '';
     if (target) {
       path = _resolve(target);
       if (_exists(path) && _isDir(path)) return fail('vim: ' + target + ': Is a directory');
       if (_exists(path)) {
         initialContent = vfs[path].data || '';
         locked = !!vfs[path].readOnly;
+        if (vfs[path].protected) {
+          protectedNote = '🔒 ' + (vfs[path].protectedReason || 'protected by SuryaOS');
+        }
       }
     }
     vimState.open = true;
@@ -7200,7 +7455,7 @@ function isOldBrowser() {
     vimState.command = '';
     vimState.pending = '';
     vimState.locked = locked;
-    vimState.lastMessage = locked ? 'readonly buffer' : 'Press i to insert, :w to save, :q to quit';
+    vimState.lastMessage = protectedNote || (locked ? 'readonly buffer' : 'Press i to insert, :w to save, :q to quit');
     vimState.preferredCol = null;
     vimBufferEl.value = initialContent;
     vimShellEl.classList.remove('vim-hidden');
@@ -7323,8 +7578,9 @@ function isOldBrowser() {
   function printWelcomeBanner() {
     if (!outputEl) return;
     printPre('Welcome to SuryaOS 3.1 — In-Page Terminal Emulator');
-    printPre('Executable section launchers: ./about  ./projects  ./resume');
-    printPre('Type \'help\' for available commands, \'man <cmd>\' for details.\n');
+    printPre('Executable section launchers: ./about  ./projects  ./resume   (protected — edits blocked)');
+    printPre('Page controls from the shell: theme · music · fx · notify · stats · calc · quote');
+    printPre('Type \'help\' for everything, \'man <cmd>\' for details.\n');
     updatePrompt();
   }
   function initCLI() {
@@ -7692,6 +7948,7 @@ function isOldBrowser() {
     overlayEl.classList.remove('is-closing');
     overlayEl.setAttribute('aria-hidden', 'false');
     ensureMusicButtonVisible();
+    if (typeof window.setPageTitleMode === 'function') window.setPageTitleMode('terminal');
     runGlitchSpawn();
   }
 
@@ -7716,6 +7973,7 @@ function isOldBrowser() {
       if (pp && pp.parentNode) pp.parentNode.removeChild(pp);
       restoreMusicButtonState();
       shutdownTerminalState();
+      if (typeof window.setPageTitleMode === 'function') window.setPageTitleMode('default');
     }, 320);
   }
 
