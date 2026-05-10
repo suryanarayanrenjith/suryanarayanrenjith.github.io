@@ -7,6 +7,32 @@ import { dirname, resolve } from 'node:path';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const r = (...p) => resolve(__dirname, ...p);
 
+const PUBLIC_SCRIPT_RE =
+    /<script\b[^>]*\bsrc=["']\/[\w./-]+\.js["'][^>]*><\/script>/gi;
+
+const protectedScripts = new Map();
+const placeholderFor = (id) => `<!--@@@@@@SR_KEEP:${id}@@@@@@-->`;
+const PLACEHOLDER_RESTORE_RE = /<!--@@@@@@SR_KEEP:([^@]+?)@@@@@@-->/g;
+
+const protectPublicScriptsPlugin = () => ({
+    name: 'sr-protect-public-scripts',
+    enforce: 'pre',
+    apply: 'build',
+    transformIndexHtml: {
+        order: 'pre',
+        handler(html, ctx) {
+            const fileKey = String(ctx?.filename || ctx?.path || '_')
+                .replace(/[\\/]/g, '_');
+            let i = 0;
+            return html.replace(PUBLIC_SCRIPT_RE, (match) => {
+                const id = `${fileKey}#${i++}`;
+                protectedScripts.set(id, match);
+                return placeholderFor(id);
+            });
+        }
+    }
+});
+
 const htmlMinifyPlugin = () => ({
     name: 'sr-html-minify-preserve-comments',
     enforce: 'post',
@@ -43,6 +69,11 @@ const htmlMinifyPlugin = () => ({
             out = out.replace(
                 /(-->)\s*(<!DOCTYPE\s+html[^>]*>)/i,
                 '$1\n$2'
+            );
+
+            out = out.replace(
+                PLACEHOLDER_RESTORE_RE,
+                (m, id) => protectedScripts.get(id) || m
             );
 
             return out;
@@ -128,12 +159,13 @@ export default defineConfig({
                 { src: '.nojekyll',          dest: '.' },
                 { src: 'robots.txt',         dest: '.' },
                 { src: 'LICENSE',            dest: '.' },
-                { src: 'assets/**/*',        dest: 'assets' },
-                { src: 'Contact/**/*',       dest: 'Contact' },
-                { src: 'Resume/**/*',        dest: 'Resume' }
+                { src: 'assets',             dest: '.' },
+                { src: 'Contact',            dest: '.' },
+                { src: 'Resume',             dest: '.' }
             ]
         }),
 
+        protectPublicScriptsPlugin(),
         htmlMinifyPlugin()
     ]
 });
