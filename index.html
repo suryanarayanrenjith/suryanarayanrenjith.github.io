@@ -4009,6 +4009,20 @@ function isOldBrowser() {
     padding: 0 !important;
     overflow: hidden !important;
   }
+  /* The site collapses the music button via inline styles when audio is muted —
+     force the container visible while the terminal is engaged so it sits next
+     to the palette. JS toggles which icon (.hidden) is showing; we just keep
+     the container open. */
+  body.cli-overlay-open .menu-bar > ul > li.music-button-container,
+  body.cli-overlay-open .menu-bar > ul > li#buttonhide {
+    max-width: 60px !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    overflow: visible !important;
+    display: inline-flex !important;
+    margin-left: 8px !important;
+  }
   /* Hide section/info/hyper-mode/terminal/links commands inside the palette while the terminal is engaged */
   body.cli-overlay-open .command-palette li:has(button[data-command="home"]),
   body.cli-overlay-open .command-palette li:has(button[data-command="about"]),
@@ -4893,6 +4907,71 @@ function isOldBrowser() {
     padding-bottom: 0;
     text-shadow: none;
   }
+
+  /* ===== Project preview overlay (lifted to body) — must sit ABOVE the CLI overlay ===== */
+  #p4-preview-overlay.cli-project-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 2147483646 !important;
+    background: rgba(0, 0, 0, 0.86) !important;
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    box-sizing: border-box;
+    overflow: auto;
+  }
+  #p4-preview-overlay.cli-project-overlay.is-open {
+    display: flex !important;
+  }
+  #p4-preview-overlay.cli-project-overlay #p4-preview-panel {
+    width: min(940px, 94vw) !important;
+    max-width: 94vw !important;
+    max-height: 90dvh !important;
+    margin: 0 auto !important;
+    box-sizing: border-box;
+    position: relative !important;
+    transform: none !important;
+    inset: auto !important;
+  }
+  #p4-preview-overlay.cli-project-overlay #p4-preview-image {
+    max-height: 62dvh !important;
+    width: auto !important;
+    max-width: 100% !important;
+    object-fit: contain !important;
+  }
+  /* Side / corner navigation labels often live OUTSIDE the panel — keep them clipped
+     to the viewport so they never spill out and look broken. */
+  #p4-preview-overlay.cli-project-overlay > *:not(#p4-preview-panel) {
+    pointer-events: auto;
+  }
+  #p4-preview-overlay.cli-project-overlay [class*="prev"],
+  #p4-preview-overlay.cli-project-overlay [class*="next"],
+  #p4-preview-overlay.cli-project-overlay [class*="nav"] {
+    z-index: 5 !important;
+  }
+  body.light-theme #p4-preview-overlay.cli-project-overlay {
+    background: rgba(245, 245, 245, 0.92) !important;
+  }
+  @media screen and (max-width: 860px) {
+    #p4-preview-overlay.cli-project-overlay #p4-preview-panel {
+      width: min(96vw, 760px) !important;
+    }
+  }
+  @media screen and (max-width: 560px) {
+    #p4-preview-overlay.cli-project-overlay {
+      padding: 12px;
+    }
+    #p4-preview-overlay.cli-project-overlay #p4-preview-panel {
+      width: calc(100vw - 24px) !important;
+      max-height: 92dvh !important;
+    }
+    #p4-preview-overlay.cli-project-overlay #p4-preview-image {
+      max-height: 50dvh !important;
+    }
+  }
   .cli-terminal-overlay .html-content .center-button {
     display: block;
     width: fit-content;
@@ -5279,13 +5358,13 @@ function isOldBrowser() {
   body.cli-overlay-open #keyboard-popups,
   body.cli-overlay-open .palette-button-container { pointer-events: none; }
 
-  /* Keep the site's custom cursor visible above the terminal overlay */
+  /* Keep the site's custom cursor visible above EVERYTHING — overlay, nav, project preview */
   body.cli-overlay-open .cursor-dot,
   body.cli-overlay-open .cursor-dot-outline {
-    z-index: 100002 !important;
+    z-index: 2147483647 !important;
   }
   body.cli-overlay-open .vortex-cube-layer {
-    z-index: 100001 !important;
+    z-index: 2147483646 !important;
   }
 </style>
 
@@ -7389,6 +7468,44 @@ function isOldBrowser() {
     }
   }
 
+  // Cache the music-button state so we can restore it on close.
+  var __musicSnapshot = null;
+  function ensureMusicButtonVisible() {
+    var u = document.getElementById('unmuteButton');
+    var m = document.getElementById('muteButton');
+    var box = document.getElementById('buttonhide');
+    if (!u || !m || !box) return;
+    __musicSnapshot = {
+      uHidden: u.classList.contains('hidden'),
+      mHidden: m.classList.contains('hidden'),
+      maxWidth: box.style.maxWidth,
+      opacity: box.style.opacity,
+      pointerEvents: box.style.pointerEvents
+    };
+    // Force the container open (CSS uses !important; clear JS-set inline styles too)
+    box.style.maxWidth = '60px';
+    box.style.opacity = '1';
+    box.style.pointerEvents = '';
+    // If both icons are hidden (e.g. before any music interaction), show the muted icon
+    if (u.classList.contains('hidden') && m.classList.contains('hidden')) {
+      u.classList.remove('hidden');
+    }
+  }
+  function restoreMusicButtonState() {
+    if (!__musicSnapshot) return;
+    var u = document.getElementById('unmuteButton');
+    var m = document.getElementById('muteButton');
+    var box = document.getElementById('buttonhide');
+    if (u) u.classList.toggle('hidden', __musicSnapshot.uHidden);
+    if (m) m.classList.toggle('hidden', __musicSnapshot.mHidden);
+    if (box) {
+      box.style.maxWidth = __musicSnapshot.maxWidth || '';
+      box.style.opacity = __musicSnapshot.opacity || '';
+      box.style.pointerEvents = __musicSnapshot.pointerEvents || '';
+    }
+    __musicSnapshot = null;
+  }
+
   function openTerminalOverlay(opts) {
     opts = opts || {};
     if (overlayEl && isMinimized()) {
@@ -7403,6 +7520,7 @@ function isOldBrowser() {
     overlayEl.classList.add('is-active');
     overlayEl.classList.remove('is-closing');
     overlayEl.setAttribute('aria-hidden', 'false');
+    ensureMusicButtonVisible();
     runGlitchSpawn();
   }
 
@@ -7425,15 +7543,22 @@ function isOldBrowser() {
       // Clean up any project preview overlays that were lifted to body.
       var pp = document.querySelector('#p4-preview-overlay.cli-project-overlay');
       if (pp && pp.parentNode) pp.parentNode.removeChild(pp);
+      restoreMusicButtonState();
       shutdownTerminalState();
     }, 320);
   }
 
-  // Esc closes the active terminal (or restores from minimized first)
+  // Esc closes the active terminal (or restores from minimized / closes the project preview first)
   document.addEventListener('keydown', function (e) {
     if (!overlayEl || !overlayEl.classList.contains('is-active')) return;
     if (e.key === 'Escape') {
       if (windowEl && windowEl.classList.contains('vim-active')) return;
+      // If the project screenshot viewer is open, close it first instead of the terminal
+      var preview = document.querySelector('#p4-preview-overlay.cli-project-overlay.is-open');
+      if (preview) {
+        preview.classList.remove('is-open');
+        return;
+      }
       if (isMinimized()) { restoreTerminal(); return; }
       closeTerminalOverlay();
     }
