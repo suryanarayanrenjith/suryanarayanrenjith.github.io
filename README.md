@@ -1,54 +1,62 @@
-## Website
+<div align="center">
 
-🌐 Welcome to my awesome website! This repository hosts the source code for my portfolio website hosted on GitHub Pages.
+# <img src="static/logo.svg" alt="SR Logo" width="38" style="vertical-align: text-bottom; margin-right: 4px;"> Surya Website
 
-## Description
+[![Uptime](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/suryanarayanrenjith/suryanarayanrenjith/main/.github/status.json&style=flat-square&label=Website%20Uptime)](https://surya.is-a.dev)
+[![Bundled & Minified with Vite](https://img.shields.io/badge/Bundled_&_Minified_with-Vite-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![License: Custom (All Rights Reserved)](https://img.shields.io/badge/License-Custom_(All_Rights_Reserved)-red?style=flat-square)](LICENSE)
 
-📝 This website showcases my projects, social media links and my skills. Feel free to contact me if you have any questions or feedback!
+*Welcome to my awesome website! This repository hosts the source code for my portfolio website hosted on GitHub Pages.*
 
-## Building
+<br>
+<img src="static/Screenshot.png" alt="Website Screenshot" width="800" style="border-radius: 8px;">
 
-🛠️ This project is configured for **production builds only** - there is no dev server, no preview, and no test mode. Vite bundles, minifies, and content-hashes the website source from `src/` into a `dist/` directory that GitHub Actions deploys to GitHub Pages.
+</div>
+
+---
+
+## <img src="static/icon-description.svg" alt="Description" width="30" style="vertical-align: text-bottom; margin-right: 4px;"> Description
+
+This website showcases my projects, social media links, and my skills. Feel free to contact me if you have any questions or feedback!
+
+## <img src="static/icon-building.svg" alt="Building" width="30" style="vertical-align: text-bottom; margin-right: 4px;"> Building
+
+This project is configured strictly for **production builds only** - there is no dev server, no preview, and no test mode (blocked natively). A custom Vite configuration aggressively bundles, minifies (using proprietary plugins for HTML, CSS verbatim mapping, and internal branding), and content-hashes the website source from `src/` into a highly-optimized `dist/` directory that GitHub Actions deploys to GitHub Pages.
 
 ### Prerequisites
 
-- Node.js **20+**
-- npm 10+
+- **Node.js** `20+`
+- **npm** `10+`
 
 ### Commands
 
-```bash
-npm install        # one-time — installs Vite and the build dependencies
-npm run build     # builds the site into ./dist
-npm run clean     # removes the dist/ directory
-```
+| Command | Description |
+|:---|:---|
+| `npm install` | **One-time** - installs Vite and the build dependencies |
+| `npm run validate` | Validates the HTML structure |
+| `npm run build` | Builds the site into `./dist` |
+| `npm run clean` | Removes the `dist/` directory |
 
 ### Project layout
 
-```
+```text
 .
-├── src/                  ← website source (HTML, JS, CSS, sub-routes, assets)
-├── scripts/              ← build tooling (clean / refusal scripts)
+├── src/                  ← website source (HTML, JS, CSS, assets)
+├── scripts/              ← build tooling
+├── static/               ← static files
+├── dist/                 ← build output
 ├── vite.config.js        ← Vite build config
-├── package.json
-├── README.md
-├── LICENSE
-├── static/Screenshot.png ← README screenshot only
-└── dist/                 ← build output (gitignored, deployed by Pages)
+├── package.json          ← project metadata and scripts
+├── README.md             ← this file
+└── LICENSE               ← license terms
 ```
 
-## License
+## <img src="static/icon-license.svg" alt="License" width="30" style="vertical-align: text-bottom; margin-right: 4px;"> License
 
-🔒 This project is licensed under a custom **All Rights Reserved License**.
+This project is licensed under a custom **All Rights Reserved License**.
 
-⛔ You may not copy, modify, redistribute, or use the code in any way without explicit written permission from the copyright holder!
+> ⛔ **WARNING**  
+> You may not copy, modify, redistribute, or use the code in any way without explicit written permission from the copyright holder!
 
 See the [LICENSE](LICENSE) file for full terms and details.
 
-## Screenshot
-
-![Screenshot](static/Screenshot.png)
-
-## Website Uptime
-
-[![Uptime](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/suryanarayanrenjith/suryanarayanrenjith/main/.github/status.json&label=Website%20Uptime)](https://surya.is-a.dev)
