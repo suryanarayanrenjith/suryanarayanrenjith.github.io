@@ -1,6 +1,6 @@
 <div align="center">
 
-# <img src="static/logo.svg" alt="SR Logo" width="36" style="vertical-align: text-bottom; margin-right: 6px;"> Surya Website
+# <img src="static/logo.svg" alt="SR Logo" width="36" height="36" align="middle"> Surya Website
 
 [![Uptime](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/suryanarayanrenjith/suryanarayanrenjith/main/.github/status.json&style=flat-square&label=Website%20Uptime)](https://surya.is-a.dev)
 [![Bundled & Minified with Vite](https://img.shields.io/badge/Bundled_&_Minified_with-Vite-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
@@ -15,11 +15,11 @@
 
 ---
 
-## <img src="static/icon-description.svg" alt="Description" width="28" style="vertical-align: text-bottom; margin-right: 6px;"> Description
+## <img src="static/icon-description.svg" alt="Description" width="28" height="28" align="middle"> Description
 
 This website showcases my projects, social media links, and my skills. Feel free to contact me if you have any questions or feedback!
 
-## <img src="static/icon-building.svg" alt="Building" width="28" style="vertical-align: text-bottom; margin-right: 6px;"> Building
+## <img src="static/icon-building.svg" alt="Building" width="28" height="28" align="middle"> Building
 
 This project is configured strictly for **production builds only** - there is no dev server, no preview, and no test mode (blocked natively). A custom Vite configuration aggressively bundles, minifies (using proprietary plugins for HTML, CSS verbatim mapping, and internal branding), and content-hashes the website source from `src/` into a highly-optimized `dist/` directory that GitHub Actions deploys to GitHub Pages.
 
@@ -51,7 +51,7 @@ This project is configured strictly for **production builds only** - there is no
 └── LICENSE               ← license terms
 ```
 
-## <img src="static/icon-license.svg" alt="License" width="28" style="vertical-align: text-bottom; margin-right: 6px;"> License
+## <img src="static/icon-license.svg" alt="License" width="28" height="28" align="middle"> License
 
 This project is licensed under a custom **All Rights Reserved License**.
 
@@ -59,4 +59,3 @@ This project is licensed under a custom **All Rights Reserved License**.
 > You may not copy, modify, redistribute, or use the code in any way without explicit written permission from the copyright holder!
 
 See the [LICENSE](LICENSE) file for full terms and details.
-
