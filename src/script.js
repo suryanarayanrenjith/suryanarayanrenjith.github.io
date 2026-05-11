@@ -1039,11 +1039,168 @@ document.addEventListener("DOMContentLoaded", () => {
         requestAnimationFrame(decay);
     }
 
+    // ── Camera input control ──────────────────────────────────────────
+    // Desktops: cursor parallax (mousemove).
+    // Phones / tablets: device-orientation parallax (gyroscope). The mouse
+    // path is intentionally NOT attached on touch devices so finger drags
+    // don't fight the gyro reading.
+    //
+    // iOS 13+ requires DeviceOrientationEvent.requestPermission() to be
+    // called from a user gesture (Apple privacy rule). Android Chrome /
+    // Firefox / Samsung Internet have no permission step. On any device
+    // without a gyro the listener simply never fires and the camera stays
+    // centered — graceful fallback.
+    function isTouchDevice() {
+        return (
+            ('ontouchstart' in window) ||
+            (typeof navigator.maxTouchPoints === 'number' && navigator.maxTouchPoints > 0) ||
+            window.matchMedia('(pointer: coarse)').matches
+        );
+    }
+
     function setupMouseControl() {
         window.addEventListener('mousemove', (event) => {
             targetMouseX = (event.clientX / window.innerWidth) * 2 - 1;
             targetMouseY = -(event.clientY / window.innerHeight) * 2 + 1;
-        });
+        }, { passive: true });
+    }
+
+    function setupGyroControl() {
+        // How many degrees of phone tilt map to the full ±1 range.
+        // 22° is comfortable for phones held one-handed.
+        const TILT_RANGE_DEG = 22;
+        let baseBeta = null;
+        let baseGamma = null;
+        let attached = false;
+
+        function currentScreenAngle() {
+            if (screen.orientation && typeof screen.orientation.angle === 'number') {
+                return screen.orientation.angle;
+            }
+            if (typeof window.orientation === 'number') {
+                return window.orientation;
+            }
+            return 0;
+        }
+
+        function recalibrate() {
+            baseBeta = null;
+            baseGamma = null;
+        }
+
+        function handleOrientation(event) {
+            const beta = event.beta;    // front-back tilt, deg
+            const gamma = event.gamma;  // left-right tilt, deg
+            if (beta === null || gamma === null) return;
+
+            // First reading establishes the user's natural holding posture
+            // as the neutral / "centered" point — feels much better than
+            // forcing them to hold the phone perfectly flat.
+            if (baseBeta === null) {
+                baseBeta = beta;
+                baseGamma = gamma;
+                return;
+            }
+
+            const dBeta = beta - baseBeta;
+            const dGamma = gamma - baseGamma;
+
+            // Rotate the (gamma, beta) reading into screen space depending
+            // on whether the user is in portrait or landscape, and which
+            // landscape side. screen.orientation.angle values:
+            //   0   portrait
+            //   90  landscape (device rotated CCW from portrait)
+            //   180 portrait upside-down
+            //   270 / -90  landscape (device rotated CW from portrait)
+            let dx, dy;
+            switch (currentScreenAngle()) {
+                case 90:
+                    dx = -dBeta;
+                    dy = dGamma;
+                    break;
+                case 180:
+                    dx = -dGamma;
+                    dy = -dBeta;
+                    break;
+                case 270:
+                case -90:
+                    dx = dBeta;
+                    dy = -dGamma;
+                    break;
+                case 0:
+                default:
+                    dx = dGamma;
+                    dy = dBeta;
+                    break;
+            }
+
+            // Normalise to [-1, 1]. The Y axis is inverted so tilting the
+            // top of the phone TOWARD the user makes the camera look UP,
+            // matching the existing mouse-Y semantics.
+            const nx = Math.max(-1, Math.min(1, dx / TILT_RANGE_DEG));
+            const ny = Math.max(-1, Math.min(1, -dy / TILT_RANGE_DEG));
+
+            targetMouseX = nx;
+            targetMouseY = ny;
+        }
+
+        function attach() {
+            if (attached) return;
+            attached = true;
+            // 'deviceorientation' is the broad-compat event; iOS / Android both fire it.
+            window.addEventListener('deviceorientation', handleOrientation, true);
+        }
+
+        function requestAndAttach() {
+            const Cls = window.DeviceOrientationEvent;
+            if (Cls && typeof Cls.requestPermission === 'function') {
+                // iOS 13+ — must be called from a user-gesture handler.
+                Cls.requestPermission()
+                    .then((state) => { if (state === 'granted') attach(); })
+                    .catch(() => { /* user denied or API failed — silent fallback */ });
+            } else {
+                // Android, desktops with sensors, older iOS — no prompt.
+                attach();
+            }
+        }
+
+        // If the DeviceOrientationEvent API isn't here at all (very old
+        // browsers / locked-down WebViews), skip wiring entirely.
+        if (typeof window.DeviceOrientationEvent === 'undefined') return;
+
+        const needsPermission =
+            typeof window.DeviceOrientationEvent.requestPermission === 'function';
+
+        if (needsPermission) {
+            // Attach a one-shot tap/touch listener so the FIRST user
+            // gesture anywhere on the page triggers the iOS prompt.
+            const trigger = () => {
+                document.removeEventListener('touchend', trigger);
+                document.removeEventListener('click', trigger);
+                requestAndAttach();
+            };
+            document.addEventListener('touchend', trigger, { once: true, passive: true });
+            document.addEventListener('click', trigger, { once: true });
+        } else {
+            requestAndAttach();
+        }
+
+        // Re-establish the neutral pose when the user rotates the device,
+        // otherwise a portrait→landscape flip would dump the camera into
+        // a maxed-out tilt until they physically returned to baseline.
+        if (screen.orientation && typeof screen.orientation.addEventListener === 'function') {
+            screen.orientation.addEventListener('change', recalibrate);
+        } else {
+            window.addEventListener('orientationchange', recalibrate);
+        }
+    }
+
+    function setupCameraInputControl() {
+        if (isTouchDevice()) {
+            setupGyroControl();
+        } else {
+            setupMouseControl();
+        }
     }
 
     const _cameraLocal = new THREE.Vector3();
@@ -1509,7 +1666,7 @@ document.addEventListener('keydown', (event) => {
         requestAnimationFrame(render);
     }
 
-    setupMouseControl();
+    setupCameraInputControl();
     if (!starfieldFrozen) {
         switchCameraPosition();
     }
