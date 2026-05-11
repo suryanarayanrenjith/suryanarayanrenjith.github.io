@@ -2796,8 +2796,48 @@ body.light-theme a[id^="forceDownload"] {
     overflow-wrap: break-word;
 }
 
+.is-generating-title .title-generation-text {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.title-generation-cursor {
+    position: relative;
+    display: inline-block;
+    width: 0.105em;
+    min-width: 2px;
+    height: 0.82em;
+    margin-left: 0.1em;
+    border-radius: 999px;
+    background: currentColor;
+    vertical-align: -0.08em;
+    transform-origin: center;
+    box-shadow: 0 0 0.48em currentColor;
+    opacity: 0.9;
+    will-change: opacity, transform;
+}
+
+.title-generation-cursor::after {
+    content: '';
+    position: absolute;
+    inset: -0.18em -0.12em;
+    border-radius: inherit;
+    background: currentColor;
+    opacity: 0.08;
+    filter: blur(0.22em);
+}
+
+.is-generation-complete .title-generation-cursor {
+    box-shadow: 0 0 0.34em currentColor;
+}
+
 body.light-theme .animated-text {
     text-shadow: 0 0 20px rgba(0,0,0,0.08);
+}
+
+body.light-theme .title-generation-cursor {
+    box-shadow: 0 0 0.28em rgba(0, 0, 0, 0.22);
+    opacity: 0.78;
 }
 
 body.light-theme .menu-bar > ul > li > a::after {
@@ -2928,6 +2968,13 @@ body.light-theme .tagline {
         letter-spacing: 2px;
     }
 
+    .title-generation-cursor {
+        width: 0.095em;
+        height: 0.78em;
+        margin-left: 0.075em;
+        box-shadow: 0 0 0.34em currentColor;
+    }
+
     .tagline {
         font-size: 1em;
         letter-spacing: 1px;
@@ -2962,6 +3009,19 @@ body.light-theme .tagline {
     .animated-text {
         font-size: 1.6em;
         letter-spacing: 1px;
+    }
+
+    .title-generation-cursor {
+        width: 0.085em;
+        min-width: 1.5px;
+        height: 0.74em;
+        margin-left: 0.065em;
+        box-shadow: 0 0 0.22em currentColor;
+    }
+
+    .title-generation-cursor::after {
+        inset: -0.12em -0.08em;
+        filter: blur(0.16em);
     }
 
     .tagline {
@@ -3391,5 +3451,9 @@ a:focus:not(:focus-visible),
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
         scroll-behavior: auto !important;
+    }
+
+    .title-generation-cursor {
+        display: none !important;
     }
 }

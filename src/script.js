@@ -96,12 +96,148 @@ document.addEventListener("DOMContentLoaded", () => {
         return (storedText || currentText).replace(/\s+/g, ' ').trim();
     }
 
+    function getTitleGenerationProfile() {
+        const width = window.innerWidth || document.documentElement.clientWidth || 1024;
+        const coarsePointer = window.matchMedia &&
+            window.matchMedia('(pointer: coarse)').matches;
+        const hyper = isHyperModeEnabled();
+
+        if (width <= 480) {
+            return {
+                firstDelay: hyper ? 70 : 115,
+                minDelay: hyper ? 10 : 24,
+                maxDelay: hyper ? 38 : 68,
+                wordPauseMin: hyper ? 8 : 24,
+                wordPauseMax: hyper ? 38 : 72,
+                punctuationPauseMin: hyper ? 35 : 80,
+                punctuationPauseMax: hyper ? 90 : 145,
+                microPauseChance: hyper ? 0.08 : 0.12,
+                burstChance: hyper ? 0.54 : 0.34,
+                maxChunk: hyper ? 3 : 2,
+                stepDuration: hyper ? 14 : 20,
+                perCharDuration: hyper ? 5 : 8,
+                finalHold: hyper ? 180 : 340,
+                cursorNudge: false,
+                textPulse: false,
+                finalDrift: '0.04em'
+            };
+        }
+
+        if (width <= 1024 || coarsePointer) {
+            return {
+                firstDelay: hyper ? 60 : 105,
+                minDelay: hyper ? 9 : 18,
+                maxDelay: hyper ? 34 : 62,
+                wordPauseMin: hyper ? 8 : 20,
+                wordPauseMax: hyper ? 35 : 66,
+                punctuationPauseMin: hyper ? 32 : 72,
+                punctuationPauseMax: hyper ? 82 : 130,
+                microPauseChance: hyper ? 0.1 : 0.16,
+                burstChance: hyper ? 0.58 : 0.42,
+                maxChunk: hyper ? 4 : 3,
+                stepDuration: hyper ? 12 : 18,
+                perCharDuration: hyper ? 4 : 7,
+                finalHold: hyper ? 190 : 380,
+                cursorNudge: true,
+                textPulse: false,
+                finalDrift: '0.055em'
+            };
+        }
+
+        return {
+            firstDelay: hyper ? 50 : 95,
+            minDelay: hyper ? 8 : 14,
+            maxDelay: hyper ? 30 : 58,
+            wordPauseMin: hyper ? 7 : 18,
+            wordPauseMax: hyper ? 28 : 64,
+            punctuationPauseMin: hyper ? 28 : 68,
+            punctuationPauseMax: hyper ? 76 : 126,
+            microPauseChance: hyper ? 0.12 : 0.2,
+            burstChance: hyper ? 0.64 : 0.48,
+            maxChunk: hyper ? 5 : 4,
+            stepDuration: hyper ? 10 : 16,
+            perCharDuration: hyper ? 4 : 6,
+            finalHold: hyper ? 200 : 430,
+            cursorNudge: true,
+            textPulse: true,
+            finalDrift: '0.07em'
+        };
+    }
+
+    function randomBetween(min, max) {
+        return min + Math.random() * (max - min);
+    }
+
+    function getTitleChunkLength(chars, index, profile) {
+        if (/\s/.test(chars[index] || '')) return 1;
+
+        let boundary = index;
+        while (
+            boundary < chars.length &&
+            !/\s/.test(chars[boundary]) &&
+            !/[.,!?;:()[\]{}]/.test(chars[boundary])
+        ) {
+            boundary += 1;
+        }
+
+        const remainingInWord = Math.max(1, boundary - index);
+        const remaining = chars.length - index;
+        const maxChunk = Math.min(profile.maxChunk, remainingInWord, remaining);
+        const roll = Math.random();
+
+        if (roll < profile.burstChance) return Math.max(1, maxChunk);
+        if (roll < profile.burstChance + 0.32) return Math.min(2, maxChunk);
+        return 1;
+    }
+
+    function getTitleStepDelay(chars, nextIndex, profile) {
+        const previous = chars[nextIndex - 1] || '';
+        const next = chars[nextIndex] || '';
+        let delay = randomBetween(profile.minDelay, profile.maxDelay);
+
+        if (/\s/.test(previous) || /\s/.test(next)) {
+            delay += randomBetween(profile.wordPauseMin, profile.wordPauseMax);
+        }
+        if (/[.,!?;:]/.test(previous)) {
+            delay += randomBetween(profile.punctuationPauseMin, profile.punctuationPauseMax);
+        }
+        if (Math.random() < profile.microPauseChance) {
+            delay += randomBetween(36, 118);
+        }
+        if (nextIndex >= chars.length - 2) {
+            delay += randomBetween(18, 58);
+        }
+
+        return delay;
+    }
+
+    function cleanupTitleGeneration(title, sourceText) {
+        const fx = title.__titleGenerationFx;
+        if (!fx) return;
+
+        if (fx.stream) fx.stream.pause();
+        if (fx.cursorBlink) fx.cursorBlink.pause();
+        if (typeof anime !== 'undefined') {
+            anime.remove(fx.state);
+            anime.remove(fx.cursor);
+        }
+        if (typeof gsap !== 'undefined') {
+            gsap.killTweensOf([fx.textEl, fx.cursor]);
+        }
+        if (fx.cursor) fx.cursor.remove();
+        title.classList.remove('is-generating-title', 'is-generation-complete');
+        title.textContent = sourceText || title.dataset.titleGenerationSource || title.textContent || '';
+        title.style.minHeight = '';
+        delete title.__titleGenerationFx;
+    }
+
     function initSectionTitleGenerationFx(content) {
         if (!content || typeof anime === 'undefined') return;
 
         const reduceMotion = window.matchMedia &&
             window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         const titleTargets = getSectionTitleTargets(content);
+        const profile = getTitleGenerationProfile();
 
         titleTargets.forEach((title, titleIndex) => {
             const sourceText = getTitleGenerationText(title);
@@ -109,18 +245,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             title.dataset.titleGenerationSource = sourceText;
             title.setAttribute('aria-label', sourceText);
-
-            if (title.__titleGenerationFx) {
-                anime.remove(title.__titleGenerationFx.state);
-                anime.remove(title.__titleGenerationFx.cursor);
-                if (title.__titleGenerationFx.cursorBlink) {
-                    title.__titleGenerationFx.cursorBlink.pause();
-                }
-                if (title.__titleGenerationFx.cursor) {
-                    title.__titleGenerationFx.cursor.remove();
-                }
-                delete title.__titleGenerationFx;
-            }
+            cleanupTitleGeneration(title, sourceText);
 
             if (reduceMotion) {
                 title.textContent = sourceText;
@@ -134,63 +259,142 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const chars = Array.from(sourceText);
             const state = { progress: 0 };
+            const textEl = document.createElement('span');
             const cursor = document.createElement('span');
+            textEl.className = 'title-generation-text';
+            textEl.setAttribute('aria-hidden', 'true');
             cursor.className = 'title-generation-cursor';
             cursor.setAttribute('aria-hidden', 'true');
-            cursor.textContent = '|';
-            cursor.style.display = 'inline-block';
-            cursor.style.marginLeft = '0.08em';
-            cursor.style.opacity = '1';
 
-            title.__titleGenerationFx = { state, cursor, cursorBlink: null };
-            anime.remove(title);
-            title.textContent = '';
-            title.appendChild(cursor);
-
-            const render = (done) => {
-                const visibleCount = done
-                    ? chars.length
-                    : Math.min(chars.length, Math.floor(state.progress));
-                title.textContent = chars.slice(0, visibleCount).join('');
-                if (!done) title.appendChild(cursor);
+            title.__titleGenerationFx = {
+                state,
+                textEl,
+                cursor,
+                cursorBlink: null,
+                stream: null,
+                index: 0,
+                lastRendered: -1
             };
+            anime.remove(title);
+            title.classList.add('is-generating-title');
+            title.textContent = '';
+            title.append(textEl, cursor);
+
+            const fx = title.__titleGenerationFx;
+            const render = (visibleCount) => {
+                const count = Math.max(0, Math.min(chars.length, visibleCount));
+                if (count === fx.lastRendered) return;
+                fx.lastRendered = count;
+                textEl.textContent = chars.slice(0, count).join('');
+            };
+
+            if (typeof gsap !== 'undefined') {
+                gsap.fromTo(cursor,
+                    { scaleY: 0.35 },
+                    { scaleY: 1, duration: 0.24, ease: 'power2.out', overwrite: 'auto' }
+                );
+            }
 
             const cursorBlink = anime({
                 targets: cursor,
-                opacity: [1, 0.2],
-                duration: 520,
-                easing: 'linear',
+                opacity: [0.95, 0.48],
+                duration: 620,
+                easing: 'easeInOutSine',
                 direction: 'alternate',
                 loop: true
             });
-            title.__titleGenerationFx.cursorBlink = cursorBlink;
+            fx.cursorBlink = cursorBlink;
 
-            anime({
-                targets: state,
-                progress: chars.length,
-                duration: Math.min(1700, Math.max(720, chars.length * 48)),
-                delay: 180 + titleIndex * 140,
-                easing: 'linear',
-                update: () => render(false),
-                complete: () => {
-                    title.textContent = sourceText;
-                    title.appendChild(cursor);
-                    cursorBlink.pause();
-                    anime.remove(cursor);
-                    anime({
+            const finish = () => {
+                render(chars.length);
+                title.classList.add('is-generation-complete');
+                cursorBlink.pause();
+
+                if (typeof gsap !== 'undefined') {
+                    gsap.fromTo(textEl,
+                        { filter: 'brightness(1.22)' },
+                        { filter: 'brightness(1)', duration: 0.36, ease: 'power2.out', overwrite: 'auto' }
+                    );
+                }
+
+                anime.remove(cursor);
+                anime.timeline({
+                    complete: () => {
+                        cursor.remove();
+                        title.classList.remove('is-generating-title', 'is-generation-complete');
+                        title.textContent = sourceText;
+                        title.style.minHeight = '';
+                        delete title.__titleGenerationFx;
+                    }
+                })
+                    .add({
+                        targets: cursor,
+                        opacity: [0.95, 1],
+                        scaleX: [1, 1.34],
+                        scaleY: [1, 0.82],
+                        duration: 150,
+                        easing: 'easeOutQuad'
+                    })
+                    .add({
                         targets: cursor,
                         opacity: 0,
-                        duration: 160,
-                        easing: 'easeOutQuad',
-                        complete: () => {
-                            cursor.remove();
-                            title.textContent = sourceText;
-                            title.style.minHeight = '';
-                            delete title.__titleGenerationFx;
-                        }
+                        scaleX: 0.42,
+                        scaleY: 0.3,
+                        translateX: profile.finalDrift,
+                        duration: 360,
+                        delay: profile.finalHold,
+                        easing: 'easeOutExpo'
                     });
+            };
+
+            const pulse = (chunkLength) => {
+                if (typeof gsap === 'undefined') return;
+
+                if (profile.cursorNudge) {
+                    gsap.fromTo(cursor,
+                        { x: Math.min(5, 1.4 + chunkLength * 0.9) },
+                        { x: 0, duration: 0.18, ease: 'power3.out', overwrite: 'auto' }
+                    );
                 }
-            });
+                if (profile.textPulse && Math.random() < 0.58) {
+                    gsap.fromTo(textEl,
+                        { filter: 'brightness(1.2)' },
+                        { filter: 'brightness(1)', duration: 0.2, ease: 'power2.out', overwrite: 'auto' }
+                    );
+                }
+            };
+
+            const streamNext = (delay) => {
+                if (!title.__titleGenerationFx) return;
+                if (fx.index >= chars.length) {
+                    finish();
+                    return;
+                }
+
+                const startIndex = fx.index;
+                const chunkLength = getTitleChunkLength(chars, startIndex, profile);
+                const nextIndex = Math.min(chars.length, startIndex + chunkLength);
+
+                fx.stream = anime({
+                    targets: state,
+                    progress: nextIndex,
+                    duration: profile.stepDuration + chunkLength * profile.perCharDuration,
+                    delay,
+                    easing: 'easeOutQuad',
+                    update: () => {
+                        render(Math.floor(state.progress));
+                    },
+                    complete: () => {
+                        fx.index = nextIndex;
+                        state.progress = nextIndex;
+                        render(nextIndex);
+                        pulse(chunkLength);
+                        streamNext(getTitleStepDelay(chars, nextIndex, profile));
+                    }
+                });
+            };
+
+            streamNext(profile.firstDelay + titleIndex * 110);
         });
     }
 
