@@ -1993,13 +1993,20 @@ body.light-theme .client-logs .ipc-link:hover {
         max-height: 80vh;
     }
     
-    /* Push the info button above the footer line + scroll-progress bar so
-       it isn't visually crammed against either of them on small screens. */
+    /* Info button anchored to the bottom-right corner. We park it just
+       above the footer's vertical band (footer baseline ≈ bottom: 20 px,
+       text height ≈ 18 px → footer top ≈ bottom: 38 px). At bottom: 56 px
+       the button bottom sits 18 px clear of the footer top, so there is
+       no chance of overlap even with the centered footer text reaching
+       the edges on narrow phones, while still feeling like it belongs to
+       the same bottom-UI strip rather than floating in mid-air. */
     .help-button {
         width: 38px;
         height: 38px;
-        bottom: 70px;
-        right: 16px;
+        bottom: 56px;
+        right: 14px;
+        top: auto;
+        margin-top: 0;
         font-size: 14px;
     }
     
@@ -2971,11 +2978,14 @@ body.light-theme .tagline {
         display: none;
     }
 
+    /* Smaller phones — same corner-paired pattern, slightly smaller circle. */
     .help-button {
         width: 34px;
         height: 34px;
-        bottom: 64px;
+        bottom: 48px;
         right: 12px;
+        top: auto;
+        margin-top: 0;
         font-size: 12px;
     }
 
