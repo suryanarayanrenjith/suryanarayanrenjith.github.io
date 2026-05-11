@@ -5510,20 +5510,65 @@ function isOldBrowser() {
   body.light-theme .cli-taskbar-quit { color: #1d1d1f; border-color: rgba(0,0,0,0.18); }
 
   /* ===== Responsive ===== */
+  @media screen and (max-width: 1024px) {
+    /* Tablet — terminal a touch wider, header chrome tightened. */
+    .cli-terminal-overlay .cli-terminal-window { width: min(720px, 94%); }
+    .cli-terminal-overlay .header-title { font-size: 11px; }
+  }
+
   @media screen and (max-width: 768px) {
-    .cli-terminal-window { width: 96%; }
-    .cli-terminal-overlay .terminal { font-size: 0.92em; }
+    /* Phone landscape / large phones — terminal nearly full-bleed with a
+       comfortable margin, capped so the dock + cursor still float clear. */
+    .cli-terminal-overlay .cli-terminal-window {
+      width: calc(100vw - 16px);
+      max-width: calc(100vw - 16px);
+      max-height: calc(100vh - 96px);
+      top: 50%;
+      transform: translate(-50%, -50%);
+      border-radius: 12px;
+    }
+    .cli-terminal-overlay .terminal {
+      font-size: 0.92em;
+      max-height: calc(100vh - 110px);
+    }
     .cli-terminal-overlay .header { font-size: 0.78em; height: 36px; padding: 0 8px 0 12px; }
-    .cli-terminal-overlay .header-tab { font-size: 11px; padding: 5px 10px 5px 8px; max-width: 200px; }
+    .cli-terminal-overlay .header-tab { font-size: 11px; padding: 5px 10px 5px 8px; max-width: 180px; }
     .cli-terminal-overlay .header-title { display: none; }
     .cli-terminal-overlay .window-btn { width: 26px; height: 24px; }
     .cli-terminal-overlay .status-bar { font-size: 10px; padding: 0 12px; gap: 12px; }
+    .cli-terminal-overlay #cliOutput { padding: 10px 14px; }
+    .cli-terminal-overlay .input-line { padding: 8px 14px; }
+    .cli-terminal-overlay .prompt { font-size: 0.9em; margin-right: 6px; }
+    .cli-terminal-overlay input[type="text"]#cliCommandInput { font-size: 13.5px; }
     .cli-boot-logo { font-size: 10px; }
+
+    /* The site nav header is normally bumped to z-index 100005 while the
+       terminal is open (so the palette/music remain reachable on desktop).
+       On phones that overlap is unworkable — hide the nav entirely until
+       the terminal is closed. The maximized-rule below still wins for the
+       "is-maximized" case. */
+    body.cli-overlay-open header {
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+      z-index: 50 !important;
+      transition: opacity 200ms ease, visibility 0s linear 200ms;
+    }
   }
 
   @media screen and (max-width: 480px) {
-    .cli-terminal-overlay #cliOutput { font-size: 12.5px; }
-    .cli-terminal-overlay .prompt { font-size: 0.9em; }
+    /* Small phones — even tighter chrome, full screen-edge contact. */
+    .cli-terminal-overlay .cli-terminal-window {
+      width: calc(100vw - 10px);
+      max-width: calc(100vw - 10px);
+      max-height: calc(100vh - 80px);
+      border-radius: 10px;
+    }
+    .cli-terminal-overlay #cliOutput { font-size: 12.5px; padding: 8px 10px; }
+    .cli-terminal-overlay .input-line { padding: 6px 10px; }
+    .cli-terminal-overlay input[type="text"]#cliCommandInput { font-size: 13px; }
+    .cli-terminal-overlay .prompt { font-size: 0.85em; }
+    .cli-terminal-overlay .header-tab { max-width: 140px; padding: 4px 8px; }
     .cli-taskbar { gap: 8px; padding: 0 10px; font-size: 10.5px; }
     .cli-taskbar-app, .cli-taskbar-date { display: none; }
   }
