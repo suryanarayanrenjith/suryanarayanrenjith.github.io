@@ -80,184 +80,117 @@ document.addEventListener("DOMContentLoaded", () => {
         return document.body.classList.contains('experimental-motion-fx');
     }
 
-    const playedTitleHoverFxKeys = new Set();
+    function getSectionTitleTargets(content) {
+        if (!content) return [];
 
-    function getTitleHoverFxKey(content, sourceText) {
-        let sectionKey = 'global';
+        const explicitTitles = Array.from(content.querySelectorAll('.animated-text'));
+        if (explicitTitles.length) return explicitTitles;
 
-        try {
-            const storedSection = sessionStorage.getItem('lastSection');
-            if (storedSection) sectionKey = storedSection.toLowerCase();
-        } catch (error) {
-            // Ignore storage access issues in privacy-restricted contexts.
-        }
-
-        const normalizedText = String(sourceText || '')
-            .replace(/\s+/g, ' ')
-            .trim()
-            .toLowerCase();
-
-        return `${sectionKey}::${normalizedText || 'title'}`;
+        const fallbackTitle = content.querySelector('h1');
+        return fallbackTitle ? [fallbackTitle] : [];
     }
 
-    function initSectionTitleHoverFx(content) {
-        if (!content || typeof Letterize === 'undefined' || typeof anime === 'undefined') return;
+    function getTitleGenerationText(title) {
+        const storedText = title.dataset.titleGenerationSource;
+        const currentText = title.textContent || '';
+        return (storedText || currentText).replace(/\s+/g, ' ').trim();
+    }
 
-        const titleTargets = Array.from(content.querySelectorAll('.animated-text'));
-        if (!titleTargets.length) {
-            const fallbackTitle = content.querySelector('h1');
-            if (fallbackTitle) titleTargets.push(fallbackTitle);
-        }
+    function initSectionTitleGenerationFx(content) {
+        if (!content || typeof anime === 'undefined') return;
 
-        titleTargets.forEach(title => {
-            if (title.dataset.letterHoverBound === 'true') return;
+        const reduceMotion = window.matchMedia &&
+            window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const titleTargets = getSectionTitleTargets(content);
 
-            if (!title.dataset.letterSourceText) {
-                title.dataset.letterSourceText = title.textContent || '';
-            }
-            const sourceText = title.dataset.letterSourceText || '';
-            const hoverFxKey = getTitleHoverFxKey(content, sourceText);
+        titleTargets.forEach((title, titleIndex) => {
+            const sourceText = getTitleGenerationText(title);
+            if (!sourceText) return;
 
-            let chars = Array.from(title.querySelectorAll('.char'));
-            if (!chars.length) {
-                try {
-                    const letterized = new Letterize({ targets: title });
-                    chars = Array.from(letterized.listAll || []);
-                    title.dataset.letterized = 'true';
-                } catch (error) {
-                    return;
+            title.dataset.titleGenerationSource = sourceText;
+            title.setAttribute('aria-label', sourceText);
+
+            if (title.__titleGenerationFx) {
+                anime.remove(title.__titleGenerationFx.state);
+                anime.remove(title.__titleGenerationFx.cursor);
+                if (title.__titleGenerationFx.cursorBlink) {
+                    title.__titleGenerationFx.cursorBlink.pause();
                 }
+                if (title.__titleGenerationFx.cursor) {
+                    title.__titleGenerationFx.cursor.remove();
+                }
+                delete title.__titleGenerationFx;
             }
 
-            if (!chars.length) return;
+            if (reduceMotion) {
+                title.textContent = sourceText;
+                return;
+            }
 
-            const isSpaceChar = (char) => {
-                const raw = char.textContent || '';
-                return raw === ' ' || raw === '\u00A0' || raw.trim() === '';
+            const measuredHeight = title.getBoundingClientRect().height;
+            if (measuredHeight > 0) {
+                title.style.minHeight = `${Math.ceil(measuredHeight)}px`;
+            }
+
+            const chars = Array.from(sourceText);
+            const state = { progress: 0 };
+            const cursor = document.createElement('span');
+            cursor.className = 'title-generation-cursor';
+            cursor.setAttribute('aria-hidden', 'true');
+            cursor.textContent = '|';
+            cursor.style.display = 'inline-block';
+            cursor.style.marginLeft = '0.08em';
+            cursor.style.opacity = '1';
+
+            title.__titleGenerationFx = { state, cursor, cursorBlink: null };
+            anime.remove(title);
+            title.textContent = '';
+            title.appendChild(cursor);
+
+            const render = (done) => {
+                const visibleCount = done
+                    ? chars.length
+                    : Math.min(chars.length, Math.floor(state.progress));
+                title.textContent = chars.slice(0, visibleCount).join('');
+                if (!done) title.appendChild(cursor);
             };
 
-            const gapAfterIndexes = new Set();
-            let nonSpaceCursor = -1;
-            for (const ch of sourceText) {
-                if (/\s/.test(ch)) {
-                    if (nonSpaceCursor >= 0) gapAfterIndexes.add(nonSpaceCursor);
-                } else {
-                    nonSpaceCursor += 1;
-                }
-            }
+            const cursorBlink = anime({
+                targets: cursor,
+                opacity: [1, 0.2],
+                duration: 520,
+                easing: 'linear',
+                direction: 'alternate',
+                loop: true
+            });
+            title.__titleGenerationFx.cursorBlink = cursorBlink;
 
-            const hasExplicitSpaceChars = chars.some(isSpaceChar);
-
-            const animatedChars = [];
-
-            chars.forEach(char => {
-                char.style.display = 'inline-block';
-                char.style.willChange = 'transform, filter, text-shadow, opacity';
-                char.style.marginRight = '0';
-
-                if (isSpaceChar(char)) {
-                    // Keep a stable visual gap between words after Letterize splitting.
-                    char.textContent = '\u00A0';
-                    char.style.width = '0.42em';
-                    char.style.willChange = 'auto';
-                } else {
-                    char.style.width = 'auto';
-                    if (!hasExplicitSpaceChars && gapAfterIndexes.has(animatedChars.length)) {
-                        // Some Letterize outputs drop space chars entirely; restore word gaps here.
-                        char.style.marginRight = '0.38em';
-                    }
-                    animatedChars.push(char);
+            anime({
+                targets: state,
+                progress: chars.length,
+                duration: Math.min(1700, Math.max(720, chars.length * 48)),
+                delay: 180 + titleIndex * 140,
+                easing: 'linear',
+                update: () => render(false),
+                complete: () => {
+                    title.textContent = sourceText;
+                    title.appendChild(cursor);
+                    cursorBlink.pause();
+                    anime.remove(cursor);
+                    anime({
+                        targets: cursor,
+                        opacity: 0,
+                        duration: 160,
+                        easing: 'easeOutQuad',
+                        complete: () => {
+                            cursor.remove();
+                            title.textContent = sourceText;
+                            title.style.minHeight = '';
+                            delete title.__titleGenerationFx;
+                        }
+                    });
                 }
             });
-
-            if (!animatedChars.length) return;
-
-            const playHoverFx = () => {
-                if (title.dataset.hoverFxPlayed === 'true' || playedTitleHoverFxKeys.has(hoverFxKey)) {
-                    return;
-                }
-
-                title.dataset.hoverFxPlayed = 'true';
-                title.dataset.hoverFxAnimating = 'true';
-                playedTitleHoverFxKeys.add(hoverFxKey);
-
-                const hyper = isHyperModeEnabled();
-                const offsetY = hyper ? 18 : 10;
-                const driftX = hyper ? 10 : 4;
-                const glowShadow = hyper
-                    ? '0 0 28px rgba(255,255,255,0.5)'
-                    : '0 0 14px rgba(255,255,255,0.28)';
-                const blurPeak = hyper ? 'blur(1.05px)' : 'blur(0.45px)';
-                const rippleY = hyper ? 13 : 3;
-                const rippleX = hyper ? 7 : 1.5;
-                const rippleRot = hyper ? 6 : 1.2;
-                const rippleDuration = hyper ? 185 : 230;
-                const rippleStagger = hyper ? 6 : 10;
-
-                anime.remove(animatedChars);
-                anime.timeline({ loop: false })
-                    .add({
-                        targets: animatedChars,
-                        translateY: (el, i) => (i % 2 === 0 ? -offsetY : offsetY * 0.6),
-                        translateX: () => anime.random(-driftX, driftX),
-                        rotateZ: () => anime.random(-9, 9),
-                        textShadow: [
-                            '0 0 0 rgba(255,255,255,0)',
-                            glowShadow
-                        ],
-                        filter: ['blur(0px)', blurPeak],
-                        duration: hyper ? 220 : 260,
-                        easing: 'easeOutExpo',
-                        delay: anime.stagger(14, { from: 'center' })
-                    })
-                    .add({
-                        targets: animatedChars,
-                        translateY: (el, i) => Math.sin((i + 1) * 0.65) * rippleY,
-                        translateX: (el, i) => Math.cos((i + 1) * 0.5) * rippleX,
-                        rotateZ: (el, i) => Math.sin((i + 1) * 0.7) * rippleRot,
-                        duration: rippleDuration,
-                        easing: 'easeInOutSine',
-                        delay: anime.stagger(rippleStagger)
-                    }, '-=110')
-                    .add({
-                        targets: animatedChars,
-                        translateX: 0,
-                        translateY: 0,
-                        rotateZ: 0,
-                        filter: 'blur(0px)',
-                        textShadow: '0 0 0 rgba(255,255,255,0)',
-                        duration: hyper ? 560 : 620,
-                        easing: 'easeOutElastic(1, 0.65)',
-                        delay: anime.stagger(10, { from: 'center' }),
-                        complete: () => {
-                            title.dataset.hoverFxAnimating = 'false';
-                        }
-                    }, '-=70');
-            };
-
-            const resetHoverFx = () => {
-                if (title.dataset.hoverFxAnimating === 'true') {
-                    return;
-                }
-                anime.remove(animatedChars);
-                anime({
-                    targets: animatedChars,
-                    translateX: 0,
-                    translateY: 0,
-                    rotateZ: 0,
-                    filter: 'blur(0px)',
-                    textShadow: '0 0 0 rgba(255,255,255,0)',
-                    duration: 240,
-                    easing: 'easeOutQuad'
-                });
-            };
-
-            title.addEventListener('mouseenter', playHoverFx);
-            title.addEventListener('focusin', playHoverFx);
-            title.addEventListener('mouseleave', resetHoverFx);
-            title.addEventListener('focusout', resetHoverFx);
-
-            title.dataset.letterHoverBound = 'true';
         });
     }
 
@@ -390,30 +323,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         initMagneticButtons();
 
-        if (!hyper && typeof Letterize !== 'undefined' && typeof anime !== 'undefined') {
-            headings.forEach(heading => {
-                if (heading.dataset.letterized) return;
-                if (!heading.dataset.letterSourceText) {
-                    heading.dataset.letterSourceText = heading.textContent || '';
-                }
-                heading.dataset.letterized = 'true';
-                try {
-                    const letterized = new Letterize({ targets: heading });
-                    anime.timeline({ loop: false }).add({
-                        targets: letterized.listAll,
-                        opacity: [0, 1],
-                        translateY: [8, 0],
-                        easing: 'easeOutExpo',
-                        duration: 600,
-                        delay: anime.stagger(20, { from: 'center' })
-                    });
-                } catch (e) {
-                    // Skip letterized animation for complex heading markup.
-                }
-            });
-        }
-
         if (typeof anime !== 'undefined') {
+            initSectionTitleGenerationFx(content);
+
             if (linkCards.length) {
                 anime({
                     targets: linkCards,
@@ -427,7 +339,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
 
-        initSectionTitleHoverFx(content);
             linkCards.forEach(card => {
                 if (card.dataset.animeHover) return;
                 card.dataset.animeHover = 'true';
