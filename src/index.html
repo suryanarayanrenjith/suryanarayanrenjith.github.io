@@ -4773,26 +4773,29 @@ function isOldBrowser() {
   .cli-terminal-window.is-maximized::after { display: none !important; }
 
   /* ===== Experimental modes — apply the page-wide FX to the terminal too ===== */
-  /* Motion FX → continuous high-frequency shake on the window. The page-wide keyframes
-     overwrite `transform`, which would knock the centered translate(-50%, -52%) off,
-     so we use CLI-specific keyframes that compose the jitter on top of the centering.
-     Uses linear timing (not steps) so the window appears to *shake* rather than
-     teleport between two states (which read as flicker/disappear-reappear).
-     IMPORTANT: We must NOT apply the shake while the overlay is spawning or
-     closing — those phases own the `transform`/`filter`/`clip-path` timeline
-     (clip-path drives the glitchy slice reveal) and our animation would
-     override the transform, leaving the clip-path slices visible as a
-     half-rendered "skeleton" of the window. The `:not(.is-spawning):not(.is-closing)`
-     gate keeps the entrance / exit pristine; the shake resumes the moment
-     the spawn finishes. */
+  /* Motion FX → continuous high-frequency shake on the window.
+     CRITICAL CONSTRAINTS (the previous implementation broke both):
+       1. The inner `.terminal` element relies on `backdrop-filter: blur(24px)`
+          for its solid-glass background (its own bg is only `rgba(0,0,0,0.78)`).
+          Applying `filter` to ANY ancestor — or even `will-change: filter` —
+          creates a stacking context that prevents `backdrop-filter` from seeing
+          the page underneath, so the terminal interior renders almost
+          transparent. Therefore: NO filter, NO will-change: filter on
+          `.cli-terminal-window` or any ancestor.
+       2. The window's centered position depends on `transform: translate(-50%, -52%)`.
+          The page-wide motion-fx keyframes (used for `#content`) overwrite
+          `transform` with a non-centered jitter, knocking the window off-center.
+          We compose the jitter on top of the centering with calc().
+       3. Spawn/close own the transform+clip-path timeline. Running our shake
+          during those phases left a half-clipped "skeleton" frame visible.
+          The `:not(.is-spawning):not(.is-closing)` gate keeps the entrance/exit
+          pristine; the shake resumes the moment the spawn finishes. */
   body.experimental-motion-fx .cli-terminal-overlay:not(.is-spawning):not(.is-closing) .cli-terminal-window {
-    animation: cliMotionFxShake 0.42s linear infinite,
-               cliMotionFxSkew 1.1s ease-in-out infinite !important;
-    will-change: transform, filter;
+    animation: cliMotionFxShake 0.42s linear infinite !important;
+    will-change: transform;
   }
   body.experimental-motion-fx .cli-terminal-overlay:not(.is-spawning):not(.is-closing) .cli-terminal-window.is-maximized {
-    animation: cliMotionFxShakeMax 0.42s linear infinite,
-               cliMotionFxSkew 1.1s ease-in-out infinite !important;
+    animation: cliMotionFxShakeMax 0.42s linear infinite !important;
   }
   @keyframes cliMotionFxShake {
     0%   { transform: translate(-50%, -52%); }
@@ -4820,16 +4823,35 @@ function isOldBrowser() {
     90%  { transform: translate(-1px, 1px); }
     100% { transform: translate(0, 0); }
   }
-  /* Skew via filter so it stacks alongside the translate animation without clobbering it */
-  @keyframes cliMotionFxSkew {
-    0%, 100% { filter: none; }
-    30%      { filter: blur(0.3px) contrast(1.04); }
-    58%      { filter: blur(0.5px) contrast(1.06); }
-    84%      { filter: blur(0.3px) contrast(1.03); }
+  /* CRT-style glitch substitute for the dropped filter blur: animate a
+     pseudo-element overlay that lives INSIDE the window. Because it's a
+     sibling of `.terminal` (not an ancestor), it cannot break the inner
+     backdrop-filter, but its `mix-blend-mode` still adds a flicker that
+     reads as motion glitch. */
+  body.experimental-motion-fx .cli-terminal-overlay:not(.is-spawning):not(.is-closing) .cli-terminal-window::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 22;
+    background: linear-gradient(180deg,
+      rgba(255, 255, 255, 0.04) 0%,
+      transparent 22%,
+      transparent 78%,
+      rgba(255, 255, 255, 0.04) 100%);
+    mix-blend-mode: screen;
+    animation: cliMotionFxFlicker 0.62s steps(6, end) infinite;
   }
-  /* Subtle text shimmy that rides on the window shake — kept small so the body of
-     output never overshoots the terminal's padding and looks like it's vanishing.
-     Same spawn/close exclusion as the window shake so the entrance flow stays clean. */
+  @keyframes cliMotionFxFlicker {
+    0%, 100% { opacity: 0.22; transform: translateY(0); }
+    20%      { opacity: 0.55; transform: translateY(-1px); }
+    40%      { opacity: 0.10; transform: translateY(1px); }
+    60%      { opacity: 0.40; transform: translateY(0); }
+    80%      { opacity: 0.18; transform: translateY(-1px); }
+  }
+  /* Subtle text shimmy on the live prompt only. The output area must NOT
+     animate transform — its parent is the scrolling .terminal, and a shifted
+     transform there visually "tears" the scroll buffer against the chrome. */
   body.experimental-motion-fx .cli-terminal-overlay:not(.is-spawning):not(.is-closing) .input-line .prompt {
     animation: cliMotionFxTextShimmy 0.36s linear infinite;
   }
