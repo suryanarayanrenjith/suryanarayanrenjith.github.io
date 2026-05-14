@@ -527,8 +527,13 @@ function isDesktop() {
                         </div>
                         <div class="tab-pane" id="terminal-tab">
                             <div class="terminal-info">
-                                <p>SuryaOS - an in-page terminal that integrates with the portfolio.</p>
-                                <p class="terminal-info-sub">Drive the page from the shell: <code>theme</code>, <code>music</code>, <code>fx</code>, <code>notify</code>, <code>stats</code>. Run <code>./about</code>, <code>./projects</code>, or <code>./resume</code> to load sections inline. Press <span class="shortcut-key inline">Ctrl + Shift + K</span> any time to toggle.</p>
+                                <p>SuryaOS &mdash; an in-page terminal that integrates with the portfolio.</p>
+                                <p class="terminal-info-sub" id="terminalInfoSub">
+                                    Drive the page from the shell:
+                                    <code>theme</code><span data-music-code-wrap>, <code>music</code></span>, <code>fx</code>, <code>notify</code>, <code>stats</code>.
+                                    Run <code>./about</code>, <code>./projects</code>, or <code>./resume</code> to load sections inline.
+                                    Press <span class="shortcut-key inline">Ctrl + Shift + K</span> any time to toggle.
+                                </p>
                                 <button class="action-button" id="openTerminal">
                                     <i class="fa-solid fa-terminal"></i> Launch Terminal
                                 </button>
@@ -613,6 +618,9 @@ function isDesktop() {
                                 : [];
                             const vortexCommandItem = commandPaletteItems.find(item => item.dataset.command === 'toggle-vortex-cursor');
                             const audioVizCommandItem = commandPaletteItems.find(item => item.dataset.command === 'toggle-audio-viz');
+                            const motionFxCommandItem = commandPaletteItems.find(item => item.dataset.command === 'toggle-motion-fx');
+                            const reducedMotionQuery = (typeof window.matchMedia === 'function')
+                                ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
 
                             if (commandPalette && commandPalette.parentElement !== document.body) {
                                 document.body.appendChild(commandPalette);
@@ -925,6 +933,30 @@ function isDesktop() {
                                 }
                             }
 
+                            function isMotionFxAvailable() {
+                                // Motion FX is a high-frequency shake. If the browser/user has
+                                // signaled `prefers-reduced-motion: reduce`, the global stylesheet
+                                // clamps every animation to ~0ms — so the toggle would silently do
+                                // nothing. Hide it instead of pretending it works.
+                                return !reducedMotionQuery || !reducedMotionQuery.matches;
+                            }
+
+                            function syncMotionFxCommandAvailability(refreshFilter) {
+                                if (!motionFxCommandItem) return;
+                                const available = isMotionFxAvailable();
+                                motionFxCommandItem.dataset.unavailable = available ? '0' : '1';
+
+                                if (!available) {
+                                    motionFxCommandItem.classList.remove('is-active');
+                                    document.body.classList.remove('experimental-motion-fx');
+                                    setStoredToggle('exp.motionFx', false);
+                                }
+
+                                if (refreshFilter) {
+                                    filterCommandPalette(commandPaletteInput ? commandPaletteInput.value : '');
+                                }
+                            }
+
                             function syncStarfieldLabel(forceEnabled) {
                                 const enabled = typeof forceEnabled === 'boolean' ? forceEnabled : isStarfieldEnabled();
                                 if (starfieldStatus) starfieldStatus.textContent = enabled ? 'On' : 'Off';
@@ -1001,6 +1033,10 @@ function isDesktop() {
                                     enabled = false;
                                 }
 
+                                if (name === 'motionFx' && enabled && !isMotionFxAvailable()) {
+                                    enabled = false;
+                                }
+
                                 if (name === 'audioViz' && enabled) {
                                     var viz = window.__audioVisualizer;
                                     if (!viz || !viz.isAudible()) {
@@ -1039,6 +1075,7 @@ function isDesktop() {
                                 });
                                 syncVortexCursorCommandAvailability(false);
                                 syncAudioVizCommandAvailability(false);
+                                syncMotionFxCommandAvailability(false);
                                 syncStarfieldLabel();
                             }
 
@@ -1275,6 +1312,14 @@ function isDesktop() {
                                         hideCommandPalette();
                                         break;
                                     case 'toggle-motion-fx':
+                                        if (!isMotionFxAvailable()) {
+                                            // Same defensive pattern as Vortex Cursor — keep the body
+                                            // class off and re-sync the palette so it disappears.
+                                            toggleExperimentalFeature('motionFx', false);
+                                            syncMotionFxCommandAvailability(true);
+                                            hideCommandPalette();
+                                            break;
+                                        }
                                         toggleExperimentalFeature('motionFx');
                                         hideCommandPalette();
                                         break;
@@ -1396,9 +1441,34 @@ function isDesktop() {
 
                             // Hide the Audio Visualizer command entirely when playback
                             // is unsupported (autoplay rejected, decode error, etc.).
+                            const musicCodeWrap = document.querySelector('[data-music-code-wrap]');
+                            function syncMusicReferencesInModal() {
+                                if (!musicCodeWrap) return;
+                                if (!isAudioPlaybackAvailable()) {
+                                    musicCodeWrap.style.display = 'none';
+                                } else {
+                                    musicCodeWrap.style.display = '';
+                                }
+                            }
+                            syncMusicReferencesInModal();
                             window.addEventListener('audioPlaybackUnavailable', () => {
                                 syncAudioVizCommandAvailability(true);
+                                syncMusicReferencesInModal();
                             });
+
+                            // Honor `prefers-reduced-motion` for the Motion FX toggle. The
+                            // user can flip this preference at runtime (system settings →
+                            // accessibility) so we listen for the media-query change instead
+                            // of only sampling it once at boot.
+                            if (reducedMotionQuery) {
+                                const onReducedMotionChange = () => syncMotionFxCommandAvailability(true);
+                                if (typeof reducedMotionQuery.addEventListener === 'function') {
+                                    reducedMotionQuery.addEventListener('change', onReducedMotionChange);
+                                } else if (typeof reducedMotionQuery.addListener === 'function') {
+                                    // Safari < 14 fallback
+                                    reducedMotionQuery.addListener(onReducedMotionChange);
+                                }
+                            }
 
                             initializeExperimentalFeatures();
 
@@ -4480,6 +4550,12 @@ function isOldBrowser() {
     display: flex;
     align-items: center;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.015), transparent);
+    transition: background 200ms ease, border-top-color 200ms ease;
+  }
+  .cli-terminal-overlay .terminal > .input-line:focus-within {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent);
+    border-top-color: rgba(255, 255, 255, 0.16);
   }
 
   .cli-terminal-overlay .header {
@@ -4678,43 +4754,63 @@ function isOldBrowser() {
   .cli-terminal-window.is-maximized::after { display: none !important; }
 
   /* ===== Experimental modes — apply the page-wide FX to the terminal too ===== */
-  /* Motion FX → glitch jitter + skew burst on the window. The page-wide keyframes
+  /* Motion FX → continuous high-frequency shake on the window. The page-wide keyframes
      overwrite `transform`, which would knock the centered translate(-50%, -52%) off,
-     so we use CLI-specific keyframes that compose the jitter on top of the centering. */
+     so we use CLI-specific keyframes that compose the jitter on top of the centering.
+     Uses linear timing (not steps) so the window appears to *shake* rather than
+     teleport between two states (which read as flicker/disappear-reappear). */
   body.experimental-motion-fx .cli-terminal-window {
-    animation: cliMotionFxJitter 0.14s steps(2, end) infinite,
-               cliMotionFxSkew 1.1s steps(2, end) infinite !important;
+    animation: cliMotionFxShake 0.42s linear infinite,
+               cliMotionFxSkew 1.1s ease-in-out infinite !important;
+    will-change: transform, filter;
   }
   body.experimental-motion-fx .cli-terminal-window.is-maximized {
-    animation: cliMotionFxJitterMax 0.14s steps(2, end) infinite,
-               cliMotionFxSkew 1.1s steps(2, end) infinite !important;
+    animation: cliMotionFxShakeMax 0.42s linear infinite,
+               cliMotionFxSkew 1.1s ease-in-out infinite !important;
   }
-  @keyframes cliMotionFxJitter {
-    0%, 100% { transform: translate(-50%, -52%); }
-    18%      { transform: translate(calc(-50% - 3px), calc(-52% + 2px)); }
-    36%      { transform: translate(calc(-50% + 3px), calc(-52% - 2px)); }
-    54%      { transform: translate(calc(-50% - 4px), calc(-52% - 1px)); }
-    72%      { transform: translate(calc(-50% + 4px), calc(-52% + 2px)); }
-    88%      { transform: translate(calc(-50% - 2px), calc(-52% + 3px)); }
+  @keyframes cliMotionFxShake {
+    0%   { transform: translate(-50%, -52%); }
+    10%  { transform: translate(calc(-50% - 2px), calc(-52% - 1px)); }
+    20%  { transform: translate(calc(-50% + 3px), calc(-52% + 1px)); }
+    30%  { transform: translate(calc(-50% - 1px), calc(-52% + 2px)); }
+    40%  { transform: translate(calc(-50% + 2px), calc(-52% - 2px)); }
+    50%  { transform: translate(calc(-50% - 3px), calc(-52% + 1px)); }
+    60%  { transform: translate(calc(-50% + 2px), calc(-52% + 2px)); }
+    70%  { transform: translate(calc(-50% - 2px), calc(-52% - 1px)); }
+    80%  { transform: translate(calc(-50% + 1px), calc(-52% - 2px)); }
+    90%  { transform: translate(calc(-50% - 1px), calc(-52% + 1px)); }
+    100% { transform: translate(-50%, -52%); }
   }
-  @keyframes cliMotionFxJitterMax {
-    0%, 100% { transform: translate(0, 0); }
-    18%      { transform: translate(-3px, 2px); }
-    36%      { transform: translate(3px, -2px); }
-    54%      { transform: translate(-4px, -1px); }
-    72%      { transform: translate(4px, 2px); }
-    88%      { transform: translate(-2px, 3px); }
+  @keyframes cliMotionFxShakeMax {
+    0%   { transform: translate(0, 0); }
+    10%  { transform: translate(-2px, -1px); }
+    20%  { transform: translate(3px, 1px); }
+    30%  { transform: translate(-1px, 2px); }
+    40%  { transform: translate(2px, -2px); }
+    50%  { transform: translate(-3px, 1px); }
+    60%  { transform: translate(2px, 2px); }
+    70%  { transform: translate(-2px, -1px); }
+    80%  { transform: translate(1px, -2px); }
+    90%  { transform: translate(-1px, 1px); }
+    100% { transform: translate(0, 0); }
   }
   /* Skew via filter so it stacks alongside the translate animation without clobbering it */
   @keyframes cliMotionFxSkew {
     0%, 100% { filter: none; }
-    30%      { filter: blur(0.4px) contrast(1.06); }
-    58%      { filter: blur(0.6px) contrast(1.08); }
-    84%      { filter: blur(0.4px) contrast(1.04); }
+    30%      { filter: blur(0.3px) contrast(1.04); }
+    58%      { filter: blur(0.5px) contrast(1.06); }
+    84%      { filter: blur(0.3px) contrast(1.03); }
   }
-  body.experimental-motion-fx .cli-terminal-overlay #cliOutput,
-  body.experimental-motion-fx .cli-terminal-overlay .prompt {
-    animation: motionFxTextSurge 0.18s steps(2, end) infinite;
+  /* Subtle text shimmy that rides on the window shake — kept small so the body of
+     output never overshoots the terminal's padding and looks like it's vanishing. */
+  body.experimental-motion-fx .cli-terminal-overlay .input-line .prompt {
+    animation: cliMotionFxTextShimmy 0.36s linear infinite;
+  }
+  @keyframes cliMotionFxTextShimmy {
+    0%, 100% { transform: translate3d(0, 0, 0); }
+    25%      { transform: translate3d(-1px, 0.5px, 0); }
+    50%      { transform: translate3d(1px, -0.5px, 0); }
+    75%      { transform: translate3d(-0.5px, 0, 0); }
   }
   /* Hyper mode → boost the window glow + saturated outline */
   body.experimental-hyper-mode .cli-terminal-window {
@@ -6046,7 +6142,14 @@ function isOldBrowser() {
     return text;
   }
   function availableCommandNames() {
-    return Object.keys(commands).filter(function (name) { return name !== 'builtin' && name !== 'section'; });
+    return Object.keys(commands).filter(function (name) {
+      if (name === 'builtin' || name === 'section') return false;
+      // Hide `music` when audio playback isn't supported — mirrors the GUI
+      // collapsing the music button on the same signal. Tab completion and
+      // `help` / `man` discovery should not surface a dead command.
+      if (name === 'music' && !isMusicAvailable()) return false;
+      return true;
+    });
   }
   function closestCmd(cmd) {
     var best = '', dist = Infinity;
@@ -6650,12 +6753,23 @@ function isOldBrowser() {
   };
   commands.man = function (args) {
     if (!args.length) return fail('What manual page do you want?\nFor example, try \'man ls\'.');
+    // `music` is gated on audio playback support — if the GUI hid the music
+    // button there's no man page for a command that doesn't exist.
+    if (args[0] === 'music' && !isMusicAvailable()) {
+      return fail('No manual entry for music');
+    }
     var page = manPages[args[0]];
     if (!page) return fail('No manual entry for ' + args[0]);
     return args[0].toUpperCase() + '(1)\n\nNAME\n    ' + page;
   };
 
   commands.help = function () {
+    // The "Page" row mirrors the GUI's nav music button — if audio playback is
+    // unsupported the GUI hides that button, so we drop `music` here too. The
+    // user shouldn't see a command that won't work.
+    var pageCommands = isMusicAvailable()
+      ? 'theme  music  fx  notify  stats  calc'
+      : 'theme  fx  notify  stats  calc';
     var sections = [
       ['Portfolio', './about  ./projects  ./resume  open'],
       ['Filesystem', 'ls  cd  pwd  cat  head  tail  mkdir  touch  rm  rmdir  cp  mv  tree  find  file  stat  chmod'],
@@ -6664,7 +6778,7 @@ function isOldBrowser() {
       ['Shell', 'help  man  history  clear  exit  alias  unalias  export  env  which  type'],
       ['Editor', 'vim'],
       ['Fun', 'neofetch  cowsay  fortune  cal  factor  sudo  quote'],
-      ['Page', 'theme  music  fx  notify  stats  calc']
+      ['Page', pageCommands]
     ];
     var labels = sections.map(function (section) { return section[0]; });
     labels = labels.concat(['Chaining', 'Piping', 'History', 'Open targets', 'Vim']);
@@ -6878,7 +6992,18 @@ function isOldBrowser() {
   };
 
   // ---- music: control the page's music button without leaving the terminal ----
+  // Mirrors the GUI behavior: when audio playback isn't supported in this browser
+  // (autoplay rejected, decode error, etc.), the GUI hides its music button — we
+  // refuse the command here too so the user gets a useful error instead of a
+  // misleading "playing" state.
+  function isMusicAvailable() {
+    return window.__audioPlaybackAvailable !== false;
+  }
+  function __musicUnavailableMsg() {
+    return 'music: audio playback is not supported in this browser';
+  }
   commands.music = function (args) {
+    if (!isMusicAvailable()) return fail(__musicUnavailableMsg());
     var arg = (args[0] || 'status').toLowerCase();
     var u = document.getElementById('unmuteButton');
     var m = document.getElementById('muteButton');
@@ -6886,7 +7011,16 @@ function isOldBrowser() {
     var playing = !m.classList.contains('hidden');
     if (arg === 'status') return 'music: ' + (playing ? 'playing' : 'muted');
     if (arg === 'play' || arg === 'unmute') {
-      if (!playing) { u.click(); return 'music: ▶ playing'; }
+      if (!playing) {
+        // The GUI click handler does its own .play().catch() — if autoplay is
+        // rejected at this point it will fire `audioPlaybackUnavailable`, which
+        // we already listen for to retract the music command from the CLI.
+        u.click();
+        // Re-check immediately: a synchronous rejection (e.g. element error)
+        // already marked playback unavailable, so report that instead of lying.
+        if (!isMusicAvailable()) return fail(__musicUnavailableMsg());
+        return 'music: ▶ playing';
+      }
       return 'music: already playing';
     }
     if (arg === 'pause' || arg === 'mute') {
@@ -6895,6 +7029,7 @@ function isOldBrowser() {
     }
     if (arg === 'toggle') {
       (playing ? m : u).click();
+      if (!isMusicAvailable()) return fail(__musicUnavailableMsg());
       return 'music: toggled (now ' + (playing ? 'muted' : 'playing') + ')';
     }
     return fail('music: usage — music [play|pause|toggle|mute|unmute|status]');
@@ -6959,43 +7094,81 @@ function isOldBrowser() {
 
   // ---- fx: toggle experimental modes from the terminal ----
   // Note: `hyper` is intentionally not exposed here (only available via the palette).
-  var __fxMap = {
-    'motion':      'experimental-motion-fx',
-    'vortex':      'experimental-vortex-cursor',
-    'freeze':      'experimental-motion-freeze',
-    'audio':       'experimental-audio-viz',
-    'zen':         'experimental-zen-mode'
+  // Each entry can declare an `available()` predicate — when it returns false the
+  // mode is hidden from listings *and* refuses to toggle on, matching what the
+  // command palette does. Keeps the surface area consistent across UIs.
+  var __reducedMotionQuery = (typeof window.matchMedia === 'function')
+    ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+  function isMotionFxAvailable() {
+    return !__reducedMotionQuery || !__reducedMotionQuery.matches;
+  }
+  function isAudioVizAvailable() {
+    // Visualizer requires music to actually be playing AND for playback to be
+    // supported at all — if either fails, omit it from the list.
+    return isMusicAvailable() && __isMusicPlaying();
+  }
+  function isVortexCursorAvailableInCLI() {
+    if (window.__fallbackCursorInUse) return false;
+    var hasCursorRoot = document.body.classList.contains('custom-cursor-active');
+    var hasCursorNodes = !!document.querySelector('.cursor-dot') && !!document.querySelector('.cursor-dot-outline');
+    return hasCursorRoot && hasCursorNodes;
+  }
+  var __fxRegistry = {
+    'motion':  { cls: 'experimental-motion-fx',      available: isMotionFxAvailable,
+                 unavailableMsg: 'fx: motion: this browser prefers reduced motion — toggle disabled' },
+    'vortex':  { cls: 'experimental-vortex-cursor',  available: isVortexCursorAvailableInCLI,
+                 unavailableMsg: 'fx: vortex: custom cursor not available (touch / fallback)' },
+    'freeze':  { cls: 'experimental-motion-freeze',  available: function () { return true; } },
+    'audio':   { cls: 'experimental-audio-viz',      available: isAudioVizAvailable,
+                 unavailableMsg: function () {
+                   if (!isMusicAvailable()) return 'fx: audio: audio playback is not supported in this browser';
+                   return 'fx: audio: no audio source detected\n' +
+                          'fx: enable music first (click the speaker in the nav, or run `music play`)';
+                 } },
+    'zen':     { cls: 'experimental-zen-mode',       available: function () { return true; } }
   };
+  function availableFxKeys() {
+    return Object.keys(__fxRegistry).filter(function (k) { return __fxRegistry[k].available(); });
+  }
   function __isMusicPlaying() {
     var m = document.getElementById('muteButton');
     // mute-icon is visible (no .hidden class) → click-to-mute → audio is currently on
     return !!(m && !m.classList.contains('hidden'));
   }
   commands.fx = function (args) {
+    var keys = availableFxKeys();
     if (!args.length) {
+      if (!keys.length) {
+        return 'fx: no experimental modes are available in this browser';
+      }
       var lines = ['available fx modes:'];
-      Object.keys(__fxMap).forEach(function (k) {
-        lines.push('  ' + rpad(k, 10) + (document.body.classList.contains(__fxMap[k]) ? '[on]' : '[off]'));
+      keys.forEach(function (k) {
+        lines.push('  ' + rpad(k, 10) + (document.body.classList.contains(__fxRegistry[k].cls) ? '[on]' : '[off]'));
       });
       lines.push('\nusage: fx <mode> [on|off|toggle]   |   fx reset');
       return lines.join('\n');
     }
     if (args[0] === 'reset') {
-      Object.keys(__fxMap).forEach(function (k) { document.body.classList.remove(__fxMap[k]); });
+      Object.keys(__fxRegistry).forEach(function (k) { document.body.classList.remove(__fxRegistry[k].cls); });
       return 'fx: all experimental modes cleared';
     }
     var key = args[0].toLowerCase();
-    var cls = __fxMap[key];
-    if (!cls) return fail('fx: unknown mode \'' + args[0] + '\' — try `fx` for the list');
+    var entry = __fxRegistry[key];
+    // Hidden modes report exactly the same error as unknown modes — no point
+    // teasing the user about a toggle they can't reach.
+    if (!entry || keys.indexOf(key) < 0) {
+      var hint = keys.length ? keys.join(', ') : '(none)';
+      return fail('fx: unknown mode \'' + args[0] + '\' — available: ' + hint);
+    }
+    var cls = entry.cls;
     var op = (args[1] || 'toggle').toLowerCase();
 
-    // The audio visualizer needs a running audio source. Refuse to enable it if
-    // music isn't actually playing (the visualizer would just render an empty bar
-    // graph and confuse the user).
     var willEnable = (op === 'on') || (op === 'toggle' && !document.body.classList.contains(cls));
-    if (key === 'audio' && willEnable && !__isMusicPlaying()) {
-      return fail('fx: audio: no audio source detected\n' +
-                  'fx: enable music first (click the speaker in the nav, or run `music play`)');
+    if (willEnable && !entry.available()) {
+      var msg = typeof entry.unavailableMsg === 'function'
+        ? entry.unavailableMsg()
+        : (entry.unavailableMsg || ('fx: ' + key + ' is not available in this browser'));
+      return fail(msg);
     }
 
     if (op === 'on')          document.body.classList.add(cls);
@@ -7634,7 +7807,10 @@ function isOldBrowser() {
     if (!outputEl) return;
     printPre('Welcome to SuryaOS 3.1 — In-Page Terminal Emulator');
     printPre('Executable section launchers: ./about  ./projects  ./resume   (protected — edits blocked)');
-    printPre('Page controls from the shell: theme · music · fx · notify · stats · calc · quote');
+    var pageLine = isMusicAvailable()
+      ? 'Page controls from the shell: theme · music · fx · notify · stats · calc · quote'
+      : 'Page controls from the shell: theme · fx · notify · stats · calc · quote';
+    printPre(pageLine);
     printPre('Type \'help\' for everything, \'man <cmd>\' for details.\n');
     updatePrompt();
   }
@@ -7955,6 +8131,10 @@ function isOldBrowser() {
       opacity: box.style.opacity,
       pointerEvents: box.style.pointerEvents
     };
+    // When the GUI marked playback as unsupported it collapsed this container
+    // intentionally — keep it hidden inside the terminal too. Don't force it
+    // open just to reveal a button that can't do anything.
+    if (window.__audioPlaybackAvailable === false) return;
     // Force the container open (CSS uses !important; clear JS-set inline styles too)
     box.style.maxWidth = '60px';
     box.style.opacity = '1';
@@ -8044,6 +8224,38 @@ function isOldBrowser() {
   // Dock pill click → restore terminal
   document.addEventListener('click', function (e) {
     if (e.target.closest('#cliDockPill')) restoreTerminal();
+  });
+
+  // When the GUI marks playback as unsupported (autoplay rejected mid-session,
+  // decode error, etc.), remove the music command from the CLI surface too —
+  // otherwise the user could still run `music play` and see a misleading
+  // "playing" message in a browser that can't actually play anything.
+  window.addEventListener('audioPlaybackUnavailable', function () {
+    if (typeof commands === 'object' && commands && commands.music) {
+      delete commands.music;
+    }
+    // Drop the synthetic /usr/bin/music binary too, so `which music` and
+    // path-based completion match the new state.
+    if (vfs && vfs['/usr/bin/music']) {
+      var pp = _parent('/usr/bin/music');
+      delete vfs['/usr/bin/music'];
+      _removeChild(pp, 'music');
+    }
+    // If the terminal overlay was holding the music button open, collapse it
+    // back so the GUI's own "playback unavailable" handling wins.
+    var box = document.getElementById('buttonhide');
+    if (box && document.body.classList.contains('cli-overlay-open')) {
+      box.style.maxWidth = '0';
+      box.style.opacity = '0';
+      box.style.pointerEvents = 'none';
+    }
+    if (__musicSnapshot) {
+      __musicSnapshot.maxWidth = '0';
+      __musicSnapshot.opacity = '0';
+      __musicSnapshot.pointerEvents = 'none';
+      __musicSnapshot.uHidden = true;
+      __musicSnapshot.mHidden = true;
+    }
   });
 
   // Public API

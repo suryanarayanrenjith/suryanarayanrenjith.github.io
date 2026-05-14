@@ -1800,38 +1800,60 @@ body.is-mobile .palette-button-container {
 .terminal-info, .client-info {
     display: flex;
     flex-direction: column;
+    gap: 4px;
 }
 
 .terminal-info p, .client-info p {
     color: var(--s-fg-secondary);
-    margin-bottom: 20px;
+    margin-bottom: 18px;
     font-size: 14px;
-    line-height: 1.5;
+    line-height: 1.55;
+}
+
+.terminal-info p:first-of-type {
+    color: var(--s-fg);
+    font-size: 14.5px;
+    letter-spacing: 0.2px;
+    margin-bottom: 14px;
 }
 
 .terminal-info p.terminal-info-sub {
     color: var(--s-fg-tertiary);
     font-size: 13px;
-    line-height: 1.65;
+    line-height: 1.75;
+    word-spacing: 1px;
 }
 .terminal-info p.terminal-info-sub code {
     font-family: 'JetBrains Mono', 'Fira Code', monospace;
-    font-size: 12px;
-    padding: 1px 6px;
+    font-size: 11.5px;
+    padding: 2px 7px;
     border-radius: 4px;
     background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     color: var(--s-fg);
+    margin: 0 1px;
+    white-space: nowrap;
+    transition: background 0.18s ease, border-color 0.18s ease;
+}
+.terminal-info p.terminal-info-sub code:hover {
+    background: rgba(255, 255, 255, 0.10);
+    border-color: rgba(255, 255, 255, 0.22);
 }
 body.light-theme .terminal-info p.terminal-info-sub code {
     background: rgba(0, 0, 0, 0.05);
-    border-color: rgba(0, 0, 0, 0.12);
+    border-color: rgba(0, 0, 0, 0.14);
+}
+body.light-theme .terminal-info p.terminal-info-sub code:hover {
+    background: rgba(0, 0, 0, 0.09);
+    border-color: rgba(0, 0, 0, 0.26);
 }
 .shortcut-key.inline {
     display: inline-block;
-    padding: 1px 6px;
+    padding: 2px 7px;
     font-size: 11px;
     margin: 0 2px;
+    min-width: 0;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
 }
 
 .action-button {
