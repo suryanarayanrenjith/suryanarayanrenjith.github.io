@@ -2505,6 +2505,10 @@ function isDesktop() {
     function markAudioPlaybackUnavailable(reason) {
         if (window.__audioPlaybackAvailable === false) return;
         window.__audioPlaybackAvailable = false;
+        // Pin a body class so CSS rules (e.g. the cli-overlay-open force-show
+        // for the nav music button) can opt out without needing JS to fight
+        // with `!important` inline styles.
+        document.body.classList.add('audio-playback-unavailable');
         window.dispatchEvent(new CustomEvent('audioPlaybackUnavailable', { detail: { reason: reason || 'unknown' } }));
     }
     audio.addEventListener('error', function() {
@@ -4103,9 +4107,11 @@ function isOldBrowser() {
   /* The site collapses the music button via inline styles when audio is muted —
      force the container visible while the terminal is engaged so it sits next
      to the palette. JS toggles which icon (.hidden) is showing; we just keep
-     the container open. */
-  body.cli-overlay-open .menu-bar > ul > li.music-button-container,
-  body.cli-overlay-open .menu-bar > ul > li#buttonhide {
+     the container open. Excludes `audio-playback-unavailable`: when the GUI
+     marked playback as unsupported it collapsed this container on purpose —
+     do not resurrect a useless button just because the CLI happens to be open. */
+  body.cli-overlay-open:not(.audio-playback-unavailable) .menu-bar > ul > li.music-button-container,
+  body.cli-overlay-open:not(.audio-playback-unavailable) .menu-bar > ul > li#buttonhide {
     max-width: 60px !important;
     opacity: 1 !important;
     visibility: visible !important;
@@ -4113,6 +4119,19 @@ function isOldBrowser() {
     overflow: visible !important;
     display: inline-flex !important;
     margin-left: 8px !important;
+  }
+  /* And conversely: when playback is unavailable, keep the container fully
+     collapsed even while the terminal is open, regardless of any inline styles
+     the CLI's `ensureMusicButtonVisible` may have set before the failure. */
+  body.audio-playback-unavailable .menu-bar > ul > li.music-button-container,
+  body.audio-playback-unavailable .menu-bar > ul > li#buttonhide {
+    max-width: 0 !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
   /* Hide section/info/hyper-mode/terminal/links commands inside the palette while the terminal is engaged */
   body.cli-overlay-open .command-palette li:has(button[data-command="home"]),
@@ -4758,13 +4777,20 @@ function isOldBrowser() {
      overwrite `transform`, which would knock the centered translate(-50%, -52%) off,
      so we use CLI-specific keyframes that compose the jitter on top of the centering.
      Uses linear timing (not steps) so the window appears to *shake* rather than
-     teleport between two states (which read as flicker/disappear-reappear). */
-  body.experimental-motion-fx .cli-terminal-window {
+     teleport between two states (which read as flicker/disappear-reappear).
+     IMPORTANT: We must NOT apply the shake while the overlay is spawning or
+     closing — those phases own the `transform`/`filter`/`clip-path` timeline
+     (clip-path drives the glitchy slice reveal) and our animation would
+     override the transform, leaving the clip-path slices visible as a
+     half-rendered "skeleton" of the window. The `:not(.is-spawning):not(.is-closing)`
+     gate keeps the entrance / exit pristine; the shake resumes the moment
+     the spawn finishes. */
+  body.experimental-motion-fx .cli-terminal-overlay:not(.is-spawning):not(.is-closing) .cli-terminal-window {
     animation: cliMotionFxShake 0.42s linear infinite,
                cliMotionFxSkew 1.1s ease-in-out infinite !important;
     will-change: transform, filter;
   }
-  body.experimental-motion-fx .cli-terminal-window.is-maximized {
+  body.experimental-motion-fx .cli-terminal-overlay:not(.is-spawning):not(.is-closing) .cli-terminal-window.is-maximized {
     animation: cliMotionFxShakeMax 0.42s linear infinite,
                cliMotionFxSkew 1.1s ease-in-out infinite !important;
   }
@@ -4802,8 +4828,9 @@ function isOldBrowser() {
     84%      { filter: blur(0.3px) contrast(1.03); }
   }
   /* Subtle text shimmy that rides on the window shake — kept small so the body of
-     output never overshoots the terminal's padding and looks like it's vanishing. */
-  body.experimental-motion-fx .cli-terminal-overlay .input-line .prompt {
+     output never overshoots the terminal's padding and looks like it's vanishing.
+     Same spawn/close exclusion as the window shake so the entrance flow stays clean. */
+  body.experimental-motion-fx .cli-terminal-overlay:not(.is-spawning):not(.is-closing) .input-line .prompt {
     animation: cliMotionFxTextShimmy 0.36s linear infinite;
   }
   @keyframes cliMotionFxTextShimmy {
