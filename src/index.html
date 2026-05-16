@@ -579,11 +579,13 @@ function isDesktop() {
                                         </span>
                                     </div>
                                     <div class="terminal-preview-body">
-                                        <div class="terminal-preview-row"><span class="terminal-preview-prompt">$</span> <span class="terminal-preview-cmd">./about</span></div>
-                                        <div class="terminal-preview-row terminal-preview-row--out">&rarr; loading section &lsquo;about&rsquo;&hellip;</div>
-                                        <div class="terminal-preview-row"><span class="terminal-preview-prompt">$</span> <span class="terminal-preview-cmd">fx motion on</span></div>
-                                        <div class="terminal-preview-row terminal-preview-row--out">fx: motion [on]</div>
-                                        <div class="terminal-preview-row"><span class="terminal-preview-prompt">$</span> <span class="terminal-preview-cursor"></span></div>
+                                        <div class="terminal-preview-row"><span class="terminal-preview-prompt">$</span> <span class="terminal-preview-cmd">fx</span></div>
+                                        <div class="terminal-preview-row terminal-preview-row--out">available fx modes:</div>
+                                        <div class="terminal-preview-row terminal-preview-row--out">&nbsp;&nbsp;motion&nbsp;&nbsp;&nbsp;&nbsp;<span class="terminal-preview-flag">[off]</span></div>
+                                        <div class="terminal-preview-row terminal-preview-row--out">&nbsp;&nbsp;freeze&nbsp;&nbsp;&nbsp;&nbsp;<span class="terminal-preview-flag">[off]</span></div>
+                                        <div class="terminal-preview-row"><span class="terminal-preview-prompt">$</span> <span class="terminal-preview-cmd">fx freeze on</span></div>
+                                        <div class="terminal-preview-row terminal-preview-row--out">fx: freeze <span class="terminal-preview-flag terminal-preview-flag--on">[on]</span> &middot; animations paused</div>
+                                        <div class="terminal-preview-row"><span class="terminal-preview-prompt">$</span> <span class="terminal-preview-cursor terminal-preview-cursor--frozen"></span></div>
                                     </div>
                                 </div>
                                 <p>SuryaOS - a full in-page terminal that drives the portfolio.</p>

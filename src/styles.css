@@ -2103,9 +2103,25 @@ body.is-mobile .palette-button-container {
     background: var(--s-fg);
     animation: terminalPreviewBlink 1.05s steps(1, end) infinite;
 }
+/* The "frozen" cursor stops blinking — visually demonstrates the result of
+   `fx freeze on` (all animations paused) right inside the preview. */
+.terminal-preview-cursor--frozen {
+    animation: none;
+    opacity: 0.85;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25);
+}
 @keyframes terminalPreviewBlink {
     0%, 49%   { opacity: 1; }
     50%, 100% { opacity: 0; }
+}
+/* Inline status flags shown after `fx <mode>` commands. Off = dim; On = green. */
+.terminal-preview-flag {
+    color: var(--s-fg-tertiary);
+    font-family: var(--s-font-mono);
+}
+.terminal-preview-flag--on {
+    color: #6fdc8c;
+    text-shadow: 0 0 6px rgba(111, 220, 140, 0.35);
 }
 
 /* ----- Client tab ----- */
@@ -2333,6 +2349,8 @@ body.light-theme .terminal-preview-body       { color: #1d1d1f; }
 body.light-theme .terminal-preview-row--out   { color: var(--s-fg-tertiary); }
 body.light-theme .terminal-preview-prompt     { color: #157a3a; }
 body.light-theme .terminal-preview-cursor     { background: #1d1d1f; }
+body.light-theme .terminal-preview-cursor--frozen { box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.22); }
+body.light-theme .terminal-preview-flag--on  { color: #157a3a; text-shadow: 0 0 6px rgba(21, 122, 58, 0.25); }
 body.light-theme .client-card,
 body.light-theme .client-card-icon          { background: rgba(0, 0, 0, 0.04); border-color: rgba(0, 0, 0, 0.12); }
 body.light-theme .client-meta-grid          { border-top-color: rgba(0, 0, 0, 0.10); }
