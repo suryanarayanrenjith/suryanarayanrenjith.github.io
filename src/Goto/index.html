@@ -263,17 +263,91 @@ body {
     user-select: none;
 }
 
-/* Single ring spinner */
-.spinner {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    border: 1.5px solid var(--s-fg-faint);
-    border-top-color: var(--s-fg);
-    animation: spin 1.1s linear infinite;
+/* Multi-ring sonar pulse — the classic "back and forth" ring breathing,
+   rebuilt with a soft aura, a hairline reference ring, and a steady core.
+   Three rings of the same size phase-offset by 1/3 of the cycle, each
+   easing between scale(0.55) and scale(1.0). Because their opacities also
+   ride the curve, the eye reads it as rings emanating from the core
+   without the harsh "ping then disappear" of a true sonar — they keep
+   coming back, which gives the actual "back and forth" feel. */
+.rings {
+    position: relative;
+    width: 132px;
+    height: 132px;
+    display: grid;
+    place-items: center;
 }
-@keyframes spin {
-    to { transform: rotate(360deg); }
+.rings::before {
+    content: '';
+    position: absolute;
+    inset: -30%;
+    background: radial-gradient(circle at center, var(--s-fg-faint), transparent 62%);
+    pointer-events: none;
+    animation: ringsAura 4s ease-in-out infinite;
+    z-index: -1;
+}
+@keyframes ringsAura {
+    0%, 100% { opacity: 0.32; transform: scale(0.92); }
+    50%      { opacity: 0.85; transform: scale(1.08); }
+}
+
+/* Hairline reference ring — sits behind everything, never moves.
+   Provides a "frame" that anchors the eye while the other rings breathe. */
+.rings::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 1px solid var(--s-fg-faint);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 1px solid var(--s-fg);
+    box-shadow:
+        0 0 16px rgba(255, 255, 255, 0.18),
+        inset 0 0 12px rgba(255, 255, 255, 0.08);
+    animation: ringBreathe 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    will-change: transform, opacity;
+}
+.ring-2 { animation-delay: -1s; border-style: dashed; }
+.ring-3 { animation-delay: -2s; }
+
+@keyframes ringBreathe {
+    0%, 100% { transform: scale(0.5);  opacity: 0.15; }
+    50%      { transform: scale(1.0);  opacity: 1; }
+}
+
+/* Steady core — small bright dot that never moves and pulses gently.
+   Locks the composition; the rings appear to "breathe around" it. */
+.ring-core {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--s-fg);
+    box-shadow:
+        0 0 6px var(--s-fg),
+        0 0 18px rgba(255, 255, 255, 0.45);
+    animation: ringCore 2s ease-in-out infinite;
+}
+@keyframes ringCore {
+    0%, 100% { transform: scale(1);    opacity: 1; }
+    50%      { transform: scale(0.55); opacity: 0.6; }
+}
+
+body.light-theme .ring {
+    box-shadow:
+        0 0 12px rgba(0, 0, 0, 0.10),
+        inset 0 0 10px rgba(0, 0, 0, 0.05);
+}
+body.light-theme .ring-core {
+    box-shadow:
+        0 0 4px rgba(0, 0, 0, 0.5),
+        0 0 14px rgba(0, 0, 0, 0.25);
 }
 
 /* Status text — what the page is doing right now */
@@ -352,19 +426,23 @@ h1 {
 /* Responsive */
 @media (max-width: 480px) {
     .container { gap: 22px; padding: 32px 24px; }
-    .spinner { width: 48px; height: 48px; }
-    h1 { font-size: 14px; }
+    .rings    { width: 108px; height: 108px; }
+    h1        { font-size: 14px; }
     .progress { width: 160px; }
-    .brand { font-size: 10px; letter-spacing: 5px; }
+    .brand    { font-size: 10px; letter-spacing: 5px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .spinner,
+    .rings::before,
+    .ring,
+    .ring-core,
     .progress::before {
         animation: none !important;
     }
+    /* Park the rings at their midpoint so the composition still reads right. */
+    .ring { transform: scale(0.78); opacity: 0.55; }
     .progress::before {
-        inset: 0 0 0 0;
+        inset: 0;
         width: 100%;
         opacity: 0.4;
     }
@@ -384,7 +462,12 @@ h1 {
 <div class="container">
     <div class="brand">SURYA</div>
 
-    <div class="spinner" aria-hidden="true"></div>
+    <div class="rings" aria-hidden="true">
+        <span class="ring ring-1"></span>
+        <span class="ring ring-2"></span>
+        <span class="ring ring-3"></span>
+        <span class="ring-core"></span>
+    </div>
 
     <div class="status">
         <span class="status-label">Resolving destination</span>

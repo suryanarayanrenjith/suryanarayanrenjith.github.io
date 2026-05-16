@@ -5396,27 +5396,55 @@ function isOldBrowser() {
     color: rgba(0, 0, 0, 0.55);
   }
 
-  /* ===== Responsive ===== */
+  /* ===== Responsive =====
+     The terminal window is centered via `top: 50%; transform: translate(-50%, -50%)`.
+     The page footer sits absolutely at `bottom: 20px` and is boosted to a z-index
+     ABOVE the terminal overlay while the CLI is open. So the only thing keeping the
+     footer from drawing on top of the terminal is the gap between the terminal's
+     bottom edge and the footer's top edge.
+
+     Footer geometry: top ≈ viewport_height − 42px (20px offset + ~22px text height).
+     Terminal bottom edge when centered = 50% + max-height/2.
+     For at-least-12px clearance, max-height ≤ 100dvh − ~110px.
+
+     We use `dvh` (with `vh` fallback) so the math survives mobile browsers whose
+     URL bar collapses mid-session — vh would otherwise be stale and re-introduce
+     the overlap. `env(safe-area-inset-bottom)` adds room for the iOS home
+     indicator on notched devices. */
+
   @media screen and (max-width: 1024px) {
-    /* Tablet — terminal a touch wider, header chrome tightened. */
-    .cli-terminal-overlay .cli-terminal-window { width: min(720px, 94%); }
+    /* Tablet — terminal a touch wider, header chrome tightened. Reserve room
+       for the footer here too (smaller iPads in portrait can dip close). */
+    .cli-terminal-overlay .cli-terminal-window {
+      width: min(720px, 94%);
+      max-height: calc(100vh - 130px);
+      max-height: calc(100dvh - 130px - env(safe-area-inset-bottom, 0px));
+    }
+    .cli-terminal-overlay .terminal {
+      max-height: calc(100vh - 144px);
+      max-height: calc(100dvh - 144px - env(safe-area-inset-bottom, 0px));
+    }
     .cli-terminal-overlay .header-title { font-size: 11px; }
   }
 
   @media screen and (max-width: 768px) {
     /* Phone landscape / large phones — terminal nearly full-bleed with a
-       comfortable margin, capped so the dock + cursor still float clear. */
+       comfortable margin. The center anchor is shifted up by ~22px so the
+       footer band at the bottom stays unobstructed even when the URL bar
+       collapses and dvh briefly disagrees with the rendered viewport. */
     .cli-terminal-overlay .cli-terminal-window {
       width: calc(100vw - 16px);
       max-width: calc(100vw - 16px);
-      max-height: calc(100vh - 96px);
-      top: 50%;
+      max-height: calc(100vh - 130px);
+      max-height: calc(100dvh - 130px - env(safe-area-inset-bottom, 0px));
+      top: calc(50% - 22px);
       transform: translate(-50%, -50%);
       border-radius: 12px;
     }
     .cli-terminal-overlay .terminal {
       font-size: 0.92em;
-      max-height: calc(100vh - 110px);
+      max-height: calc(100vh - 144px);
+      max-height: calc(100dvh - 144px - env(safe-area-inset-bottom, 0px));
     }
     .cli-terminal-overlay .header { font-size: 0.78em; height: 36px; padding: 0 8px 0 12px; }
     .cli-terminal-overlay .header-tab { font-size: 11px; padding: 5px 10px 5px 8px; max-width: 180px; }
@@ -5428,10 +5456,21 @@ function isOldBrowser() {
     .cli-terminal-overlay .prompt { font-size: 0.9em; margin-right: 6px; }
     .cli-terminal-overlay input[type="text"]#cliCommandInput { font-size: 13.5px; }
 
+    /* The footer is shown with z-index above the overlay; tighten its bottom
+       offset and font slightly so it reads as a thin strip rather than a banner. */
+    body.cli-overlay-open footer {
+      bottom: max(14px, env(safe-area-inset-bottom, 14px)) !important;
+      font-size: 0.78em !important;
+      opacity: 0.78;
+      padding: 0 12px;
+      text-align: center;
+      left: 0; right: 0;
+    }
+
     /* The site nav header is normally bumped to z-index 100005 while the
        terminal is open (so the palette/music remain reachable on desktop).
        On phones that overlap is unworkable — hide the nav entirely until
-       the terminal is closed. The maximized-rule below still wins for the
+       the terminal is closed. The maximized-rule still wins for the
        "is-maximized" case. */
     body.cli-overlay-open header {
       opacity: 0 !important;
@@ -5443,18 +5482,50 @@ function isOldBrowser() {
   }
 
   @media screen and (max-width: 480px) {
-    /* Small phones — even tighter chrome, full screen-edge contact. */
+    /* Small phones — even tighter chrome, full screen-edge contact, but the
+       footer clearance is preserved (this breakpoint used to allow overlap). */
     .cli-terminal-overlay .cli-terminal-window {
       width: calc(100vw - 10px);
       max-width: calc(100vw - 10px);
-      max-height: calc(100vh - 80px);
+      max-height: calc(100vh - 120px);
+      max-height: calc(100dvh - 120px - env(safe-area-inset-bottom, 0px));
+      top: calc(50% - 24px);
       border-radius: 10px;
+    }
+    .cli-terminal-overlay .terminal {
+      max-height: calc(100vh - 134px);
+      max-height: calc(100dvh - 134px - env(safe-area-inset-bottom, 0px));
     }
     .cli-terminal-overlay #cliOutput { font-size: 12.5px; padding: 8px 10px; }
     .cli-terminal-overlay .input-line { padding: 6px 10px; }
     .cli-terminal-overlay input[type="text"]#cliCommandInput { font-size: 13px; }
     .cli-terminal-overlay .prompt { font-size: 0.85em; }
     .cli-terminal-overlay .header-tab { max-width: 140px; padding: 4px 8px; }
+
+    body.cli-overlay-open footer {
+      font-size: 0.72em !important;
+      letter-spacing: 0.2px;
+    }
+  }
+
+  /* Very short viewports (landscape phones) — the footer + status bar would
+     consume half the screen with the default geometry. Collapse the bottom
+     status bar and let the terminal use almost the full height. */
+  @media screen and (max-height: 480px) and (orientation: landscape) {
+    .cli-terminal-overlay .cli-terminal-window {
+      max-height: calc(100vh - 84px);
+      max-height: calc(100dvh - 84px - env(safe-area-inset-bottom, 0px));
+      top: calc(50% - 16px);
+    }
+    .cli-terminal-overlay .terminal {
+      max-height: calc(100vh - 100px);
+      max-height: calc(100dvh - 100px - env(safe-area-inset-bottom, 0px));
+    }
+    .cli-terminal-overlay .status-bar { display: none; }
+    body.cli-overlay-open footer {
+      font-size: 0.7em !important;
+      bottom: 8px !important;
+    }
   }
 
   /* Make non-interactive page chrome ignore pointer events while terminal is engaged.
