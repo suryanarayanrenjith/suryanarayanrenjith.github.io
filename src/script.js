@@ -25,12 +25,23 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    const copyrightText = `© ${currentYear} Suryanarayan Renjith. All rights reserved.`;
+    function isAudioPlaybackAvailable() {
+        return window.__audioPlaybackAvailable !== false;
+    }
     footerText.addEventListener('mouseover', function() {
+        if (!isAudioPlaybackAvailable()) return;
         changeTextWithGSAP('Music Credits: Suryanarayan Renjith.');
     });
 
     footerText.addEventListener('mouseout', function() {
-        changeTextWithGSAP(`© ${currentYear} Suryanarayan Renjith. All rights reserved.`);
+        changeTextWithGSAP(copyrightText);
+    });
+
+    window.addEventListener('audioPlaybackUnavailable', function () {
+        if (footerText.textContent.indexOf('Music Credits') !== -1) {
+            changeTextWithGSAP(copyrightText);
+        }
     });
 
     function initMagneticButtons() {
@@ -39,7 +50,6 @@ document.addEventListener("DOMContentLoaded", () => {
             if (btn.dataset.magnetic) return;
             btn.dataset.magnetic = 'true';
 
-            // rAF-throttle mousemove so we issue at most one gsap tween per frame.
             let pendingX = 0, pendingY = 0;
             let frameScheduled = false;
             const flushMagnetic = () => {
@@ -1220,13 +1230,6 @@ document.addEventListener("DOMContentLoaded", () => {
             const dBeta = beta - baseBeta;
             const dGamma = gamma - baseGamma;
 
-            // Rotate the (gamma, beta) reading into screen space depending
-            // on whether the user is in portrait or landscape, and which
-            // landscape side. screen.orientation.angle values:
-            //   0   portrait
-            //   90  landscape (device rotated CCW from portrait)
-            //   180 portrait upside-down
-            //   270 / -90  landscape (device rotated CW from portrait)
             let dx, dy;
             switch (currentScreenAngle()) {
                 case 90:
