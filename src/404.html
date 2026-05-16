@@ -64,7 +64,7 @@
 
     html, body { margin: 0; padding: 0; width: 100%; }
     body {
-      height: 100vh;
+      min-height: 100vh;
       min-height: 100dvh;
       padding-top:    max(var(--pad-y), env(safe-area-inset-top));
       padding-right:  max(var(--pad-x), env(safe-area-inset-right));
@@ -75,7 +75,8 @@
       background-color: var(--s-bg);
       color: var(--s-fg);
       line-height: 1.6;
-      overflow: hidden;
+      overflow-x: hidden;
+      overflow-y: auto;
       display: grid;
       place-items: center;
       position: relative;
@@ -96,8 +97,8 @@
       width: 100%;
       height: 100%;
     }
-    #halftoneCanvas { opacity: 0.55; }
-    #particleCanvas { opacity: 0.9; }
+    #halftoneCanvas { opacity: 0.38; }
+    #particleCanvas { opacity: 0.68; }
 
     .stars {
       position: absolute;
@@ -137,7 +138,7 @@
       position: relative;
       z-index: 1;
       width: min(1100px, 100%);
-      max-height: calc(100dvh - var(--pad-y) - var(--pad-y));
+      min-height: min(680px, calc(100dvh - var(--pad-y) - var(--pad-y)));
       padding: clamp(1rem, 2.4vh, 2rem) clamp(1rem, 3vw, 2.5rem);
       border-radius: clamp(1.1rem, 2vw, 2rem);
       border: 1px solid var(--s-border);
@@ -147,8 +148,8 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.08);
       display: flex;
       flex-direction: column;
-      gap: clamp(0.9rem, 1.8vh, 1.7rem);
-      overflow: hidden;
+      gap: clamp(0.9rem, 1.7vh, 1.5rem);
+      overflow: clip;
       opacity: 0;
       transform: translateY(14px);
       animation: shellIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
@@ -379,71 +380,63 @@
     .btn.primary:hover { transform: translateY(-2px); box-shadow: 0 12px 36px rgba(255,255,255,0.18); }
     body.light-theme .btn.primary:hover { box-shadow: 0 12px 36px rgba(0,0,0,0.12); }
 
-    /* =========================================================================
-       ROBOT — "SR-404 Probe Unit"
-       Round chassis, holographic visor, mouse-tracked LED eyes, breathing
-       reactor, orbiting data tags, antenna ping, slow radar sweep.
-       The visible polish lives mostly in JS: a five-state machine
-       (booting → idle → tracking → engaged → startled), spring-physics
-       head rotation, idle saccades, click look-at, and pupil dilation.
-       Each state is also reflected on `.figure-wrap[data-bot-state="…"]`
-       so CSS can decorate the HUD chip + ambient feel.
-       ========================================================================= */
+    /* ----- Simple SR-404 robot ----- */
     .figure-wrap {
       position: relative;
-      border: 1px solid var(--s-border-subtle);
-      border-radius: clamp(0.9rem, 2vw, 1.6rem);
-      padding: clamp(1rem, 3vw, 2.2rem);
-      background: linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.005));
+      border: 1px solid var(--s-border);
+      border-radius: 18px;
+      padding: clamp(1rem, 2.5vw, 1.75rem);
+      background:
+        radial-gradient(circle at var(--mouse-x) var(--mouse-y), rgba(255,255,255,0.08), transparent 34%),
+        linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.01));
       display: flex;
       justify-content: center;
+      align-items: center;
+      min-height: clamp(260px, 36vw, 390px);
       overflow: hidden;
       --mouse-x: 50%;
       --mouse-y: 50%;
       --pupil-scale: 1;
     }
+    body.light-theme .figure-wrap {
+      background:
+        radial-gradient(circle at var(--mouse-x) var(--mouse-y), rgba(0,0,0,0.055), transparent 34%),
+        linear-gradient(180deg, rgba(0,0,0,0.035), rgba(0,0,0,0.01));
+    }
     .figure-wrap::before {
       content: '';
       position: absolute;
-      inset: 0;
-      background: radial-gradient(circle at var(--mouse-x) var(--mouse-y), var(--s-glow) 0%, transparent 38%);
-      opacity: 0;
-      transition: opacity 0.3s ease;
+      inset: 18%;
+      border: 1px solid var(--s-border-subtle);
+      border-radius: 999px;
+      opacity: 0.8;
       pointer-events: none;
     }
-    .figure-wrap:hover::before { opacity: 0.45; }
-
-    /* Hairline grid backdrop inside the figure-wrap */
     .figure-wrap::after {
       content: '';
       position: absolute;
       inset: 0;
       background:
-        repeating-linear-gradient(0deg, transparent 0 23px, var(--s-border-subtle) 23px 24px),
-        repeating-linear-gradient(90deg, transparent 0 23px, var(--s-border-subtle) 23px 24px);
-      mask-image: radial-gradient(ellipse at center, rgba(0,0,0,0.45), transparent 75%);
-      -webkit-mask-image: radial-gradient(ellipse at center, rgba(0,0,0,0.45), transparent 75%);
+        linear-gradient(90deg, transparent, var(--s-border-subtle), transparent),
+        linear-gradient(0deg, transparent, var(--s-border-subtle), transparent);
+      opacity: 0.45;
       pointer-events: none;
     }
 
     .robot {
       position: relative;
-      width: min(360px, 70vw);
+      width: min(300px, 62vw);
       height: auto;
       display: block;
-      filter: drop-shadow(0 14px 40px rgba(0, 0, 0, 0.6));
+      filter: drop-shadow(0 18px 34px rgba(0, 0, 0, 0.48));
       z-index: 2;
-      animation: robotFloat 7s ease-in-out infinite;
+      animation: robotFloat 8s ease-in-out infinite;
     }
     @keyframes robotFloat {
-      0%, 100% { transform: translateY(0)    rotate(0deg); }
-      25%      { transform: translateY(-6px) rotate(0.6deg); }
-      50%      { transform: translateY(-12px) rotate(0deg); }
-      75%      { transform: translateY(-6px) rotate(-0.6deg); }
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-8px); }
     }
 
-    /* The bot-core SVG group is rotated by JS to track the cursor.
-       Eyes also translate slightly. */
     .robot .bot-core {
       transform-origin: 50% 50%;
       transition: transform 0.12s ease-out;
@@ -455,29 +448,29 @@
       transition: transform 0.15s ease-out;
     }
 
-    /* ----- HUD status chip (top-left of figure-wrap) ----- */
     .bot-status {
       position: absolute;
-      top: 14px;
-      left: 14px;
+      top: 12px;
+      left: 12px;
       z-index: 4;
       display: inline-flex;
       align-items: center;
       gap: 7px;
       padding: 4px 10px;
       border-radius: 999px;
-      background: var(--s-surface);
+      background: rgba(8, 8, 10, 0.72);
       border: 1px solid var(--s-border-subtle);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       font-family: var(--s-font-mono);
       font-size: 9px;
-      letter-spacing: 1.8px;
+      letter-spacing: 1.4px;
       text-transform: uppercase;
       color: var(--s-fg-tertiary);
       pointer-events: none;
       transition: color 0.25s ease, border-color 0.25s ease;
     }
+    body.light-theme .bot-status { background: rgba(246, 246, 246, 0.76); }
     .bot-status-led {
       width: 5px; height: 5px;
       border-radius: 50%;
@@ -497,7 +490,6 @@
     [data-bot-state="startled"] .bot-status-led { background: #ffd56b; box-shadow: 0 0 9px rgba(255, 213, 107, 0.7); animation-duration: 0.4s; }
     [data-bot-state="startled"] .bot-status      { color: #ffd56b; border-color: rgba(255, 213, 107, 0.4); }
 
-    /* Pupil dilation — driven by --pupil-scale (set by JS based on state). */
     .bot-pupil {
       transform-box: fill-box;
       transform-origin: center;
@@ -505,19 +497,24 @@
       transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    /* Boot sequence — eyes + reactor fade in. Once JS strips the `booting`
-       state from the figure-wrap, normal opacity resumes via CSS transition. */
     [data-bot-state="booting"] .bot-eye      { opacity: 0; }
     [data-bot-state="booting"] .bot-reactor  { opacity: 0.25; }
     .bot-eye, .bot-reactor                   { transition: opacity 0.6s ease; }
 
-    /* Ambient brightness shifts per state — sells the "alive" feel without
-       extra animation cost. */
     .robot {
       transition: filter 0.35s ease;
     }
-    [data-bot-state="engaged"]  .robot { filter: drop-shadow(0 14px 40px rgba(0,0,0,0.6)) brightness(1.08) saturate(1.05); }
-    [data-bot-state="startled"] .robot { filter: drop-shadow(0 16px 44px rgba(0,0,0,0.7)) brightness(1.25) contrast(1.06); }
+    [data-bot-state="engaged"]  .robot { filter: drop-shadow(0 18px 38px rgba(0,0,0,0.52)) brightness(1.06); }
+    [data-bot-state="startled"] .robot { filter: drop-shadow(0 18px 42px rgba(0,0,0,0.62)) brightness(1.18); }
+
+    .bot-radar,
+    .bot-antenna,
+    .bot-rivets,
+    .bot-vents,
+    .bot-bars,
+    .bot-status-pin {
+      display: none;
+    }
 
     /* Click flash — applied to the core for ~360 ms. Uses filter so it
        composes with the JS-set transform without clobbering it. */
@@ -526,52 +523,6 @@
       0%   { filter: brightness(1); }
       28%  { filter: brightness(1.6) drop-shadow(0 0 24px rgba(255, 255, 255, 0.55)); }
       100% { filter: brightness(1); }
-    }
-
-    /* Orbiting data tags around the robot — pure CSS animation */
-    .orbits {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      z-index: 1;
-    }
-    .orbit {
-      position: absolute;
-      top: 50%; left: 50%;
-      width: 0; height: 0;
-    }
-    .orbit-tag {
-      position: absolute;
-      transform: translate(-50%, -50%);
-      font-family: var(--s-font-mono);
-      font-size: 9px;
-      letter-spacing: 1.4px;
-      text-transform: uppercase;
-      color: var(--s-fg-secondary);
-      padding: 3px 8px;
-      border: 1px solid var(--s-border-subtle);
-      border-radius: 999px;
-      background: var(--s-surface);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      white-space: nowrap;
-    }
-    .orbit-1 { width: min(440px, 84vw); height: min(440px, 84vw); margin-left: calc(-1 * min(220px, 42vw)); margin-top: calc(-1 * min(220px, 42vw)); animation: orbitSpin 24s linear infinite; }
-    .orbit-2 { width: min(380px, 72vw); height: min(380px, 72vw); margin-left: calc(-1 * min(190px, 36vw)); margin-top: calc(-1 * min(190px, 36vw)); animation: orbitSpin 32s linear infinite reverse; }
-    .orbit > .orbit-tag.t-top    { top: 0;    left: 50%; }
-    .orbit > .orbit-tag.t-right  { top: 50%;  left: 100%; }
-    .orbit > .orbit-tag.t-bottom { top: 100%; left: 50%; }
-    .orbit > .orbit-tag.t-left   { top: 50%;  left: 0; }
-    @keyframes orbitSpin {
-      from { transform: rotate(0deg); }
-      to   { transform: rotate(360deg); }
-    }
-    /* Counter-rotate the tag content so text stays upright */
-    .orbit .orbit-tag { animation: orbitTagUpright 24s linear infinite; }
-    .orbit-2 .orbit-tag { animation-duration: 32s; animation-direction: reverse; }
-    @keyframes orbitTagUpright {
-      from { transform: translate(-50%, -50%) rotate(0deg); }
-      to   { transform: translate(-50%, -50%) rotate(-360deg); }
     }
 
     /* ----- Responsive ----- */
@@ -588,7 +539,6 @@
       .btn { width: 100%; justify-content: center; }
       .path-display { letter-spacing: 0.16em; }
       .shell { padding: 0.9rem; }
-      .orbit-tag { font-size: 8px; padding: 2px 6px; }
     }
     @media (max-height: 860px) {
       :root { --pad-y: clamp(0.55rem, 1.1vh, 0.95rem); }
@@ -596,12 +546,15 @@
       .hero  { gap: clamp(0.8rem, 1.6vh, 1.3rem); }
       .message { font-size: clamp(1.3rem, 3vw, 2rem); }
       .description { line-height: 1.45; }
-      .figure-wrap { padding: clamp(0.7rem, 1.6vh, 1.2rem); }
-      .robot { width: min(280px, 46vw); }
+      .figure-wrap {
+        min-height: clamp(230px, 34vw, 320px);
+        padding: clamp(0.7rem, 1.6vh, 1.2rem);
+      }
+      .robot { width: min(250px, 46vw); }
     }
     @media (prefers-reduced-motion: reduce) {
       .glitch, .glitch::before, .glitch::after,
-      .robot, .stars, .orbit, .orbit .orbit-tag, .shell::before, .path-display::after,
+      .robot, .stars, .shell::before, .path-display::after,
       .highlight::after, .highlight {
         animation: none !important;
       }
@@ -646,7 +599,7 @@
       <h1 class="message">Lost in <span class="highlight">Space</span></h1>
       <p class="description">
         The page you're looking for has drifted into the void. Try playing my
-        <a href="/Game" class="link-highlight">Space game</a> while you're here.
+        <a href="/Game/" class="link-highlight">Space game</a> while you're here.
       </p>
       <div class="ctas">
         <a href="/" class="btn primary">
@@ -667,20 +620,8 @@
         <span class="bot-status-text">BOOTING&hellip;</span>
       </div>
 
-      <!-- Orbiting data tags — pure CSS, no JS needed -->
-      <div class="orbits" aria-hidden="true">
-        <div class="orbit orbit-1">
-          <span class="orbit-tag t-top">ID&nbsp;&middot;&nbsp;SR-404</span>
-          <span class="orbit-tag t-bottom">MODE&nbsp;&middot;&nbsp;PROBE</span>
-        </div>
-        <div class="orbit orbit-2">
-          <span class="orbit-tag t-left">STATUS&nbsp;&middot;&nbsp;LOST</span>
-          <span class="orbit-tag t-right">SECTOR&nbsp;&middot;&nbsp;404</span>
-        </div>
-      </div>
-
-      <svg class="robot" id="robot" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg"
-           role="img" aria-label="SR-404 probe robot, floating quietly">
+      <svg class="robot" id="robot" viewBox="35 45 250 250" xmlns="http://www.w3.org/2000/svg"
+           role="img" aria-label="Simple SR-404 robot, floating quietly">
         <defs>
           <!-- Spherical chassis: highlight at top-left to read as a 3D ball. -->
           <radialGradient id="chassisFill" cx="35%" cy="28%" r="80%">
@@ -758,7 +699,7 @@
         </defs>
 
         <!-- ====== Radar sweep behind the chassis (clipped to the circle) ====== -->
-        <g clip-path="url(#chassisClip)" opacity="0.45">
+        <g class="bot-radar" clip-path="url(#chassisClip)" opacity="0.45">
           <rect x="160" y="65" width="220" height="220" fill="url(#radarSweep)" transform-origin="160 170">
             <animateTransform attributeName="transform" type="rotate"
                               from="0 160 170" to="360 160 170" dur="6s" repeatCount="indefinite"/>
@@ -810,7 +751,7 @@
                 stroke="#fff" stroke-width="0.5" stroke-opacity="0.12" stroke-dasharray="2 6"/>
 
           <!-- Eight rivets evenly distributed around the perimeter -->
-          <g fill="#fff" opacity="0.5">
+          <g class="bot-rivets" fill="#fff" opacity="0.5">
             <circle cx="160" cy="65"  r="1.6"/>
             <circle cx="234" cy="96"  r="1.6"/>
             <circle cx="265" cy="170" r="1.6"/>
@@ -822,7 +763,7 @@
           </g>
 
           <!-- Curved side vents that follow the sphere surface -->
-          <g fill="none" stroke="#fff" stroke-width="0.7" stroke-opacity="0.22" stroke-linecap="round">
+          <g class="bot-vents" fill="none" stroke="#fff" stroke-width="0.7" stroke-opacity="0.22" stroke-linecap="round">
             <path d="M 64 156 A 100 100 0 0 1 64 184"/>
             <path d="M 70 148 A 96 96 0 0 1 70 192"/>
             <path d="M 256 156 A 100 100 0 0 0 256 184"/>
@@ -902,7 +843,7 @@
         </g>
 
         <!-- ====== Status pin (rotating arc beneath the bot) ====== -->
-        <g transform="translate(160 297)">
+        <g class="bot-status-pin" transform="translate(160 297)">
           <circle cx="0" cy="0" r="14" fill="none" stroke="#fff" stroke-width="0.6" stroke-opacity="0.25"/>
           <circle cx="0" cy="0" r="14" fill="none" stroke="#fff" stroke-width="1.4"
                   stroke-linecap="round" stroke-dasharray="22 70" transform-origin="0 0">
@@ -936,7 +877,7 @@
 
   function initRandomButton() {
     const btn = document.getElementById('randomBtn');
-    const pages = ['/', '/Cli', '/?section=links', '/Resume', '/Game'];
+    const pages = ['/', '/curl/', '/?section=links', '/Resume/', '/Game/'];
     btn?.addEventListener('click', (e) => {
       e.preventDefault();
       window.location.assign(pages[Math.floor(Math.random() * pages.length)]);
@@ -978,7 +919,7 @@
     let nextSaccadeAt = performance.now() + 1800 + Math.random() * 1800;
 
     const LABELS = {
-      booting:  'BOOTING…',
+      booting:  'BOOTING...',
       idle:     'STANDBY',
       tracking: 'TRACKING',
       engaged:  'LOCKED ON',
@@ -1113,7 +1054,11 @@
     tick();
   }
 
-  /* Background halftone (white-only to match the theme) */
+  function getInkRgb() {
+    return document.body.classList.contains('light-theme') ? '0,0,0' : '255,255,255';
+  }
+
+  /* Background halftone */
   function initHalftoneCanvas() {
     const canvas = document.getElementById('halftoneCanvas');
     if (!canvas) return;
@@ -1124,11 +1069,13 @@
     function resize() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+      if (motionQuery.matches) requestAnimationFrame(draw);
     }
     resize();
     window.addEventListener('resize', resize);
     function draw() {
       const w = canvas.width, h = canvas.height;
+      const ink = getInkRgb();
       const cols = Math.max(40, Math.floor(w / 28));
       const rows = Math.max(25, Math.floor(h / 28));
       const cw = w / cols, ch = h / rows;
@@ -1145,7 +1092,7 @@
             const px = x * cw + Math.sin(t * 0.3 + x * 0.03) * 3;
             const py = y * ch + Math.cos(t * 0.3 + y * 0.03) * 3;
             ctx.beginPath();
-            ctx.fillStyle = `rgba(255,255,255,${0.06 + wave * 0.18})`;
+            ctx.fillStyle = `rgba(${ink},${0.05 + wave * 0.16})`;
             ctx.arc(px, py, r, 0, 6.2832);
             ctx.fill();
           }
@@ -1159,17 +1106,19 @@
     draw();
   }
 
-  /* Floating particles + connection web (white-only) */
+  /* Floating particles + connection web */
   function initParticleSystem() {
     const canvas = document.getElementById('particleCanvas');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+    const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     let particles = [];
     let mx = -1, my = -1;
     function resize() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+      if (motionQuery.matches && particles.length) requestAnimationFrame(animate);
     }
     resize();
     window.addEventListener('resize', resize);
@@ -1208,17 +1157,19 @@
         ctx.fill();
       }
     }
-    for (let i = 0; i < 70; i++) particles.push(new P());
+    const particleCount = motionQuery.matches ? 34 : 56;
+    for (let i = 0; i < particleCount; i++) particles.push(new P());
 
     function animate() {
+      const ink = getInkRgb();
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = '#fff';
+      ctx.fillStyle = `rgb(${ink})`;
       ctx.shadowBlur = 8;
-      ctx.shadowColor = 'rgba(255,255,255,0.45)';
+      ctx.shadowColor = `rgba(${ink},0.38)`;
       const n = particles.length;
       for (let i = 0; i < n; i++) { particles[i].update(); particles[i].draw(); }
       ctx.shadowBlur = 0;
-      ctx.strokeStyle = '#fff';
+      ctx.strokeStyle = `rgb(${ink})`;
       ctx.lineWidth = 0.45;
       for (let i = 0; i < n; i++) {
         const a = particles[i];
@@ -1234,7 +1185,7 @@
           }
         }
       }
-      requestAnimationFrame(animate);
+      if (!motionQuery.matches) requestAnimationFrame(animate);
     }
     animate();
   }

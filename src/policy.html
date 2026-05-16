@@ -137,6 +137,227 @@
             -webkit-mask-image: radial-gradient(ellipse at center, rgba(0,0,0,0.7) 30%, transparent 80%);
         }
 
+        /* =========================================================================
+           SECURITY-PERIMETER BACKGROUND ANIMATION
+           Three composited layers, all purely CSS:
+             1. .scan-sweep   — a conic-gradient comet tail rotating slowly around
+                                the viewport, like a radar antenna.
+             2. .scan-ring    — concentric hairline rings emanating from the panel
+                                center every couple of seconds (sonar pings).
+             3. .scan-flash   — small amber "intrusion" markers that bloom briefly
+                                at fixed pseudo-random positions, evoking a packet
+                                inspector flagging hits along the perimeter.
+           Layered above the stars/grid (z-index 0/1) and below the panel (z-index 10).
+           ========================================================================= */
+        .scan-field {
+            position: fixed;
+            inset: 0;
+            z-index: 2;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        /* Rotating radar sweep — conic gradient with a narrow bright trail.
+           The mask softens the edges so it reads as ambient light, not a hard cone. */
+        .scan-sweep {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 200vmax;
+            height: 200vmax;
+            transform: translate(-50%, -50%);
+            background: conic-gradient(
+                from 0deg,
+                rgba(255, 255, 255, 0.16) 0deg,
+                rgba(255, 255, 255, 0.04) 18deg,
+                transparent 38deg,
+                transparent 360deg
+            );
+            mask-image: radial-gradient(circle at center, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.18) 35%, transparent 65%);
+            -webkit-mask-image: radial-gradient(circle at center, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.18) 35%, transparent 65%);
+            animation: scanSweepRotate 14s linear infinite;
+            opacity: 0.85;
+        }
+        body.light-theme .scan-sweep {
+            background: conic-gradient(
+                from 0deg,
+                rgba(0, 0, 0, 0.12) 0deg,
+                rgba(0, 0, 0, 0.03) 18deg,
+                transparent 38deg,
+                transparent 360deg
+            );
+            opacity: 0.7;
+        }
+        @keyframes scanSweepRotate {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to   { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        /* Corner-anchored scan rings — sonar pings emanating from each corner
+           instead of the panel center, so the active motion lives in the
+           negative space around the card (which is where the user can see it). */
+        .scan-ring {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border: 1px solid var(--s-fg);
+            border-radius: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0;
+            animation: scanRing 12s linear infinite;
+        }
+        .scan-ring--tl { top: 0;    left: 0;    animation-delay: 0s; }
+        .scan-ring--tr { top: 0;    left: 100%; animation-delay: 3s;  border-style: dashed; }
+        .scan-ring--br { top: 100%; left: 100%; animation-delay: 6s; }
+        .scan-ring--bl { top: 100%; left: 0;    animation-delay: 9s;  border-width: 1.4px; }
+        @keyframes scanRing {
+            0%   { transform: translate(-50%, -50%) scale(0);  opacity: 0; }
+            6%   { opacity: 0.42; }
+            70%  { opacity: 0.12; }
+            100% { transform: translate(-50%, -50%) scale(38); opacity: 0; }
+        }
+
+        /* Perimeter data flow — bright dots traveling clockwise around the screen
+           edge on a single rectangular path. Four dots offset by 1/4 of the loop
+           so one is always near every edge — looks like packets being routed
+           around the firewall perimeter. Position + transform combine to keep
+           a consistent 20-26 px inset from each edge. */
+        .perimeter-flow {
+            position: absolute;
+            top: 22px; left: 22px;
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: var(--s-fg);
+            box-shadow:
+                0 0 10px var(--s-fg),
+                0 0 22px rgba(255, 255, 255, 0.35);
+            opacity: 0.75;
+            animation: perimeterFlow 22s linear infinite;
+        }
+        .perimeter-flow::after {
+            content: '';
+            position: absolute;
+            inset: -6px;
+            border: 1px solid var(--s-fg);
+            border-radius: 50%;
+            opacity: 0.32;
+        }
+        body.light-theme .perimeter-flow {
+            background: var(--s-fg);
+            box-shadow: 0 0 10px rgba(0,0,0,0.35), 0 0 22px rgba(0,0,0,0.18);
+        }
+        @keyframes perimeterFlow {
+            0%   { transform: translate(0, 0); }
+            25%  { transform: translate(calc(100vw - 58px), 0); }
+            50%  { transform: translate(calc(100vw - 58px), calc(100dvh - 58px)); }
+            75%  { transform: translate(0, calc(100dvh - 58px)); }
+            100% { transform: translate(0, 0); }
+        }
+
+        /* Edge axis ticks — thin marks along the top + bottom edges, faintly
+           glowing in waves. Reads as a system meter band running along the
+           perimeter, well clear of the card. */
+        .edge-axis {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 6px;
+            pointer-events: none;
+        }
+        .edge-axis-top    { top: 12px; }
+        .edge-axis-bottom { bottom: 12px; }
+        .edge-axis span {
+            display: inline-block;
+            width: 1px;
+            height: 7px;
+            background: var(--s-fg);
+            opacity: 0.18;
+            animation: edgeTickPulse 3.6s ease-in-out infinite;
+        }
+        .edge-axis span:nth-child(odd)  { height: 5px; opacity: 0.10; }
+        .edge-axis span:nth-child(5n)   { height: 11px; opacity: 0.4; }
+        .edge-axis span:nth-child(1)    { animation-delay: -0s; }
+        .edge-axis span:nth-child(2)    { animation-delay: -0.2s; }
+        .edge-axis span:nth-child(3)    { animation-delay: -0.4s; }
+        .edge-axis span:nth-child(4)    { animation-delay: -0.6s; }
+        .edge-axis span:nth-child(5)    { animation-delay: -0.8s; }
+        .edge-axis span:nth-child(6)    { animation-delay: -1.0s; }
+        .edge-axis span:nth-child(7)    { animation-delay: -1.2s; }
+        .edge-axis span:nth-child(8)    { animation-delay: -1.4s; }
+        .edge-axis span:nth-child(9)    { animation-delay: -1.6s; }
+        .edge-axis span:nth-child(10)   { animation-delay: -1.8s; }
+        .edge-axis span:nth-child(11)   { animation-delay: -2.0s; }
+        .edge-axis span:nth-child(12)   { animation-delay: -2.2s; }
+        .edge-axis span:nth-child(13)   { animation-delay: -2.4s; }
+        @keyframes edgeTickPulse {
+            0%, 100% { opacity: var(--tick-min, 0.10); }
+            50%      { opacity: var(--tick-max, 0.55); }
+        }
+
+        /* Intrusion-flash markers — small amber bloom dots at fixed positions
+           that fire on staggered delays. Each gets its own --d and --x/--y
+           via inline style. Reads as "packet flagged" hits along the perimeter. */
+        .scan-flash {
+            position: absolute;
+            top: var(--y, 50%);
+            left: var(--x, 50%);
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--s-warn);
+            box-shadow:
+                0 0 10px var(--s-warn),
+                0 0 22px rgba(255, 213, 107, 0.35);
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.3);
+            animation: scanFlash 9s ease-in-out infinite;
+            animation-delay: var(--d, 0s);
+        }
+        .scan-flash::after {
+            content: '';
+            position: absolute;
+            inset: -8px;
+            border: 1px solid var(--s-warn);
+            border-radius: 50%;
+            opacity: 0;
+            animation: scanFlashRing 9s ease-out infinite;
+            animation-delay: var(--d, 0s);
+        }
+        @keyframes scanFlash {
+            0%, 4%   { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+            6%       { opacity: 1; transform: translate(-50%, -50%) scale(1.4); }
+            10%      { opacity: 0.55; transform: translate(-50%, -50%) scale(1); }
+            14%      { opacity: 0; }
+            100%     { opacity: 0; }
+        }
+        @keyframes scanFlashRing {
+            0%, 5%   { opacity: 0; transform: scale(0.6); }
+            7%       { opacity: 0.7; transform: scale(1); }
+            18%      { opacity: 0; transform: scale(3); }
+            100%     { opacity: 0; transform: scale(3); }
+        }
+
+        /* Crosshair brackets at the screen corners — tiny detail that frames the
+           composition and ties to the "perimeter scan" theme. */
+        .scan-bracket {
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            border: 1px solid var(--s-fg-faint);
+            opacity: 0.6;
+        }
+        .scan-bracket.tl { top: 24px;    left: 24px;    border-right: none;  border-bottom: none; }
+        .scan-bracket.tr { top: 24px;    right: 24px;   border-left: none;   border-bottom: none; }
+        .scan-bracket.bl { bottom: 24px; left: 24px;    border-right: none;  border-top: none; }
+        .scan-bracket.br { bottom: 24px; right: 24px;   border-left: none;   border-top: none; }
+        @media (max-width: 480px) {
+            .scan-bracket { width: 16px; height: 16px; }
+            .scan-bracket.tl, .scan-bracket.tr { top: 14px; }
+            .scan-bracket.bl, .scan-bracket.br { bottom: 14px; }
+            .scan-bracket.tl, .scan-bracket.bl { left: 14px; }
+            .scan-bracket.tr, .scan-bracket.br { right: 14px; }
+        }
+
         .panel {
             position: relative;
             z-index: 10;
@@ -377,8 +598,14 @@
 
         @media (prefers-reduced-motion: reduce) {
             body::before, .panel::before, .status-led,
-            .emblem::before, .emblem-ring { animation: none !important; }
+            .emblem::before, .emblem-ring,
+            .scan-sweep, .scan-ring, .scan-flash, .scan-flash::after,
+            .perimeter-flow, .edge-axis span { animation: none !important; }
             .emblem-ring { transform: scale(0.78); opacity: 0.6; }
+            /* Park a static perimeter — corner brackets + edge ticks still
+               anchor the composition without any motion. */
+            .scan-ring, .scan-flash, .scan-sweep, .perimeter-flow { opacity: 0; }
+            .edge-axis span { opacity: 0.18; }
         }
     </style>
 </head>
@@ -391,6 +618,51 @@
     }
 })();
 </script>
+
+<!-- Security-perimeter scan background. Pure CSS — no JS, no canvas.
+     All active motion lives OUTSIDE the panel:
+       - sweep covers the full viewport but its center is masked
+       - scan-rings emanate from the four corners outward
+       - perimeter-flow dots travel clockwise around the screen edge
+       - edge-axis ticks pulse along the top + bottom edges
+       - scan-flash markers + corner brackets pin the framing -->
+<div class="scan-field" aria-hidden="true">
+    <div class="scan-sweep"></div>
+
+    <!-- 4 corner-anchored sonar pings, staggered 3s apart on a 12s loop -->
+    <div class="scan-ring scan-ring--tl"></div>
+    <div class="scan-ring scan-ring--tr"></div>
+    <div class="scan-ring scan-ring--br"></div>
+    <div class="scan-ring scan-ring--bl"></div>
+
+    <!-- Perimeter packet flow — 4 dots offset by 1/4 of the loop -->
+    <span class="perimeter-flow"></span>
+    <span class="perimeter-flow" style="animation-delay: -5.5s"></span>
+    <span class="perimeter-flow" style="animation-delay: -11s"></span>
+    <span class="perimeter-flow" style="animation-delay: -16.5s"></span>
+
+    <!-- Edge tick bands along the top + bottom horizons -->
+    <div class="edge-axis edge-axis-top">
+        <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <div class="edge-axis edge-axis-bottom">
+        <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <!-- Intrusion-flash markers pushed toward the edges (not behind the card) -->
+    <span class="scan-flash" style="--x: 12%; --y: 16%; --d: 0.0s;"></span>
+    <span class="scan-flash" style="--x: 88%; --y: 14%; --d: 1.9s;"></span>
+    <span class="scan-flash" style="--x: 92%; --y: 84%; --d: 3.4s;"></span>
+    <span class="scan-flash" style="--x: 14%; --y: 86%; --d: 5.1s;"></span>
+    <span class="scan-flash" style="--x: 6%;  --y: 50%; --d: 6.6s;"></span>
+    <span class="scan-flash" style="--x: 94%; --y: 50%; --d: 7.8s;"></span>
+
+    <!-- HUD corner brackets framing the whole composition -->
+    <span class="scan-bracket tl"></span>
+    <span class="scan-bracket tr"></span>
+    <span class="scan-bracket bl"></span>
+    <span class="scan-bracket br"></span>
+</div>
 
 <main class="panel" role="alertdialog" aria-labelledby="restrictedTitle">
     <span class="panel-corner tl" aria-hidden="true"></span>
