@@ -153,11 +153,10 @@
   })(); 
 </script>
 
-    <!-- ============ TITLE TYPING ANIMATION ============ -->
     <script>
     document.addEventListener("DOMContentLoaded", function() {
         const defaultText = "Suryanarayan Renjith";
-        const terminalText = "Surya Terminal — bash 5.2.15";
+        const terminalText = "Surya Terminal";
         let currentTarget = defaultText;
         let fixedChar = currentTarget[0];
         let dynamicText = currentTarget.slice(1);
@@ -209,7 +208,6 @@
 </head>
 <body>
 
-<!-- ============ THEME INITIALIZATION ============ -->
 <script>
 (function() {
     if (localStorage.getItem('suryaLightTheme') === 'true') {
@@ -221,7 +219,6 @@
 
 <i id="fa-test" class="fa-solid fa-circle-exclamation"></i>
 
-<!-- ============ FONT AWESOME CHECK ============ -->
 <script>
     function isFontAwesomeLoaded() {
         const testIcon = document.getElementById('fa-test');
@@ -241,7 +238,6 @@
     window.addEventListener('load', isFontAwesomeLoaded, { once: true });
 </script>
 
-<!-- ============ CUSTOM CURSOR ============ -->
 <script>
 function isDesktop() {
     return window.innerWidth > 768 && !("ontouchstart" in window || navigator.maxTouchPoints > 0);
@@ -404,7 +400,6 @@ function isDesktop() {
 
     bindHoverListeners(document);
 
-    // Re-bind hover listeners when dynamic content is loaded
     const observer = new MutationObserver((mutations) => {
       for (const m of mutations) {
         for (const node of m.addedNodes) {
@@ -500,52 +495,142 @@ function isDesktop() {
                     <div class="tab-content">
                         <div class="tab-pane active" id="about-tab">
                             <div class="about-section">
-                                <div class="favicon-container">
-                                    <img src="/assets/favicon/android-chrome-512x512.png" alt="Favicon" class="favicon" loading="lazy" decoding="async" width="80" height="80" />
+                                <div class="about-hero">
+                                    <div class="about-emblem">
+                                        <span class="about-emblem-ring" aria-hidden="true"></span>
+                                        <span class="about-emblem-ring about-emblem-ring--alt" aria-hidden="true"></span>
+                                        <img src="/assets/favicon/android-chrome-512x512.png" alt="" class="favicon" loading="lazy" decoding="async" width="80" height="80" />
+                                    </div>
+                                    <div class="about-hero-text">
+                                        <span class="about-eyebrow">Portfolio &middot; v3.1</span>
+                                        <h3 class="website-title">Surya Website</h3>
+                                        <p class="about-tagline">Fusing imagination with innovation.</p>
+                                        <div class="about-status">
+                                            <span class="about-status-led" aria-hidden="true"></span>
+                                            <span class="about-status-label">online</span>
+                                            <span class="about-status-divider" aria-hidden="true"></span>
+                                            <span id="uptimeResponseTime" class="about-status-rtt">Loading&hellip;</span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <h3 class="website-title">Surya Website</h3>
-                                <p id="yearRange">
-                                    <i class="fa-regular fa-calendar"></i>
-                                    Since 2023
-                                </p>                                  
-                                <p id="uptimeResponseTime" class="uptime-response-time">Loading…</p>
-                                <p class="made-with">Made with <span class="heart"> <i class="fa-solid fa-heart"></i> </span> by Suryanarayan Renjith.</p>
+
+                                <div class="about-meta-grid" role="list">
+                                    <div class="about-meta-cell" role="listitem">
+                                        <span class="about-meta-label">Since</span>
+                                        <span class="about-meta-value" id="yearRange">2023</span>
+                                    </div>
+                                    <div class="about-meta-cell" role="listitem">
+                                        <span class="about-meta-label">Build</span>
+                                        <span class="about-meta-value">v3.1<span class="about-meta-suffix">.0</span></span>
+                                    </div>
+                                    <div class="about-meta-cell" role="listitem">
+                                        <span class="about-meta-label">Engine</span>
+                                        <span class="about-meta-value">Vite + GSAP</span>
+                                    </div>
+                                    <div class="about-meta-cell" role="listitem">
+                                        <span class="about-meta-label">License</span>
+                                        <span class="about-meta-value">MIT</span>
+                                    </div>
+                                </div>
+
+                                <ul class="about-chips" aria-label="Tech stack">
+                                    <li>HTML</li>
+                                    <li>CSS</li>
+                                    <li>JS</li>
+                                    <li>Vite</li>
+                                    <li>GSAP</li>
+                                    <li>Three.js</li>
+                                </ul>
+
+                                <p class="made-with">Crafted with <span class="heart"><i class="fa-solid fa-heart" aria-hidden="true"></i></span> by Suryanarayan Renjith.</p>
                             </div>
                         </div>
                         <div class="tab-pane" id="keyboard-tab">
-                            <ul class="shortcuts-list">
-                                <li data-action="toggle-info"><span class="shortcut-key">Ctrl + Shift + /</span> Open Info Section</li>
-                                <li data-action="open-command-palette"><span class="shortcut-key">F2</span> Open Command Palette</li>
-                                <li data-action="go-home"><span class="shortcut-key">Ctrl + Shift + 5</span> Go to Home section</li>
-                                <li data-action="go-about"><span class="shortcut-key">Ctrl + Shift + 6</span> Go to About section</li>
-                                <li data-action="go-projects"><span class="shortcut-key">Ctrl + Shift + 7</span> Go to Projects section</li>
-                                <li data-action="go-resume"><span class="shortcut-key">Ctrl + Shift + 8</span> Go to Resume section</li>
-                                <li data-action="open-terminal"><span class="shortcut-key">Ctrl + Shift + K</span> Open Terminal</li>
-                                <li data-action="open-links"><span class="shortcut-key">Ctrl + Shift + L</span> Open Links in new tab</li>
-                                <li data-action="open-resume"><span class="shortcut-key">Ctrl + Shift + V</span> Open Resume in new tab</li>
-                            </ul>
+                            <div class="shortcuts-section">
+                                <div class="shortcuts-section-head">
+                                    <span class="shortcuts-section-label">Overlays</span>
+                                    <span class="shortcuts-section-line" aria-hidden="true"></span>
+                                </div>
+                                <ul class="shortcuts-list">
+                                    <li data-action="toggle-info"><span class="shortcut-key">Ctrl + Shift + /</span><span class="shortcut-label">Open Info Section</span></li>
+                                    <li data-action="open-command-palette"><span class="shortcut-key">F2</span><span class="shortcut-label">Open Command Palette</span></li>
+                                    <li data-action="open-terminal"><span class="shortcut-key">Ctrl + Shift + K</span><span class="shortcut-label">Open Terminal</span></li>
+                                </ul>
+                            </div>
+                            <div class="shortcuts-section">
+                                <div class="shortcuts-section-head">
+                                    <span class="shortcuts-section-label">Navigation</span>
+                                    <span class="shortcuts-section-line" aria-hidden="true"></span>
+                                </div>
+                                <ul class="shortcuts-list">
+                                    <li data-action="go-home"><span class="shortcut-key">Ctrl + Shift + 5</span><span class="shortcut-label">Go to Home section</span></li>
+                                    <li data-action="go-about"><span class="shortcut-key">Ctrl + Shift + 6</span><span class="shortcut-label">Go to About section</span></li>
+                                    <li data-action="go-projects"><span class="shortcut-key">Ctrl + Shift + 7</span><span class="shortcut-label">Go to Projects section</span></li>
+                                    <li data-action="go-resume"><span class="shortcut-key">Ctrl + Shift + 8</span><span class="shortcut-label">Go to Resume section</span></li>
+                                </ul>
+                            </div>
+                            <div class="shortcuts-section">
+                                <div class="shortcuts-section-head">
+                                    <span class="shortcuts-section-label">Quick Actions</span>
+                                    <span class="shortcuts-section-line" aria-hidden="true"></span>
+                                </div>
+                                <ul class="shortcuts-list">
+                                    <li data-action="open-links"><span class="shortcut-key">Ctrl + Shift + L</span><span class="shortcut-label">Open Links in new tab</span></li>
+                                    <li data-action="open-resume"><span class="shortcut-key">Ctrl + Shift + V</span><span class="shortcut-label">Open Resume in new tab</span></li>
+                                </ul>
+                            </div>
                         </div>
                         <div class="tab-pane" id="terminal-tab">
                             <div class="terminal-info">
-                                <p>SuryaOS &mdash; an in-page terminal that integrates with the portfolio.</p>
+                                <div class="terminal-preview" aria-hidden="true">
+                                    <div class="terminal-preview-chrome">
+                                        <span class="terminal-preview-dot terminal-preview-dot--red"></span>
+                                        <span class="terminal-preview-dot terminal-preview-dot--amber"></span>
+                                        <span class="terminal-preview-dot terminal-preview-dot--green"></span>
+                                        <span class="terminal-preview-title">surya@portfolio:~</span>
+                                    </div>
+                                    <div class="terminal-preview-body">
+                                        <div class="terminal-preview-row"><span class="terminal-preview-prompt">$</span> <span class="terminal-preview-cmd">./about</span></div>
+                                        <div class="terminal-preview-row terminal-preview-row--out">&rarr; loading section &lsquo;about&rsquo;&hellip;</div>
+                                        <div class="terminal-preview-row"><span class="terminal-preview-prompt">$</span> <span class="terminal-preview-cmd">fx motion on</span></div>
+                                        <div class="terminal-preview-row terminal-preview-row--out">fx: motion [on]</div>
+                                        <div class="terminal-preview-row"><span class="terminal-preview-prompt">$</span> <span class="terminal-preview-cursor"></span></div>
+                                    </div>
+                                </div>
+                                <p>SuryaOS &mdash; a full in-page terminal that drives the portfolio.</p>
                                 <p class="terminal-info-sub" id="terminalInfoSub">
-                                    Drive the page from the shell:
-                                    <code>theme</code><span data-music-code-wrap>, <code>music</code></span>, <code>fx</code>, <code>notify</code>, <code>stats</code>.
-                                    Run <code>./about</code>, <code>./projects</code>, or <code>./resume</code> to load sections inline.
-                                    Press <span class="shortcut-key inline">Ctrl + Shift + K</span> any time to toggle.
+                                    Run from the shell:
+                                    <code>theme</code><span data-music-code-wrap>, <code>music</code></span>, <code>fx</code>, <code>notify</code>, <code>stats</code>, <code>calc</code>.
+                                    Launch sections inline with <code>./about</code>, <code>./projects</code>, or <code>./resume</code>.
+                                    Toggle any time with <span class="shortcut-key inline">Ctrl + Shift + K</span>.
                                 </p>
                                 <button class="action-button" id="openTerminal">
-                                    <i class="fa-solid fa-terminal"></i> Launch Terminal
+                                    <i class="fa-solid fa-terminal" aria-hidden="true"></i> Launch Terminal
                                 </button>
                             </div>
                         </div>
                         <div class="tab-pane" id="client-tab">
                             <div class="client-info">
-                                <p>Download my portfolio client to access my portfolio anytime with ease.</p>
+                                <div class="client-card">
+                                    <div class="client-card-head">
+                                        <span class="client-card-icon" aria-hidden="true">
+                                            <i class="fa-solid fa-cube"></i>
+                                        </span>
+                                        <div class="client-card-text">
+                                            <span class="client-card-title">Surya Desktop Client</span>
+                                            <span class="client-card-sub">Native installer &middot; auto-detected platform</span>
+                                        </div>
+                                    </div>
+                                    <ul class="client-meta-grid" aria-label="Build metadata">
+                                        <li><span>Channel</span><strong>Stable</strong></li>
+                                        <li><span>Targets</span><strong>Win / Linux / Android</strong></li>
+                                        <li><span>Source</span><strong>Direct CDN</strong></li>
+                                    </ul>
+                                </div>
                                 <button class="action-button" id="downloadClient">
-                                    <i class="fa-solid fa-download"></i> Download Client
+                                    <i class="fa-solid fa-download" aria-hidden="true"></i> Download Client
                                 </button>
-                                <div class="client-logs">
+                                <div class="client-logs" aria-live="polite">
                                     <code></code>
                                 </div>
                             </div>
@@ -565,7 +650,10 @@ function isDesktop() {
           
               const el = document.getElementById('uptimeResponseTime');
               function setUI(val) {
-                if (el) el.textContent = `Last checked response time: ${val}`;
+                if (!el) return;
+                if (val === '--') { el.textContent = 'offline'; el.dataset.state = 'down'; return; }
+                el.textContent = String(val).match(/ms$/i) ? val : `${val} ms`;
+                el.dataset.state = 'ok';
               }
           
               const cachedVal = localStorage.getItem(keyValue);
@@ -1430,8 +1518,7 @@ function isDesktop() {
                                 syncStarfieldLabel(!!(event.detail && event.detail.enabled));
                             });
 
-                            // Auto-disable the audio visualizer if music gets paused/muted
-                            // while it's running — visualizer must follow background music.
+                            
                             window.addEventListener('bgAudioStateChange', (event) => {
                                 const playing = !!(event.detail && event.detail.playing);
                                 if (!playing && document.body.classList.contains('experimental-audio-viz')) {
@@ -1439,8 +1526,6 @@ function isDesktop() {
                                 }
                             });
 
-                            // Hide the Audio Visualizer command entirely when playback
-                            // is unsupported (autoplay rejected, decode error, etc.).
                             const musicCodeWrap = document.querySelector('[data-music-code-wrap]');
                             function syncMusicReferencesInModal() {
                                 if (!musicCodeWrap) return;
@@ -1456,10 +1541,6 @@ function isDesktop() {
                                 syncMusicReferencesInModal();
                             });
 
-                            // Honor `prefers-reduced-motion` for the Motion FX toggle. The
-                            // user can flip this preference at runtime (system settings →
-                            // accessibility) so we listen for the media-query change instead
-                            // of only sampling it once at boot.
                             if (reducedMotionQuery) {
                                 const onReducedMotionChange = () => syncMotionFxCommandAvailability(true);
                                 if (typeof reducedMotionQuery.addEventListener === 'function') {
@@ -3736,9 +3817,6 @@ function isOldBrowser() {
         }
 
         function logBandEdges(binCount, barCount) {
-            // Float bin positions (not floor()'d) so we can fractionally sample
-            // between FFT bins below — fixes the "left bars move as a block"
-            // problem caused by integer bucket collisions at low frequencies.
             var minHz = 40;
             var maxHz = 16000;
             var sampleRate = audioCtx ? audioCtx.sampleRate : 48000;
@@ -3755,10 +3833,6 @@ function isOldBrowser() {
         }
 
         function sampleBand(freqData, fLo, fHi) {
-            // Returns the band's average energy in [0,1] using fractional FFT
-            // bins. When the band is narrower than one bin (deep bass at the
-            // edge of resolution), we linearly interpolate between the two
-            // surrounding bins so adjacent bars still produce distinct values.
             var binMax = freqData.length - 1;
             if (fHi <= fLo) fHi = fLo + 0.0001;
 
@@ -4179,140 +4253,15 @@ function isOldBrowser() {
     z-index: 9;
   }
 
-  /* Boot screen + taskbar removed — terminal now glitch-spawns directly */
+  /* Boot screen + taskbar were removed in the glitch-spawn refactor.
+     The HTML no longer renders them; we keep the kill-switch so any
+     stray fragment fetched from the worker stays invisible. */
   .cli-boot-screen,
   .cli-taskbar { display: none !important; }
 
-  /* ===== BOOT SCREEN (legacy — kept for back-compat, hidden above) ===== */
-  .cli-boot-screen {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 20px;
-    background: rgba(0, 0, 0, 0.74);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    z-index: 4;
-    color: rgba(255, 255, 255, 0.92);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    line-height: 1.55;
-    text-shadow: 0 0 8px rgba(255, 255, 255, 0.18);
-    letter-spacing: 0.4px;
-    pointer-events: none;
-    transition: opacity 280ms ease-out;
-  }
-  .cli-terminal-overlay.is-booted .cli-boot-screen {
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  .cli-boot-logo {
-    margin: 0 0 20px;
-    color: #ffffff;
-    font-weight: 600;
-    font-size: 12px;
-    line-height: 1.15;
-    letter-spacing: 0.6px;
-    text-shadow: 0 0 18px rgba(255, 255, 255, 0.55), 0 0 4px rgba(255, 255, 255, 0.5);
-    animation: cliBootLogoGlitch 1.6s steps(8, end) infinite;
-    white-space: pre;
-    text-align: center;
-    opacity: 0;
-    animation: cliBootLogoIn 700ms cubic-bezier(0.16, 1, 0.3, 1) 80ms forwards;
-  }
-  @keyframes cliBootLogoIn {
-    0%   { opacity: 0; transform: translateY(-8px) scale(0.96); filter: blur(6px); }
-    60%  { opacity: 1; filter: blur(0); }
-    100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
-  }
-
-  .cli-boot-meta {
-    margin-bottom: 18px;
-    color: rgba(255, 255, 255, 0.55);
-    font-size: 11.5px;
-    letter-spacing: 1.2px;
-    text-transform: uppercase;
-    opacity: 0;
-    animation: cliBootLogoIn 500ms ease-out 380ms forwards;
-  }
-
-  .cli-boot-lines {
-    width: min(640px, 92%);
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    font-size: 12.5px;
-    color: rgba(255, 255, 255, 0.78);
-  }
-  .cli-boot-lines li {
-    opacity: 0;
-    transform: translateX(-8px);
-    margin-bottom: 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .cli-boot-lines li.is-shown {
-    opacity: 1;
-    transform: none;
-    transition: opacity 180ms ease, transform 180ms ease;
-  }
-  .cli-boot-lines .ok    { color: rgba(255, 255, 255, 0.92); text-shadow: 0 0 6px rgba(255, 255, 255, 0.25); }
-  .cli-boot-lines .info  { color: rgba(255, 255, 255, 0.74); }
-  .cli-boot-lines .warn  { color: rgba(255, 255, 255, 0.6); font-style: italic; }
-  .cli-boot-lines .ready { color: #ffffff; font-weight: 600; letter-spacing: 1.4px; text-shadow: 0 0 14px rgba(255, 255, 255, 0.55); }
-  .cli-boot-lines .dim   { color: rgba(255, 255, 255, 0.4); }
-
-  .cli-boot-progress {
-    width: min(560px, 88%);
-    height: 4px;
-    margin-top: 22px;
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 100px;
-    overflow: hidden;
-    position: relative;
-  }
-  .cli-boot-progress > div {
-    position: absolute;
-    inset: 0 100% 0 0;
-    background: linear-gradient(90deg, rgba(255, 255, 255, 0.2), #ffffff, rgba(255, 255, 255, 0.2));
-    box-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
-    animation: cliBootBar 1.6s cubic-bezier(0.45, 0, 0.15, 1) forwards;
-  }
-  @keyframes cliBootBar {
-    0%   { right: 100%; }
-    100% { right: 0; }
-  }
-
-  .cli-boot-skip {
-    position: absolute;
-    bottom: 22px;
-    right: 24px;
-    color: rgba(255, 255, 255, 0.45);
-    font-size: 10.5px;
-    letter-spacing: 1.2px;
-    text-transform: uppercase;
-    pointer-events: auto;
-    cursor: pointer;
-    padding: 6px 10px;
-    border-radius: 6px;
-    transition: color 180ms ease, background 180ms ease;
-  }
-  .cli-boot-skip:hover {
-    color: #ffffff;
-    background: rgba(255, 255, 255, 0.08);
-  }
-  body.light-theme .cli-boot-skip { color: rgba(0, 0, 0, 0.55); }
-  body.light-theme .cli-boot-skip:hover {
-    color: #000;
-    background: rgba(0, 0, 0, 0.08);
-  }
-
-  /* ===== DESKTOP (the wallpaper that hosts the terminal) ===== */
+  /* ===== DESKTOP (transparent wallpaper layer between overlay + window) =====
+     Its decorative children (orbs/grid/rain/vignette) were retired; we keep
+     only the positioning container so the existing markup still flows. */
   .cli-desktop {
     position: absolute;
     inset: 0;
@@ -4330,78 +4279,6 @@ function isOldBrowser() {
     opacity: 1;
   }
 
-  .cli-desktop-grid {
-    position: absolute;
-    inset: -50px;
-    pointer-events: none;
-    background-image:
-      linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-    background-size: 56px 56px;
-    mask-image: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.55) 0%, transparent 75%);
-    -webkit-mask-image: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.55) 0%, transparent 75%);
-    transform: perspective(900px) rotateX(60deg) translateZ(-90px);
-    animation: cliGridDrift 24s linear infinite;
-  }
-  @keyframes cliGridDrift {
-    from { background-position: 0 0; }
-    to   { background-position: 0 56px; }
-  }
-
-  .cli-desktop-rain {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    overflow: hidden;
-    opacity: 0.55;
-  }
-  .cli-desktop-rain .col {
-    position: absolute;
-    top: -30%;
-    width: 18px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    line-height: 1.35;
-    color: rgba(255, 255, 255, 0.75);
-    text-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
-    white-space: pre;
-    animation: cliRainFall linear infinite;
-  }
-  @keyframes cliRainFall {
-    from { transform: translateY(0); }
-    to   { transform: translateY(160vh); }
-  }
-
-  .cli-desktop-vignette {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: radial-gradient(ellipse at center, transparent 28%, rgba(0, 0, 0, 0.78) 100%);
-  }
-
-  .cli-desktop-orbs {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    overflow: hidden;
-  }
-  .cli-desktop-orbs span {
-    position: absolute;
-    width: 320px;
-    height: 320px;
-    border-radius: 50%;
-    filter: blur(80px);
-    opacity: 0.55;
-    mix-blend-mode: screen;
-    animation: cliOrbDrift 22s ease-in-out infinite;
-  }
-  .cli-desktop-orbs span:nth-child(1) { background: rgba(120, 180, 255, 0.32); top: -10%; left: -8%; animation-duration: 24s; }
-  .cli-desktop-orbs span:nth-child(2) { background: rgba(190, 140, 255, 0.28); bottom: -12%; right: -6%; animation-duration: 28s; animation-delay: -8s; }
-  .cli-desktop-orbs span:nth-child(3) { background: rgba(140, 240, 200, 0.22); top: 35%; left: 60%; width: 260px; height: 260px; animation-duration: 32s; animation-delay: -14s; }
-  @keyframes cliOrbDrift {
-    0%, 100% { transform: translate3d(0,0,0) scale(1); }
-    50%      { transform: translate3d(40px,-30px,0) scale(1.12); }
-  }
 
   /* ===== TERMINAL WINDOW (glitch spawn) ===== */
   .cli-terminal-window {
@@ -4523,8 +4400,7 @@ function isOldBrowser() {
   }
 
   .cli-terminal-overlay.is-closing .cli-desktop,
-  .cli-terminal-overlay.is-closing .cli-overlay-fade,
-  .cli-terminal-overlay.is-closing .cli-taskbar {
+  .cli-terminal-overlay.is-closing .cli-overlay-fade {
     transition: opacity 240ms ease;
     opacity: 0;
   }
@@ -4878,7 +4754,6 @@ function isOldBrowser() {
   }
   /* Motion freeze → kill the LED pulse + scanline animation */
   body.experimental-motion-freeze .cli-terminal-overlay .status-led,
-  body.experimental-motion-freeze .cli-terminal-overlay .cli-taskbar-brand::before,
   body.experimental-motion-freeze .cli-dock-pill::before {
     animation: none !important;
   }
@@ -5470,90 +5345,6 @@ function isOldBrowser() {
     margin-right: 4px;
   }
 
-  /* ===== TASKBAR ===== */
-  .cli-taskbar {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 0 16px;
-    background: linear-gradient(180deg, rgba(20, 20, 26, 0.65), rgba(8, 8, 12, 0.85));
-    backdrop-filter: blur(28px) saturate(140%);
-    -webkit-backdrop-filter: blur(28px) saturate(140%);
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.7);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11.5px;
-    letter-spacing: 0.4px;
-    z-index: 6;
-    transform: translateY(120%);
-    transition: transform 480ms cubic-bezier(0.18, 1.05, 0.32, 1.04);
-  }
-  .cli-terminal-overlay.is-booted .cli-taskbar { transform: translateY(0); }
-
-  .cli-taskbar-brand {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    color: rgba(255, 255, 255, 0.92);
-    font-weight: 600;
-    letter-spacing: 1.2px;
-    text-transform: uppercase;
-    font-size: 11px;
-  }
-  .cli-taskbar-brand::before {
-    content: "";
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #ffffff;
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
-  }
-  .cli-taskbar-app {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 10px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 6px;
-    color: rgba(255, 255, 255, 0.85);
-    font-size: 11px;
-  }
-  .cli-taskbar-spacer { flex: 1 1 auto; }
-  .cli-taskbar-clock {
-    color: rgba(255, 255, 255, 0.85);
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.6px;
-  }
-  .cli-taskbar-date {
-    color: rgba(255, 255, 255, 0.55);
-    font-size: 10.5px;
-    letter-spacing: 0.5px;
-  }
-  .cli-taskbar-quit {
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    color: rgba(255, 255, 255, 0.85);
-    font-family: inherit;
-    font-size: 10.5px;
-    letter-spacing: 0.8px;
-    text-transform: uppercase;
-    padding: 4px 10px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
-  }
-  .cli-taskbar-quit:hover {
-    background: rgba(255, 255, 255, 0.18);
-    border-color: rgba(255, 255, 255, 0.5);
-    color: #ffffff;
-  }
-
   /* ===== Light theme variant (matches main page) ===== */
   body.light-theme .cli-terminal-overlay {
     background: transparent;
@@ -5565,35 +5356,9 @@ function isOldBrowser() {
     -webkit-backdrop-filter: blur(18px) saturate(120%);
   }
   body.light-theme .cli-desktop { background: transparent; }
-  body.light-theme .cli-boot-screen {
-    background: rgba(245, 245, 245, 0.78);
-    color: rgba(0, 0, 0, 0.85);
-    text-shadow: 0 0 8px rgba(0, 0, 0, 0.08);
-  }
-  body.light-theme .cli-boot-logo {
-    color: #0a0a0a;
-    text-shadow: 0 0 18px rgba(0, 0, 0, 0.18), 0 0 4px rgba(0, 0, 0, 0.18);
-  }
-  body.light-theme .cli-boot-lines .ok    { color: rgba(0, 0, 0, 0.92); text-shadow: 0 0 6px rgba(0, 0, 0, 0.18); }
-  body.light-theme .cli-boot-lines .info  { color: rgba(0, 0, 0, 0.7); }
-  body.light-theme .cli-boot-lines .warn  { color: rgba(0, 0, 0, 0.55); }
-  body.light-theme .cli-boot-lines .ready { color: #000; text-shadow: 0 0 14px rgba(0, 0, 0, 0.35); }
-  body.light-theme .cli-boot-lines .dim   { color: rgba(0, 0, 0, 0.4); }
-  body.light-theme .cli-boot-progress {
-    background: rgba(0, 0, 0, 0.08);
-    border-color: rgba(0, 0, 0, 0.18);
-  }
-  body.light-theme .cli-boot-progress > div {
-    background: linear-gradient(90deg, rgba(0, 0, 0, 0.2), #000, rgba(0, 0, 0, 0.2));
-    box-shadow: 0 0 12px rgba(0, 0, 0, 0.4);
-  }
   body.light-theme .cli-terminal-overlay .status-led {
     background: #000;
     box-shadow: 0 0 6px rgba(0, 0, 0, 0.55);
-  }
-  body.light-theme .cli-taskbar-brand::before {
-    background: #000;
-    box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
   }
   body.light-theme .cli-terminal-overlay .vim-shell--insert .vim-mode-pill {
     background: rgba(0, 0, 0, 0.16);
@@ -5614,11 +5379,6 @@ function isOldBrowser() {
   }
   body.light-theme .cli-terminal-overlay .window-btn.close:active {
     background: rgba(0, 0, 0, 0.28);
-  }
-  body.light-theme .cli-taskbar-quit:hover {
-    background: rgba(0, 0, 0, 0.12);
-    border-color: rgba(0, 0, 0, 0.4);
-    color: #000;
   }
   body.light-theme .cli-terminal-overlay .terminal {
     background: rgba(255, 255, 255, 0.4);
@@ -5644,15 +5404,6 @@ function isOldBrowser() {
     border-top: 1px solid rgba(0, 0, 0, 0.1);
     color: rgba(0, 0, 0, 0.55);
   }
-  body.light-theme .cli-taskbar {
-    background: linear-gradient(180deg, rgba(255,255,255,0.65), rgba(238,238,240,0.85));
-    border-top-color: rgba(0, 0, 0, 0.1);
-    color: rgba(0, 0, 0, 0.65);
-  }
-  body.light-theme .cli-taskbar-brand { color: #1d1d1f; }
-  body.light-theme .cli-taskbar-clock { color: #1d1d1f; }
-  body.light-theme .cli-taskbar-app { background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.1); color: #1d1d1f; }
-  body.light-theme .cli-taskbar-quit { color: #1d1d1f; border-color: rgba(0,0,0,0.18); }
 
   /* ===== Responsive ===== */
   @media screen and (max-width: 1024px) {
@@ -5685,7 +5436,6 @@ function isOldBrowser() {
     .cli-terminal-overlay .input-line { padding: 8px 14px; }
     .cli-terminal-overlay .prompt { font-size: 0.9em; margin-right: 6px; }
     .cli-terminal-overlay input[type="text"]#cliCommandInput { font-size: 13.5px; }
-    .cli-boot-logo { font-size: 10px; }
 
     /* The site nav header is normally bumped to z-index 100005 while the
        terminal is open (so the palette/music remain reachable on desktop).
@@ -5714,8 +5464,6 @@ function isOldBrowser() {
     .cli-terminal-overlay input[type="text"]#cliCommandInput { font-size: 13px; }
     .cli-terminal-overlay .prompt { font-size: 0.85em; }
     .cli-terminal-overlay .header-tab { max-width: 140px; padding: 4px 8px; }
-    .cli-taskbar { gap: 8px; padding: 0 10px; font-size: 10.5px; }
-    .cli-taskbar-app, .cli-taskbar-date { display: none; }
   }
 
   /* Make non-interactive page chrome ignore pointer events while terminal is engaged.
@@ -5772,12 +5520,8 @@ function isOldBrowser() {
 <div id="cli-terminal-overlay" class="cli-terminal-overlay" aria-hidden="true" role="dialog" aria-label="SuryaOS terminal">
   <div class="cli-overlay-fade"></div>
 
-  <!-- Desktop phase -->
+  <!-- Desktop phase — empty wallpaper layer (decorative children were retired) -->
   <div class="cli-desktop">
-    <div class="cli-desktop-orbs"><span></span><span></span><span></span></div>
-    <div class="cli-desktop-grid"></div>
-    <div class="cli-desktop-rain" id="cliDesktopRain"></div>
-    <div class="cli-desktop-vignette"></div>
 
     <div class="cli-terminal-window" id="cliTerminalWindow">
       <div class="terminal" id="cliTerminal">
@@ -6325,7 +6069,6 @@ function isOldBrowser() {
     vim:      'vim [FILE]\n  Open the built-in modal editor.\n  i/a/o  enter insert mode\n  Esc    return to normal mode\n  :w     save    :q     quit    :wq / :x  save and quit',
     exit:     'exit\n  Close the terminal session.',
     sudo:     'sudo COMMAND\n  Execute a command as superuser (simulated).',
-    /* Page-control commands */
     theme:    'theme [light|dark|toggle|status]\n  Switch the page theme without leaving the terminal.\n  Persists via localStorage.',
     music:    'music [play|pause|toggle|mute|unmute|status]\n  Drive the page\'s background music control from the shell.',
     fx:       'fx [MODE [on|off|toggle]]   |   fx reset\n  Toggle experimental visual effects.\n  Modes: motion, vortex, freeze, audio, zen.\n  Note: `audio` requires music to be playing first (run `music play`).\n  Run with no args to list current state.',
@@ -7203,8 +6946,6 @@ function isOldBrowser() {
     }
     var key = args[0].toLowerCase();
     var entry = __fxRegistry[key];
-    // Hidden modes report exactly the same error as unknown modes — no point
-    // teasing the user about a toggle they can't reach.
     if (!entry || keys.indexOf(key) < 0) {
       var hint = keys.length ? keys.join(', ') : '(none)';
       return fail('fx: unknown mode \'' + args[0] + '\' — available: ' + hint);
@@ -7227,7 +6968,6 @@ function isOldBrowser() {
     return 'fx: ' + key + ' ' + (document.body.classList.contains(cls) ? '[on]' : '[off]');
   };
 
-  // ---- stats: session counters — uptime, commands run, sections visited ----
   commands.stats = function () {
     var ms = Date.now() - __sessionStart;
     var s = Math.floor(ms / 1000);
@@ -8082,21 +7822,6 @@ function isOldBrowser() {
   }
   window.toggleMaximizeTerminal = toggleMaximizeTerminal;
 
-  function startTaskbarClock() {
-    var clock = $('cliTaskbarClock');
-    var date = $('cliTaskbarDate');
-    function tick() {
-      var d = new Date();
-      if (clock) clock.textContent =
-        String(d.getHours()).padStart(2, '0') + ':' +
-        String(d.getMinutes()).padStart(2, '0');
-      if (date) date.textContent = d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
-    }
-    tick();
-    if (window.__cliTaskbarClockTimer) clearInterval(window.__cliTaskbarClockTimer);
-    window.__cliTaskbarClockTimer = setInterval(tick, 30000);
-  }
-
   function getDockPill() { return document.getElementById('cliDockPill'); }
 
   function isMinimized() {
@@ -8153,10 +7878,6 @@ function isOldBrowser() {
   }
 
   function shutdownTerminalState() {
-    // Wipe runtime state so the next launch is a fresh shell. We DO NOT reset
-    // __cliInited — re-running initCLI() would re-attach every event handler
-    // (maximize, minimize, close, header dblclick, keydown, etc.) on top of the
-    // existing ones, causing each click to fire N times after N reopens.
     if (outputEl) outputEl.innerHTML = '';
     if (inputEl) inputEl.value = '';
     hist = []; histPos = -1;
@@ -8180,9 +7901,6 @@ function isOldBrowser() {
       opacity: box.style.opacity,
       pointerEvents: box.style.pointerEvents
     };
-    // When the GUI marked playback as unsupported it collapsed this container
-    // intentionally — keep it hidden inside the terminal too. Don't force it
-    // open just to reveal a button that can't do anything.
     if (window.__audioPlaybackAvailable === false) return;
     // Force the container open (CSS uses !important; clear JS-set inline styles too)
     box.style.maxWidth = '60px';
@@ -8275,10 +7993,6 @@ function isOldBrowser() {
     if (e.target.closest('#cliDockPill')) restoreTerminal();
   });
 
-  // When the GUI marks playback as unsupported (autoplay rejected mid-session,
-  // decode error, etc.), remove the music command from the CLI surface too —
-  // otherwise the user could still run `music play` and see a misleading
-  // "playing" message in a browser that can't actually play anything.
   window.addEventListener('audioPlaybackUnavailable', function () {
     if (typeof commands === 'object' && commands && commands.music) {
       delete commands.music;
