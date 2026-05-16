@@ -380,10 +380,14 @@
     body.light-theme .btn.primary:hover { box-shadow: 0 12px 36px rgba(0,0,0,0.12); }
 
     /* =========================================================================
-       ROBOT — the centerpiece. The previous astronaut is replaced by a much
-       richer, layered bot called "SR-404 Probe Unit": a hexagonal chassis
-       with a holographic visor, mouse-tracked LED eyes, a pulsing antenna,
-       a breathing reactor core, orbiting data tags, and a slow radar sweep.
+       ROBOT — "SR-404 Probe Unit"
+       Round chassis, holographic visor, mouse-tracked LED eyes, breathing
+       reactor, orbiting data tags, antenna ping, slow radar sweep.
+       The visible polish lives mostly in JS: a five-state machine
+       (booting → idle → tracking → engaged → startled), spring-physics
+       head rotation, idle saccades, click look-at, and pupil dilation.
+       Each state is also reflected on `.figure-wrap[data-bot-state="…"]`
+       so CSS can decorate the HUD chip + ambient feel.
        ========================================================================= */
     .figure-wrap {
       position: relative;
@@ -396,6 +400,7 @@
       overflow: hidden;
       --mouse-x: 50%;
       --mouse-y: 50%;
+      --pupil-scale: 1;
     }
     .figure-wrap::before {
       content: '';
@@ -448,6 +453,79 @@
       transform-box: fill-box;
       transform-origin: center;
       transition: transform 0.15s ease-out;
+    }
+
+    /* ----- HUD status chip (top-left of figure-wrap) ----- */
+    .bot-status {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      z-index: 4;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--s-surface);
+      border: 1px solid var(--s-border-subtle);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      font-family: var(--s-font-mono);
+      font-size: 9px;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+      color: var(--s-fg-tertiary);
+      pointer-events: none;
+      transition: color 0.25s ease, border-color 0.25s ease;
+    }
+    .bot-status-led {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--s-fg);
+      box-shadow: 0 0 6px var(--s-fg);
+      animation: hudLedPulse 1.6s ease-in-out infinite;
+    }
+    @keyframes hudLedPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: 0.4; transform: scale(0.7); }
+    }
+    [data-bot-state="booting"]  .bot-status-led { animation-duration: 0.45s; }
+    [data-bot-state="idle"]     .bot-status-led { animation-duration: 2.2s; }
+    [data-bot-state="tracking"] .bot-status-led { background: var(--s-fg); }
+    [data-bot-state="engaged"]  .bot-status-led { background: #6fdc8c; box-shadow: 0 0 8px rgba(111, 220, 140, 0.7); animation-duration: 1s; }
+    [data-bot-state="engaged"]  .bot-status      { color: var(--s-fg); border-color: var(--s-border); }
+    [data-bot-state="startled"] .bot-status-led { background: #ffd56b; box-shadow: 0 0 9px rgba(255, 213, 107, 0.7); animation-duration: 0.4s; }
+    [data-bot-state="startled"] .bot-status      { color: #ffd56b; border-color: rgba(255, 213, 107, 0.4); }
+
+    /* Pupil dilation — driven by --pupil-scale (set by JS based on state). */
+    .bot-pupil {
+      transform-box: fill-box;
+      transform-origin: center;
+      transform: scale(var(--pupil-scale, 1));
+      transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Boot sequence — eyes + reactor fade in. Once JS strips the `booting`
+       state from the figure-wrap, normal opacity resumes via CSS transition. */
+    [data-bot-state="booting"] .bot-eye      { opacity: 0; }
+    [data-bot-state="booting"] .bot-reactor  { opacity: 0.25; }
+    .bot-eye, .bot-reactor                   { transition: opacity 0.6s ease; }
+
+    /* Ambient brightness shifts per state — sells the "alive" feel without
+       extra animation cost. */
+    .robot {
+      transition: filter 0.35s ease;
+    }
+    [data-bot-state="engaged"]  .robot { filter: drop-shadow(0 14px 40px rgba(0,0,0,0.6)) brightness(1.08) saturate(1.05); }
+    [data-bot-state="startled"] .robot { filter: drop-shadow(0 16px 44px rgba(0,0,0,0.7)) brightness(1.25) contrast(1.06); }
+
+    /* Click flash — applied to the core for ~360 ms. Uses filter so it
+       composes with the JS-set transform without clobbering it. */
+    .bot-core.is-flashing { animation: botFlash 360ms ease-out; }
+    @keyframes botFlash {
+      0%   { filter: brightness(1); }
+      28%  { filter: brightness(1.6) drop-shadow(0 0 24px rgba(255, 255, 255, 0.55)); }
+      100% { filter: brightness(1); }
     }
 
     /* Orbiting data tags around the robot — pure CSS animation */
@@ -582,7 +660,13 @@
       </div>
     </div>
 
-    <div class="figure-wrap" id="figure-wrap">
+    <div class="figure-wrap" id="figure-wrap" data-bot-state="booting">
+      <!-- HUD status chip — text + LED swap per bot state -->
+      <div class="bot-status" id="botStatus" aria-hidden="true">
+        <span class="bot-status-led" aria-hidden="true"></span>
+        <span class="bot-status-text">BOOTING&hellip;</span>
+      </div>
+
       <!-- Orbiting data tags — pure CSS, no JS needed -->
       <div class="orbits" aria-hidden="true">
         <div class="orbit orbit-1">
@@ -598,44 +682,54 @@
       <svg class="robot" id="robot" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg"
            role="img" aria-label="SR-404 probe robot, floating quietly">
         <defs>
-          <!-- Radial gradient for the chassis -->
-          <radialGradient id="chassisFill" cx="50%" cy="40%" r="65%">
-            <stop offset="0%"   stop-color="#1a1a1f" stop-opacity="0.95"/>
-            <stop offset="60%"  stop-color="#0a0a0c" stop-opacity="0.95"/>
-            <stop offset="100%" stop-color="#000"    stop-opacity="0.85"/>
+          <!-- Spherical chassis: highlight at top-left to read as a 3D ball. -->
+          <radialGradient id="chassisFill" cx="35%" cy="28%" r="80%">
+            <stop offset="0%"   stop-color="#26262d" stop-opacity="0.98"/>
+            <stop offset="45%"  stop-color="#101013" stop-opacity="0.97"/>
+            <stop offset="100%" stop-color="#000"    stop-opacity="0.92"/>
           </radialGradient>
-          <!-- Visor gradient: dark glass with a brighter reflection band -->
+          <!-- Inner glass dome inside the chrome bezel. -->
+          <radialGradient id="domeFill" cx="50%" cy="42%" r="62%">
+            <stop offset="0%"   stop-color="#1a1a20" stop-opacity="0.95"/>
+            <stop offset="100%" stop-color="#040406" stop-opacity="0.95"/>
+          </radialGradient>
+          <!-- Visor band: dark glass with a mid highlight. -->
           <linearGradient id="visorFill" x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%"   stop-color="#0d0d10"/>
             <stop offset="35%"  stop-color="#1a1a20"/>
             <stop offset="50%"  stop-color="#2a2a32"/>
             <stop offset="100%" stop-color="#050507"/>
           </linearGradient>
-          <!-- Visor highlight band that slides across -->
           <linearGradient id="visorHighlight" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%"   stop-color="rgba(255,255,255,0)"/>
             <stop offset="50%"  stop-color="rgba(255,255,255,0.55)"/>
             <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
           </linearGradient>
+          <!-- Top "specular" highlight on the dome -->
+          <radialGradient id="domeShine" cx="40%" cy="22%" r="32%">
+            <stop offset="0%"   stop-color="rgba(255,255,255,0.45)"/>
+            <stop offset="60%"  stop-color="rgba(255,255,255,0.10)"/>
+            <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+          </radialGradient>
           <!-- Reactor core gradient -->
           <radialGradient id="coreFill" cx="50%" cy="50%" r="50%">
             <stop offset="0%"   stop-color="#fff"/>
             <stop offset="40%"  stop-color="#fff" stop-opacity="0.9"/>
             <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
           </radialGradient>
-          <!-- Antenna orb gradient -->
+          <!-- Antenna orb -->
           <radialGradient id="antennaOrb" cx="35%" cy="35%" r="65%">
             <stop offset="0%"   stop-color="#fff"/>
             <stop offset="70%"  stop-color="#fff" stop-opacity="0.6"/>
             <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
           </radialGradient>
-          <!-- Radar sweep gradient (conic-like via SVG: from white to transparent) -->
+          <!-- Radar sweep -->
           <linearGradient id="radarSweep" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%"   stop-color="rgba(255,255,255,0)"/>
             <stop offset="80%"  stop-color="rgba(255,255,255,0.25)"/>
             <stop offset="100%" stop-color="rgba(255,255,255,0.65)"/>
           </linearGradient>
-          <!-- Soft outer glow filter -->
+          <!-- Soft outer glow -->
           <filter id="botGlow" x="-30%" y="-30%" width="160%" height="160%">
             <feGaussianBlur stdDeviation="2.2" result="b1"/>
             <feMerge>
@@ -643,7 +737,7 @@
               <feMergeNode in="SourceGraphic"/>
             </feMerge>
           </filter>
-          <!-- Strong glow for the LEDs -->
+          <!-- LED bloom -->
           <filter id="ledGlow" x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur stdDeviation="2.4" result="b1"/>
             <feGaussianBlur stdDeviation="5"   result="b2"/>
@@ -653,31 +747,29 @@
               <feMergeNode in="SourceGraphic"/>
             </feMerge>
           </filter>
-          <!-- Clip the visor highlight to the visor shape -->
-          <clipPath id="visorClip">
-            <path d="M 100 140 Q 160 130 220 140 Q 224 168 220 180 Q 160 192 100 180 Q 96 168 100 140 Z"/>
-          </clipPath>
-          <!-- Clip the radar sweep to the chassis -->
+          <!-- Clip the radar sweep + dome shine to the chassis circle. -->
           <clipPath id="chassisClip">
-            <path d="M 160 60 L 260 100 L 270 200 L 230 268 L 90 268 L 50 200 L 60 100 Z"/>
+            <circle cx="160" cy="170" r="105"/>
+          </clipPath>
+          <!-- Clip the visor band content -->
+          <clipPath id="visorClip">
+            <ellipse cx="160" cy="158" rx="68" ry="18"/>
           </clipPath>
         </defs>
 
-        <!-- =========== Radar sweep (back layer, clipped to chassis) =========== -->
+        <!-- ====== Radar sweep behind the chassis (clipped to the circle) ====== -->
         <g clip-path="url(#chassisClip)" opacity="0.45">
-          <rect x="160" y="60" width="220" height="220" fill="url(#radarSweep)" transform-origin="160 168">
+          <rect x="160" y="65" width="220" height="220" fill="url(#radarSweep)" transform-origin="160 170">
             <animateTransform attributeName="transform" type="rotate"
-                              from="0 160 168" to="360 160 168" dur="6s" repeatCount="indefinite"/>
+                              from="0 160 170" to="360 160 170" dur="6s" repeatCount="indefinite"/>
           </rect>
         </g>
 
-        <!-- =========== Antenna assembly =========== -->
+        <!-- ====== Antenna assembly (above the head) ====== -->
         <g class="bot-antenna" filter="url(#botGlow)">
-          <!-- Antenna mast -->
-          <line x1="160" y1="60" x2="160" y2="22" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.9"/>
-          <!-- Small mid-mast band -->
+          <line x1="160" y1="65" x2="160" y2="22" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.9"/>
           <line x1="155" y1="42" x2="165" y2="42" stroke="#fff" stroke-width="1.5" stroke-linecap="round" opacity="0.55"/>
-          <!-- Frequency rings around the orb -->
+          <!-- Three expanding frequency rings -->
           <circle cx="160" cy="18" r="10" fill="none" stroke="#fff" stroke-width="0.6" stroke-opacity="0.35">
             <animate attributeName="r" values="10;18;22" dur="1.8s" repeatCount="indefinite"/>
             <animate attributeName="stroke-opacity" values="0.6;0.1;0" dur="1.8s" repeatCount="indefinite"/>
@@ -690,128 +782,127 @@
             <animate attributeName="r" values="10;18;22" dur="1.8s" begin="1.2s" repeatCount="indefinite"/>
             <animate attributeName="stroke-opacity" values="0.6;0.1;0" dur="1.8s" begin="1.2s" repeatCount="indefinite"/>
           </circle>
-          <!-- Orb halo -->
+          <!-- Orb halo + core -->
           <circle cx="160" cy="18" r="14" fill="url(#antennaOrb)" opacity="0.85"/>
-          <!-- Orb core -->
           <circle cx="160" cy="18" r="5.5" fill="#fff">
             <animate attributeName="r"       values="5.5;7;5.5" dur="1.4s" repeatCount="indefinite"/>
             <animate attributeName="opacity" values="1;0.7;1"   dur="1.4s" repeatCount="indefinite"/>
           </circle>
         </g>
 
-        <!-- =========== Core (head/chassis + everything that rotates with it) =========== -->
+        <!-- ====== Core (head + everything that tracks the cursor) ====== -->
         <g class="bot-core" id="bot-core">
-          <!-- Outer chassis (hexagonal) -->
-          <path d="M 160 60 L 260 100 L 270 200 L 230 268 L 90 268 L 50 200 L 60 100 Z"
-                fill="url(#chassisFill)" stroke="#fff" stroke-width="1.4" stroke-opacity="0.8"
-                filter="url(#botGlow)"/>
+          <!-- Spherical chrome bezel: outer ring -->
+          <circle cx="160" cy="170" r="105"
+                  fill="url(#chassisFill)" stroke="#fff" stroke-width="1.4" stroke-opacity="0.8"
+                  filter="url(#botGlow)"/>
 
-          <!-- Inner chassis seam -->
-          <path d="M 160 78 L 244 110 L 252 196 L 220 254 L 100 254 L 68 196 L 76 110 Z"
-                fill="none" stroke="#fff" stroke-width="0.6" stroke-opacity="0.18"/>
+          <!-- Inner dome (slightly smaller, darker glass) -->
+          <circle cx="160" cy="170" r="92" fill="url(#domeFill)" stroke="#fff" stroke-width="0.6" stroke-opacity="0.22"/>
 
-          <!-- Corner rivets / mount points -->
-          <g fill="#fff" opacity="0.55">
-            <circle cx="60"  cy="100" r="1.6"/>
-            <circle cx="260" cy="100" r="1.6"/>
-            <circle cx="270" cy="200" r="1.6"/>
-            <circle cx="230" cy="268" r="1.6"/>
-            <circle cx="90"  cy="268" r="1.6"/>
-            <circle cx="50"  cy="200" r="1.6"/>
-            <circle cx="160" cy="60"  r="1.6"/>
+          <!-- Top specular highlight — sells the spherical 3D feel -->
+          <g clip-path="url(#chassisClip)" opacity="0.9">
+            <ellipse cx="128" cy="118" rx="56" ry="34" fill="url(#domeShine)"/>
           </g>
 
-          <!-- Side vents (hairline stripes) -->
-          <g stroke="#fff" stroke-width="0.7" stroke-opacity="0.25" stroke-linecap="round">
-            <line x1="60"  y1="138" x2="76"  y2="138"/>
-            <line x1="60"  y1="148" x2="76"  y2="148"/>
-            <line x1="60"  y1="158" x2="76"  y2="158"/>
-            <line x1="244" y1="138" x2="260" y2="138"/>
-            <line x1="244" y1="148" x2="260" y2="148"/>
-            <line x1="244" y1="158" x2="260" y2="158"/>
+          <!-- Thin equatorial seam — implies "two hemispheres" without busy detail -->
+          <line x1="62" y1="170" x2="258" y2="170"
+                stroke="#fff" stroke-width="0.5" stroke-opacity="0.12" stroke-dasharray="2 6"/>
+
+          <!-- Eight rivets evenly distributed around the perimeter -->
+          <g fill="#fff" opacity="0.5">
+            <circle cx="160" cy="65"  r="1.6"/>
+            <circle cx="234" cy="96"  r="1.6"/>
+            <circle cx="265" cy="170" r="1.6"/>
+            <circle cx="234" cy="244" r="1.6"/>
+            <circle cx="160" cy="275" r="1.6"/>
+            <circle cx="86"  cy="244" r="1.6"/>
+            <circle cx="55"  cy="170" r="1.6"/>
+            <circle cx="86"  cy="96"  r="1.6"/>
           </g>
 
-          <!-- =========== Visor (holographic dark glass) =========== -->
+          <!-- Curved side vents that follow the sphere surface -->
+          <g fill="none" stroke="#fff" stroke-width="0.7" stroke-opacity="0.22" stroke-linecap="round">
+            <path d="M 64 156 A 100 100 0 0 1 64 184"/>
+            <path d="M 70 148 A 96 96 0 0 1 70 192"/>
+            <path d="M 256 156 A 100 100 0 0 0 256 184"/>
+            <path d="M 250 148 A 96 96 0 0 0 250 192"/>
+          </g>
+
+          <!-- ====== Visor (wraparound dark-glass band) ====== -->
           <g class="bot-visor">
-            <!-- Visor body -->
-            <path d="M 100 140 Q 160 130 220 140 Q 224 168 220 180 Q 160 192 100 180 Q 96 168 100 140 Z"
-                  fill="url(#visorFill)" stroke="#fff" stroke-width="0.9" stroke-opacity="0.55"/>
+            <ellipse cx="160" cy="158" rx="68" ry="18"
+                     fill="url(#visorFill)" stroke="#fff" stroke-width="0.9" stroke-opacity="0.55"/>
             <!-- Inner thin highlight along the top edge -->
-            <path d="M 102 142 Q 160 134 218 142" fill="none" stroke="#fff" stroke-width="0.6" stroke-opacity="0.45"/>
+            <path d="M 96 152 Q 160 144 224 152" fill="none" stroke="#fff" stroke-width="0.6" stroke-opacity="0.45"/>
 
-            <!-- Scanline pattern inside the visor -->
+            <!-- Scanline pattern (clipped to the ellipse) -->
             <g clip-path="url(#visorClip)" opacity="0.18">
-              <line x1="98" y1="146" x2="222" y2="146" stroke="#fff" stroke-width="0.5"/>
-              <line x1="98" y1="152" x2="222" y2="152" stroke="#fff" stroke-width="0.5"/>
-              <line x1="98" y1="158" x2="222" y2="158" stroke="#fff" stroke-width="0.5"/>
-              <line x1="98" y1="164" x2="222" y2="164" stroke="#fff" stroke-width="0.5"/>
-              <line x1="98" y1="170" x2="222" y2="170" stroke="#fff" stroke-width="0.5"/>
-              <line x1="98" y1="176" x2="222" y2="176" stroke="#fff" stroke-width="0.5"/>
-              <line x1="98" y1="182" x2="222" y2="182" stroke="#fff" stroke-width="0.5"/>
+              <line x1="92" y1="148" x2="228" y2="148" stroke="#fff" stroke-width="0.5"/>
+              <line x1="92" y1="154" x2="228" y2="154" stroke="#fff" stroke-width="0.5"/>
+              <line x1="92" y1="160" x2="228" y2="160" stroke="#fff" stroke-width="0.5"/>
+              <line x1="92" y1="166" x2="228" y2="166" stroke="#fff" stroke-width="0.5"/>
+              <line x1="92" y1="172" x2="228" y2="172" stroke="#fff" stroke-width="0.5"/>
             </g>
 
-            <!-- Sliding reflection highlight across the visor -->
+            <!-- Sliding reflection across the visor -->
             <g clip-path="url(#visorClip)">
-              <rect x="-60" y="138" width="80" height="46" fill="url(#visorHighlight)" opacity="0.6">
+              <rect x="-80" y="138" width="80" height="42" fill="url(#visorHighlight)" opacity="0.6">
                 <animate attributeName="x" values="-80;260" dur="5.5s" repeatCount="indefinite"/>
               </rect>
             </g>
 
-            <!-- =========== Eye LEDs — tracked by JS =========== -->
+            <!-- ====== Eye LEDs — translated by JS to track the cursor ====== -->
             <g class="bot-eye" id="leftEye">
-              <circle cx="128" cy="161" r="6.5" fill="rgba(255,255,255,0.08)" stroke="#fff" stroke-width="0.9" stroke-opacity="0.45"/>
-              <circle cx="128" cy="161" r="3.2" fill="#fff" filter="url(#ledGlow)">
-                <!-- Blink every 5s -->
+              <circle cx="135" cy="158" r="6.5" fill="rgba(255,255,255,0.08)" stroke="#fff" stroke-width="0.9" stroke-opacity="0.45"/>
+              <circle class="bot-pupil" cx="135" cy="158" r="3.2" fill="#fff" filter="url(#ledGlow)">
                 <animate attributeName="r" values="3.2;3.2;0.2;3.2" keyTimes="0;0.92;0.96;1" dur="5s" repeatCount="indefinite"/>
               </circle>
             </g>
             <g class="bot-eye" id="rightEye">
-              <circle cx="192" cy="161" r="6.5" fill="rgba(255,255,255,0.08)" stroke="#fff" stroke-width="0.9" stroke-opacity="0.45"/>
-              <circle cx="192" cy="161" r="3.2" fill="#fff" filter="url(#ledGlow)">
+              <circle cx="185" cy="158" r="6.5" fill="rgba(255,255,255,0.08)" stroke="#fff" stroke-width="0.9" stroke-opacity="0.45"/>
+              <circle class="bot-pupil" cx="185" cy="158" r="3.2" fill="#fff" filter="url(#ledGlow)">
                 <animate attributeName="r" values="3.2;3.2;0.2;3.2" keyTimes="0;0.92;0.96;1" dur="5s" begin="0.08s" repeatCount="indefinite"/>
               </circle>
             </g>
           </g>
 
-          <!-- =========== Reactor core (chest crystal) =========== -->
+          <!-- ====== Reactor core (chest crystal, inside the dome) ====== -->
           <g class="bot-reactor">
-            <!-- Diamond outline -->
-            <path d="M 160 200 L 178 218 L 160 236 L 142 218 Z"
+            <path d="M 160 198 L 178 216 L 160 234 L 142 216 Z"
                   fill="rgba(255,255,255,0.04)" stroke="#fff" stroke-width="0.9" stroke-opacity="0.55"/>
-            <!-- Inner glow disc -->
-            <circle cx="160" cy="218" r="11" fill="url(#coreFill)" opacity="0.85">
+            <circle cx="160" cy="216" r="11" fill="url(#coreFill)" opacity="0.85">
               <animate attributeName="opacity" values="0.55;1;0.55" dur="2.8s" repeatCount="indefinite"/>
               <animate attributeName="r"       values="8;13;8"       dur="2.8s" repeatCount="indefinite"/>
             </circle>
-            <!-- Core dot -->
-            <circle cx="160" cy="218" r="2.4" fill="#fff" filter="url(#ledGlow)"/>
+            <circle cx="160" cy="216" r="2.4" fill="#fff" filter="url(#ledGlow)"/>
           </g>
 
-          <!-- =========== Data bars (rolling indicator strip) =========== -->
-          <g class="bot-bars" transform="translate(108 250)">
-            <rect x="0"  y="0" width="14" height="3" rx="1" fill="#fff" opacity="0.85">
+          <!-- ====== Rolling data bar strip below the reactor ====== -->
+          <g class="bot-bars" transform="translate(120 250)">
+            <rect x="0"  y="0" width="12" height="3" rx="1" fill="#fff" opacity="0.85">
               <animate attributeName="opacity" values="0.3;1;0.3" dur="1.4s" repeatCount="indefinite"/>
             </rect>
-            <rect x="18" y="0" width="14" height="3" rx="1" fill="#fff" opacity="0.85">
+            <rect x="16" y="0" width="12" height="3" rx="1" fill="#fff" opacity="0.85">
               <animate attributeName="opacity" values="0.3;1;0.3" dur="1.4s" begin="0.18s" repeatCount="indefinite"/>
             </rect>
-            <rect x="36" y="0" width="14" height="3" rx="1" fill="#fff" opacity="0.85">
+            <rect x="32" y="0" width="12" height="3" rx="1" fill="#fff" opacity="0.85">
               <animate attributeName="opacity" values="0.3;1;0.3" dur="1.4s" begin="0.36s" repeatCount="indefinite"/>
             </rect>
-            <rect x="54" y="0" width="14" height="3" rx="1" fill="#fff" opacity="0.85">
+            <rect x="48" y="0" width="12" height="3" rx="1" fill="#fff" opacity="0.85">
               <animate attributeName="opacity" values="0.3;1;0.3" dur="1.4s" begin="0.54s" repeatCount="indefinite"/>
             </rect>
-            <rect x="72" y="0" width="14" height="3" rx="1" fill="#fff" opacity="0.85">
+            <rect x="64" y="0" width="12" height="3" rx="1" fill="#fff" opacity="0.85">
               <animate attributeName="opacity" values="0.3;1;0.3" dur="1.4s" begin="0.72s" repeatCount="indefinite"/>
             </rect>
-            <rect x="90" y="0" width="14" height="3" rx="1" fill="#fff" opacity="0.85">
+            <rect x="80" y="0" width="12" height="3" rx="1" fill="#fff" opacity="0.85">
               <animate attributeName="opacity" values="0.3;1;0.3" dur="1.4s" begin="0.9s" repeatCount="indefinite"/>
             </rect>
           </g>
         </g>
 
-        <!-- =========== Status pin at the bottom (rotating arc) =========== -->
-        <g transform="translate(160 290)">
+        <!-- ====== Status pin (rotating arc beneath the bot) ====== -->
+        <g transform="translate(160 297)">
           <circle cx="0" cy="0" r="14" fill="none" stroke="#fff" stroke-width="0.6" stroke-opacity="0.25"/>
           <circle cx="0" cy="0" r="14" fill="none" stroke="#fff" stroke-width="1.4"
                   stroke-linecap="round" stroke-dasharray="22 70" transform-origin="0 0">
@@ -852,35 +943,171 @@
     });
   }
 
-  /* Robot tracking — the head/chassis rotates 3D-style toward the cursor,
-     the LED eyes slide a few px in the same direction. */
+  /* SR-404 behavior — state machine + spring physics.
+     States: booting → idle → tracking → engaged → startled (back to prev)
+       booting   first ~1.4s on load — eyes/reactor fade in.
+       idle      no mouse for 3 s — head drifts to center, eyes saccade.
+       tracking  cursor active anywhere on the page.
+       engaged   cursor over the figure-wrap — pupils dilate, brighter glow.
+       startled  user clicked — bot snaps to look at the click, flashes.
+     Spring physics replaces the old constant-rate lerp so head movement has
+     real momentum (velocity + damping → slight overshoot + settle). */
   function initRobotTracking() {
-    const core    = document.getElementById('bot-core');
-    const leftEye = document.getElementById('leftEye');
-    const rightEye = document.getElementById('rightEye');
+    const core      = document.getElementById('bot-core');
+    const leftEye   = document.getElementById('leftEye');
+    const rightEye  = document.getElementById('rightEye');
+    const figureWrap = document.getElementById('figure-wrap');
+    const statusText = figureWrap?.querySelector('.bot-status-text');
     const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    if (!core || motionQuery.matches) return;
+    if (!core) return;
 
-    let tX = 0, tY = 0;   // target rotation
-    let cX = 0, cY = 0;   // current rotation (lerped)
+    // ----- Spring physics state -----
+    let tRotX = 0, tRotY = 0;   // target rotation (deg)
+    let cRotX = 0, cRotY = 0;   // current rotation
+    let vRotX = 0, vRotY = 0;   // angular velocity
+    let cEyeX = 0, cEyeY = 0;   // current eye offset (px)
+    let tEyeX = 0, tEyeY = 0;   // target eye offset
+    let saccX = 0, saccY = 0;   // additive saccade offset
+    let cPup  = 1, tPup = 1;    // pupil scale current / target
 
+    // ----- State machine -----
+    let state = 'booting';
+    let lastMouseAt = 0;
+    let onWrap = false;
+    let saccadeUntil = 0;
+    let nextSaccadeAt = performance.now() + 1800 + Math.random() * 1800;
+
+    const LABELS = {
+      booting:  'BOOTING…',
+      idle:     'STANDBY',
+      tracking: 'TRACKING',
+      engaged:  'LOCKED ON',
+      startled: '! ANOMALY'
+    };
+
+    function setState(next) {
+      if (next === state) return;
+      state = next;
+      if (figureWrap) figureWrap.setAttribute('data-bot-state', next);
+      if (statusText) statusText.textContent = LABELS[next] || next.toUpperCase();
+      // Pupil targets per state — sells "alertness".
+      tPup = next === 'engaged' ? 1.25 : next === 'startled' ? 0.65 : 1;
+    }
+
+    function normalState() { return onWrap ? 'engaged' : 'tracking'; }
+
+    // ----- Mouse tracking -----
     document.addEventListener('mousemove', (e) => {
       const cx = window.innerWidth / 2;
       const cy = window.innerHeight / 2;
       const dx = (e.clientX - cx) / cx;
       const dy = (e.clientY - cy) / cy;
-      tY = dx * 22;
-      tX = -dy * 16;
-      const eyeX = dx * 4;
-      const eyeY = dy * 4;
-      if (leftEye)  leftEye.style.transform  = `translate(${eyeX}px, ${eyeY}px)`;
-      if (rightEye) rightEye.style.transform = `translate(${eyeX}px, ${eyeY}px)`;
+      tRotY = dx * 24;
+      tRotX = -dy * 18;
+      tEyeX = dx * 5;
+      tEyeY = dy * 4;
+      lastMouseAt = performance.now();
+      if (state === 'idle' || state === 'tracking' || state === 'engaged') {
+        setState(normalState());
+      }
     });
 
+    figureWrap?.addEventListener('mouseenter', () => {
+      onWrap = true;
+      if (state === 'tracking') setState('engaged');
+    });
+    figureWrap?.addEventListener('mouseleave', () => {
+      onWrap = false;
+      if (state === 'engaged') setState('tracking');
+    });
+
+    // ----- Click reaction — bot looks at the click, then flashes -----
+    document.addEventListener('click', (e) => {
+      // Skip clicks on real interactive elements so the buttons still feel ours.
+      if (e.target.closest('a, button, input, textarea, label')) return;
+      const cx = window.innerWidth / 2;
+      const cy = window.innerHeight / 2;
+      const dx = (e.clientX - cx) / cx;
+      const dy = (e.clientY - cy) / cy;
+      // Exaggerated snap-look — spring overshoots and settles.
+      tRotY = dx * 32;
+      tRotX = -dy * 24;
+      tEyeX = dx * 6;
+      tEyeY = dy * 5;
+      vRotX += 1.2;  // give the spring a kick so we get a real settle wobble
+      vRotY += 1.2;
+      setState('startled');
+      core.classList.remove('is-flashing');
+      // Force reflow so the keyframe re-runs on rapid clicks
+      void core.offsetWidth;
+      core.classList.add('is-flashing');
+      setTimeout(() => core.classList.remove('is-flashing'), 380);
+      setTimeout(() => {
+        if (state === 'startled') setState(normalState());
+      }, 700);
+    });
+
+    // ----- Boot complete handoff -----
+    setTimeout(() => {
+      if (state === 'booting') setState('idle');
+    }, 1300);
+
+    // ----- Reduced-motion: just lock the visuals and exit. -----
+    if (motionQuery.matches) {
+      setState('idle');
+      return;
+    }
+
+    // ----- Idle saccades — random eye flicks every 2-4 s. -----
+    function maybeSaccade(now) {
+      if (state !== 'idle') return;
+      if (now >= saccadeUntil) { saccX = 0; saccY = 0; }
+      if (now < nextSaccadeAt) return;
+      saccX = (Math.random() - 0.5) * 18;
+      saccY = (Math.random() - 0.5) * 7;
+      saccadeUntil = now + 180 + Math.random() * 220;
+      nextSaccadeAt = saccadeUntil + 1600 + Math.random() * 2400;
+    }
+
+    // ----- Main loop -----
+    const STIFF = 0.10;   // spring constant — how hard it pulls to target
+    const DAMP  = 0.78;   // damping — 1.0 would oscillate forever, <1 settles
+    const EYE_LERP = 0.20;
+    const PUP_LERP = 0.12;
+
     function tick() {
-      cX += (tX - cX) * 0.08;
-      cY += (tY - cY) * 0.08;
-      core.style.transform = `perspective(900px) rotateY(${cY}deg) rotateX(${cX}deg)`;
+      const now = performance.now();
+
+      // Idle handoff after 3 s of mouse silence
+      if ((state === 'tracking' || state === 'engaged') && now - lastMouseAt > 3000) {
+        setState('idle');
+      }
+
+      // Idle drift — head back to neutral, eyes settle (saccades override).
+      if (state === 'idle') {
+        tRotX *= 0.94; tRotY *= 0.94;
+        tEyeX *= 0.92; tEyeY *= 0.92;
+        maybeSaccade(now);
+      }
+
+      // Spring physics on head rotation
+      vRotX = (vRotX + (tRotX - cRotX) * STIFF) * DAMP;
+      vRotY = (vRotY + (tRotY - cRotY) * STIFF) * DAMP;
+      cRotX += vRotX;
+      cRotY += vRotY;
+
+      // Eye offset (simple critically-damped lerp, additive saccade)
+      cEyeX += ((tEyeX + saccX) - cEyeX) * EYE_LERP;
+      cEyeY += ((tEyeY + saccY) - cEyeY) * EYE_LERP;
+
+      // Pupil dilation
+      cPup += (tPup - cPup) * PUP_LERP;
+
+      if (leftEye)  leftEye.style.transform  = `translate(${cEyeX.toFixed(2)}px, ${cEyeY.toFixed(2)}px)`;
+      if (rightEye) rightEye.style.transform = `translate(${cEyeX.toFixed(2)}px, ${cEyeY.toFixed(2)}px)`;
+      core.style.transform = `perspective(900px) rotateY(${cRotY.toFixed(2)}deg) rotateX(${cRotX.toFixed(2)}deg)`;
+      if (figureWrap) figureWrap.style.setProperty('--pupil-scale', cPup.toFixed(3));
+
       requestAnimationFrame(tick);
     }
     tick();

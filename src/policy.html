@@ -310,42 +310,6 @@
             max-width: 420px;
         }
 
-        .reason {
-            border: 1px solid var(--s-border-subtle);
-            border-radius: 10px;
-            padding: 12px 14px;
-            margin-bottom: 24px;
-            background: var(--s-surface);
-            font-family: var(--s-font-mono);
-            font-size: 11.5px;
-            line-height: 1.7;
-            color: var(--s-fg-tertiary);
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-        .reason-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-        }
-        .reason-label {
-            color: var(--s-fg-dim);
-            text-transform: uppercase;
-            letter-spacing: 1.4px;
-            font-size: 10px;
-            flex-shrink: 0;
-        }
-        .reason-value {
-            color: var(--s-fg);
-            text-align: right;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .reason-value.deny { color: var(--s-warn); }
-
         .actions {
             display: flex;
             flex-direction: column;
@@ -389,8 +353,6 @@
         .btn:hover::before { transform: translateX(0); }
         .btn:active { transform: translateY(0); }
         .btn svg { width: 14px; height: 14px; }
-        .btn--ghost { color: var(--s-fg-tertiary); border-color: var(--s-border-subtle); }
-        .btn--ghost:hover { color: var(--s-bg); border-color: var(--s-fg); }
 
         .hint {
             margin-top: 22px;
@@ -410,7 +372,6 @@
             .emblem      { width: 84px; height: 84px; margin-bottom: 22px; }
             h1           { font-size: 1.45rem; }
             .lede        { font-size: 0.88rem; }
-            .reason      { font-size: 11px; }
             .btn         { padding: 11px 18px; font-size: 11px; }
         }
 
@@ -460,21 +421,6 @@
         Disable any active VPN or proxy and reload the page to continue.
     </p>
 
-    <div class="reason" role="group" aria-label="Diagnostics">
-        <div class="reason-row">
-            <span class="reason-label">Channel</span>
-            <span class="reason-value">surya-verify &middot; verify-proxy</span>
-        </div>
-        <div class="reason-row">
-            <span class="reason-label">Verdict</span>
-            <span class="reason-value deny">proxy_detected &middot; block</span>
-        </div>
-        <div class="reason-row">
-            <span class="reason-label">Action</span>
-            <span class="reason-value">disable proxy &middot; reload</span>
-        </div>
-    </div>
-
     <div class="actions">
         <a href="javascript:void(0)" class="btn" onclick="location.reload(); return false;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -482,13 +428,6 @@
                 <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
             </svg>
             Refresh Page
-        </a>
-        <a href="/" class="btn btn--ghost">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M3 12L12 3l9 9"/>
-                <path d="M5 10v10h14V10"/>
-            </svg>
-            Return Home
         </a>
     </div>
 
