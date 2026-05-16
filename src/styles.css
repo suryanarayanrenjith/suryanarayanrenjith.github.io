@@ -1707,64 +1707,47 @@ body.is-mobile .palette-button-container {
 .about-section {
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 16px;
     padding: 4px 2px 2px;
+    text-align: center;
 }
 
-/* ----- About hero (emblem + title) ----- */
+/* ----- About hero (emblem + title) -----
+   Vertical layout for a calmer, less-cluttered look. The single emblem ring
+   gently breathes around the favicon — no decorative grid, no eyebrow, no
+   stacked metadata. */
 .about-hero {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 18px;
-    padding: 18px 18px 20px;
+    gap: 10px;
+    padding: 22px 18px 18px;
     border: 1px solid var(--s-modal-border);
     border-radius: 14px;
-    background:
-        radial-gradient(circle at top right, rgba(255, 255, 255, 0.07), transparent 55%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.005));
     position: relative;
     overflow: hidden;
-}
-.about-hero::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-image:
-        linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-    background-size: 22px 22px;
-    mask-image: radial-gradient(ellipse at top right, rgba(0, 0, 0, 0.55), transparent 70%);
-    -webkit-mask-image: radial-gradient(ellipse at top right, rgba(0, 0, 0, 0.55), transparent 70%);
-    pointer-events: none;
-    opacity: 0.6;
 }
 
 .about-emblem {
     position: relative;
-    width: 84px;
-    height: 84px;
-    flex-shrink: 0;
+    width: 80px;
+    height: 80px;
+    margin-bottom: 4px;
     display: grid;
     place-items: center;
 }
 .about-emblem-ring {
     position: absolute;
-    inset: -6px;
-    border: 1px dashed rgba(255, 255, 255, 0.22);
+    inset: -8px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 50%;
-    animation: aboutRingSpin 22s linear infinite;
     pointer-events: none;
+    animation: aboutEmblemBreathe 4.2s ease-in-out infinite;
 }
-.about-emblem-ring--alt {
-    inset: -12px;
-    border-style: solid;
-    border-color: rgba(255, 255, 255, 0.08);
-    animation-duration: 38s;
-    animation-direction: reverse;
-}
-@keyframes aboutRingSpin {
-    from { transform: rotate(0deg); }
-    to   { transform: rotate(360deg); }
+@keyframes aboutEmblemBreathe {
+    0%, 100% { opacity: 0.55; transform: scale(1); }
+    50%      { opacity: 1;    transform: scale(1.06); }
 }
 .favicon {
     width: 64px;
@@ -1780,20 +1763,11 @@ body.is-mobile .palette-button-container {
 .about-hero-text {
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 4px;
     min-width: 0;
     position: relative;
     z-index: 1;
-}
-.about-eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-family: var(--s-font-mono);
-    font-size: 10.5px;
-    letter-spacing: 1.6px;
-    text-transform: uppercase;
-    color: var(--s-fg-tertiary);
 }
 .website-title {
     color: var(--s-fg);
@@ -1804,8 +1778,8 @@ body.is-mobile .palette-button-container {
 }
 .about-tagline {
     color: var(--s-fg-secondary);
-    font-size: 12.5px;
-    margin: 0;
+    font-size: 13px;
+    margin: 0 0 6px;
     font-style: italic;
 }
 
@@ -1813,7 +1787,6 @@ body.is-mobile .palette-button-container {
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    margin-top: 8px;
     padding: 5px 10px;
     border-radius: 999px;
     font-family: var(--s-font-mono);
@@ -1854,69 +1827,22 @@ body.is-mobile .palette-button-container {
     color: var(--s-fg-secondary);
 }
 
-/* ----- Metadata grid ----- */
-.about-meta-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-}
-.about-meta-cell {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    padding: 10px 12px;
-    border: 1px solid var(--s-modal-border);
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.02);
-    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
-}
-.about-meta-cell:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.18);
-    transform: translateY(-1px);
-}
-.about-meta-label {
-    font-family: var(--s-font-mono);
-    font-size: 10px;
-    letter-spacing: 1.4px;
-    text-transform: uppercase;
-    color: var(--s-fg-tertiary);
-}
-.about-meta-value {
-    font-size: 13.5px;
-    font-weight: 600;
-    color: var(--s-fg);
-    letter-spacing: 0.2px;
-}
-.about-meta-suffix {
-    color: var(--s-fg-tertiary);
-    font-weight: 500;
-}
-
-/* ----- Tech-stack chips ----- */
-.about-chips {
-    list-style: none;
-    padding: 0;
+/* ----- Single condensed info line (replaces the meta grid + chips) ----- */
+.about-info-line {
     margin: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-}
-.about-chips li {
     font-family: var(--s-font-mono);
     font-size: 11px;
-    letter-spacing: 0.6px;
-    padding: 4px 10px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.10);
-    color: var(--s-fg-secondary);
-    transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--s-fg-tertiary);
+    display: inline-flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    align-self: center;
 }
-.about-chips li:hover {
-    background: rgba(255, 255, 255, 0.10);
-    border-color: rgba(255, 255, 255, 0.22);
-    color: var(--s-fg);
+.about-info-dot {
+    color: rgba(255, 255, 255, 0.22);
 }
 
 /* ----- Made-with line ----- */
@@ -1927,7 +1853,7 @@ body.is-mobile .palette-button-container {
     align-items: center;
     justify-content: center;
     gap: 4px;
-    margin: 4px 0 0;
+    margin: 0;
     padding-top: 12px;
     border-top: 1px dashed rgba(255, 255, 255, 0.10);
 }
@@ -2080,7 +2006,9 @@ body.is-mobile .palette-button-container {
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
 }
 
-/* Mini terminal preview shown at the top of the Terminal tab */
+/* Mini terminal preview shown at the top of the Terminal tab.
+   Linux/Unix-style chrome: title tab pinned to the LEFT, window controls
+   (minimize / maximize / close) on the RIGHT. No traffic-light dots. */
 .terminal-preview {
     border: 1px solid var(--s-modal-border);
     border-radius: 10px;
@@ -2095,24 +2023,54 @@ body.is-mobile .palette-button-container {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 12px;
+    padding: 6px 8px 6px 10px;
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
     border-bottom: 1px solid rgba(255, 255, 255, 0.10);
 }
-.terminal-preview-dot {
-    width: 9px;
-    height: 9px;
-    border-radius: 50%;
-    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.4);
+.terminal-preview-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 10px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 11px;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
 }
-.terminal-preview-dot--red    { background: #ff5f56; }
-.terminal-preview-dot--amber  { background: #ffbd2e; }
-.terminal-preview-dot--green  { background: #27c93f; }
-.terminal-preview-title {
-    margin-left: 8px;
-    font-size: 10.5px;
-    letter-spacing: 0.6px;
-    color: var(--s-fg-tertiary);
+.terminal-preview-tab-icon {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.6);
+}
+.terminal-preview-controls {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+.terminal-preview-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 20px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    color: rgba(255, 255, 255, 0.62);
+    cursor: default;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+.terminal-preview-btn:hover {
+    background: rgba(255, 255, 255, 0.10);
+    color: rgba(255, 255, 255, 0.95);
+}
+.terminal-preview-btn--close:hover {
+    background: rgba(255, 95, 86, 0.85);
+    color: #fff;
 }
 .terminal-preview-body {
     padding: 10px 14px 12px;
@@ -2343,25 +2301,13 @@ body.light-theme .client-logs .ipc-link:hover {
 
 /* ----- Light-theme adjustments for the redesigned Info modal ----- */
 body.light-theme .about-hero {
-    background:
-        radial-gradient(circle at top right, rgba(0, 0, 0, 0.06), transparent 55%),
-        linear-gradient(180deg, rgba(0, 0, 0, 0.03), rgba(0, 0, 0, 0.01));
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.025), rgba(0, 0, 0, 0.005));
 }
-body.light-theme .about-hero::before {
-    background-image:
-        linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
-    opacity: 0.5;
-}
-body.light-theme .about-emblem-ring        { border-color: rgba(0, 0, 0, 0.22); }
-body.light-theme .about-emblem-ring--alt   { border-color: rgba(0, 0, 0, 0.10); }
+body.light-theme .about-emblem-ring        { border-color: rgba(0, 0, 0, 0.16); }
 body.light-theme .favicon                  { border-color: rgba(0, 0, 0, 0.18); }
-body.light-theme .about-status,
-body.light-theme .about-meta-cell,
-body.light-theme .about-chips li           { background: rgba(0, 0, 0, 0.04); border-color: rgba(0, 0, 0, 0.12); }
-body.light-theme .about-meta-cell:hover    { background: rgba(0, 0, 0, 0.07); border-color: rgba(0, 0, 0, 0.22); }
-body.light-theme .about-chips li:hover     { background: rgba(0, 0, 0, 0.08); border-color: rgba(0, 0, 0, 0.22); }
+body.light-theme .about-status             { background: rgba(0, 0, 0, 0.04); border-color: rgba(0, 0, 0, 0.12); }
 body.light-theme .about-status-divider     { background: rgba(0, 0, 0, 0.18); }
+body.light-theme .about-info-dot           { color: rgba(0, 0, 0, 0.22); }
 body.light-theme .made-with                { border-top-color: rgba(0, 0, 0, 0.10); }
 body.light-theme .shortcuts-section-line   { background: linear-gradient(90deg, rgba(0, 0, 0, 0.20), transparent); }
 body.light-theme .shortcuts-list li:hover  { background: rgba(0, 0, 0, 0.04); border-color: rgba(0, 0, 0, 0.10); }
@@ -2377,10 +2323,16 @@ body.light-theme .terminal-preview {
     background: rgba(245, 245, 245, 0.9);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
 }
-body.light-theme .terminal-preview-chrome   { background: linear-gradient(180deg, rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.02)); border-bottom-color: rgba(0, 0, 0, 0.10); }
-body.light-theme .terminal-preview-body     { color: #1d1d1f; }
-body.light-theme .terminal-preview-row--out { color: var(--s-fg-tertiary); }
-body.light-theme .terminal-preview-prompt   { color: #157a3a; }
+body.light-theme .terminal-preview-chrome     { background: linear-gradient(180deg, rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.02)); border-bottom-color: rgba(0, 0, 0, 0.10); }
+body.light-theme .terminal-preview-tab        { background: rgba(0, 0, 0, 0.05); border-color: rgba(0, 0, 0, 0.12); color: #1d1d1f; }
+body.light-theme .terminal-preview-tab-icon   { color: rgba(0, 0, 0, 0.5); }
+body.light-theme .terminal-preview-btn        { color: rgba(0, 0, 0, 0.55); }
+body.light-theme .terminal-preview-btn:hover  { background: rgba(0, 0, 0, 0.08); color: #000; }
+body.light-theme .terminal-preview-btn--close:hover { background: rgba(220, 50, 47, 0.9); color: #fff; }
+body.light-theme .terminal-preview-body       { color: #1d1d1f; }
+body.light-theme .terminal-preview-row--out   { color: var(--s-fg-tertiary); }
+body.light-theme .terminal-preview-prompt     { color: #157a3a; }
+body.light-theme .terminal-preview-cursor     { background: #1d1d1f; }
 body.light-theme .client-card,
 body.light-theme .client-card-icon          { background: rgba(0, 0, 0, 0.04); border-color: rgba(0, 0, 0, 0.12); }
 body.light-theme .client-meta-grid          { border-top-color: rgba(0, 0, 0, 0.10); }
@@ -2402,13 +2354,8 @@ body.light-theme .client-meta-grid          { border-top-color: rgba(0, 0, 0, 0.
         font-size: 14px;
     }
 
-    .about-hero {
-        flex-direction: column;
-        align-items: flex-start;
-        text-align: left;
-        gap: 14px;
-    }
-    .about-meta-grid     { grid-template-columns: repeat(2, 1fr); }
+    /* About hero already uses a centered column layout — just trim padding on phones. */
+    .about-hero          { padding: 18px 14px 14px; }
     .client-meta-grid    { grid-template-columns: 1fr 1fr; }
     .shortcuts-list      { grid-template-columns: 1fr; }
     .shortcut-key        { min-width: 96px; }

@@ -498,11 +498,9 @@ function isDesktop() {
                                 <div class="about-hero">
                                     <div class="about-emblem">
                                         <span class="about-emblem-ring" aria-hidden="true"></span>
-                                        <span class="about-emblem-ring about-emblem-ring--alt" aria-hidden="true"></span>
                                         <img src="/assets/favicon/android-chrome-512x512.png" alt="" class="favicon" loading="lazy" decoding="async" width="80" height="80" />
                                     </div>
                                     <div class="about-hero-text">
-                                        <span class="about-eyebrow">Portfolio &middot; v3.1</span>
                                         <h3 class="website-title">Surya Website</h3>
                                         <p class="about-tagline">Fusing imagination with innovation.</p>
                                         <div class="about-status">
@@ -514,33 +512,13 @@ function isDesktop() {
                                     </div>
                                 </div>
 
-                                <div class="about-meta-grid" role="list">
-                                    <div class="about-meta-cell" role="listitem">
-                                        <span class="about-meta-label">Since</span>
-                                        <span class="about-meta-value" id="yearRange">2023</span>
-                                    </div>
-                                    <div class="about-meta-cell" role="listitem">
-                                        <span class="about-meta-label">Build</span>
-                                        <span class="about-meta-value">v3.1<span class="about-meta-suffix">.0</span></span>
-                                    </div>
-                                    <div class="about-meta-cell" role="listitem">
-                                        <span class="about-meta-label">Engine</span>
-                                        <span class="about-meta-value">Vite + GSAP</span>
-                                    </div>
-                                    <div class="about-meta-cell" role="listitem">
-                                        <span class="about-meta-label">License</span>
-                                        <span class="about-meta-value">MIT</span>
-                                    </div>
-                                </div>
-
-                                <ul class="about-chips" aria-label="Tech stack">
-                                    <li>HTML</li>
-                                    <li>CSS</li>
-                                    <li>JS</li>
-                                    <li>Vite</li>
-                                    <li>GSAP</li>
-                                    <li>Three.js</li>
-                                </ul>
+                                <p class="about-info-line">
+                                    <span id="yearRange">Since 2023</span>
+                                    <span class="about-info-dot" aria-hidden="true">&middot;</span>
+                                    <span>v3.1</span>
+                                    <span class="about-info-dot" aria-hidden="true">&middot;</span>
+                                    <span>MIT&nbsp;Licensed</span>
+                                </p>
 
                                 <p class="made-with">Crafted with <span class="heart"><i class="fa-solid fa-heart" aria-hidden="true"></i></span> by Suryanarayan Renjith.</p>
                             </div>
@@ -584,10 +562,21 @@ function isDesktop() {
                             <div class="terminal-info">
                                 <div class="terminal-preview" aria-hidden="true">
                                     <div class="terminal-preview-chrome">
-                                        <span class="terminal-preview-dot terminal-preview-dot--red"></span>
-                                        <span class="terminal-preview-dot terminal-preview-dot--amber"></span>
-                                        <span class="terminal-preview-dot terminal-preview-dot--green"></span>
-                                        <span class="terminal-preview-title">surya@portfolio:~</span>
+                                        <span class="terminal-preview-tab">
+                                            <i class="fa-solid fa-terminal terminal-preview-tab-icon" aria-hidden="true"></i>
+                                            surya@portfolio: ~
+                                        </span>
+                                        <span class="terminal-preview-controls" aria-hidden="true">
+                                            <button type="button" class="terminal-preview-btn" tabindex="-1" aria-label="Minimize">
+                                                <svg viewBox="0 0 12 12" width="12" height="12"><line x1="2" y1="9" x2="10" y2="9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                                            </button>
+                                            <button type="button" class="terminal-preview-btn" tabindex="-1" aria-label="Maximize">
+                                                <svg viewBox="0 0 12 12" width="12" height="12"><rect x="2.5" y="2.5" width="7" height="7" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>
+                                            </button>
+                                            <button type="button" class="terminal-preview-btn terminal-preview-btn--close" tabindex="-1" aria-label="Close">
+                                                <svg viewBox="0 0 12 12" width="12" height="12"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                                            </button>
+                                        </span>
                                     </div>
                                     <div class="terminal-preview-body">
                                         <div class="terminal-preview-row"><span class="terminal-preview-prompt">$</span> <span class="terminal-preview-cmd">./about</span></div>
